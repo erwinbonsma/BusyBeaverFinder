@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		AA1101FF21F32120005C67CF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA1101FE21F32120005C67CF /* main.cpp */; };
+		AA11020821F3261F005C67CF /* Program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA11020721F3261F005C67CF /* Program.cpp */; };
+		AA11020C21F327F4005C67CF /* Data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA11020A21F327F4005C67CF /* Data.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +27,12 @@
 /* Begin PBXFileReference section */
 		AA1101FB21F32120005C67CF /* BusyBeaverFinder */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BusyBeaverFinder; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA1101FE21F32120005C67CF /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		AA11020521F32538005C67CF /* Enums.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Enums.h; sourceTree = "<group>"; };
+		AA11020621F3258D005C67CF /* Program.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Program.h; sourceTree = "<group>"; };
+		AA11020721F3261F005C67CF /* Program.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Program.cpp; sourceTree = "<group>"; };
+		AA11020921F32671005C67CF /* Consts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Consts.h; sourceTree = "<group>"; };
+		AA11020A21F327F4005C67CF /* Data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Data.cpp; sourceTree = "<group>"; };
+		AA11020B21F327F4005C67CF /* Data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Data.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +66,12 @@
 			isa = PBXGroup;
 			children = (
 				AA1101FE21F32120005C67CF /* main.cpp */,
+				AA11020521F32538005C67CF /* Enums.h */,
+				AA11020621F3258D005C67CF /* Program.h */,
+				AA11020721F3261F005C67CF /* Program.cpp */,
+				AA11020921F32671005C67CF /* Consts.h */,
+				AA11020A21F327F4005C67CF /* Data.cpp */,
+				AA11020B21F327F4005C67CF /* Data.h */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";
@@ -119,6 +133,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
+				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
