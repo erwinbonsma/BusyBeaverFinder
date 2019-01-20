@@ -9,8 +9,8 @@
 #ifndef Consts_h
 #define Consts_h
 
-const int w = 7;
-const int h = 7;
+const int programWidth = 7;
+const int programHeight = 7;
 
 const int dataSize = 1024;
 

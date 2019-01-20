@@ -12,26 +12,28 @@
 
 const char op_chars[4] = {'?', '_', 'o', '*' };
 
-Program::Program() {
-    for (int x = 0; x < w; x++) {
-        for (int y = 0; y < h; y++) {
-            _ops[x][y] = Op::UNSET;
-        }
+Program::Program(int width, int height) {
+    _width = width;
+    _height = height;
+    _ops = new Op[width * height];
+
+    for (int i = width * height; --i >= 0; ) {
+        _ops[i] = Op::UNSET;
     }
 }
 
 void Program::clone(Program& dest) {
-    for (int x = 0; x < w; x++) {
-        for (int y = 0; y < h; y++) {
+    for (int x = 0; x < _width; x++) {
+        for (int y = 0; y < _height; y++) {
             dest.setOp(x, y, getOp(x, y));
         }
     }
 }
 
 void Program::dump() {
-    for (int y = h; --y >= 0; ) {
-        for (int x = 0; x < w; x++) {
-            std::cout << " " << op_chars[(int)_ops[x][y]];
+    for (int y = _height; --y >= 0; ) {
+        for (int x = 0; x < _width; x++) {
+            std::cout << " " << op_chars[(int)getOp(x, y)];
         }
         std::cout << "\n";
     }

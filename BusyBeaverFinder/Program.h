@@ -15,16 +15,22 @@
 #include "Enums.h"
 
 class Program {
-    Op _ops[w][h];
+    int _width;
+    int _height;
+    // Instruction array
+    Op *_ops;
 
 public:
-    Program();
+    Program(int width, int height);
 
     void clone(Program& dest);
 
-    void setOp(int x, int y, Op op) { _ops[x][y] = op; }
-    void clearOp(int x, int y) { _ops[x][y] = Op::UNSET; }
-    Op getOp(int x, int y) { return _ops[x][y]; }
+    int getWidth() { return _width; }
+    int getHeight() { return _height; }
+
+    void setOp(int x, int y, Op op) { _ops[x + y * _width] = op; }
+    void clearOp(int x, int y) { _ops[x + y * _width] = Op::UNSET; }
+    Op getOp(int x, int y) { return _ops[x + y * _width]; }
 
     void dump();
 };

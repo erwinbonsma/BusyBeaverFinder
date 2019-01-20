@@ -14,11 +14,11 @@
 int dx[4] = {0, 1, 0, -1};
 int dy[4] = {1, 0, -1, 0};
 
-Program program;
+Program program(programWidth, programHeight);
 Data data(dataSize, maxSteps, hangSamplePeriod);
 
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
-Op opStack[w * h];
+Op opStack[programWidth * programHeight];
 
 //#define FORCE
 #ifdef FORCE
@@ -31,11 +31,11 @@ int total, totalSuccess, totalError, totalHangs, totalEarlyHangs;
 clock_t startTime = clock();
 
 int maxStepsSofar = 0;
-Program bestProgram;
+Program bestProgram(programWidth, programHeight);
 
 void dumpSettings() {
     std::cout
-    << "Size = " << w << "x" << h
+    << "Size = " << programWidth << "x" << programHeight
     << ", DataSize = " << dataSize
     << ", MaxSteps = " << maxSteps
     << ", HangSamplePeriod = " << hangSamplePeriod
@@ -64,7 +64,7 @@ void dumpStats() {
 }
 
 void clearOpStack() {
-    for (int i = 0; i < w*h; i++) {
+    for (int i = programWidth * programHeight; --i >= 0; ) {
         opStack[i] = Op::UNSET;
     }
 }
@@ -144,7 +144,7 @@ void run(int x, int y, Dir dir, int totalSteps, int depth) {
             _x = x + dx[(int)dir];
             _y = y + dy[(int)dir];
 
-            if (_x < 0 || _x == w || _y < 0 || _y == h) {
+            if (_x < 0 || _x == program.getWidth() || _y < 0 || _y == program.getHeight()) {
                 reportDone(totalSteps + steps);
                 data.undo(numDataOps);
                 return;
