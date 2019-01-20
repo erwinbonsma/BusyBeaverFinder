@@ -15,18 +15,18 @@
 #include "Enums.h"
 
 class Data {
-    int *_data_p, *_data_p_max, *_data_p_min;
+    int *_dataP, *_maxDataP, *_minDataP;
     int _data[dataSize];
 
-    DataOp *_undo_p;
-    DataOp _undo_stack[undoStackSize];
+    DataOp *_undoP;
+    DataOp _undoStack[undoStackSize];
 
 /* Hang Detection 1 collects effective data instruction. It collapses subsequent data instructions
  * that cancel each other out, e.g. DEC after INC, SHL after SHR. If at the end of the hang sample
  * period there are no effective instructions, it concludes that the program hangs.
  */
 #ifdef HANG_DETECTION1
-    DataOp *_effective_p;
+    DataOp *_effectiveP;
     DataOp _effective[effectiveStackSize];
 #endif
 
@@ -39,15 +39,13 @@ class Data {
     int _significantValueChange;
 #endif
 
-    void undo_last();
-
 public:
     Data();
 
     void resetHangDetection();
     bool isHangDetected();
 
-    int val() { return *_data_p; }
+    int val() { return *_dataP; }
 
     void inc();
     void dec();
@@ -57,7 +55,7 @@ public:
     void undo(int num);
 
     void dump();
-    void dump_stack();
+    void dumpStack();
 };
 
 #endif /* Data_h */

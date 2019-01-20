@@ -15,16 +15,16 @@ Data::Data() {
     for (int i = 0; i < dataSize; i++) {
         _data[i] = 0;
     }
-    _data_p = &_data[dataSize / 2];
-    _data_p_min = &_data[0];
-    _data_p_max = &_data[dataSize - 1];
+    _dataP = &_data[dataSize / 2];
+    _minDataP = &_data[0];
+    _maxDataP = &_data[dataSize - 1];
 
-    _undo_p = &_undo_stack[0];
+    _undoP = &_undoStack[0];
 
 
 #ifdef HANG_DETECTION1
-    _effective_p = &_effective[0];
-    *(_effective_p++) = DataOp::NONE; // Guard
+    _effectiveP = &_effective[0];
+    *(_effectiveP++) = DataOp::NONE; // Guard
 #endif
 
 #ifdef HANG_DETECTION2
@@ -34,19 +34,19 @@ Data::Data() {
 }
 
 void Data::inc() {
-    (*_data_p)++;
-    *(_undo_p++) = DataOp::INC;
+    (*_dataP)++;
+    *(_undoP++) = DataOp::INC;
 
 #ifdef HANG_DETECTION1
-    if (*(_effective_p - 1) == DataOp::DEC) {
-        _effective_p--;
+    if (*(_effectiveP - 1) == DataOp::DEC) {
+        _effectiveP--;
     } else {
-        *(_effective_p++) = DataOp::INC;
+        *(_effectiveP++) = DataOp::INC;
     }
 #endif
 
 #ifdef HANG_DETECTION2
-    if (*_data_p == 0 || *_data_p == 1) {
+    if (*_dataP == 0 || *_dataP == 1) {
         _significantValueChange = true;
     } else {
         (*_deltaP)++;
@@ -55,19 +55,19 @@ void Data::inc() {
 }
 
 void Data::dec() {
-    (*_data_p)--;
-    *(_undo_p++) = DataOp::DEC;
+    (*_dataP)--;
+    *(_undoP++) = DataOp::DEC;
 
 #ifdef HANG_DETECTION1
-    if (*(_effective_p - 1) == DataOp::INC) {
-        _effective_p--;
+    if (*(_effectiveP - 1) == DataOp::INC) {
+        _effectiveP--;
     } else {
-        *(_effective_p++) = DataOp::DEC;
+        *(_effectiveP++) = DataOp::DEC;
     }
 #endif
 
 #ifdef HANG_DETECTION2
-    if (*_data_p == 0 || *_data_p == -1) {
+    if (*_dataP == 0 || *_dataP == -1) {
         _significantValueChange = true;
     } else {
         (*_deltaP)--;
@@ -76,56 +76,56 @@ void Data::dec() {
 }
 
 bool Data::shr() {
-    _data_p++;
-    *(_undo_p++) = DataOp::SHR;
+    _dataP++;
+    *(_undoP++) = DataOp::SHR;
 
 #ifdef HANG_DETECTION1
-    if (*(_effective_p - 1) == DataOp::SHL) {
-        _effective_p--;
+    if (*(_effectiveP - 1) == DataOp::SHL) {
+        _effectiveP--;
     } else {
-        *(_effective_p++) = DataOp::SHR;
+        *(_effectiveP++) = DataOp::SHR;
     }
 #endif
 
 #ifdef HANG_DETECTION2
     _deltaP++;
-    if (*_data_p != 0 && _deltaP > _maxNonZeroDeltaP) {
+    if (*_dataP != 0 && _deltaP > _maxNonZeroDeltaP) {
         _maxNonZeroDeltaP = _deltaP;
     }
 #endif
 
-    return _data_p <= _data_p_max;
+    return _dataP <= _maxDataP;
 }
 
 bool Data::shl() {
-    _data_p--;
-    *(_undo_p++) = DataOp::SHL;
+    _dataP--;
+    *(_undoP++) = DataOp::SHL;
 
 #ifdef HANG_DETECTION1
-    if (*(_effective_p - 1) == DataOp::SHR) {
-        _effective_p--;
+    if (*(_effectiveP - 1) == DataOp::SHR) {
+        _effectiveP--;
     } else {
-        *(_effective_p++) = DataOp::SHL;
+        *(_effectiveP++) = DataOp::SHL;
     }
 #endif
 
 #ifdef HANG_DETECTION2
     _deltaP--;
-    if (*_data_p != 0 && _deltaP < _minNonZeroDeltaP) {
+    if (*_dataP != 0 && _deltaP < _minNonZeroDeltaP) {
         _minNonZeroDeltaP = _deltaP;
     }
 #endif
 
-    return _data_p >= _data_p_min;
+    return _dataP >= _minDataP;
 }
 
 void Data::undo(int num) {
     while (--num >= 0) {
-        switch (*(--_undo_p)) {
-            case DataOp::INC: (*_data_p)--; break;
-            case DataOp::DEC: (*_data_p)++; break;
-            case DataOp::SHR: _data_p--; break;
-            case DataOp::SHL: _data_p++; break;
+        switch (*(--_undoP)) {
+            case DataOp::INC: (*_dataP)--; break;
+            case DataOp::DEC: (*_dataP)++; break;
+            case DataOp::SHR: _dataP--; break;
+            case DataOp::SHL: _dataP++; break;
             case DataOp::NONE: break;
         }
     }
@@ -133,7 +133,7 @@ void Data::undo(int num) {
 
 void Data::resetHangDetection() {
 #ifdef HANG_DETECTION1
-    _effective_p = &_effective[1];
+    _effectiveP = &_effective[1];
 #endif
 
 #ifdef HANG_DETECTION2
@@ -152,7 +152,7 @@ void Data::resetHangDetection() {
 
 bool Data::isHangDetected() {
 #ifdef HANG_DETECTION1
-    if (_effective_p == &_effective[1]) {
+    if (_effectiveP == &_effective[1]) {
         // No effective data instruction carried out
         return true;
     }
@@ -160,7 +160,7 @@ bool Data::isHangDetected() {
 
 #ifdef HANG_DETECTION2
 //    int *deltaP = _minNonZeroDeltaP;
-//    int *dataP = _data_p + (deltaP - _deltaP);
+//    int *dataP = _dataP + (deltaP - _deltaP);
 //    std::cout
 //        << "Offset = " << (dataP - &_data[dataSize / 2])
 //        << ", Width = " << (_maxNonZeroDeltaP - _minNonZeroDeltaP) << "\n";
@@ -181,7 +181,7 @@ bool Data::isHangDetected() {
     ) {
         // Possible hang
         int *deltaP = _minNonZeroDeltaP;
-        int *dataP = _data_p + (deltaP - _deltaP);
+        int *dataP = _dataP + (deltaP - _deltaP);
         while (deltaP <= _maxNonZeroDeltaP && ((*dataP) * (*deltaP)) >= 0) {
             deltaP++;
             dataP++;
@@ -199,19 +199,19 @@ bool Data::isHangDetected() {
 
 void Data::dump() {
     // Find end
-    int *max = _data_p_max;
-    while (max > _data_p && *max == 0) {
+    int *max = _maxDataP;
+    while (max > _dataP && *max == 0) {
         max--;
     }
     // Find start
-    int *p = _data_p_min;
-    while (p < _data_p && *p == 0) {
+    int *p = _minDataP;
+    while (p < _dataP && *p == 0) {
         p++;
     }
 
     std::cout << "Data: ";
     while (1) {
-        if (p == _data_p) {
+        if (p == _dataP) {
             std::cout << "[" << *p << "]";
         } else {
             std::cout << *p;
@@ -226,10 +226,10 @@ void Data::dump() {
     std::cout << "\n";
 }
 
-void Data::dump_stack() {
-    DataOp *p = &_undo_stack[0];
-    while (p < _undo_p) {
-        if (p != &_undo_stack[0]) {
+void Data::dumpStack() {
+    DataOp *p = &_undoStack[0];
+    while (p < _undoP) {
+        if (p != &_undoStack[0]) {
             std::cout << ",";
         }
         std::cout << (char)*p;
