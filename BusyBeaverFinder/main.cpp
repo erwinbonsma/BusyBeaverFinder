@@ -91,14 +91,14 @@ void reportDone(int totalSteps) {
             dumpOpStack();
         }
     }
-    if (++total % 100000 == 0) {
+    if (++total % dumpStatsPeriod == 0) {
         dumpStats();
     }
 }
 
 void reportError() {
     totalError++;
-    if (++total % 100000 == 0) {
+    if (++total % dumpStatsPeriod == 0) {
         dumpStats();
     }
 }
@@ -108,7 +108,7 @@ void reportHang(bool early) {
     if (early) {
         totalEarlyHangs++;
     }
-    if (++total % 100000 == 0) {
+    if (++total % dumpStatsPeriod == 0) {
         dumpStats();
     }
 }

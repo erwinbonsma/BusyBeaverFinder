@@ -14,6 +14,8 @@ const int h = 7;
 
 const int dataSize = 1024;
 
+const int dumpStatsPeriod = 100000;
+
 const int maxSteps = 65536;
 const int hangSamplePeriod = 256;
 
