@@ -16,10 +16,12 @@
 
 class Data {
     int *_dataP, *_maxDataP, *_minDataP;
-    int _data[dataSize];
+    // Array with data values
+    int *_data;
 
     DataOp *_undoP;
-    DataOp _undoStack[undoStackSize];
+    // Undo-stack for data operations
+    DataOp *_undoStack;
 
 /* Hang Detection 1 collects effective data instruction. It collapses subsequent data instructions
  * that cancel each other out, e.g. DEC after INC, SHL after SHR. If at the end of the hang sample
@@ -27,20 +29,25 @@ class Data {
  */
 #ifdef HANG_DETECTION1
     DataOp *_effectiveP;
-    DataOp _effective[effectiveStackSize];
+    // Stack with effective instruction in current hang sample period
+    DataOp *_effective;
 #endif
 
 #ifdef HANG_DETECTION2
-    int _delta[hangDeltaSize];
+    // Array with data value deltas in current hange sample period
+    int *_delta;
 
     int *_deltaP;
-    int *_minNonZeroDeltaP, *_minNonZeroDeltaP0;
-    int *_maxNonZeroDeltaP, *_maxNonZeroDeltaP0;
+    int *_minDeltaP, *_minDeltaP0;
+    int *_maxDeltaP, *_maxDeltaP0;
     int _significantValueChange;
+    int _hangSamplePeriod;
 #endif
 
 public:
-    Data();
+    Data(int size, int maxDataOps, int hangSamplePeriod);
+
+    long size() { return _maxDataP - _minDataP + 1; }
 
     void resetHangDetection();
     bool isHangDetected();

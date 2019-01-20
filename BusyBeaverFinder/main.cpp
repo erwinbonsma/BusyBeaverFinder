@@ -15,7 +15,7 @@ int dx[4] = {0, 1, 0, -1};
 int dy[4] = {1, 0, -1, 0};
 
 Program program;
-Data data;
+Data data(dataSize, maxSteps, hangSamplePeriod);
 
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
 Op opStack[w * h];
@@ -197,7 +197,7 @@ void run(int x, int y, Dir dir, int totalSteps, int depth) {
         y = _y;
         steps++;
 
-        if (steps > maxSteps) {
+        if (steps == maxSteps) {
             reportHang(false);
             data.undo(numDataOps);
             return;

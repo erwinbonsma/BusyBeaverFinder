@@ -11,25 +11,30 @@
 
 #include "Data.h"
 
-Data::Data() {
-    for (int i = 0; i < dataSize; i++) {
+Data::Data(int size, int maxDataOps, int hangSamplePeriod) {
+    _data = new int[size];
+    for (int i = 0; i < size; i++) {
         _data[i] = 0;
     }
-    _dataP = &_data[dataSize / 2];
+    _dataP = &_data[size / 2];
     _minDataP = &_data[0];
-    _maxDataP = &_data[dataSize - 1];
+    _maxDataP = &_data[size - 1];
 
+    _undoStack = new DataOp[maxDataOps];
     _undoP = &_undoStack[0];
 
-
 #ifdef HANG_DETECTION1
+    _effective = new DataOp[hangSamplePeriod + 1];
     _effectiveP = &_effective[0];
     *(_effectiveP++) = DataOp::NONE; // Guard
 #endif
 
 #ifdef HANG_DETECTION2
-    _minNonZeroDeltaP = 0;
-    _maxNonZeroDeltaP = 0;
+    _hangSamplePeriod = hangSamplePeriod;
+    _delta = new int[hangSamplePeriod * 2];
+    // Init so that entire array is cleared by resetHangDetection()
+    _minDeltaP = _delta;
+    _maxDeltaP = _delta + hangSamplePeriod * 2 - 1;
 #endif
 }
 
@@ -89,8 +94,8 @@ bool Data::shr() {
 
 #ifdef HANG_DETECTION2
     _deltaP++;
-    if (*_dataP != 0 && _deltaP > _maxNonZeroDeltaP) {
-        _maxNonZeroDeltaP = _deltaP;
+    if (_deltaP > _maxDeltaP) {
+        _maxDeltaP = _deltaP;
     }
 #endif
 
@@ -111,8 +116,8 @@ bool Data::shl() {
 
 #ifdef HANG_DETECTION2
     _deltaP--;
-    if (*_dataP != 0 && _deltaP < _minNonZeroDeltaP) {
-        _minNonZeroDeltaP = _deltaP;
+    if (_deltaP < _minDeltaP) {
+        _minDeltaP = _deltaP;
     }
 #endif
 
@@ -137,15 +142,17 @@ void Data::resetHangDetection() {
 #endif
 
 #ifdef HANG_DETECTION2
-    for (int i = hangDeltaSize; --i >= 0; ) {
-        _delta[i] = 0;
+    int *p = _minDeltaP;
+    while (p <= _maxDeltaP) {
+        *p = 0;
+        p++;
     }
 
-    _minNonZeroDeltaP0 = _minNonZeroDeltaP;
-    _maxNonZeroDeltaP0 = _maxNonZeroDeltaP;
-    _deltaP = &_delta[hangDeltaSize / 2];
-    _minNonZeroDeltaP = _deltaP;
-    _maxNonZeroDeltaP = _deltaP;
+    _minDeltaP0 = _minDeltaP;
+    _maxDeltaP0 = _maxDeltaP;
+    _deltaP = &_delta[_hangSamplePeriod];
+    _minDeltaP = _deltaP;
+    _maxDeltaP = _deltaP;
     _significantValueChange = false;
 #endif
 }
@@ -175,19 +182,18 @@ bool Data::isHangDetected() {
     if (
         // No hang if a data value became zero
         !_significantValueChange &&
-        // or when new non-zero data cells were entered
-        _minNonZeroDeltaP >= _minNonZeroDeltaP0 &&
-        _maxNonZeroDeltaP <= _maxNonZeroDeltaP0
+        // or when new data cells were entered
+        _minDeltaP >= _minDeltaP0 &&
+        _maxDeltaP <= _maxDeltaP0
     ) {
         // Possible hang
-        int *deltaP = _minNonZeroDeltaP;
+        int *deltaP = _minDeltaP;
         int *dataP = _dataP + (deltaP - _deltaP);
-        while (deltaP <= _maxNonZeroDeltaP && ((*dataP) * (*deltaP)) >= 0) {
+        while (deltaP <= _maxDeltaP && ((*dataP) * (*deltaP)) >= 0) {
             deltaP++;
             dataP++;
         }
-        if (deltaP > _maxNonZeroDeltaP) {
-
+        if (deltaP > _maxDeltaP) {
             // All data cell changes were away from zero
             return true;
         }

@@ -20,15 +20,4 @@ const int hangSamplePeriod = 256;
 #define HANG_DETECTION1
 #define HANG_DETECTION2
 
-// Over-dimension to avoid need for bound checks
-const int undoStackSize = maxSteps * 2;
-
-#ifdef HANG_DETECTION1
-const int effectiveStackSize = maxSteps * 2;
-#endif
-
-#ifdef HANG_DETECTION2
-const int hangDeltaSize  = hangSamplePeriod;
-#endif
-
 #endif /* Consts_h */
