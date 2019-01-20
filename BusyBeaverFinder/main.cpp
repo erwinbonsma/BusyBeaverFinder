@@ -18,6 +18,14 @@ Program program;
 Data data;
 
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
+Op opStack[w * h];
+
+//#define FORCE
+#ifdef FORCE
+int forceStack[] =
+    // #13549 Busy Beaver for 7x7
+    { 1,1,1,1,1,2,3,1,1,1,1,1,3,1,3,2,2,3,2,2,1,3,1,3,2,3,3,3,3,3,2,2,3,3,2,1,3,3,3 };
+#endif
 
 int totalDone, totalError, totalHangs, totalEarlyHangs;
 clock_t startTime = clock();
@@ -54,6 +62,22 @@ void dumpStats() {
     << "\n";
 }
 
+void clearOpStack() {
+    for (int i = 0; i < w*h; i++) {
+        opStack[i] = Op::UNSET;
+    }
+}
+
+void dumpOpStack() {
+    int i = 0;
+    std::cout << "Op stack: ";
+    while (opStack[i] != Op::UNSET) {
+        std::cout << (int)opStack[i] << ",";
+        i++;
+    }
+    std::cout << "\n";
+}
+
 void reportDone(int totalSteps) {
     totalDone++;
     if (totalSteps > maxStepsSofar) {
@@ -63,6 +87,7 @@ void reportDone(int totalSteps) {
             std::cout << "Best sofar = " << maxStepsSofar << "\n";
             bestProgram.dump();
             data.dump();
+            dumpOpStack();
         }
     }
     if (totalDone % 100000 == 0) {
@@ -81,19 +106,24 @@ void reportHang(bool early) {
     }
 }
 
-void run(int x, int y, Dir dir, int totalSteps);
+void run(int x, int y, Dir dir, int totalSteps, int depth);
 
-void branch(int x, int y, Dir dir, int totalSteps) {
+void branch(int x, int y, Dir dir, int totalSteps, int depth) {
     int _x = x + dx[(int)dir];
     int _y = y + dy[(int)dir];
     for (int i = 0; i < 3; i++) {
-        program.setOp(_x, _y, validOps[i]);
-        run(x, y, dir, totalSteps);
+        Op op = validOps[i];
+#ifdef FORCE
+        op = (Op)forceStack[depth];
+#endif
+        program.setOp(_x, _y, op);
+        opStack[depth] = op;
+        run(x, y, dir, totalSteps, depth + 1);
     }
     program.clearOp(_x, _y);
 }
 
-void run(int x, int y, Dir dir, int totalSteps) {
+void run(int x, int y, Dir dir, int totalSteps, int depth) {
     int numDataOps = 0;
     int steps = 0;
 
@@ -115,7 +145,7 @@ void run(int x, int y, Dir dir, int totalSteps) {
 
             switch (program.getOp(_x, _y)) {
                 case Op::UNSET:
-                    branch(x, y, dir, totalSteps + steps);
+                    branch(x, y, dir, totalSteps + steps, depth);
                     data.undo(numDataOps);
                     return;
                 case Op::NOOP:
@@ -177,8 +207,10 @@ void run(int x, int y, Dir dir, int totalSteps) {
 }
 
 int main(int argc, const char * argv[]) {
+    clearOpStack();
+
     dumpSettings();
-    run(0, -1, Dir::UP, 0);
+    run(0, -1, Dir::UP, 0, 0);
     dumpStats();
     bestProgram.dump();
 
