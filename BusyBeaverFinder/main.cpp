@@ -27,7 +27,7 @@ int forceStack[] =
     { 1,1,1,1,1,2,3,1,1,1,1,1,3,1,3,2,2,3,2,2,1,3,1,3,2,3,3,3,3,3,2,2,3,3,2,1,3,3,3 };
 #endif
 
-int totalDone, totalError, totalHangs, totalEarlyHangs;
+int total, totalSuccess, totalError, totalHangs, totalEarlyHangs;
 clock_t startTime = clock();
 
 int maxStepsSofar = 0;
@@ -55,7 +55,8 @@ void dumpSettings() {
 void dumpStats() {
     std::cout
     << "Best=" << maxStepsSofar
-    << ", Done=" << totalDone
+    << ", Total=" << total
+    << ", Success=" << totalSuccess
     << ", Errors=" << totalError
     << ", Hangs=" << totalEarlyHangs << "/" << totalHangs
     << ", Time taken=" << (clock() - startTime) / (double)CLOCKS_PER_SEC
@@ -79,7 +80,7 @@ void dumpOpStack() {
 }
 
 void reportDone(int totalSteps) {
-    totalDone++;
+    totalSuccess++;
     if (totalSteps > maxStepsSofar) {
         maxStepsSofar = totalSteps;
         program.clone(bestProgram);
@@ -90,19 +91,25 @@ void reportDone(int totalSteps) {
             dumpOpStack();
         }
     }
-    if (totalDone % 100000 == 0) {
+    if (++total % 100000 == 0) {
         dumpStats();
     }
 }
 
 void reportError() {
     totalError++;
+    if (++total % 100000 == 0) {
+        dumpStats();
+    }
 }
 
 void reportHang(bool early) {
     totalHangs++;
     if (early) {
         totalEarlyHangs++;
+    }
+    if (++total % 100000 == 0) {
+        dumpStats();
     }
 }
 
