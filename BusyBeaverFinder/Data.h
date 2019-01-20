@@ -21,16 +21,22 @@ class Data {
     DataOp *_undo_p;
     DataOp _undo_stack[undoStackSize];
 
+/* Hang Detection 1 collects effective data instruction. It collapses subsequent data instructions
+ * that cancel each other out, e.g. DEC after INC, SHL after SHR. If at the end of the hang sample
+ * period there are no effective instructions, it concludes that the program hangs.
+ */
+#ifdef HANG_DETECTION1
     DataOp *_effective_p;
     DataOp _effective[effectiveStackSize];
+#endif
 
     void undo_last();
 
 public:
     Data();
 
-    void resetHangDetection() { _effective_p = &_effective[1]; }
-    bool isHangDetected() { return _effective_p == &_effective[1]; }
+    void resetHangDetection();
+    bool isHangDetected();
 
     int val() { return *_data_p; }
 

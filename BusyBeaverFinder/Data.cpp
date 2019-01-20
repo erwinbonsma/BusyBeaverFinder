@@ -20,50 +20,65 @@ Data::Data() {
     _data_p_max = &_data[dataSize - 1];
 
     _undo_p = &_undo_stack[0];
-    _effective_p = &_effective[0];
 
+
+#ifdef HANG_DETECTION1
+    _effective_p = &_effective[0];
     *(_effective_p++) = DataOp::NONE; // Guard
+#endif
 }
 
 void Data::inc() {
     (*_data_p)++;
     *(_undo_p++) = DataOp::INC;
+
+#ifdef HANG_DETECTION1
     if (*(_effective_p - 1) == DataOp::DEC) {
         _effective_p--;
     } else {
         *(_effective_p++) = DataOp::INC;
     }
+#endif
 }
 
 void Data::dec() {
     (*_data_p)--;
     *(_undo_p++) = DataOp::DEC;
+
+#ifdef HANG_DETECTION1
     if (*(_effective_p - 1) == DataOp::INC) {
         _effective_p--;
     } else {
         *(_effective_p++) = DataOp::DEC;
     }
+#endif
 }
 
 bool Data::shr() {
     _data_p++;
     *(_undo_p++) = DataOp::SHR;
+
+#ifdef HANG_DETECTION1
     if (*(_effective_p - 1) == DataOp::SHL) {
         _effective_p--;
     } else {
         *(_effective_p++) = DataOp::SHR;
     }
+#endif
     return _data_p <= _data_p_max;
 }
 
 bool Data::shl() {
     _data_p--;
     *(_undo_p++) = DataOp::SHL;
+
+#ifdef HANG_DETECTION1
     if (*(_effective_p - 1) == DataOp::SHR) {
         _effective_p--;
     } else {
         *(_effective_p++) = DataOp::SHL;
     }
+#endif
     return _data_p >= _data_p_min;
 }
 
@@ -77,6 +92,21 @@ void Data::undo(int num) {
             case DataOp::NONE: break;
         }
     }
+}
+
+void Data::resetHangDetection() {
+#ifdef HANG_DETECTION1
+    _effective_p = &_effective[1];
+#endif
+}
+bool Data::isHangDetected() {
+#ifdef HANG_DETECTION1
+    if (_effective_p == &_effective[1]) {
+        // No effective data instruction carried out
+        return true;
+    }
+#endif
+    return false;
 }
 
 void Data::dump() {

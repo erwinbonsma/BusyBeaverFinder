@@ -30,7 +30,7 @@ void dumpSettings() {
     << "Size = " << w << "x" << h
     << ", DataSize = " << dataSize
     << ", MaxSteps = " << maxSteps
-    << ", EarlyHangCheck = " << earlyHangCheck
+    << ", HangSamplePeriod = " << hangSamplePeriod
     << "\n";
 }
 
@@ -52,6 +52,7 @@ void reportDone(int totalSteps) {
         if (maxStepsSofar > 256) {
             std::cout << "Best sofar = " << maxStepsSofar << "\n";
             bestProgram.dump();
+            data.dump();
         }
     }
     if (totalDone % 100000 == 0) {
@@ -154,11 +155,13 @@ void run(int x, int y, Dir dir, int totalSteps) {
             data.undo(numDataOps);
             return;
         }
-        else if (steps > earlyHangCheck && data.isHangDetected()) {
-            reportHang(true);
-            data.undo(numDataOps);
-            return;
-
+        else if (steps % hangSamplePeriod == 0) {
+            if (data.isHangDetected()) {
+                reportHang(true);
+                data.undo(numDataOps);
+                return;
+            }
+            data.resetHangDetection();
         }
     }
 }
