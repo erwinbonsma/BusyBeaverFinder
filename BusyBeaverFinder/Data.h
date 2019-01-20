@@ -36,7 +36,7 @@ class Data {
     int *_deltaP;
     int *_minNonZeroDeltaP, *_minNonZeroDeltaP0;
     int *_maxNonZeroDeltaP, *_maxNonZeroDeltaP0;
-    int _valueBecameZero;
+    int _significantValueChange;
 #endif
 
     void undo_last();

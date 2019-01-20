@@ -46,8 +46,8 @@ void Data::inc() {
 #endif
 
 #ifdef HANG_DETECTION2
-    if (*_data_p == 0) {
-        _valueBecameZero = true;
+    if (*_data_p == 0 || *_data_p == 1) {
+        _significantValueChange = true;
     } else {
         (*_deltaP)++;
     }
@@ -67,8 +67,8 @@ void Data::dec() {
 #endif
 
 #ifdef HANG_DETECTION2
-    if (*_data_p == 0) {
-        _valueBecameZero = true;
+    if (*_data_p == 0 || *_data_p == -1) {
+        _significantValueChange = true;
     } else {
         (*_deltaP)--;
     }
@@ -145,8 +145,8 @@ void Data::resetHangDetection() {
     _maxNonZeroDeltaP0 = _maxNonZeroDeltaP;
     _deltaP = &_delta[hangDeltaSize / 2];
     _minNonZeroDeltaP = _deltaP;
-    _minNonZeroDeltaP = _deltaP;
-    _valueBecameZero = false;
+    _maxNonZeroDeltaP = _deltaP;
+    _significantValueChange = false;
 #endif
 }
 
@@ -159,9 +159,22 @@ bool Data::isHangDetected() {
 #endif
 
 #ifdef HANG_DETECTION2
+//    int *deltaP = _minNonZeroDeltaP;
+//    int *dataP = _data_p + (deltaP - _deltaP);
+//    std::cout
+//        << "Offset = " << (dataP - &_data[dataSize / 2])
+//        << ", Width = " << (_maxNonZeroDeltaP - _minNonZeroDeltaP) << "\n";
+//    while (deltaP <= _maxNonZeroDeltaP) {
+//        std::cout << *dataP << "("
+//        << *deltaP << ") ";
+//        deltaP++;
+//        dataP++;
+//    }
+//    std::cout << "\n";
+
     if (
         // No hang if a data value became zero
-        !_valueBecameZero &&
+        !_significantValueChange &&
         // or when new non-zero data cells were entered
         _minNonZeroDeltaP >= _minNonZeroDeltaP0 &&
         _maxNonZeroDeltaP <= _maxNonZeroDeltaP0
@@ -174,6 +187,7 @@ bool Data::isHangDetected() {
             dataP++;
         }
         if (deltaP > _maxNonZeroDeltaP) {
+
             // All data cell changes were away from zero
             return true;
         }
@@ -195,6 +209,7 @@ void Data::dump() {
         p++;
     }
 
+    std::cout << "Data: ";
     while (1) {
         if (p == _data_p) {
             std::cout << "[" << *p << "]";
