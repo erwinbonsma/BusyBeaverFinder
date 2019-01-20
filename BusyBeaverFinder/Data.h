@@ -47,7 +47,7 @@ class Data {
 public:
     Data(int size, int maxDataOps, int hangSamplePeriod);
 
-    long size() { return _maxDataP - _minDataP + 1; }
+    long getSize() { return _maxDataP - _minDataP + 1; }
 
     void resetHangDetection();
     bool isHangDetected();
