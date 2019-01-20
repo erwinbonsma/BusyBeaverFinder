@@ -26,6 +26,11 @@ Data::Data() {
     _effective_p = &_effective[0];
     *(_effective_p++) = DataOp::NONE; // Guard
 #endif
+
+#ifdef HANG_DETECTION2
+    _minNonZeroDeltaP = 0;
+    _maxNonZeroDeltaP = 0;
+#endif
 }
 
 void Data::inc() {
@@ -37,6 +42,14 @@ void Data::inc() {
         _effective_p--;
     } else {
         *(_effective_p++) = DataOp::INC;
+    }
+#endif
+
+#ifdef HANG_DETECTION2
+    if (*_data_p == 0) {
+        _valueBecameZero = true;
+    } else {
+        (*_deltaP)++;
     }
 #endif
 }
@@ -52,6 +65,14 @@ void Data::dec() {
         *(_effective_p++) = DataOp::DEC;
     }
 #endif
+
+#ifdef HANG_DETECTION2
+    if (*_data_p == 0) {
+        _valueBecameZero = true;
+    } else {
+        (*_deltaP)--;
+    }
+#endif
 }
 
 bool Data::shr() {
@@ -65,6 +86,14 @@ bool Data::shr() {
         *(_effective_p++) = DataOp::SHR;
     }
 #endif
+
+#ifdef HANG_DETECTION2
+    _deltaP++;
+    if (*_data_p != 0 && _deltaP > _maxNonZeroDeltaP) {
+        _maxNonZeroDeltaP = _deltaP;
+    }
+#endif
+
     return _data_p <= _data_p_max;
 }
 
@@ -79,6 +108,14 @@ bool Data::shl() {
         *(_effective_p++) = DataOp::SHL;
     }
 #endif
+
+#ifdef HANG_DETECTION2
+    _deltaP--;
+    if (*_data_p != 0 && _deltaP < _minNonZeroDeltaP) {
+        _minNonZeroDeltaP = _deltaP;
+    }
+#endif
+
     return _data_p >= _data_p_min;
 }
 
@@ -98,7 +135,21 @@ void Data::resetHangDetection() {
 #ifdef HANG_DETECTION1
     _effective_p = &_effective[1];
 #endif
+
+#ifdef HANG_DETECTION2
+    for (int i = hangDeltaSize; --i >= 0; ) {
+        _delta[i] = 0;
+    }
+
+    _minNonZeroDeltaP0 = _minNonZeroDeltaP;
+    _maxNonZeroDeltaP0 = _maxNonZeroDeltaP;
+    _deltaP = &_delta[hangDeltaSize / 2];
+    _minNonZeroDeltaP = _deltaP;
+    _minNonZeroDeltaP = _deltaP;
+    _valueBecameZero = false;
+#endif
 }
+
 bool Data::isHangDetected() {
 #ifdef HANG_DETECTION1
     if (_effective_p == &_effective[1]) {
@@ -106,6 +157,29 @@ bool Data::isHangDetected() {
         return true;
     }
 #endif
+
+#ifdef HANG_DETECTION2
+    if (
+        // No hang if a data value became zero
+        !_valueBecameZero &&
+        // or when new non-zero data cells were entered
+        _minNonZeroDeltaP >= _minNonZeroDeltaP0 &&
+        _maxNonZeroDeltaP <= _maxNonZeroDeltaP0
+    ) {
+        // Possible hang
+        int *deltaP = _minNonZeroDeltaP;
+        int *dataP = _data_p + (deltaP - _deltaP);
+        while (deltaP <= _maxNonZeroDeltaP && ((*dataP) * (*deltaP)) >= 0) {
+            deltaP++;
+            dataP++;
+        }
+        if (deltaP > _maxNonZeroDeltaP) {
+            // All data cell changes were away from zero
+            return true;
+        }
+    }
+#endif
+
     return false;
 }
 

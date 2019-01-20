@@ -32,6 +32,16 @@ void dumpSettings() {
     << ", MaxSteps = " << maxSteps
     << ", HangSamplePeriod = " << hangSamplePeriod
     << "\n";
+
+    std::cout
+    << "Enabled hang detections:"
+#ifdef HANG_DETECTION1
+    << " 1"
+#endif
+#ifdef HANG_DETECTION2
+    << " 2"
+#endif
+    << "\n";
 }
 
 void dumpStats() {

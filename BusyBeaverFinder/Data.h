@@ -30,6 +30,15 @@ class Data {
     DataOp _effective[effectiveStackSize];
 #endif
 
+#ifdef HANG_DETECTION2
+    int _delta[hangDeltaSize];
+
+    int *_deltaP;
+    int *_minNonZeroDeltaP, *_minNonZeroDeltaP0;
+    int *_maxNonZeroDeltaP, *_maxNonZeroDeltaP0;
+    int _valueBecameZero;
+#endif
+
     void undo_last();
 
 public:
