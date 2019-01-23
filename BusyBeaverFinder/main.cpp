@@ -16,7 +16,8 @@
 int dx[4] = {0, 1, 0, -1};
 int dy[4] = {1, 0, -1, 0};
 
-int maxSteps = 1024;
+int maxStepsTotal = 2048;
+int maxStepsPerRun = 1024;
 int hangSamplePeriod = 256;
 int dumpStatsPeriod = 100000;
 
@@ -43,7 +44,7 @@ void dumpSettings() {
     std::cout
     << "Size = " << program->getWidth() << "x" << program->getHeight()
     << ", DataSize = " << data->getSize()
-    << ", MaxSteps = " << maxSteps
+    << ", MaxSteps = " << maxStepsPerRun << "/" << maxStepsTotal
     << ", HangSamplePeriod = " << hangSamplePeriod
     << "\n";
 
@@ -149,68 +150,91 @@ void run(int x, int y, Dir dir, int totalSteps, int depth) {
         int _y;
         bool done = false;
         do { // Execute single step
-            _x = x + dx[(int)dir];
-            _y = y + dy[(int)dir];
 
-            if (_x < 0 || _x == program->getWidth() || _y < 0 || _y == program->getHeight()) {
+            // Unwrap position update to only update and check coordinate that changed
+            if ((char)dir & 1) {
+                if (dir == Dir::LEFT) {
+                    _x = x - 1;
+                    done = _x < 0;
+                } else {
+                    _x = x + 1;
+                    done = _x == program->getWidth();
+                }
+                _y = y;
+            } else {
+                if (dir == Dir::DOWN) {
+                    _y = y - 1;
+                    done = _y < 0;
+                } else {
+                    _y = y + 1;
+                    done = _y == program->getHeight();
+                }
+                _x = x;
+            }
+
+            if (done) {
                 reportDone(totalSteps + steps);
                 data->undo(numDataOps);
                 return;
-            }
-
-            switch (program->getOp(_x, _y)) {
-                case Op::UNSET:
-                    branch(x, y, dir, totalSteps + steps, depth);
-                    data->undo(numDataOps);
-                    return;
-                case Op::NOOP:
-                    done = true;
-                    break;
-                case Op::DATA:
-                    numDataOps++;
-                    switch (dir) {
-                        case Dir::UP:
-                            data->inc();
-                            break;
-                        case Dir::DOWN:
-                            data->dec();
-                            break;
-                        case Dir::RIGHT:
-                            if (! data->shr()) {
-                                reportError();
-                                data->undo(numDataOps);
-                                return;
-                            }
-                            break;
-                        case Dir::LEFT:
-                            if (! data->shl()) {
-                                reportError();
-                                data->undo(numDataOps);
-                                return;
-                            }
-                            break;
-                    }
-                    done = true;
-                    break;
-                case Op::TURN:
-                    if (data->val() == 0) {
-                        dir = (Dir) (((int)dir + 3) % 4);
-                    } else {
-                        dir = (Dir) (((int)dir + 1) % 4);
-                    }
-                    break;
+            } else {
+                switch (program->getOp(_x, _y)) {
+                    case Op::UNSET:
+                        branch(x, y, dir, totalSteps + steps, depth);
+                        data->undo(numDataOps);
+                        return;
+                    case Op::NOOP:
+                        done = true;
+                        break;
+                    case Op::DATA:
+                        numDataOps++;
+                        switch (dir) {
+                            case Dir::UP:
+                                data->inc();
+                                break;
+                            case Dir::DOWN:
+                                data->dec();
+                                break;
+                            case Dir::RIGHT:
+                                if (! data->shr()) {
+                                    reportError();
+                                    data->undo(numDataOps);
+                                    return;
+                                }
+                                break;
+                            case Dir::LEFT:
+                                if (! data->shl()) {
+                                    reportError();
+                                    data->undo(numDataOps);
+                                    return;
+                                }
+                                break;
+                        }
+                        done = true;
+                        break;
+                    case Op::TURN:
+                        if (data->val() == 0) {
+                            dir = (Dir) (((int)dir + 3) % 4);
+                        } else {
+                            dir = (Dir) (((int)dir + 1) % 4);
+                        }
+                        break;
+                }
             }
         } while (!done);
         x = _x;
         y = _y;
         steps++;
 
-        if (steps == maxSteps) {
-            reportHang(false);
-            data->undo(numDataOps);
-            return;
-        }
-        else if (steps % hangSamplePeriod == 0) {
+        if (steps % hangSamplePeriod == 0) {
+            if (
+                (steps + totalSteps + hangSamplePeriod >= maxStepsTotal) ||
+                (steps == maxStepsPerRun)
+            ) {
+                reportHang(false);
+                data->undo(numDataOps);
+                return;
+            }
+
             if (data->isHangDetected()) {
                 reportHang(true);
                 data->undo(numDataOps);
@@ -227,7 +251,8 @@ void init(int argc, char * argv[]) {
         ("w,width", "Program width", cxxopts::value<int>())
         ("h,height", "Program height", cxxopts::value<int>())
         ("d,datasize", "Data size", cxxopts::value<int>())
-        ("m,max-steps", "Maximum steps to run", cxxopts::value<int>())
+        ("max-steps", "Maximum steps per recursion level", cxxopts::value<int>())
+        ("max-steps-total", "Total maximum steps", cxxopts::value<int>())
         ("p,hang-period", "Period for hang-detection", cxxopts::value<int>())
         ("help", "Show help");
     auto result = options.parse(argc, argv);
@@ -250,16 +275,29 @@ void init(int argc, char * argv[]) {
     if (result.count("d")) {
         dataSize = result["d"].as<int>();
     }
-    if (result.count("m")) {
-        maxSteps = result["m"].as<int>();
+    if (result.count("max-steps")) {
+        maxStepsPerRun = result["max-steps"].as<int>();
+    }
+    if (result.count("max-stepst-total")) {
+        maxStepsTotal = result["max-steps-total"].as<int>();
     }
     if (result.count("p")) {
         hangSamplePeriod = result["p"].as<int>();
     }
 
+    if (maxStepsPerRun % hangSamplePeriod != 0) {
+        maxStepsPerRun += hangSamplePeriod - (maxStepsPerRun % hangSamplePeriod);
+        std::cout << "Adjusted maxStepsPerRun to be multiple of hangSamplePeriod" << std::endl;
+    }
+
+    if (maxStepsTotal < maxStepsPerRun) {
+        maxStepsTotal = maxStepsPerRun;
+        std::cout << "Adjusted maxStepsTotal to equal maxStepsPerRun" << std::endl;
+    }
+
     program = new Program(width, height);
     bestProgram = new Program(width, height);
-    data = new Data(dataSize, maxSteps, hangSamplePeriod);
+    data = new Data(dataSize, maxStepsTotal, hangSamplePeriod);
 
     initOpStack(width * height);
 }
