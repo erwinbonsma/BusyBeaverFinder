@@ -305,7 +305,7 @@ void init(int argc, char * argv[]) {
     if (result.count("max-steps")) {
         maxStepsPerRun = result["max-steps"].as<int>();
     }
-    if (result.count("max-stepst-total")) {
+    if (result.count("max-steps-total")) {
         maxStepsTotal = result["max-steps-total"].as<int>();
     }
     if (result.count("p")) {
