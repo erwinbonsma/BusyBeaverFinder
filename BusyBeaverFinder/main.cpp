@@ -20,6 +20,7 @@ int maxStepsTotal = 2048;
 int maxStepsPerRun = 1024;
 int hangSamplePeriod = 256;
 int dumpStatsPeriod = 100000;
+int dumpStackPeriod = 1000000;
 
 Program *program;
 Data *data;
@@ -32,6 +33,19 @@ Op *opStack;
 int forceStack[] =
     // #13549 Busy Beaver for 7x7
     { 1,1,1,1,1,2,3,1,1,1,1,1,3,1,3,2,2,3,2,2,1,3,1,3,2,3,3,3,3,3,2,2,3,3,2,1,3,3,3 };
+#endif
+#define RESUME
+#ifdef RESUME
+int resumeStack[49] =
+    // #117272 Busy Beaver for 7x7
+    { 1,1,2,3,1,1,2,
+      2,3,2,3,1,3,1,
+      3,1,3,1,3,2,2,
+      3,2,1,3,3,2,3,
+      3,2,1,3,2,3,3,
+      1,3,3,3,3,3,3,
+      3,1,1,1,1,1,1,
+    };
 #endif
 
 int total, totalSuccess, totalError, totalHangs, totalEarlyHangs;
@@ -57,6 +71,13 @@ void dumpSettings() {
     << " 2"
 #endif
     << "\n";
+
+#ifdef FORCE
+    std::cout << "FORCE ACTIVE" << std::endl;
+#endif
+#ifdef RESUME
+    std::cout << "RESUME ACTIVE" << std::endl;
+#endif
 }
 
 void dumpStats() {
@@ -103,6 +124,9 @@ void reportDone(int totalSteps) {
     if (++total % dumpStatsPeriod == 0) {
         dumpStats();
     }
+    if (total % dumpStackPeriod == 0) {
+        dumpOpStack();
+    }
 }
 
 void reportError() {
@@ -131,6 +155,9 @@ void branch(int x, int y, Dir dir, int totalSteps, int depth) {
         Op op = validOps[i];
 #ifdef FORCE
         op = (Op)forceStack[depth];
+#endif
+#ifdef RESUME
+        op = (Op)validOps[(i + resumeStack[depth] - 1) % 3];
 #endif
         program->setOp(_x, _y, op);
         opStack[depth] = op;
