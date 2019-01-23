@@ -35,6 +35,6 @@ void Program::dump() {
         for (int x = 0; x < _width; x++) {
             std::cout << " " << op_chars[(int)getOp(x, y)];
         }
-        std::cout << "\n";
+        std::cout << std::endl;
     }
 }

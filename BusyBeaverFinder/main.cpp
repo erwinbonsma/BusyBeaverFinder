@@ -60,7 +60,7 @@ void dumpSettings() {
     << ", DataSize = " << data->getSize()
     << ", MaxSteps = " << maxStepsPerRun << "/" << maxStepsTotal
     << ", HangSamplePeriod = " << hangSamplePeriod
-    << "\n";
+    << std::endl;
 
     std::cout
     << "Enabled hang detections:"
@@ -70,7 +70,7 @@ void dumpSettings() {
 #ifdef HANG_DETECTION2
     << " 2"
 #endif
-    << "\n";
+    << std::endl;
 
 #ifdef FORCE
     std::cout << "FORCE ACTIVE" << std::endl;
@@ -88,7 +88,7 @@ void dumpStats() {
     << ", Errors=" << totalError
     << ", Hangs=" << totalEarlyHangs << "/" << totalHangs
     << ", Time taken=" << (clock() - startTime) / (double)CLOCKS_PER_SEC
-    << "\n";
+    << std::endl;
 }
 
 void initOpStack(int size) {
@@ -106,7 +106,7 @@ void dumpOpStack() {
         std::cout << (int)opStack[i] << ",";
         i++;
     }
-    std::cout << "\n";
+    std::cout << std::endl;
 }
 
 void reportDone(int totalSteps) {
@@ -115,7 +115,7 @@ void reportDone(int totalSteps) {
         maxStepsSofar = totalSteps;
         program->clone(*bestProgram);
         if (maxStepsSofar > 256) {
-            std::cout << "Best sofar = " << maxStepsSofar << "\n";
+            std::cout << "Best sofar = " << maxStepsSofar << std::endl;
             bestProgram->dump();
             data->dump();
             dumpOpStack();
