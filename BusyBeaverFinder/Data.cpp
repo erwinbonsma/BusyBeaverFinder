@@ -166,19 +166,6 @@ bool Data::isHangDetected() {
 #endif
 
 #ifdef HANG_DETECTION2
-//    int *deltaP = _minNonZeroDeltaP;
-//    int *dataP = _dataP + (deltaP - _deltaP);
-//    std::cout
-//        << "Offset = " << (dataP - &_data[dataSize / 2])
-//        << ", Width = " << (_maxNonZeroDeltaP - _minNonZeroDeltaP) << std::endl;
-//    while (deltaP <= _maxNonZeroDeltaP) {
-//        std::cout << *dataP << "("
-//        << *deltaP << ") ";
-//        deltaP++;
-//        dataP++;
-//    }
-//    std::cout << std::endl;
-
     if (
         // No hang if a data value became zero
         !_significantValueChange &&
