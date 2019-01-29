@@ -11,7 +11,7 @@
 
 #include "Data.h"
 
-Data::Data(int size, int maxDataOps, int hangSamplePeriod) {
+Data::Data(int size) {
     _data = new int[size];
     for (int i = 0; i < size; i++) {
         _data[i] = 0;
@@ -19,23 +19,35 @@ Data::Data(int size, int maxDataOps, int hangSamplePeriod) {
     _dataP = &_data[size / 2];
     _minDataP = &_data[0];
     _maxDataP = &_data[size - 1];
+}
 
-    _undoStack = new DataOp[maxDataOps];
+void Data::setStackSize(int size) {
+    if (_undoStack != nullptr) {
+        delete _undoStack;
+    }
+
+    _undoStack = new DataOp[size];
     _undoP = &_undoStack[0];
+}
 
+void Data::setHangSamplePeriod(int period) {
 #ifdef HANG_DETECTION1
-    _effective = new DataOp[hangSamplePeriod + 1];
+    if (_effective != nullptr) {
+        delete _effective;
+    }
+    _effective = new DataOp[period + 1];
     _effectiveP = &_effective[0];
     *(_effectiveP++) = DataOp::NONE; // Guard
 #endif
 
 #ifdef HANG_DETECTION2
-    _hangSamplePeriod = hangSamplePeriod;
-    _delta = new int[hangSamplePeriod * 2];
+    _hangSamplePeriod = period;
+    _delta = new int[period * 2];
     // Init so that entire array is cleared by resetHangDetection()
     _minDeltaP = _delta;
-    _maxDeltaP = _delta + hangSamplePeriod * 2 - 1;
+    _maxDeltaP = _delta + period * 2 - 1;
 #endif
+
 }
 
 void Data::inc() {
@@ -228,4 +240,16 @@ void Data::dumpStack() {
         std::cout << (char)*p;
         p++;
     }
+}
+
+void Data::dumpSettings() {
+    std::cout
+    << "Enabled hang detections:"
+#ifdef HANG_DETECTION1
+    << " 1"
+#endif
+#ifdef HANG_DETECTION2
+    << " 2"
+#endif
+    << std::endl;
 }

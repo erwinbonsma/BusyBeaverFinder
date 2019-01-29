@@ -19,33 +19,36 @@ class Data {
     // Array with data values
     int *_data;
 
-    DataOp *_undoP;
+    DataOp *_undoP = nullptr;
     // Undo-stack for data operations
-    DataOp *_undoStack;
+    DataOp *_undoStack = nullptr;
 
 /* Hang Detection 1 collects effective data instruction. It collapses subsequent data instructions
  * that cancel each other out, e.g. DEC after INC, SHL after SHR. If at the end of the hang sample
  * period there are no effective instructions, it concludes that the program hangs.
  */
 #ifdef HANG_DETECTION1
-    DataOp *_effectiveP;
+    DataOp *_effectiveP = nullptr;
     // Stack with effective instruction in current hang sample period
-    DataOp *_effective;
+    DataOp *_effective = nullptr;
 #endif
 
 #ifdef HANG_DETECTION2
     // Array with data value deltas in current hange sample period
-    int *_delta;
+    int *_delta = nullptr;
 
-    int *_deltaP;
-    int *_minDeltaP, *_minDeltaP0;
-    int *_maxDeltaP, *_maxDeltaP0;
+    int *_deltaP = nullptr;
+    int *_minDeltaP = nullptr, *_minDeltaP0 = nullptr;
+    int *_maxDeltaP = nullptr, *_maxDeltaP0 = nullptr;
     int _significantValueChange;
     int _hangSamplePeriod;
 #endif
 
 public:
-    Data(int size, int maxDataOps, int hangSamplePeriod);
+    Data(int size);
+
+    void setStackSize(int size);
+    void setHangSamplePeriod(int period);
 
     long getSize() { return _maxDataP - _minDataP + 1; }
 
@@ -63,6 +66,7 @@ public:
 
     void dump();
     void dumpStack();
+    void dumpSettings();
 };
 
 #endif /* Data_h */
