@@ -1,9 +1,9 @@
 //
-//  ExhaustiveSearcher.hpp
+//  ExhaustiveSearcher.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 29/01/19.
-//  Copyright © 2019 Erwin. All rights reserved.
+//  Copyright © 2019 Erwin Bonsma.
 //
 
 #ifndef ExhaustiveSearcher_h

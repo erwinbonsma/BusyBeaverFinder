@@ -1,9 +1,9 @@
 //
-//  Data.hpp
+//  Data.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 19/01/19.
-//  Copyright © 2019 Erwin. All rights reserved.
+//  Copyright © 2019 Erwin Bonsma.
 //
 
 #ifndef Data_h
