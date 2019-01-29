@@ -10,6 +10,7 @@
 
 #include "cxxopts.hpp"
 
+#include "Utils.h"
 #include "ExhaustiveSearcher.h"
 #include "ProgressTracker.h"
 
@@ -70,10 +71,15 @@ void init(int argc, char * argv[]) {
     searcher = new ExhaustiveSearcher(width, height, dataSize);
 
     // Set hang sample period
-    if (result.count("p")) {
-        searcher->setHangSamplePeriod( result["p"].as<int>() );
-    }
     int hangSamplePeriod = searcher->getHangSamplePeriod();
+    if (result.count("p")) {
+        hangSamplePeriod = result["p"].as<int>();
+    }
+    if (! isPowerOfTwo(hangSamplePeriod) ) {
+        hangSamplePeriod = makePowerOfTwo(hangSamplePeriod);
+        std::cout << "Adjusted hangSamplePeriod to be a power of two" << std::endl;
+    }
+    searcher->setHangSamplePeriod(hangSamplePeriod);
 
     // Set max steps per run
     int maxStepsPerRun = searcher->getMaxStepsPerRun();

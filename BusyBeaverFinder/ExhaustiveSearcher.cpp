@@ -9,6 +9,9 @@
 #include "ExhaustiveSearcher.h"
 
 #include <iostream>
+#include <assert.h>
+
+#include "Utils.h"
 
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
 
@@ -36,7 +39,9 @@ void ExhaustiveSearcher::setMaxStepsPerRun(int val) {
 }
 
 void ExhaustiveSearcher::setHangSamplePeriod(int val) {
+    assert(isPowerOfTwo(val));
     _hangSamplePeriod = val;
+    _hangSampleMask = val - 1;
     _data.setHangSamplePeriod(val);
 }
 
@@ -181,7 +186,7 @@ void ExhaustiveSearcher::run(int x, int y, Dir dir, int totalSteps, int depth) {
         y = y2;
         steps++;
 
-        if (steps % _hangSamplePeriod == 0) {
+        if (! (steps & _hangSampleMask)) {
             if (
                 (steps + totalSteps + _hangSamplePeriod >= _maxStepsTotal) ||
                 (steps == _maxStepsPerRun)

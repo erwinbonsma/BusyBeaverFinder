@@ -12,6 +12,7 @@
 		AA11020C21F327F4005C67CF /* Data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA11020A21F327F4005C67CF /* Data.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
+		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +41,8 @@
 		AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExhaustiveSearcher.h; sourceTree = "<group>"; };
 		AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgressTracker.cpp; sourceTree = "<group>"; };
 		AA90A5862200EB9D00242D3D /* ProgressTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressTracker.h; sourceTree = "<group>"; };
+		AA90A5882201052900242D3D /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Utils.cpp; sourceTree = "<group>"; };
+		AA90A5892201052900242D3D /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +87,8 @@
 				AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */,
 				AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */,
 				AA90A5862200EB9D00242D3D /* ProgressTracker.h */,
+				AA90A5882201052900242D3D /* Utils.cpp */,
+				AA90A5892201052900242D3D /* Utils.h */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";
@@ -146,6 +151,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
+				AA90A58A2201052900242D3D /* Utils.cpp in Sources */,
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,

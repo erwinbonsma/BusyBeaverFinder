@@ -17,6 +17,7 @@
 
 class ExhaustiveSearcher {
     int _hangSamplePeriod;
+    int _hangSampleMask;
     int _maxStepsPerRun;
     int _maxStepsTotal;
 
