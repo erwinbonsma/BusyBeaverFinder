@@ -44,7 +44,6 @@ int readNextChar(FILE* file) {
         skip = (isspace(ch) || ch == 10);
     } while (skip);
 
-    std::cout << (char)ch;
     return ch;
 }
 
