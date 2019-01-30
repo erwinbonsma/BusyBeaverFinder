@@ -17,25 +17,14 @@
 ExhaustiveSearcher* searcher;
 ProgressTracker* tracker;
 
-//#define FORCE
-#ifdef FORCE
-int forceStack[] =
-    // #13549 Busy Beaver for 7x7
-    { 1,1,1,1,1,2,3,1,1,1,1,1,3,1,3,2,2,3,2,2,1,3,1,3,2,3,3,3,3,3,2,2,3,3,2,1,3,3,3 };
-#endif
-//#define RESUME
-#ifdef RESUME
-int resumeStack[49] =
+char resumeStack[29] =
     // #117272 Busy Beaver for 7x7
     { 1,1,2,3,1,1,2,
       2,3,2,3,1,3,1,
       3,1,3,1,3,2,2,
       3,2,1,3,3,2,3,
-      3,2,1,3,2,3,3,
-      1,3,3,3,3,3,3,
-      3,1,1,1,1,1,1,
+      0
     };
-#endif
 
 void init(int argc, char * argv[]) {
     cxxopts::Options options("BusyBeaverFinder", "Searcher for Busy Beaver Programs");
@@ -111,7 +100,8 @@ int main(int argc, char * argv[]) {
     init(argc, argv);
 
     searcher->dumpSettings();
-    searcher->search();
+    //searcher->search();
+    searcher->search((Op*)resumeStack);
     tracker->dumpFinalStats();
 
     return 0;

@@ -72,13 +72,6 @@ void ExhaustiveSearcher::dumpSettings() {
     << std::endl;
 
     _data.dumpSettings();
-
-#ifdef FORCE
-    std::cout << "FORCE ACTIVE" << std::endl;
-#endif
-#ifdef RESUME
-    std::cout << "RESUME ACTIVE" << std::endl;
-#endif
 }
 
 
@@ -87,12 +80,16 @@ void ExhaustiveSearcher::branch(int x, int y, Dir dir, int totalSteps, int depth
     int y2 = y + dy[(int)dir];
     for (int i = 0; i < 3; i++) {
         Op op = validOps[i];
-#ifdef FORCE
-        op = (Op)forceStack[depth];
-#endif
-#ifdef RESUME
-        op = (Op)validOps[(i + resumeStack[depth] - 1) % 3];
-#endif
+
+        if (*_resumeFrom != Op::UNSET) {
+            if (op == *_resumeFrom) {
+                std::cout << "Resuming from " << (int)op << " at depth " << depth << std::endl;
+                _resumeFrom++;
+            } else {
+                continue;
+            }
+        }
+
         _program.setOp(x2, y2, op);
         _opStack[depth] = op;
         run(x, y, dir, totalSteps, depth + 1);
@@ -207,5 +204,14 @@ void ExhaustiveSearcher::run(int x, int y, Dir dir, int totalSteps, int depth) {
 }
 
 void ExhaustiveSearcher::search() {
+    _resumeFrom = new Op[1];
+    _resumeFrom[0] = Op::UNSET;
+
+    run(0, -1, Dir::UP, 0, 0);
+}
+
+void ExhaustiveSearcher::search(Op* resumeFrom) {
+    _resumeFrom = resumeFrom;
+
     run(0, -1, Dir::UP, 0, 0);
 }

@@ -24,9 +24,14 @@ class ExhaustiveSearcher {
     Program _program;
     Data _data;
 
-    Op *_opStack;
+    // Pointer to array that can be used to resume a previous search. The last operation must be
+    // UNSET.
+    Op* _resumeFrom;
 
-    ProgressTracker *_tracker;
+    // Stack of operations built up by the exhaustive search
+    Op* _opStack;
+
+    ProgressTracker* _tracker;
 
     void initOpStack(int size);
 
@@ -49,6 +54,7 @@ public:
     Data& getData() { return _data; }
 
     void search();
+    void search(Op* resumeFrom);
 
     void dumpOpStack();
     void dumpSettings();
