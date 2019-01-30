@@ -17,8 +17,8 @@
 class ExhaustiveSearcher;
 
 class ProgressTracker {
-    int _dumpStatsPeriod = 10000;
-    int _dumpStackPeriod = 100000;
+    int _dumpStatsPeriod = 100000;
+    int _dumpStackPeriod = 1000000;
 
     ExhaustiveSearcher *_searcher = nullptr;
 
@@ -31,7 +31,7 @@ class ProgressTracker {
     long _totalFaultyHangs = 0;
     clock_t _startTime;
 
-    bool _earlyHangSignalled;
+    bool _earlyHangSignalled = false;
 
     int _maxStepsSofar = 0;
     Program _bestProgram;
