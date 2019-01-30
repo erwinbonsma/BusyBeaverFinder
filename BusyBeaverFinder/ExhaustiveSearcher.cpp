@@ -53,14 +53,17 @@ void ExhaustiveSearcher::initOpStack(int size) {
     }
 }
 
-void ExhaustiveSearcher::dumpOpStack() {
-    int i = 0;
-    std::cout << "Op stack: ";
-    while (_opStack[i] != Op::UNSET) {
-        std::cout << (int)_opStack[i] << ",";
-        i++;
+void ExhaustiveSearcher::dumpOpStack(Op* op) {
+    while (*op != Op::UNSET) {
+        std::cout << (int)*op << ",";
+        op++;
     }
     std::cout << std::endl;
+}
+
+void ExhaustiveSearcher::dumpOpStack() {
+    std::cout << "Op stack: ";
+    dumpOpStack(_opStack);
 }
 
 void ExhaustiveSearcher::dumpSettings() {
@@ -83,7 +86,6 @@ void ExhaustiveSearcher::branch(int x, int y, Dir dir, int totalSteps, int depth
 
         if (*_resumeFrom != Op::UNSET) {
             if (op == *_resumeFrom) {
-                std::cout << "Resuming from " << (int)op << " at depth " << depth << std::endl;
                 _resumeFrom++;
             } else {
                 continue;
@@ -212,6 +214,9 @@ void ExhaustiveSearcher::search() {
 
 void ExhaustiveSearcher::search(Op* resumeFrom) {
     _resumeFrom = resumeFrom;
+
+    std::cout << "Resuming from: ";
+    dumpOpStack(_resumeFrom);
 
     run(0, -1, Dir::UP, 0, 0);
 }

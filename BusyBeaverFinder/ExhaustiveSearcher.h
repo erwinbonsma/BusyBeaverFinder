@@ -33,6 +33,7 @@ class ExhaustiveSearcher {
 
     ProgressTracker* _tracker;
 
+    void dumpOpStack(Op* op);
     void initOpStack(int size);
 
     void run(int x, int y, Dir dir, int totalSteps, int depth);

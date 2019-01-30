@@ -17,14 +17,7 @@
 ExhaustiveSearcher* searcher;
 ProgressTracker* tracker;
 
-char resumeStack[29] =
-    // #117272 Busy Beaver for 7x7
-    { 1,1,2,3,1,1,2,
-      2,3,2,3,1,3,1,
-      3,1,3,1,3,2,2,
-      3,2,1,3,3,2,3,
-      0
-    };
+Op* resumeStack = nullptr;
 
 void init(int argc, char * argv[]) {
     cxxopts::Options options("BusyBeaverFinder", "Searcher for Busy Beaver Programs");
@@ -35,6 +28,7 @@ void init(int argc, char * argv[]) {
         ("max-steps", "Maximum steps per recursion level", cxxopts::value<int>())
         ("max-steps-total", "Total maximum steps", cxxopts::value<int>())
         ("p,hang-period", "Period for hang-detection", cxxopts::value<int>())
+        ("resume-from", "File with resume stack", cxxopts::value<std::string>())
         ("help", "Show help");
     auto result = options.parse(argc, argv);
 
@@ -92,6 +86,13 @@ void init(int argc, char * argv[]) {
     }
     searcher->setMaxStepsTotal( maxStepsTotal );
 
+    // Load resume stack
+    if (result.count("resume-from")) {
+        std::string resumeFile = result["resume-from"].as<std::string>();
+
+        resumeStack = loadResumeStackFromFile(resumeFile, width * height);
+    }
+
     tracker = new ProgressTracker(searcher);
     searcher->setProgressTracker(tracker);
 }
@@ -100,8 +101,11 @@ int main(int argc, char * argv[]) {
     init(argc, argv);
 
     searcher->dumpSettings();
-    //searcher->search();
-    searcher->search((Op*)resumeStack);
+    if (resumeStack != nullptr) {
+        searcher->search((Op*)resumeStack);
+    } else {
+        searcher->search();
+    }
     tracker->dumpFinalStats();
 
     return 0;
