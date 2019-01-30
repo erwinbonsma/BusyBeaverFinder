@@ -20,6 +20,7 @@ class ExhaustiveSearcher {
     int _hangSampleMask;
     int _maxStepsPerRun;
     int _maxStepsTotal;
+    bool _testHangDetection;
 
     Program _program;
     Data _data;
@@ -44,10 +45,12 @@ public:
     int getHangSamplePeriod() { return _hangSamplePeriod; }
     int getMaxStepsPerRun() { return _maxStepsPerRun; }
     int getMaxStepsTotal() { return _maxStepsTotal; }
+    bool getHangDetectionTestMode() { return _testHangDetection; }
 
     void setMaxStepsTotal(int val);
     void setMaxStepsPerRun(int val);
     void setHangSamplePeriod(int val);
+    void setHangDetectionTestMode(bool val);
 
     void setProgressTracker(ProgressTracker* tracker) { _tracker = tracker; }
 

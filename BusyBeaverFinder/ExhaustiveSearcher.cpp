@@ -27,6 +27,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     setMaxStepsTotal(1024);
     setMaxStepsPerRun(1024);
     setHangSamplePeriod(64);
+    setHangDetectionTestMode(false);
 }
 
 void ExhaustiveSearcher::setMaxStepsTotal(int val) {
@@ -43,6 +44,10 @@ void ExhaustiveSearcher::setHangSamplePeriod(int val) {
     _hangSamplePeriod = val;
     _hangSampleMask = val - 1;
     _data.setHangSamplePeriod(val);
+}
+
+void ExhaustiveSearcher::setHangDetectionTestMode(bool val) {
+    _testHangDetection = val;
 }
 
 void ExhaustiveSearcher::initOpStack(int size) {
@@ -72,6 +77,7 @@ void ExhaustiveSearcher::dumpSettings() {
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _maxStepsPerRun << "/" << _maxStepsTotal
     << ", HangSamplePeriod = " << _hangSamplePeriod
+    << ", TestHangDetection = " << _testHangDetection
     << std::endl;
 
     _data.dumpSettings();
@@ -190,15 +196,17 @@ void ExhaustiveSearcher::run(int x, int y, Dir dir, int totalSteps, int depth) {
                 (steps + totalSteps + _hangSamplePeriod >= _maxStepsTotal) ||
                 (steps == _maxStepsPerRun)
             ) {
-                _tracker->reportHang(false);
+                _tracker->reportHang();
                 _data.undo(numDataOps);
                 return;
             }
 
             if (_data.isHangDetected()) {
-                _tracker->reportHang(true);
-                _data.undo(numDataOps);
-                return;
+                _tracker->reportEarlyHang();
+                if (!_testHangDetection) {
+                    _data.undo(numDataOps);
+                    return;
+                }
             }
             _data.resetHangDetection();
         }

@@ -29,6 +29,7 @@ void init(int argc, char * argv[]) {
         ("max-steps-total", "Total maximum steps", cxxopts::value<int>())
         ("p,hang-period", "Period for hang-detection", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
+        ("t,test-hangs", "Test hang detection")
         ("help", "Show help");
     auto result = options.parse(argc, argv);
 
@@ -85,6 +86,11 @@ void init(int argc, char * argv[]) {
         std::cout << "Adjusted maxStepsTotal to equal maxStepsPerRun" << std::endl;
     }
     searcher->setMaxStepsTotal( maxStepsTotal );
+
+    // Enable testing of hang detection?
+    if (result.count("t")) {
+        searcher->setHangDetectionTestMode(true);
+    }
 
     // Load resume stack
     if (result.count("resume-from")) {
