@@ -19,8 +19,17 @@ const int programStorageSize = (MAX_WIDTH + 1) * (MAX_HEIGHT + 2);
 class Program {
     int _width;
     int _height;
+
     // Instruction array
     Op _ops[programStorageSize];
+
+#ifdef HANG_DETECTION2
+    // Hang detection
+    bool* _activeVisited;
+    bool* _prevVisited;
+    bool _visited1[programStorageSize];
+    bool _visited2[programStorageSize];
+#endif
 
 public:
     Program(int width, int height);
@@ -32,12 +41,21 @@ public:
 
     Op* startPP() { return &(_ops[1]); /* Start at row = -1, col = 0 */ }
 
+    void resetHangDetection();
+    bool isHangDetected();
+
     void setOp(Op *pp, Op op) { (*pp) = op; }
     void clearOp(Op *pp) { (*pp) = Op::UNSET; }
-    Op getOp(Op *pp) { return (*pp); }
+    Op getOp(Op *pp) {
+#ifdef HANG_DETECTION2
+        _activeVisited[pp - _ops] = true;
+#endif
+        return (*pp);
+    }
     Op getOp(int col, int row);
 
     void dump();
+    void dumpHangInfo();
 };
 
 #endif /* Program_h */

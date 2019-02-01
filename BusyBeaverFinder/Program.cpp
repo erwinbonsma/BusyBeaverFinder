@@ -31,6 +31,44 @@ Program::Program(int width, int height) {
             pp++;
         }
     }
+
+#ifdef HANG_DETECTION2
+    _prevVisited = _visited1;
+    _activeVisited = _visited2;
+    resetHangDetection();
+#endif
+}
+
+void Program::resetHangDetection() {
+#ifdef HANG_DETECTION2
+    // Swap arrays
+    bool *tmp = _prevVisited;
+    _prevVisited = _activeVisited;
+    _activeVisited = tmp;
+
+    // Clear _activeVisisted
+    for (int i = programStorageSize; --i >= 0; ) {
+        *(tmp++) = false;
+    }
+#endif
+}
+
+bool Program::isHangDetected() {
+#ifdef HANG_DETECTION2
+    bool *p1 = _prevVisited;
+    bool *p2 = _activeVisited;
+    for (int i = programStorageSize; --i >= 0; ) {
+        if (*p2 && !(*p1)) {
+            // Visited new instruction compared to previous period
+            return false;
+        }
+        p2++;
+        p1++;
+    }
+    return true;
+#else
+    return false;
+#endif
 }
 
 Op Program::getOp(int col, int row) {
@@ -53,4 +91,15 @@ void Program::dump() {
         }
         std::cout << std::endl;
     }
+}
+
+void Program::dumpHangInfo() {
+#ifdef HANG_DETECTION2
+    bool *p1 = _prevVisited;
+    bool *p2 = _activeVisited;
+    for (int i = programStorageSize; --i >= 0; ) {
+        std::cout << *(p1++) << "/" << *(p2++) << " ";
+    }
+    std::cout << std::endl;
+#endif
 }

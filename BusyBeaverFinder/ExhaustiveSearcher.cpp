@@ -106,6 +106,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     int steps = 0;
 
     _data.resetHangDetection();
+    _program.resetHangDetection();
 
     while (1) { // Run until branch, termination or error
         Op* pp2;
@@ -184,10 +185,12 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 return;
             }
 
-            // TODO: Decide early hangs on DATA and PROGRAM
-            //_data.dumpHangInfo();
-            //_data.dump();
-            if (_data.isHangDetected()) {
+            if (_data.isHangDetected() && _program.isHangDetected()) {
+//                _data.dumpHangInfo();
+//                _data.dump();
+//                _program.dump();
+//                _program.dumpHangInfo();
+
                 _tracker->reportEarlyHang();
                 if (!_testHangDetection) {
                     _data.undo(numDataOps);
@@ -195,6 +198,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 }
             }
             _data.resetHangDetection();
+            _program.resetHangDetection();
         }
     }
 }
