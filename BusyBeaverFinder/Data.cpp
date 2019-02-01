@@ -160,8 +160,8 @@ void Data::resetHangDetection() {
         p++;
     }
 
-    _minDeltaP0 = _minDeltaP;
-    _maxDeltaP0 = _maxDeltaP;
+    _prevMinDataP = _dataP + (_minDeltaP - _deltaP);
+    _prevMaxDataP = _dataP + (_maxDeltaP - _deltaP);
     _deltaP = &_delta[_hangSamplePeriod];
     _minDeltaP = _deltaP;
     _maxDeltaP = _deltaP;
@@ -178,16 +178,19 @@ bool Data::isHangDetected() {
 #endif
 
 #ifdef HANG_DETECTION2
+    // Range of data cells entered in the current sample period
+    int *minDataP = _dataP + (_minDeltaP - _deltaP);
+    int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
     if (
         // No hang if a data value became zero
         !_significantValueChange &&
         // or when new data cells were entered
-        _minDeltaP >= _minDeltaP0 &&
-        _maxDeltaP <= _maxDeltaP0
+        minDataP >= _prevMinDataP &&
+        maxDataP <= _prevMaxDataP
     ) {
         // Possible hang
         int *deltaP = _minDeltaP;
-        int *dataP = _dataP + (deltaP - _deltaP);
+        int *dataP = minDataP;
         while (deltaP <= _maxDeltaP && ((*dataP) * (*deltaP)) >= 0) {
             deltaP++;
             dataP++;
@@ -251,5 +254,17 @@ void Data::dumpSettings() {
 #ifdef HANG_DETECTION2
     << " 2"
 #endif
+    << std::endl;
+}
+
+
+void Data::dumpHangInfo() {
+    int *minDataP = _dataP + (_minDeltaP - _deltaP);
+    int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
+
+    std::cout
+    << "Prev :" << (_prevMinDataP - _minDataP) << " - " << (_prevMaxDataP - _minDataP)
+    << std::endl
+    << "Now  :" << (minDataP - _minDataP) << " - " << (maxDataP - _minDataP)
     << std::endl;
 }

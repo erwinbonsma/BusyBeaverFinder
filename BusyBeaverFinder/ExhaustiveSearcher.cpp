@@ -201,6 +201,10 @@ void ExhaustiveSearcher::run(int x, int y, Dir dir, int totalSteps, int depth) {
                 return;
             }
 
+            std::cout << "steps = " << (totalSteps + steps) << std::endl;
+            // TODO: Decide early hangs on DATA and PROGRAM
+            _data.dumpHangInfo();
+            _data.dump();
             if (_data.isHangDetected()) {
                 _tracker->reportEarlyHang();
                 if (!_testHangDetection) {

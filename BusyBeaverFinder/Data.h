@@ -38,8 +38,8 @@ class Data {
     int *_delta = nullptr;
 
     int *_deltaP = nullptr;
-    int *_minDeltaP = nullptr, *_minDeltaP0 = nullptr;
-    int *_maxDeltaP = nullptr, *_maxDeltaP0 = nullptr;
+    int *_minDeltaP = nullptr, *_maxDeltaP = nullptr;
+    int *_prevMinDataP = nullptr, *_prevMaxDataP = nullptr;
     int _significantValueChange;
     int _hangSamplePeriod;
 #endif
@@ -67,6 +67,7 @@ public:
     void dump();
     void dumpStack();
     void dumpSettings();
+    void dumpHangInfo();
 };
 
 #endif /* Data_h */

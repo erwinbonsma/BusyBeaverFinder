@@ -82,6 +82,9 @@ void ProgressTracker::reportHang() {
 void ProgressTracker::reportEarlyHang() {
     if (_searcher->getHangDetectionTestMode()) {
         // Only signal it. The run continues so it can be verified if it was correctly signalled.
+        _searcher->getProgram().dump();
+        _searcher->getData().dump();
+        _searcher->dumpOpStack();
         _earlyHangSignalled = true;
     } else {
         _totalHangs++;
