@@ -9,18 +9,21 @@
 #ifndef Enums_h
 #define Enums_h
 
+#include "Consts.h"
+
 enum class Op : char {
     UNSET = 0,
     NOOP = 1,
     DATA = 2,
-    TURN = 3
+    TURN = 3,
+    DONE = 4 // Guard instruction, signalling program completion
 };
 
-enum class Dir : char {
-    UP = 0,
+enum class Dir : int {
+    UP = (MAX_WIDTH + 1),
     RIGHT = 1,
-    DOWN = 2,
-    LEFT = 3
+    DOWN = -(MAX_WIDTH + 1),
+    LEFT = -1
 };
 
 enum class DataOp : char {

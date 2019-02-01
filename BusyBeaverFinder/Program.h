@@ -14,11 +14,13 @@
 #include "Consts.h"
 #include "Enums.h"
 
+const int programStorageSize = (MAX_WIDTH + 1) * (MAX_HEIGHT + 2);
+
 class Program {
     int _width;
     int _height;
     // Instruction array
-    Op *_ops;
+    Op _ops[programStorageSize];
 
 public:
     Program(int width, int height);
@@ -28,9 +30,12 @@ public:
     int getWidth() { return _width; }
     int getHeight() { return _height; }
 
-    void setOp(int x, int y, Op op) { _ops[x + y * _width] = op; }
-    void clearOp(int x, int y) { _ops[x + y * _width] = Op::UNSET; }
-    Op getOp(int x, int y) { return _ops[x + y * _width]; }
+    Op* startPP() { return _ops; /* Start at row = -1, col = 0 */ }
+
+    void setOp(Op *pp, Op op) { (*pp) = op; }
+    void clearOp(Op *pp) { (*pp) = Op::UNSET; }
+    Op getOp(Op *pp) { return (*pp); }
+    Op getOp(int col, int row);
 
     void dump();
 };

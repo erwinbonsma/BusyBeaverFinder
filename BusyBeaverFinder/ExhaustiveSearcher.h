@@ -37,8 +37,8 @@ class ExhaustiveSearcher {
     void dumpOpStack(Op* op);
     void initOpStack(int size);
 
-    void run(int x, int y, Dir dir, int totalSteps, int depth);
-    void branch(int x, int y, Dir dir, int totalSteps, int depth);
+    void run(Op* pp, Dir dir, int totalSteps, int depth);
+    void branch(Op* pp, Dir dir, int totalSteps, int depth);
 public:
     ExhaustiveSearcher(int width, int height, int dataSize);
 

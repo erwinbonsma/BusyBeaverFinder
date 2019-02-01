@@ -15,9 +15,6 @@
 
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
 
-const int dx[4] = {0, 1, 0, -1};
-const int dy[4] = {1, 0, -1, 0};
-
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height), _data(dataSize)
 {
@@ -84,9 +81,8 @@ void ExhaustiveSearcher::dumpSettings() {
 }
 
 
-void ExhaustiveSearcher::branch(int x, int y, Dir dir, int totalSteps, int depth) {
-    int x2 = x + dx[(int)dir];
-    int y2 = y + dy[(int)dir];
+void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
+    Op* pp2 = pp + (int)dir;
     for (int i = 0; i < 3; i++) {
         Op op = validOps[i];
 
@@ -98,97 +94,86 @@ void ExhaustiveSearcher::branch(int x, int y, Dir dir, int totalSteps, int depth
             }
         }
 
-        _program.setOp(x2, y2, op);
+        _program.setOp(pp2, op);
         _opStack[depth] = op;
-        run(x, y, dir, totalSteps, depth + 1);
+        run(pp, dir, totalSteps, depth + 1);
     }
-    _program.clearOp(x2, y2);
+    _program.clearOp(pp2);
 }
 
-void ExhaustiveSearcher::run(int x, int y, Dir dir, int totalSteps, int depth) {
+void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     int numDataOps = 0;
     int steps = 0;
 
     _data.resetHangDetection();
 
     while (1) { // Run until branch, termination or error
-        int x2;
-        int y2;
+        Op* pp2;
         bool done = false;
         do { // Execute single step
 
-            // Unwrap position update to only update and check coordinate that changed
-            if ((char)dir & 1) {
-                if (dir == Dir::LEFT) {
-                    x2 = x - 1;
-                    done = x2 < 0;
-                } else {
-                    x2 = x + 1;
-                    done = x2 == _program.getWidth();
-                }
-                y2 = y;
-            } else {
-                if (dir == Dir::DOWN) {
-                    y2 = y - 1;
-                    done = y2 < 0;
-                } else {
-                    y2 = y + 1;
-                    done = y2 == _program.getHeight();
-                }
-                x2 = x;
-            }
+            pp2 = pp + (int)dir;
 
-            if (done) {
-                _tracker->reportDone(totalSteps + steps);
-                _data.undo(numDataOps);
-                return;
-            } else {
-                switch (_program.getOp(x2, y2)) {
-                    case Op::UNSET:
-                        branch(x, y, dir, totalSteps + steps, depth);
-                        _data.undo(numDataOps);
-                        return;
-                    case Op::NOOP:
-                        done = true;
-                        break;
-                    case Op::DATA:
-                        numDataOps++;
+            //std::cout << "Step = " << steps << ", Op = " << (int)(*pp2) << std::endl;
+
+            switch (_program.getOp(pp2)) {
+                case Op::DONE:
+                    _tracker->reportDone(totalSteps + steps);
+                    _data.undo(numDataOps);
+                    return;
+                case Op::UNSET:
+                    branch(pp, dir, totalSteps + steps, depth);
+                    _data.undo(numDataOps);
+                    return;
+                case Op::NOOP:
+                    done = true;
+                    break;
+                case Op::DATA:
+                    numDataOps++;
+                    switch (dir) {
+                        case Dir::UP:
+                            _data.inc();
+                            break;
+                        case Dir::DOWN:
+                            _data.dec();
+                            break;
+                        case Dir::RIGHT:
+                            if (! _data.shr()) {
+                                _tracker->reportError();
+                                _data.undo(numDataOps);
+                                return;
+                            }
+                            break;
+                        case Dir::LEFT:
+                            if (! _data.shl()) {
+                                _tracker->reportError();
+                                _data.undo(numDataOps);
+                                return;
+                            }
+                            break;
+                    }
+                    done = true;
+                    break;
+                case Op::TURN:
+                    if (_data.val() == 0) {
                         switch (dir) {
-                            case Dir::UP:
-                                _data.inc();
-                                break;
-                            case Dir::DOWN:
-                                _data.dec();
-                                break;
-                            case Dir::RIGHT:
-                                if (! _data.shr()) {
-                                    _tracker->reportError();
-                                    _data.undo(numDataOps);
-                                    return;
-                                }
-                                break;
-                            case Dir::LEFT:
-                                if (! _data.shl()) {
-                                    _tracker->reportError();
-                                    _data.undo(numDataOps);
-                                    return;
-                                }
-                                break;
+                            case Dir::UP: dir = Dir::LEFT; break;
+                            case Dir::RIGHT: dir = Dir::UP; break;
+                            case Dir::DOWN: dir = Dir::RIGHT; break;
+                            case Dir::LEFT: dir = Dir::DOWN; break;
                         }
-                        done = true;
-                        break;
-                    case Op::TURN:
-                        if (_data.val() == 0) {
-                            dir = (Dir) (((int)dir + 3) % 4);
-                        } else {
-                            dir = (Dir) (((int)dir + 1) % 4);
+                    } else {
+                        switch (dir) {
+                            case Dir::UP: dir = Dir::RIGHT; break;
+                            case Dir::RIGHT: dir = Dir::DOWN; break;
+                            case Dir::DOWN: dir = Dir::LEFT; break;
+                            case Dir::LEFT: dir = Dir::UP; break;
                         }
-                        break;
-                }
+                    }
+                    break;
             }
         } while (!done);
-        x = x2;
-        y = y2;
+        pp = pp2;
         steps++;
 
         if (! (steps & _hangSampleMask)) {
@@ -203,8 +188,8 @@ void ExhaustiveSearcher::run(int x, int y, Dir dir, int totalSteps, int depth) {
 
             std::cout << "steps = " << (totalSteps + steps) << std::endl;
             // TODO: Decide early hangs on DATA and PROGRAM
-            _data.dumpHangInfo();
-            _data.dump();
+            //_data.dumpHangInfo();
+            //_data.dump();
             if (_data.isHangDetected()) {
                 _tracker->reportEarlyHang();
                 if (!_testHangDetection) {
@@ -221,7 +206,7 @@ void ExhaustiveSearcher::search() {
     _resumeFrom = new Op[1];
     _resumeFrom[0] = Op::UNSET;
 
-    run(0, -1, Dir::UP, 0, 0);
+    run(_program.startPP(), Dir::UP, 0, 0);
 }
 
 void ExhaustiveSearcher::search(Op* resumeFrom) {
@@ -230,5 +215,5 @@ void ExhaustiveSearcher::search(Op* resumeFrom) {
     std::cout << "Resuming from: ";
     dumpOpStack(_resumeFrom);
 
-    run(0, -1, Dir::UP, 0, 0);
+    run(_program.startPP(), Dir::UP, 0, 0);
 }

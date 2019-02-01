@@ -12,4 +12,8 @@
 #define HANG_DETECTION1
 #define HANG_DETECTION2
 
+// The maximum size of programs that can be searched for
+#define MAX_WIDTH  9
+#define MAX_HEIGHT  9
+
 #endif /* Consts_h */
