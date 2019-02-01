@@ -96,8 +96,16 @@ void ProgressTracker::dumpStats() {
     std::cout
     << "Best=" << _maxStepsSofar
     << ", Total=" << _total
-    << ", Success=" << _totalFaultyHangs << "/" << _totalSuccess
-    << ", Errors=" << _totalEarlyErrors << "/" << _totalError
+    << ", Success=";
+    if (_searcher->getHangDetectionTestMode()) {
+         std::cout << _totalFaultyHangs << "/";
+    }
+    std::cout << _totalSuccess
+    << ", Errors=";
+    if (_searcher->getHangDetectionTestMode()) {
+        std::cout << _totalEarlyErrors << "/";
+    }
+    std::cout << _totalError
     << ", Hangs=" << _totalEarlyHangs << "/" << _totalHangs
     << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
     << std::endl;
