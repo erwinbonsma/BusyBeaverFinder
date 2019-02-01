@@ -170,39 +170,44 @@ void Data::resetHangDetection() {
 }
 
 bool Data::isHangDetected() {
+    bool hangDetected = false;
 #ifdef HANG_DETECTION1
     if (_effectiveP == &_effective[1]) {
         // No effective data instruction carried out
-        return true;
+        hangDetected = true;
     }
 #endif
 
 #ifdef HANG_DETECTION2
-    // Range of data cells entered in the current sample period
-    int *minDataP = _dataP + (_minDeltaP - _deltaP);
-    int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
-    if (
-        // No hang if a data value became zero
-        !_significantValueChange &&
-        // or when new data cells were entered
-        minDataP >= _prevMinDataP &&
-        maxDataP <= _prevMaxDataP
-    ) {
-        // Possible hang
-        int *deltaP = _minDeltaP;
-        int *dataP = minDataP;
-        while (deltaP <= _maxDeltaP && ((*dataP) * (*deltaP)) >= 0) {
-            deltaP++;
-            dataP++;
-        }
-        if (deltaP > _maxDeltaP) {
-            // All data cell changes were away from zero
-            return true;
+    if (!hangDetected) {
+        // Range of data cells entered in the current sample period
+        int *minDataP = _dataP + (_minDeltaP - _deltaP);
+        int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
+        if (
+            // No hang if a data value became zero
+            !_significantValueChange &&
+            // or when new data cells were entered
+            minDataP >= _prevMinDataP &&
+            maxDataP <= _prevMaxDataP
+        ) {
+            // Possible hang
+            int *deltaP = _minDeltaP;
+            int *dataP = minDataP;
+            while (deltaP <= _maxDeltaP && ((*dataP) * (*deltaP)) >= 0) {
+                deltaP++;
+                dataP++;
+            }
+            if (deltaP > _maxDeltaP) {
+                // All data cell changes were away from zero
+                hangDetected = true;
+            }
         }
     }
 #endif
 
-    return false;
+    resetHangDetection();
+
+    return hangDetected;
 }
 
 void Data::dump() {

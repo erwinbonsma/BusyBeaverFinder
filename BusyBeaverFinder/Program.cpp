@@ -41,15 +41,7 @@ Program::Program(int width, int height) {
 
 void Program::resetHangDetection() {
 #ifdef HANG_DETECTION2
-    // Swap arrays
-    bool *tmp = _prevVisited;
-    _prevVisited = _activeVisited;
-    _activeVisited = tmp;
-
-    // Clear _activeVisisted
-    for (int i = programStorageSize; --i >= 0; ) {
-        *(tmp++) = false;
-    }
+    _firstPeriod = true;
 #endif
 }
 
@@ -57,15 +49,23 @@ bool Program::isHangDetected() {
 #ifdef HANG_DETECTION2
     bool *p1 = _prevVisited;
     bool *p2 = _activeVisited;
+    bool hangDetected = !_firstPeriod; // First run never detects hangs
     for (int i = programStorageSize; --i >= 0; ) {
         if (*p2 && !(*p1)) {
-            // Visited new instruction compared to previous period
-            return false;
+            hangDetected = false;
         }
         p2++;
-        p1++;
+        *(p1++) = false; // Clear previous for next period
     }
-    return true;
+
+    // Swap arrays
+    bool *tmp = _prevVisited;
+    _prevVisited = _activeVisited;
+    _activeVisited = tmp;
+
+    _firstPeriod = false;
+
+    return hangDetected;
 #else
     return false;
 #endif

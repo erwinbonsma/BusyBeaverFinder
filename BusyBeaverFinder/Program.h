@@ -29,6 +29,7 @@ class Program {
     bool* _prevVisited;
     bool _visited1[programStorageSize];
     bool _visited2[programStorageSize];
+    bool _firstPeriod;
 #endif
 
 public:

@@ -185,20 +185,19 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 return;
             }
 
-            if (_data.isHangDetected() && _program.isHangDetected()) {
-//                _data.dumpHangInfo();
-//                _data.dump();
-//                _program.dump();
-//                _program.dumpHangInfo();
-
+//            std::cout << "Steps = " << (steps + totalSteps) << std::endl;
+//            _data.dumpHangInfo();
+//            _data.dump();
+//            _program.dumpHangInfo();
+            bool dataHang = _data.isHangDetected();
+            bool progHang = _program.isHangDetected();
+            if (dataHang && progHang) {
                 _tracker->reportEarlyHang();
                 if (!_testHangDetection) {
                     _data.undo(numDataOps);
                     return;
                 }
             }
-            _data.resetHangDetection();
-            _program.resetHangDetection();
         }
     }
 }
