@@ -30,7 +30,7 @@ public:
     int getWidth() { return _width; }
     int getHeight() { return _height; }
 
-    Op* startPP() { return _ops; /* Start at row = -1, col = 0 */ }
+    Op* startPP() { return &(_ops[1]); /* Start at row = -1, col = 0 */ }
 
     void setOp(Op *pp, Op op) { (*pp) = op; }
     void clearOp(Op *pp) { (*pp) = Op::UNSET; }

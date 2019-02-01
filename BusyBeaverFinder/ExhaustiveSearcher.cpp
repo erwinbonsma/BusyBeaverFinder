@@ -114,8 +114,6 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
             pp2 = pp + (int)dir;
 
-            //std::cout << "Step = " << steps << ", Op = " << (int)(*pp2) << std::endl;
-
             switch (_program.getOp(pp2)) {
                 case Op::DONE:
                     _tracker->reportDone(totalSteps + steps);
@@ -186,7 +184,6 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 return;
             }
 
-            std::cout << "steps = " << (totalSteps + steps) << std::endl;
             // TODO: Decide early hangs on DATA and PROGRAM
             //_data.dumpHangInfo();
             //_data.dump();

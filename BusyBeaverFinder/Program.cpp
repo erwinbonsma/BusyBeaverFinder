@@ -10,15 +10,23 @@
 
 #include "Program.h"
 
-const char op_chars[4] = {'?', '_', 'o', '*' };
+const char op_chars[5] = {'?', '_', 'o', '*', 'X' };
 
 Program::Program(int width, int height) {
     _width = width;
     _height = height;
 
+    // Initialize program
+    //
+    // All valid instructions are set to UNSET. All other positions are set to DONE. These can be
+    // used to quickly check when the Program Pointer has exited the program thereby terminating
+    // the program.
+    //
+    // Note, there's no extra rightmost column. This is not needed, the pointer will wrap and end
+    // up in the leftmost "DONE" column.
     Op* pp = _ops;
     for (int row = -1; row <= MAX_HEIGHT; row++) {
-        for (int col = 0; col <= MAX_WIDTH; col++) {
+        for (int col = -1; col < MAX_WIDTH; col++) {
             *pp = (row >=0 && row < height && col >= 0 && col < width) ? Op::UNSET : Op::DONE;
             pp++;
         }
@@ -26,7 +34,7 @@ Program::Program(int width, int height) {
 }
 
 Op Program::getOp(int col, int row) {
-    return _ops[col + (row + 1) * (MAX_WIDTH + 1)];
+    return _ops[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
 }
 
 
