@@ -15,8 +15,8 @@
 #include "Enums.h"
 
 class Data {
-    int *_dataP, *_maxDataP, *_minDataP;
-    int *_minVisitedDataP, *_maxVisitedDataP;
+    int *_dataP;
+    int *_minDataP, *_midDataP, *_maxDataP;
     // Array with data values
     int *_data;
 
@@ -60,7 +60,7 @@ public:
     void setStackSize(int size);
     void setHangSamplePeriod(int period);
 
-    long getSize() { return _maxDataP - _minDataP + 1; }
+    long getSize() { return _maxDataP - _minDataP; }
 
     void resetHangDetection();
     bool isHangDetected();

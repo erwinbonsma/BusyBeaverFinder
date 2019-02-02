@@ -24,12 +24,10 @@ Data::Data(int size) {
 #endif
     }
 
-    _dataP = &_data[size / 2];
-    _minDataP = &_data[0];
-    _maxDataP = &_data[size - 1];
-
-    _minVisitedDataP = _dataP;
-    _maxVisitedDataP = _dataP;
+    _midDataP = &_data[size / 2];
+    _minDataP = &_data[0]; // Inclusive
+    _maxDataP = &_data[size]; // Exclusive
+    _dataP = _midDataP;
 }
 
 void Data::setStackSize(int size) {
@@ -107,10 +105,6 @@ bool Data::shr() {
     _dataP++;
     *(_undoP++) = DataOp::SHR;
 
-    if (_dataP > _maxVisitedDataP) {
-        _maxVisitedDataP = _dataP;
-    }
-
 #ifdef HANG_DETECTION1
     if (*(_effectiveP - 1) == DataOp::SHL) {
         _effectiveP--;
@@ -126,17 +120,12 @@ bool Data::shr() {
     }
 #endif
 
-    // Signal when _dataP == _maxDataP to ensure that _maxVisistedDataP remains in bounds
     return _dataP < _maxDataP;
 }
 
 bool Data::shl() {
     _dataP--;
     *(_undoP++) = DataOp::SHL;
-
-    if (_dataP < _minVisitedDataP) {
-        _minVisitedDataP = _dataP;
-    }
 
 #ifdef HANG_DETECTION1
     if (*(_effectiveP - 1) == DataOp::SHR) {
@@ -153,8 +142,7 @@ bool Data::shl() {
     }
 #endif
 
-    // Signal when _dataP == _minDataP to ensure that _minVisistedDataP remains in bound
-    return _dataP > _minDataP;
+    return _dataP >= _minDataP;
 }
 
 void Data::undo(int num) {
@@ -238,34 +226,46 @@ bool Data::isHangDetected() {
 
 #ifdef HANG_DETECTION3
 void Data::captureSnapShot() {
-    int* p1 = _minVisitedDataP;
-    int* p2 = _snapShotData + (p1 - _minDataP);
-    do {
-        *(p2++) = *(p1++);
-    } while (p1 <= _maxVisitedDataP);
+    memcpy(_snapShotData, _data, sizeof(int) * getSize());
 }
 
+// Checks if a change in data value is impactful. An impactful change is one that, when carried out
+// repeatedly, will impact a TURN evaluation. I.e. a data value moved closer to zero (or its value
+// was zero and not anymore). In the macro, x is the old value and y the new value.
+#define IMPACTFUL_CHANGE(x, y) ((x <= 0 && y > x) || (x >= 0 && y < x))
+
 SnapShotComparison Data::compareToSnapShot() {
-    int* p1 = _minVisitedDataP;
-    int* p2 = _snapShotData + (p1 - _minDataP);
+    int *dataP1, *dataP2;
+    int *snapP1, *snapP2;
     SnapShotComparison result = SnapShotComparison::UNCHANGED;
+
+    // Instead of comparing from start of the tape towards the end, comparison starts in the
+    // middle and moves outwards in both directions. This way, it first considers the values that
+    // most frequently are changed so that comparison ends more quickly.
+    dataP1 = _midDataP;
+    snapP1 = _snapShotData + (dataP1 - _minDataP);
+    dataP2 = dataP1 - 1;
+    snapP2 = snapP1 - 1;
     do {
-        if (*p1 != *p2) {
-            if (
-                (*p1 <= 0 && *p2 > *p1) ||
-                (*p1 >= 0 && *p2 < *p2)
-                ) {
-                // Impactful change detected. This is a change that may, when carried out
-                // repeatedly, will impact a TURN evaluation. I.e. a data value moved closer to
-                // zero or its value was zero and now changed.
+        if (*dataP1 != *snapP1) {
+            if (IMPACTFUL_CHANGE(*dataP1, *snapP1)) {
                 return SnapShotComparison::IMPACTFUL;
             } else {
                 result = SnapShotComparison::DIVERGING;
             }
         }
-        p1++;
-        p2++;
-    } while (p1 <= _maxVisitedDataP);
+        if (*dataP2 != *snapP2) {
+            if (IMPACTFUL_CHANGE(*dataP2, *snapP2)) {
+                return SnapShotComparison::IMPACTFUL;
+            } else {
+                result = SnapShotComparison::DIVERGING;
+            }
+        }
+        dataP1++;
+        snapP1++;
+        dataP2--;
+        snapP2--;
+    } while (dataP1 < _maxDataP);
 
     return result;
 }
