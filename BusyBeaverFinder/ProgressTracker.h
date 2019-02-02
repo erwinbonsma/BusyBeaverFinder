@@ -31,6 +31,8 @@ class ProgressTracker {
     long _totalFaultyHangs = 0;
     clock_t _startTime;
 
+    ulonglong _equivalenceTotal = 0;
+
     bool _earlyHangSignalled = false;
 
     int _maxStepsSofar = 0;

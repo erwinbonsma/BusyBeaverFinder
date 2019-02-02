@@ -93,6 +93,36 @@ void Program::clone(Program& dest) {
     }
 }
 
+ulonglong Program::getEquivalenceNumber() {
+    ulonglong num = 1;
+    Op op;
+    for (int x = _width - 1; --x >= 0; ) {
+        for (int y = _height - 1; --y >= 0; ) {
+            if (getOp(x, y) == Op::UNSET) {
+                num *= 3;
+            }
+        }
+
+        op = getOp(x, _height - 1);
+        if (op == Op::UNSET) {
+            num *= 2;
+        }
+        else if (op == Op::DATA) {
+            return 0;
+        }
+    }
+    for (int y = _height - 1; --y >= 0; ) {
+        op = getOp(_width - 1, y);
+        if (op == Op::UNSET) {
+            num *= 2;
+        }
+        else if (op == Op::DATA) {
+            return 0;
+        }
+    }
+    return num;
+}
+
 void Program::dump() {
     for (int y = _height; --y >= 0; ) {
         for (int x = 0; x < _width; x++) {
