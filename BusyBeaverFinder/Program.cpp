@@ -50,11 +50,20 @@ bool Program::isHangDetected() {
     bool *p1 = _prevVisited;
     bool *p2 = _activeVisited;
     bool hangDetected = !_firstPeriod; // First run never detects hangs
-    for (int i = programStorageSize; --i >= 0; ) {
+    int i = programStorageSize;
+
+    // Check and clear
+    while (--i >= 0) {
         if (*p2 && !(*p1)) {
             hangDetected = false;
+            break;
         }
         p2++;
+        *(p1++) = false; // Clear previous for next period
+    }
+
+    // Clear remainder
+    while (--i >= 0) {
         *(p1++) = false; // Clear previous for next period
     }
 
