@@ -72,6 +72,10 @@ void ProgressTracker::reportHang() {
         // Hang correctly signalled
         _earlyHangSignalled = false;
         _totalEarlyHangs++;
+    } else {
+        //std::cout << "Undetected hang" << std::endl;
+        //_searcher->getProgram().dump();
+        //std::cout << std::endl;
     }
 
     if (++_total % _dumpStatsPeriod == 0) {
@@ -86,9 +90,13 @@ void ProgressTracker::reportEarlyHang() {
         //_searcher->getData().dump();
         //_searcher->dumpOpStack();
         _earlyHangSignalled = true;
-    } else {
-        _totalHangs++;
-        _totalEarlyHangs++;
+        return;
+    }
+
+    _totalHangs++;
+    _totalEarlyHangs++;
+    if (++_total % _dumpStatsPeriod == 0) {
+        dumpStats();
     }
 }
 
