@@ -126,7 +126,8 @@ bool Data::shr() {
     }
 #endif
 
-    return _dataP <= _maxDataP;
+    // Signal when _dataP == _maxDataP to ensure that _maxVisistedDataP remains in bounds
+    return _dataP < _maxDataP;
 }
 
 bool Data::shl() {
@@ -152,7 +153,8 @@ bool Data::shl() {
     }
 #endif
 
-    return _dataP >= _minDataP;
+    // Signal when _dataP == _minDataP to ensure that _minVisistedDataP remains in bound
+    return _dataP > _minDataP;
 }
 
 void Data::undo(int num) {
@@ -237,7 +239,7 @@ bool Data::isHangDetected() {
 #ifdef HANG_DETECTION3
 void Data::captureSnapShot() {
     int* p1 = _minVisitedDataP;
-    int* p2 = _snapShotData + (_minVisitedDataP - _minDataP);
+    int* p2 = _snapShotData + (p1 - _minDataP);
     do {
         *(p2++) = *(p1++);
     } while (p1 <= _maxVisitedDataP);
@@ -245,7 +247,7 @@ void Data::captureSnapShot() {
 
 SnapShotComparison Data::compareToSnapShot() {
     int* p1 = _minVisitedDataP;
-    int* p2 = _snapShotData + (_minVisitedDataP - _minDataP);
+    int* p2 = _snapShotData + (p1 - _minDataP);
     SnapShotComparison result = SnapShotComparison::UNCHANGED;
     do {
         if (*p1 != *p2) {
