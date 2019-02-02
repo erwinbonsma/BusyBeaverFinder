@@ -40,6 +40,7 @@ class Data {
     int *_deltaP = nullptr;
     int *_minDeltaP = nullptr, *_maxDeltaP = nullptr;
     int *_prevMinDataP = nullptr, *_prevMaxDataP = nullptr;
+    int _prevMove;
     int _significantValueChange;
     int _hangSamplePeriod;
 #endif
