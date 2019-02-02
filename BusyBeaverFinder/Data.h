@@ -16,6 +16,7 @@
 
 class Data {
     int *_dataP, *_maxDataP, *_minDataP;
+    int *_minVisitedDataP, *_maxVisitedDataP;
     // Array with data values
     int *_data;
 
@@ -45,6 +46,14 @@ class Data {
     int _hangSamplePeriod;
 #endif
 
+/* Hang Detection 2 takes at a given execution state (PP including direction and DP) a snapshot
+ * of the data. It then checks if the next time the program reached this execution state if there
+ * was an impactful change to the data.
+ */
+#ifdef HANG_DETECTION3
+    int *_snapShotData;
+#endif
+
 public:
     Data(int size);
 
@@ -56,6 +65,12 @@ public:
     void resetHangDetection();
     bool isHangDetected();
 
+#ifdef HANG_DETECTION3
+    void captureSnapShot();
+    SnapShotComparison compareToSnapShot();
+#endif
+
+    int* getDataPointer() { return _dataP; }
     int val() { return *_dataP; }
 
     void inc();

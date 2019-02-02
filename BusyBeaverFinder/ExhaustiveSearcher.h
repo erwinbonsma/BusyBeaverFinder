@@ -32,6 +32,12 @@ class ExhaustiveSearcher {
     // Stack of operations built up by the exhaustive search
     Op* _opStack;
 
+#ifdef HANG_DETECTION3
+    Op* _sampleProgramPointer;
+    int* _sampleDataPointer;
+    Dir _sampleDir;
+#endif
+
     ProgressTracker* _tracker;
 
     void dumpOpStack(Op* op);

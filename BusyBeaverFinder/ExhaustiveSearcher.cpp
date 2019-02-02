@@ -107,6 +107,9 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
     _data.resetHangDetection();
     _program.resetHangDetection();
+#ifdef HANG_DETECTION3
+    _sampleProgramPointer = nullptr;
+#endif
 
     while (1) { // Run until branch, termination or error
         Op* pp2;
@@ -175,6 +178,24 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
         pp = pp2;
         steps++;
 
+#ifdef HANG_DETECTION3
+        if (
+            pp == _sampleProgramPointer &&
+            dir == _sampleDir &&
+            _data.getDataPointer() == _sampleDataPointer
+        ) {
+//            std::cout << ".";
+            if (_data.compareToSnapShot() != SnapShotComparison::IMPACTFUL) {
+                _tracker->reportEarlyHang();
+                if (!_testHangDetection) {
+                    _data.undo(numDataOps);
+                    return;
+                }
+            }
+            _sampleProgramPointer = nullptr;
+        }
+#endif
+
         if (! (steps & _hangSampleMask)) {
             if (
                 (steps + totalSteps + _hangSamplePeriod >= _maxStepsTotal) ||
@@ -186,9 +207,11 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             }
 
 //            std::cout << "Steps = " << (steps + totalSteps) << std::endl;
+//            _tracker->dumpStats();
 //            _data.dumpHangInfo();
 //            _data.dump();
 //            _program.dumpHangInfo();
+
             bool dataHang = _data.isHangDetected();
             bool progHang = _program.isHangDetected();
             if (dataHang && progHang) {
@@ -198,6 +221,13 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                     return;
                 }
             }
+#ifdef HANG_DETECTION3
+            // Initiate new sample (as it may not have been stuck yet)
+            _sampleProgramPointer = pp;
+            _sampleDataPointer = _data.getDataPointer();
+            _sampleDir = dir;
+            _data.captureSnapShot();
+#endif
         }
     }
 }
@@ -206,7 +236,7 @@ void ExhaustiveSearcher::search() {
     _resumeFrom = new Op[1];
     _resumeFrom[0] = Op::UNSET;
 
-    run(_program.startPP(), Dir::UP, 0, 0);
+    run(_program.startProgramPointer(), Dir::UP, 0, 0);
 }
 
 void ExhaustiveSearcher::search(Op* resumeFrom) {
@@ -215,5 +245,5 @@ void ExhaustiveSearcher::search(Op* resumeFrom) {
     std::cout << "Resuming from: ";
     dumpOpStack(_resumeFrom);
 
-    run(_program.startPP(), Dir::UP, 0, 0);
+    run(_program.startProgramPointer(), Dir::UP, 0, 0);
 }

@@ -13,12 +13,23 @@
 
 Data::Data(int size) {
     _data = new int[size];
+#ifdef HANG_DETECTION3
+    _snapShotData = new int[size];
+#endif
+
     for (int i = 0; i < size; i++) {
         _data[i] = 0;
+#ifdef HANG_DETECTION3
+        _snapShotData[i] = 0; // Not strictly needed, but there's no harm
+#endif
     }
+
     _dataP = &_data[size / 2];
     _minDataP = &_data[0];
     _maxDataP = &_data[size - 1];
+
+    _minVisitedDataP = _dataP;
+    _maxVisitedDataP = _dataP;
 }
 
 void Data::setStackSize(int size) {
@@ -96,6 +107,10 @@ bool Data::shr() {
     _dataP++;
     *(_undoP++) = DataOp::SHR;
 
+    if (_dataP > _maxVisitedDataP) {
+        _maxVisitedDataP = _dataP;
+    }
+
 #ifdef HANG_DETECTION1
     if (*(_effectiveP - 1) == DataOp::SHL) {
         _effectiveP--;
@@ -117,6 +132,10 @@ bool Data::shr() {
 bool Data::shl() {
     _dataP--;
     *(_undoP++) = DataOp::SHL;
+
+    if (_dataP < _minVisitedDataP) {
+        _minVisitedDataP = _dataP;
+    }
 
 #ifdef HANG_DETECTION1
     if (*(_effectiveP - 1) == DataOp::SHR) {
@@ -215,6 +234,41 @@ bool Data::isHangDetected() {
     return hangDetected;
 }
 
+#ifdef HANG_DETECTION3
+void Data::captureSnapShot() {
+    int* p1 = _minVisitedDataP;
+    int* p2 = _snapShotData + (_minVisitedDataP - _minDataP);
+    do {
+        *(p2++) = *(p1++);
+    } while (p1 <= _maxVisitedDataP);
+}
+
+SnapShotComparison Data::compareToSnapShot() {
+    int* p1 = _minVisitedDataP;
+    int* p2 = _snapShotData + (_minVisitedDataP - _minDataP);
+    SnapShotComparison result = SnapShotComparison::UNCHANGED;
+    do {
+        if (*p1 != *p2) {
+            if (
+                (*p1 <= 0 && *p2 > *p1) ||
+                (*p1 >= 0 && *p2 < *p2)
+                ) {
+                // Impactful change detected. This is a change that may, when carried out
+                // repeatedly, will impact a TURN evaluation. I.e. a data value moved closer to
+                // zero or its value was zero and now changed.
+                return SnapShotComparison::IMPACTFUL;
+            } else {
+                result = SnapShotComparison::DIVERGING;
+            }
+        }
+        p1++;
+        p2++;
+    } while (p1 <= _maxVisitedDataP);
+
+    return result;
+}
+#endif
+
 void Data::dump() {
     // Find end
     int *max = _maxDataP;
@@ -263,6 +317,9 @@ void Data::dumpSettings() {
 #endif
 #ifdef HANG_DETECTION2
     << " 2"
+#endif
+#ifdef HANG_DETECTION3
+    << " 3"
 #endif
     << std::endl;
 }

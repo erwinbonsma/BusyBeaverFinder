@@ -34,4 +34,15 @@ enum class DataOp : char {
     NONE = 4
 };
 
+#ifdef HANG_DETECTION3
+enum class SnapShotComparison : char {
+    // Data did not change
+    UNCHANGED = 0,
+    // Data changed, but diverging from zero (which will not impact TURN evaluation)
+    DIVERGING = 1,
+    // Data changed in a way that can impact program flow (i.e. towards zero)
+    IMPACTFUL = 2
+};
+#endif
+
 #endif /* Enums_h */

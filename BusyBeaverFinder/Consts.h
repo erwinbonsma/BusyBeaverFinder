@@ -11,6 +11,7 @@
 
 #define HANG_DETECTION1
 #define HANG_DETECTION2
+#define HANG_DETECTION3
 
 // The maximum size of programs that can be searched for
 #define MAX_WIDTH  9

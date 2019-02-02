@@ -86,8 +86,8 @@ Op Program::getOp(int col, int row) {
 
 
 void Program::clone(Program& dest) {
-    Op* ppSrc = startPP();
-    Op* ppDst = dest.startPP();
+    Op* ppSrc = startProgramPointer();
+    Op* ppDst = dest.startProgramPointer();
     for (int i = programStorageSize; --i >= 0; ) {
         dest.setOp(ppDst++, getOp(ppSrc++));
     }
