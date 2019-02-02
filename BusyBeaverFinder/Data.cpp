@@ -235,17 +235,15 @@ void Data::captureSnapShot() {
 #define IMPACTFUL_CHANGE(x, y) ((x <= 0 && y > x) || (x >= 0 && y < x))
 
 SnapShotComparison Data::compareToSnapShot() {
-    int *dataP1, *dataP2;
-    int *snapP1, *snapP2;
     SnapShotComparison result = SnapShotComparison::UNCHANGED;
 
     // Instead of comparing from start of the tape towards the end, comparison starts in the
     // middle and moves outwards in both directions. This way, it first considers the values that
     // most frequently are changed so that comparison ends more quickly.
-    dataP1 = _midDataP;
-    snapP1 = _snapShotData + (dataP1 - _minDataP);
-    dataP2 = dataP1 - 1;
-    snapP2 = snapP1 - 1;
+    int *dataP1 = _midDataP;
+    int *snapP1 = _snapShotData + (dataP1 - _minDataP);
+    int *dataP2 = dataP1 - 1;
+    int *snapP2 = snapP1 - 1;
     do {
         if (*dataP1 != *snapP1) {
             if (IMPACTFUL_CHANGE(*dataP1, *snapP1)) {
@@ -273,7 +271,7 @@ SnapShotComparison Data::compareToSnapShot() {
 
 void Data::dump() {
     // Find end
-    int *max = _maxDataP;
+    int *max = _maxDataP - 1;
     while (max > _dataP && *max == 0) {
         max--;
     }
