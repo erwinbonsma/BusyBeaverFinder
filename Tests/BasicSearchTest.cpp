@@ -17,10 +17,18 @@ TEST_CASE( "3x3 Search", "[search]" ) {
 
     searcher->setProgressTracker(tracker);
 
-    searcher->search();
+    SECTION( "Find all" ) {
+        searcher->search();
 
-    REQUIRE(tracker->getMaxStepsFound() == 4);
-    REQUIRE(tracker->getTotalSuccess() == 59);
+        REQUIRE(tracker->getMaxStepsFound() == 4);
+        REQUIRE(tracker->getTotalSuccess() == 59);
+    }
+    SECTION( "Find one" ) {
+        searcher->findOne();
+
+        REQUIRE(tracker->getMaxStepsFound() == 3);
+        REQUIRE(tracker->getTotalSuccess() == 1);
+    }
 
     delete searcher;
     delete tracker;

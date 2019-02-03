@@ -97,6 +97,10 @@ void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
         _program.setOp(pp2, op);
         _opStack[depth] = op;
         run(pp, dir, totalSteps, depth + 1);
+
+        if (_abortSearch) {
+            break;
+        }
     }
     _program.clearOp(pp2);
 }
@@ -246,4 +250,16 @@ void ExhaustiveSearcher::search(Op* resumeFrom) {
     dumpOpStack(_resumeFrom);
 
     run(_program.startProgramPointer(), Dir::UP, 0, 0);
+}
+
+void ExhaustiveSearcher::findOne() {
+    _abortSearch = true;
+    search();
+    _abortSearch = false;
+}
+
+void ExhaustiveSearcher::findOne(Op* resumeFrom) {
+    _abortSearch = true;
+    search(resumeFrom);
+    _abortSearch = false;
 }

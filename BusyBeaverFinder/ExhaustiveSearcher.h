@@ -25,6 +25,10 @@ class ExhaustiveSearcher {
     Program _program;
     Data _data;
 
+    // When set to true, aborts the search. Note, the current program that is being built/evaluated
+    // will end first. This is exploited by the findOne methods.
+    bool _abortSearch = false;
+
     // Pointer to array that can be used to resume a previous search. The last operation must be
     // UNSET.
     Op* _resumeFrom;
@@ -65,6 +69,9 @@ public:
 
     void search();
     void search(Op* resumeFrom);
+
+    void findOne();
+    void findOne(Op* resumeFrom);
 
     void dumpOpStack();
     void dumpSettings();

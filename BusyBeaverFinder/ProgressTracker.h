@@ -47,6 +47,7 @@ public:
     void setDumpStackPeriod(int val) { _dumpStackPeriod = val; }
 
     long getTotalSuccess() { return _totalSuccess; }
+    long getTotalEarlyHangs() { return _totalEarlyHangs; }
     int getMaxStepsFound() { return _maxStepsSofar; }
 
     void reportDone(int totalSteps);
