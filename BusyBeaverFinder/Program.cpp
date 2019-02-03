@@ -32,7 +32,7 @@ Program::Program(int width, int height) {
         }
     }
 
-#ifdef HANG_DETECTION2
+#ifdef HANG_DETECTION2B
     _prevVisited = _visited1;
     _activeVisited = _visited2;
     resetHangDetection();
@@ -40,13 +40,13 @@ Program::Program(int width, int height) {
 }
 
 void Program::resetHangDetection() {
-#ifdef HANG_DETECTION2
+#ifdef HANG_DETECTION2B
     _firstPeriod = true;
 #endif
 }
 
 bool Program::isHangDetected() {
-#ifdef HANG_DETECTION2
+#ifdef HANG_DETECTION2B
     bool *p1 = _prevVisited;
     bool *p2 = _activeVisited;
     bool hangDetected = !_firstPeriod; // First run never detects hangs
@@ -133,7 +133,7 @@ void Program::dump() {
 }
 
 void Program::dumpHangInfo() {
-#ifdef HANG_DETECTION2
+#ifdef HANG_DETECTION2B
     bool *p1 = _prevVisited;
     bool *p2 = _activeVisited;
     for (int i = programStorageSize; --i >= 0; ) {

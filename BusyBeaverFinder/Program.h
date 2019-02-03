@@ -25,7 +25,7 @@ class Program {
     // Instruction array
     Op _ops[programStorageSize];
 
-#ifdef HANG_DETECTION2
+#ifdef HANG_DETECTION2B
     // Hang detection
     bool* _activeVisited;
     bool* _prevVisited;
@@ -50,7 +50,7 @@ public:
     void setOp(Op *pp, Op op) { (*pp) = op; }
     void clearOp(Op *pp) { (*pp) = Op::UNSET; }
     Op getOp(Op *pp) {
-#ifdef HANG_DETECTION2
+#ifdef HANG_DETECTION2B
         _activeVisited[pp - _ops] = true;
 #endif
         return (*pp);

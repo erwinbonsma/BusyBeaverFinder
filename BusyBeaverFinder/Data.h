@@ -65,6 +65,8 @@ public:
     void resetHangDetection();
     bool isHangDetected();
 
+    bool significantDataChanges();
+
 #ifdef HANG_DETECTION3
     void captureSnapShot();
     SnapShotComparison compareToSnapShot();

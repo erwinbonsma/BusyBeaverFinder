@@ -185,11 +185,24 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 #ifdef HANG_DETECTION3
         if (
             pp == _sampleProgramPointer &&
-            dir == _sampleDir &&
-            _data.getDataPointer() == _sampleDataPointer
+            dir == _sampleDir
         ) {
-//            std::cout << ".";
-            if (_data.compareToSnapShot() != SnapShotComparison::IMPACTFUL) {
+            bool hangDetected = false;
+
+            if (!_data.significantDataChanges()) {
+                hangDetected = true;
+            }
+
+            if (!hangDetected) {
+                if (_data.getDataPointer() == _sampleDataPointer) {
+                    SnapShotComparison result = _data.compareToSnapShot();
+                    if (result != SnapShotComparison::IMPACTFUL) {
+                        hangDetected = true;
+                    }
+                }
+            }
+
+            if (hangDetected) {
                 _tracker->reportEarlyHang();
                 if (!_testHangDetection) {
                     _data.undo(numDataOps);
@@ -216,22 +229,12 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 //            _data.dump();
 //            _program.dumpHangInfo();
 
-            bool dataHang = _data.isHangDetected();
-            bool progHang = _program.isHangDetected();
-            if (dataHang && progHang) {
-                _tracker->reportEarlyHang();
-                if (!_testHangDetection) {
-                    _data.undo(numDataOps);
-                    return;
-                }
-            }
-#ifdef HANG_DETECTION3
             // Initiate new sample (as it may not have been stuck yet)
             _sampleProgramPointer = pp;
             _sampleDataPointer = _data.getDataPointer();
             _sampleDir = dir;
             _data.captureSnapShot();
-#endif
+            _data.resetHangDetection();
         }
     }
 }

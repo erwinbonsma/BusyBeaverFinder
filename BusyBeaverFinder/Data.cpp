@@ -179,14 +179,19 @@ void Data::resetHangDetection() {
 #endif
 }
 
-bool Data::isHangDetected() {
-    bool hangDetected = false;
+bool Data::significantDataChanges() {
 #ifdef HANG_DETECTION1
     if (_effectiveP == &_effective[1]) {
         // No effective data instruction carried out
-        hangDetected = true;
+        return false;
     }
 #endif
+    return true;
+
+}
+
+bool Data::isHangDetected() {
+    bool hangDetected = false;
 
 #ifdef HANG_DETECTION2
     if (!hangDetected) {
@@ -246,14 +251,14 @@ SnapShotComparison Data::compareToSnapShot() {
     int *snapP2 = snapP1 - 1;
     do {
         if (*dataP1 != *snapP1) {
-            if (IMPACTFUL_CHANGE(*dataP1, *snapP1)) {
+            if (IMPACTFUL_CHANGE(*snapP1, *dataP1)) {
                 return SnapShotComparison::IMPACTFUL;
             } else {
                 result = SnapShotComparison::DIVERGING;
             }
         }
         if (*dataP2 != *snapP2) {
-            if (IMPACTFUL_CHANGE(*dataP2, *snapP2)) {
+            if (IMPACTFUL_CHANGE(*snapP2, *dataP2)) {
                 return SnapShotComparison::IMPACTFUL;
             } else {
                 result = SnapShotComparison::DIVERGING;
