@@ -321,11 +321,19 @@ void Data::dumpSettings() {
 #ifdef HANG_DETECTION3
     << " 3"
 #endif
+#ifndef HANG_DETECTION1
+#ifndef HANG_DETECTION2
+#ifndef HANG_DETECTION3
+    << " None"
+#endif
+#endif
+#endif
     << std::endl;
 }
 
 
 void Data::dumpHangInfo() {
+#ifdef HANG_DETECTION2
     int *minDataP = _dataP + (_minDeltaP - _deltaP);
     int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
     int move = (int)(_deltaP - &_delta[_hangSamplePeriod]);
@@ -337,4 +345,5 @@ void Data::dumpHangInfo() {
     << "Now  :" << (minDataP - _minDataP) << " - " << (maxDataP - _minDataP)
     << ", delta = " << move
     << std::endl;
+#endif
 }

@@ -31,7 +31,9 @@ class ProgressTracker {
     long _totalFaultyHangs = 0;
     clock_t _startTime;
 
+#ifdef TRACK_EQUIVALENCE
     ulonglong _equivalenceTotal = 0;
+#endif
 
     bool _earlyHangSignalled = false;
 
