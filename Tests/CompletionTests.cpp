@@ -61,7 +61,6 @@ TEST_CASE( "Completion tests", "[success]" ) {
             Op::DATA, Op::TURN, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN,
             Op::NOOP, Op::NOOP, Op::TURN, Op::DATA, Op::NOOP, Op::NOOP, Op::UNSET
         };
-
         searcher->findOne(resumeFrom);
 
         REQUIRE(tracker->getMaxStepsFound() == 422154);
