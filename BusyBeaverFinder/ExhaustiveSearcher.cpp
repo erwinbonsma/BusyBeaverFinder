@@ -27,6 +27,11 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     setHangDetectionTestMode(false);
 }
 
+ExhaustiveSearcher::~ExhaustiveSearcher() {
+    delete[] _opStack;
+}
+
+
 void ExhaustiveSearcher::setMaxStepsTotal(int val) {
     _maxStepsTotal = val;
     _data.setStackSize(val);
@@ -194,7 +199,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             }
 
             if (!hangDetected) {
-                if (_data.getDataPointer() == _sampleDataPointer) {
+                if (_data.getDataPointer() == _data.getNewSnapShot()->dataP) {
                     SnapShotComparison result = _data.compareToSnapShot();
                     if (result != SnapShotComparison::IMPACTFUL) {
                         hangDetected = true;
@@ -212,7 +217,6 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             _sampleProgramPointer = nullptr;
         }
 #endif
-
         if (! (steps & _hangSampleMask)) {
             if (
                 (steps + totalSteps + _hangSamplePeriod >= _maxStepsTotal) ||
@@ -231,10 +235,9 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
             // Initiate new sample (as it may not have been stuck yet)
             _sampleProgramPointer = pp;
-            _sampleDataPointer = _data.getDataPointer();
             _sampleDir = dir;
-            _data.captureSnapShot();
             _data.resetHangDetection();
+            _data.captureSnapShot();
         }
     }
 }

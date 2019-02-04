@@ -17,7 +17,7 @@ TEST_CASE( "Hang tests", "[hang]" ) {
 
     searcher->setProgressTracker(tracker);
 
-    SECTION( "Basic endless loop" ) {
+    SECTION( "BasicLoop" ) {
         // *   *
         // o . . . *
         // . * . .
@@ -34,7 +34,7 @@ TEST_CASE( "Hang tests", "[hang]" ) {
 
         REQUIRE(tracker->getTotalEarlyHangs() == 1);
     }
-    SECTION( "Loop with counter" ) {
+    SECTION( "CountingLoop" ) {
         // *   *
         // o . . . *
         // . . o .

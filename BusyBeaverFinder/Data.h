@@ -14,9 +14,22 @@
 #include "Consts.h"
 #include "Enums.h"
 
+struct SnapShot {
+    int *buf;
+    int *dataP;
+
+    // Delimits the range of values that have been visisted since the last snapshot was taken.
+    // These are the date values that may have impacted program execution since then.
+    int *minVisitedP, *maxVisitedP;
+};
+
 class Data {
     int *_dataP;
     int *_minDataP, *_midDataP, *_maxDataP;
+
+    // Delimits the data cells that have been visisted (since the last snapshot was taken)
+    int *_minVisitedP, *_maxVisitedP;
+
     // Array with data values
     int *_data;
 
@@ -34,38 +47,27 @@ class Data {
     DataOp *_effective = nullptr;
 #endif
 
-#ifdef HANG_DETECTION2
-    // Array with data value deltas in current hange sample period
-    int *_delta = nullptr;
+    // Two snapshots. These should not be used directly, instead use oldSnapShot and newSnapShot
+    SnapShot _snapShotA;
+    SnapShot _snapShotB;
 
-    int *_deltaP = nullptr;
-    int *_minDeltaP = nullptr, *_maxDeltaP = nullptr;
-    int *_prevMinDataP = nullptr, *_prevMaxDataP = nullptr;
-    int _prevMove;
-    int _significantValueChange;
-    int _hangSamplePeriod;
-#endif
-
-/* Hang Detection 2 takes at a given execution state (PP including direction and DP) a snapshot
- * of the data. It then checks if the next time the program reached this execution state if there
- * was an impactful change to the data.
- */
-#ifdef HANG_DETECTION3
-    int *_snapShotData;
-#endif
+    SnapShot *_oldSnapShotP;
+    SnapShot *_newSnapShotP;
 
 public:
     Data(int size);
+    ~Data();
 
     void setStackSize(int size);
     void setHangSamplePeriod(int period);
 
-    long getSize() { return _maxDataP - _minDataP; }
+    long getSize() { return _maxDataP - _minDataP + 1; }
 
     void resetHangDetection();
-    bool isHangDetected();
 
     bool significantDataChanges();
+    SnapShot* getOldSnapShot() { return _oldSnapShotP; }
+    SnapShot* getNewSnapShot() { return _newSnapShotP; }
 
 #ifdef HANG_DETECTION3
     void captureSnapShot();

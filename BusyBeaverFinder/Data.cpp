@@ -13,26 +13,41 @@
 
 Data::Data(int size) {
     _data = new int[size];
-#ifdef HANG_DETECTION3
-    _snapShotData = new int[size];
-#endif
+
+    _snapShotA.buf = new int[size];
+    _snapShotB.buf = new int[size];
 
     for (int i = 0; i < size; i++) {
         _data[i] = 0;
-#ifdef HANG_DETECTION3
-        _snapShotData[i] = 0; // Not strictly needed, but there's no harm
-#endif
+        _snapShotA.buf[i] = 0;
+        _snapShotB.buf[i] = 0;
     }
 
     _midDataP = &_data[size / 2];
     _minDataP = &_data[0]; // Inclusive
-    _maxDataP = &_data[size]; // Exclusive
+    _maxDataP = &_data[size - 1]; // Inclusive
     _dataP = _midDataP;
+}
+
+Data::~Data() {
+    delete[] _data;
+    delete[] _snapShotA.buf;
+    delete[] _snapShotB.buf;
+
+    if (_undoStack != nullptr) {
+        delete[] _undoStack;
+    }
+
+#ifdef HANG_DETECTION1
+    if (_effective != nullptr) {
+        delete[] _effective;
+    }
+#endif
 }
 
 void Data::setStackSize(int size) {
     if (_undoStack != nullptr) {
-        delete _undoStack;
+        delete[] _undoStack;
     }
 
     _undoStack = new DataOp[size];
@@ -42,21 +57,12 @@ void Data::setStackSize(int size) {
 void Data::setHangSamplePeriod(int period) {
 #ifdef HANG_DETECTION1
     if (_effective != nullptr) {
-        delete _effective;
+        delete[] _effective;
     }
     _effective = new DataOp[period + 1];
     _effectiveP = &_effective[0];
     *(_effectiveP++) = DataOp::NONE; // Guard
 #endif
-
-#ifdef HANG_DETECTION2
-    _hangSamplePeriod = period;
-    _delta = new int[period * 2];
-    // Init so that entire array is cleared by resetHangDetection()
-    _minDeltaP = _delta;
-    _maxDeltaP = _delta + period * 2 - 1;
-#endif
-
 }
 
 void Data::inc() {
@@ -68,14 +74,6 @@ void Data::inc() {
         _effectiveP--;
     } else {
         *(_effectiveP++) = DataOp::INC;
-    }
-#endif
-
-#ifdef HANG_DETECTION2
-    if (*_dataP == 0 || *_dataP == 1) {
-        _significantValueChange = true;
-    } else {
-        (*_deltaP)++;
     }
 #endif
 }
@@ -91,32 +89,21 @@ void Data::dec() {
         *(_effectiveP++) = DataOp::DEC;
     }
 #endif
-
-#ifdef HANG_DETECTION2
-    if (*_dataP == 0 || *_dataP == -1) {
-        _significantValueChange = true;
-    } else {
-        (*_deltaP)--;
-    }
-#endif
 }
 
 bool Data::shr() {
     _dataP++;
     *(_undoP++) = DataOp::SHR;
 
+    if (_dataP > _maxVisitedP) {
+        _maxVisitedP = _dataP;
+    }
+
 #ifdef HANG_DETECTION1
     if (*(_effectiveP - 1) == DataOp::SHL) {
         _effectiveP--;
     } else {
         *(_effectiveP++) = DataOp::SHR;
-    }
-#endif
-
-#ifdef HANG_DETECTION2
-    _deltaP++;
-    if (_deltaP > _maxDeltaP) {
-        _maxDeltaP = _deltaP;
     }
 #endif
 
@@ -127,6 +114,10 @@ bool Data::shl() {
     _dataP--;
     *(_undoP++) = DataOp::SHL;
 
+    if (_dataP < _minVisitedP) {
+        _minVisitedP = _dataP;
+    }
+
 #ifdef HANG_DETECTION1
     if (*(_effectiveP - 1) == DataOp::SHR) {
         _effectiveP--;
@@ -135,14 +126,7 @@ bool Data::shl() {
     }
 #endif
 
-#ifdef HANG_DETECTION2
-    _deltaP--;
-    if (_deltaP < _minDeltaP) {
-        _minDeltaP = _deltaP;
-    }
-#endif
-
-    return _dataP >= _minDataP;
+    return _dataP > _minDataP;
 }
 
 void Data::undo(int num) {
@@ -162,21 +146,11 @@ void Data::resetHangDetection() {
     _effectiveP = &_effective[1];
 #endif
 
-#ifdef HANG_DETECTION2
-    int *p = _minDeltaP;
-    while (p <= _maxDeltaP) {
-        *p = 0;
-        p++;
-    }
+    _oldSnapShotP = nullptr;
+    _newSnapShotP = nullptr;
 
-    _prevMinDataP = _dataP + (_minDeltaP - _deltaP);
-    _prevMaxDataP = _dataP + (_maxDeltaP - _deltaP);
-    _prevMove = (int)(_deltaP - &_delta[_hangSamplePeriod]);
-    _deltaP = &_delta[_hangSamplePeriod];
-    _minDeltaP = _deltaP;
-    _maxDeltaP = _deltaP;
-    _significantValueChange = false;
-#endif
+    _minVisitedP = _dataP;
+    _maxVisitedP = _dataP;
 }
 
 bool Data::significantDataChanges() {
@@ -187,51 +161,36 @@ bool Data::significantDataChanges() {
     }
 #endif
     return true;
-
 }
 
-bool Data::isHangDetected() {
-    bool hangDetected = false;
-
-#ifdef HANG_DETECTION2
-    if (!hangDetected) {
-        // Range of data cells entered in the current sample period
-        int *minDataP = _dataP + (_minDeltaP - _deltaP);
-        int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
-        int move = (int)(_deltaP - &_delta[_hangSamplePeriod]);
-        if (
-            // No hang if a data value became zero
-            !_significantValueChange &&
-            // or when new data cells were entered
-            minDataP >= _prevMinDataP &&
-            maxDataP <= _prevMaxDataP &&
-            // or when the data pointer moved (significantly) in a different direction
-            !(move < -4 && _prevMove > 4) &&
-            !(move > 4 && _prevMove < -4)
-        ) {
-            // Possible hang
-            int *deltaP = _minDeltaP;
-            int *dataP = minDataP;
-            while (deltaP <= _maxDeltaP && ((*dataP) * (*deltaP)) >= 0) {
-                deltaP++;
-                dataP++;
-            }
-            if (deltaP > _maxDeltaP) {
-                // All data cell changes were away from zero
-                hangDetected = true;
-            }
-        }
-    }
-#endif
-
-    resetHangDetection();
-
-    return hangDetected;
-}
-
-#ifdef HANG_DETECTION3
 void Data::captureSnapShot() {
-    memcpy(_snapShotData, _data, sizeof(int) * getSize());
+    if (_newSnapShotP == nullptr) {
+        std::cout << "Snapshot 1" << std::endl;
+        _newSnapShotP = &_snapShotA;
+    }
+    else if (_oldSnapShotP == nullptr) {
+        std::cout << "Snapshot 2" << std::endl;
+        _oldSnapShotP = _newSnapShotP;
+        _newSnapShotP = &_snapShotB;
+    }
+    else {
+        std::cout << "Snapshot N" << std::endl;
+        SnapShot *tmp = _newSnapShotP;
+        _newSnapShotP = _oldSnapShotP;
+        _oldSnapShotP = tmp;
+    }
+
+    // TODO: A full copy is not needed when old snapshot is reused. In this case, a smart partial
+    // update suffices.
+    int *buf = _newSnapShotP->buf;
+    memcpy(buf, _data, sizeof(int) * getSize());
+
+    _newSnapShotP->dataP =_dataP;
+    _newSnapShotP->minVisitedP = _minVisitedP;
+    _newSnapShotP->maxVisitedP = _minVisitedP;
+
+    _minVisitedP = _dataP;
+    _maxVisitedP = _dataP;
 }
 
 // Checks if a change in data value is impactful. An impactful change is one that, when carried out
@@ -242,37 +201,22 @@ void Data::captureSnapShot() {
 SnapShotComparison Data::compareToSnapShot() {
     SnapShotComparison result = SnapShotComparison::UNCHANGED;
 
-    // Instead of comparing from start of the tape towards the end, comparison starts in the
-    // middle and moves outwards in both directions. This way, it first considers the values that
-    // most frequently are changed so that comparison ends more quickly.
-    int *dataP1 = _midDataP;
-    int *snapP1 = _snapShotData + (dataP1 - _minDataP);
-    int *dataP2 = dataP1 - 1;
-    int *snapP2 = snapP1 - 1;
+    int *p1 = _minVisitedP;
+    int *p2 = _newSnapShotP->buf + (p1 - _data);
     do {
-        if (*dataP1 != *snapP1) {
-            if (IMPACTFUL_CHANGE(*snapP1, *dataP1)) {
+        if (*p1 != *p2) {
+            if (IMPACTFUL_CHANGE(*p2, *p1)) {
                 return SnapShotComparison::IMPACTFUL;
             } else {
                 result = SnapShotComparison::DIVERGING;
             }
         }
-        if (*dataP2 != *snapP2) {
-            if (IMPACTFUL_CHANGE(*snapP2, *dataP2)) {
-                return SnapShotComparison::IMPACTFUL;
-            } else {
-                result = SnapShotComparison::DIVERGING;
-            }
-        }
-        dataP1++;
-        snapP1++;
-        dataP2--;
-        snapP2--;
-    } while (dataP1 < _maxDataP);
+        p1++;
+        p2++;
+    } while (p1 <= _maxVisitedP);
 
     return result;
 }
-#endif
 
 void Data::dump() {
     // Find end
@@ -320,14 +264,14 @@ void Data::dumpSettings() {
 #ifdef HANG_DETECTION1
     << " 1"
 #endif
-#ifdef HANG_DETECTION2
-    << " 2"
+#ifdef HANG_DETECTION2B
+    << " 2B"
 #endif
 #ifdef HANG_DETECTION3
     << " 3"
 #endif
 #ifndef HANG_DETECTION1
-#ifndef HANG_DETECTION2
+#ifndef HANG_DETECTION2B
 #ifndef HANG_DETECTION3
     << " None"
 #endif
@@ -338,17 +282,4 @@ void Data::dumpSettings() {
 
 
 void Data::dumpHangInfo() {
-#ifdef HANG_DETECTION2
-    int *minDataP = _dataP + (_minDeltaP - _deltaP);
-    int *maxDataP = _dataP + (_maxDeltaP - _deltaP);
-    int move = (int)(_deltaP - &_delta[_hangSamplePeriod]);
-
-    std::cout
-    << "Prev :" << (_prevMinDataP - _minDataP) << " - " << (_prevMaxDataP - _minDataP)
-    << ", delta = " << _prevMove
-    << std::endl
-    << "Now  :" << (minDataP - _minDataP) << " - " << (maxDataP - _minDataP)
-    << ", delta = " << move
-    << std::endl;
-#endif
 }

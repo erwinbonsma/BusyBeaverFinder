@@ -81,9 +81,9 @@ void ProgressTracker::reportHang() {
         _earlyHangSignalled = false;
         _totalEarlyHangs++;
     } else {
-        std::cout << "Undetected hang" << std::endl;
-        _searcher->getProgram().dump();
-        std::cout << std::endl;
+//        std::cout << "Undetected hang" << std::endl;
+//        _searcher->getProgram().dump();
+//        std::cout << std::endl;
     }
 
 #ifdef TRACK_EQUIVALENCE
@@ -97,12 +97,14 @@ void ProgressTracker::reportHang() {
 void ProgressTracker::reportEarlyHang() {
     if (_searcher->getHangDetectionTestMode()) {
         // Only signal it. The run continues so it can be verified if it was correctly signalled.
-        //_searcher->getProgram().dump();
-        //_searcher->getData().dump();
-        //_searcher->dumpOpStack();
         _earlyHangSignalled = true;
         return;
     }
+
+//    std::cout << "Detected hang" << std::endl;
+//    _searcher->getProgram().dump();
+//    _searcher->getData().dump();
+//    _searcher->dumpOpStack();
 
     _totalHangs++;
     _totalEarlyHangs++;

@@ -38,7 +38,6 @@ class ExhaustiveSearcher {
 
 #ifdef HANG_DETECTION3
     Op* _sampleProgramPointer;
-    int* _sampleDataPointer;
     Dir _sampleDir;
 #endif
 
@@ -51,6 +50,7 @@ class ExhaustiveSearcher {
     void branch(Op* pp, Dir dir, int totalSteps, int depth);
 public:
     ExhaustiveSearcher(int width, int height, int dataSize);
+    ~ExhaustiveSearcher();
 
     int getHangSamplePeriod() { return _hangSamplePeriod; }
     int getMaxStepsPerRun() { return _maxStepsPerRun; }
