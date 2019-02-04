@@ -54,6 +54,8 @@ class Data {
     SnapShot *_oldSnapShotP;
     SnapShot *_newSnapShotP;
 
+    void dumpDataBuffer(int* buf, int* dataP);
+
 public:
     Data(int size);
     ~Data();
@@ -69,10 +71,9 @@ public:
     SnapShot* getOldSnapShot() { return _oldSnapShotP; }
     SnapShot* getNewSnapShot() { return _newSnapShotP; }
 
-#ifdef HANG_DETECTION3
     void captureSnapShot();
     SnapShotComparison compareToSnapShot();
-#endif
+    bool areSnapShotDeltasAreIdentical();
 
     int* getDataPointer() { return _dataP; }
     int val() { return *_dataP; }

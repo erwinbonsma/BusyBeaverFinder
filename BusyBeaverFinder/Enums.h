@@ -34,7 +34,6 @@ enum class DataOp : char {
     NONE = 4
 };
 
-#ifdef HANG_DETECTION3
 enum class SnapShotComparison : char {
     // Data did not change
     UNCHANGED = 0,
@@ -43,6 +42,5 @@ enum class SnapShotComparison : char {
     // Data changed in a way that can impact program flow (i.e. towards zero)
     IMPACTFUL = 2
 };
-#endif
 
 #endif /* Enums_h */

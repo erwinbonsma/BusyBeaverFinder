@@ -11,11 +11,12 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "Hang tests", "[hang]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(9, 9, 1024);
+TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
+    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(5, 5, 64);
     ProgressTracker *tracker = new ProgressTracker(searcher);
 
     searcher->setProgressTracker(tracker);
+    searcher->setHangSamplePeriod(16);
 
     SECTION( "BasicLoop" ) {
         // *   *
@@ -52,7 +53,7 @@ TEST_CASE( "Hang tests", "[hang]" ) {
 
         REQUIRE(tracker->getTotalEarlyHangs() == 1);
     }
-    SECTION( "InfSeq1" ) {
+    SECTION( "InfSeq1" ) { // Extends leftwards
         //
         // *   *
         // o . . . *
@@ -72,20 +73,19 @@ TEST_CASE( "Hang tests", "[hang]" ) {
 
         REQUIRE(tracker->getTotalEarlyHangs() == 1);
     }
-    SECTION( "InfSec2" ) {
+    SECTION( "InfSeq2" ) { // Extends rightwards
         //       *
         // *   * o *
         // o . . o *
-        // . . o .
-        // . * . .
-        // .     *
+        // . * . o
+        // .   . *
         Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
             Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
             Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
             Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::TURN,
             Op::UNSET
         };
         searcher->findOne(resumeFrom);

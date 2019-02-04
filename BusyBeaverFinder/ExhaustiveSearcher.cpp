@@ -116,9 +116,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
     _data.resetHangDetection();
     _program.resetHangDetection();
-#ifdef HANG_DETECTION3
     _sampleProgramPointer = nullptr;
-#endif
 
     while (1) { // Run until branch, termination or error
         Op* pp2;
@@ -187,11 +185,12 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
         pp = pp2;
         steps++;
 
-#ifdef HANG_DETECTION3
         if (
             pp == _sampleProgramPointer &&
             dir == _sampleDir
         ) {
+//            std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
+
             bool hangDetected = false;
 
             if (!_data.significantDataChanges()) {
@@ -205,6 +204,16 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                         hangDetected = true;
                     }
                 }
+                else {
+                    if (_data.getOldSnapShot() != nullptr) {
+                        if (_data.areSnapShotDeltasAreIdentical()) {
+                            hangDetected = true;
+                        }
+                    }
+
+                    _data.captureSnapShot();
+                    // TODO: Abort after X failed attempts?
+                }
             }
 
             if (hangDetected) {
@@ -214,9 +223,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                     return;
                 }
             }
-            _sampleProgramPointer = nullptr;
         }
-#endif
+
         if (! (steps & _hangSampleMask)) {
             if (
                 (steps + totalSteps + _hangSamplePeriod >= _maxStepsTotal) ||
@@ -227,7 +235,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 return;
             }
 
-//            std::cout << "Steps = " << (steps + totalSteps) << std::endl;
+//            std::cout << "Reset Hang Detection: Steps = " << (steps + totalSteps) << std::endl;
 //            _tracker->dumpStats();
 //            _data.dumpHangInfo();
 //            _data.dump();

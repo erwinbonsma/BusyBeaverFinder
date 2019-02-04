@@ -165,16 +165,16 @@ bool Data::significantDataChanges() {
 
 void Data::captureSnapShot() {
     if (_newSnapShotP == nullptr) {
-        std::cout << "Snapshot 1" << std::endl;
+//        std::cout << "Snapshot 1" << std::endl;
         _newSnapShotP = &_snapShotA;
     }
     else if (_oldSnapShotP == nullptr) {
-        std::cout << "Snapshot 2" << std::endl;
+//        std::cout << "Snapshot 2" << std::endl;
         _oldSnapShotP = _newSnapShotP;
         _newSnapShotP = &_snapShotB;
     }
     else {
-        std::cout << "Snapshot N" << std::endl;
+//        std::cout << "Snapshot N" << std::endl;
         SnapShot *tmp = _newSnapShotP;
         _newSnapShotP = _oldSnapShotP;
         _oldSnapShotP = tmp;
@@ -187,7 +187,7 @@ void Data::captureSnapShot() {
 
     _newSnapShotP->dataP =_dataP;
     _newSnapShotP->minVisitedP = _minVisitedP;
-    _newSnapShotP->maxVisitedP = _minVisitedP;
+    _newSnapShotP->maxVisitedP = _maxVisitedP;
 
     _minVisitedP = _dataP;
     _maxVisitedP = _dataP;
@@ -216,6 +216,79 @@ SnapShotComparison Data::compareToSnapShot() {
     } while (p1 <= _maxVisitedP);
 
     return result;
+}
+
+bool Data::areSnapShotDeltasAreIdentical() {
+    long _deltaNew = _maxVisitedP - _minVisitedP;
+    long _deltaOld = _newSnapShotP->maxVisitedP - _newSnapShotP->minVisitedP;
+
+    if (_deltaNew != _deltaOld) {
+        // The number of cells visited differ
+        return false;
+    }
+
+    int *oldBeforeP = _oldSnapShotP->buf + (_newSnapShotP->minVisitedP - _data);
+    int *oldAfterP = _newSnapShotP->buf + (_newSnapShotP->minVisitedP - _data);
+    int *newBeforeP = _newSnapShotP->buf + (_minVisitedP - _data);
+    int *newAfterP = _data + (_minVisitedP - _data); // Expanded for clarity
+
+    do {
+//        std::cout
+//        << "OLD: " << *oldBeforeP << " => " << *oldAfterP << std::endl
+//        << "NEW: " << *newBeforeP << " => " << *newAfterP << std::endl;
+        if (
+            *oldBeforeP != *newBeforeP ||
+            *oldAfterP != *newAfterP
+        ) {
+            return false;
+        }
+        oldBeforeP++;
+        newBeforeP++;
+        oldAfterP++;
+        newAfterP++;
+    } while (newAfterP <= _maxVisitedP);
+
+    long shift = _dataP - _newSnapShotP->dataP;
+    if (shift > 0) {
+        // Check that the newly visited values were all zeros
+        newBeforeP -= shift;
+        while (shift > 0) {
+            if (*newBeforeP != 0) {
+                return false;
+            }
+            newBeforeP++;
+            shift--;
+        }
+
+        // Check that there are only zeros ahead. Other values may break the repetitive behavior
+        while (newAfterP <= _maxDataP) {
+            if (*newAfterP != 0) {
+                return false;
+            }
+            newAfterP++;
+        }
+    } else {
+        // Check that the newly visited values were all zeros
+        newBeforeP = _newSnapShotP->buf + (_minVisitedP - _data);
+        while (shift > 0) {
+            if (*newBeforeP != 0) {
+                return false;
+            }
+            newBeforeP++; // Note: The increase is intentional
+            shift--;
+        }
+
+        // Check that there are only zeros ahead. Other values may break the repetitive behavior
+        newAfterP = _minVisitedP - 1;
+        while (newAfterP >= _minDataP) {
+            if (*newAfterP != 0) {
+                return false;
+            }
+            newAfterP--;
+        }
+    }
+
+    return true;
 }
 
 void Data::dump() {
@@ -267,19 +340,48 @@ void Data::dumpSettings() {
 #ifdef HANG_DETECTION2B
     << " 2B"
 #endif
-#ifdef HANG_DETECTION3
-    << " 3"
-#endif
 #ifndef HANG_DETECTION1
 #ifndef HANG_DETECTION2B
-#ifndef HANG_DETECTION3
     << " None"
-#endif
 #endif
 #endif
     << std::endl;
 }
 
+void Data::dumpDataBuffer(int* buf, int* dataP) {
+    int size = (int)getSize();
+    for (int i = 0; i < size; i++) {
+        if (&buf[i] == dataP) {
+            std::cout << "[";
+        }
+        std::cout << buf[i];
+        if (&buf[i] == dataP) {
+            std::cout << "] ";
+        } else {
+            std::cout << " ";
+        }
+
+    }
+    std::cout << std::endl;
+}
 
 void Data::dumpHangInfo() {
+    std::cout << "DATA: min = " << (_minVisitedP - _data)
+    << ", p = " << (_dataP - _data)
+    << ", max = " << (_maxVisitedP - _data)
+    << std::endl;
+    dumpDataBuffer(_data, _dataP);
+
+    std::cout << "SNAP1: min = " << (_newSnapShotP->minVisitedP - _data)
+    << ", p = " << (_newSnapShotP->dataP - _data)
+    << ", max = " << (_newSnapShotP->maxVisitedP - _data)
+    << std::endl;
+
+    dumpDataBuffer(_newSnapShotP->buf, _newSnapShotP->buf + (_newSnapShotP->dataP - _data));
+
+    std::cout << "SNAP2: min = " << (_oldSnapShotP->minVisitedP - _data)
+    << ", p = " << (_oldSnapShotP->dataP - _data)
+    << ", max = " << (_oldSnapShotP->maxVisitedP - _data)
+    << std::endl;
+    dumpDataBuffer(_oldSnapShotP->buf, _oldSnapShotP->buf + (_oldSnapShotP->dataP - _data));
 }
