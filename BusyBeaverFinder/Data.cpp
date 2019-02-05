@@ -280,12 +280,12 @@ bool Data::areSnapShotDeltasAreIdentical() {
     } else {
         // Check that the newly visited values were all zeros
         newBeforeP = _newSnapShotP->buf + (_minVisitedP - _data);
-        while (shift > 0) {
+        while (shift < 0) {
             if (*newBeforeP != 0) {
                 return false;
             }
             newBeforeP++; // Note: The increase is intentional
-            shift--;
+            shift++;
         }
 
         // Check that there are only zeros ahead. Other values may break the repetitive behavior
