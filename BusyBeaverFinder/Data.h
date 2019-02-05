@@ -53,6 +53,7 @@ class Data {
 
     SnapShot *_oldSnapShotP;
     SnapShot *_newSnapShotP;
+    bool _significantValueChange;
 
     void dumpDataBuffer(int* buf, int* dataP);
 
@@ -67,7 +68,18 @@ public:
 
     void resetHangDetection();
 
-    bool significantDataChanges();
+    /* Returns "true" if there have been effective data operations since the last snapshot.
+     * Operations are effective if they do not cancel out the previous (effective) operation.
+     * E.g. a DEC that follows an INC is not effective.
+     *
+     * TODO: Check why this detects hangs not detected by the snapshot-based hang detection.
+     */
+    bool effectiveDataOperations();
+
+    /* True if one or more values since last snapshot became zero, or moved away from zero.
+     */
+    bool significantValueChange() { return _significantValueChange; }
+
     SnapShot* getOldSnapShot() { return _oldSnapShotP; }
     SnapShot* getNewSnapShot() { return _newSnapShotP; }
 

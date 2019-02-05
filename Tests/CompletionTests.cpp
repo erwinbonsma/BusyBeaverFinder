@@ -13,7 +13,36 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "Completion tests", "[success]" ) {
+TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
+    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(6, 6, 32);
+    ProgressTracker *tracker = new ProgressTracker(searcher);
+
+    searcher->setProgressTracker(tracker);
+    searcher->setMaxStepsPerRun(10000);
+    searcher->setMaxStepsTotal(10000);
+    searcher->setHangSamplePeriod(64);
+
+    SECTION( "DivergingDeltaYetNoHang" ) {
+        // A diverging change after 102 steps, however, not a hang as one value change touched zero
+        // (it changed from one, to zero, back to one). At Step 102 this value is two (a diverging
+        // delta) but it does not touch zero anymore, which means that subsequent program flow
+        // diverges.
+        Op resumeFrom[] = {
+            Op::NOOP, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN,
+            Op::DATA, Op::DATA, Op::TURN, Op::TURN, Op::NOOP, Op::TURN, Op::DATA, Op::DATA,
+            Op::TURN, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::DATA,
+            Op::NOOP, Op::TURN, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN, Op::TURN, Op::UNSET
+        };
+        searcher->findOne(resumeFrom);
+
+        REQUIRE(tracker->getTotalSuccess() == 1);
+    }
+
+    delete searcher;
+    delete tracker;
+}
+
+TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
     ExhaustiveSearcher *searcher = new ExhaustiveSearcher(7, 7, 1024);
     ProgressTracker *tracker = new ProgressTracker(searcher);
 

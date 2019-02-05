@@ -193,12 +193,15 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
             bool hangDetected = false;
 
-            if (!_data.significantDataChanges()) {
+            if (!_data.effectiveDataOperations()) {
                 hangDetected = true;
             }
 
             if (!hangDetected) {
-                if (_data.getDataPointer() == _data.getNewSnapShot()->dataP) {
+                if (
+                    _data.getDataPointer() == _data.getNewSnapShot()->dataP &&
+                    !_data.significantValueChange()
+                ) {
                     SnapShotComparison result = _data.compareToSnapShot();
                     if (result != SnapShotComparison::IMPACTFUL) {
                         hangDetected = true;

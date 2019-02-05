@@ -76,6 +76,10 @@ void Data::inc() {
         *(_effectiveP++) = DataOp::INC;
     }
 #endif
+
+    if (*_dataP == 0 || *_dataP == 1) {
+        _significantValueChange = true;
+    }
 }
 
 void Data::dec() {
@@ -89,6 +93,10 @@ void Data::dec() {
         *(_effectiveP++) = DataOp::DEC;
     }
 #endif
+
+    if (*_dataP == 0 || *_dataP == -1) {
+        _significantValueChange = true;
+    }
 }
 
 bool Data::shr() {
@@ -151,9 +159,11 @@ void Data::resetHangDetection() {
 
     _minVisitedP = _dataP;
     _maxVisitedP = _dataP;
+
+    _significantValueChange = false;
 }
 
-bool Data::significantDataChanges() {
+bool Data::effectiveDataOperations() {
 #ifdef HANG_DETECTION1
     if (_effectiveP == &_effective[1]) {
         // No effective data instruction carried out
@@ -372,16 +382,19 @@ void Data::dumpHangInfo() {
     << std::endl;
     dumpDataBuffer(_data, _dataP);
 
-    std::cout << "SNAP1: min = " << (_newSnapShotP->minVisitedP - _data)
-    << ", p = " << (_newSnapShotP->dataP - _data)
-    << ", max = " << (_newSnapShotP->maxVisitedP - _data)
-    << std::endl;
+    if (_newSnapShotP != nullptr) {
+        std::cout << "SNAP1: min = " << (_newSnapShotP->minVisitedP - _data)
+        << ", p = " << (_newSnapShotP->dataP - _data)
+        << ", max = " << (_newSnapShotP->maxVisitedP - _data)
+        << std::endl;
+        dumpDataBuffer(_newSnapShotP->buf, _newSnapShotP->buf + (_newSnapShotP->dataP - _data));
+    }
 
-    dumpDataBuffer(_newSnapShotP->buf, _newSnapShotP->buf + (_newSnapShotP->dataP - _data));
-
-    std::cout << "SNAP2: min = " << (_oldSnapShotP->minVisitedP - _data)
-    << ", p = " << (_oldSnapShotP->dataP - _data)
-    << ", max = " << (_oldSnapShotP->maxVisitedP - _data)
-    << std::endl;
-    dumpDataBuffer(_oldSnapShotP->buf, _oldSnapShotP->buf + (_oldSnapShotP->dataP - _data));
+    if (_oldSnapShotP != nullptr) {
+        std::cout << "SNAP2: min = " << (_oldSnapShotP->minVisitedP - _data)
+        << ", p = " << (_oldSnapShotP->dataP - _data)
+        << ", max = " << (_oldSnapShotP->maxVisitedP - _data)
+        << std::endl;
+        dumpDataBuffer(_oldSnapShotP->buf, _oldSnapShotP->buf + (_oldSnapShotP->dataP - _data));
+    }
 }
