@@ -39,12 +39,14 @@ TEST_CASE( "4x4 Search", "[search]" ) {
     ProgressTracker *tracker = new ProgressTracker(searcher);
 
     searcher->setProgressTracker(tracker);
-    searcher->setMaxStepsPerRun(64);
+    searcher->setMaxStepsPerRun(1024);
+    searcher->setHangSamplePeriod(32);
 
     searcher->search();
 
     REQUIRE(tracker->getMaxStepsFound() == 14);
     REQUIRE(tracker->getTotalSuccess() == 854);
+    REQUIRE(tracker->getTotalEarlyHangs() == tracker->getTotalHangs());
 
     delete searcher;
     delete tracker;
