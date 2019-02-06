@@ -47,6 +47,46 @@ int readNextChar(FILE* file) {
     return ch;
 }
 
+void calculateZArray(const char* input, int* output, int len) {
+    int l, r;
+    l = r = 0;
+
+    output[0] = 0; // Should not be used
+    for (int i = 1; i < len; i++) {
+        if (i > r) {
+            l = r = i;
+            while (r < len && input[r - l] == input[r]) {
+                r++;
+            }
+            output[i] = r - l;
+            r--;
+        } else {
+            int k = i - l;
+            if (output[k] < r - i + 1) {
+                // z[k] is less than remaining interval
+                output[i] = output[k];
+            } else {
+                l = i;
+                while (r < len && input[r - l] == input[r]) {
+                    r++;
+                }
+                output[i] = r - l;
+                r--;
+            }
+        }
+    }
+}
+
+int findPeriod(const char* sequence, int* buf, int len) {
+    calculateZArray(sequence, buf, len);
+    for (int i = 1; i < len; i++) {
+        if (i + buf[i] == len) {
+            return i;
+        }
+    }
+    return len;
+}
+
 Op* loadResumeStackFromFile(std::string inputFile, int maxSize) {
     Op* resumeStack = new Op[maxSize];
     int numOps = 0;
