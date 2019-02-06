@@ -37,6 +37,21 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
 
         REQUIRE(tracker->getTotalSuccess() == 1);
     }
+    SECTION( "IdenticalSnapshotDeltaButNonZeroNewlyVisited" ) {
+        // An example where after 220 steps the snapshot delta is the same, but a newly visited
+        // value was not zero. This hang was not detected, as there was an error in the check for
+        // sequences extending to the left.
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN, Op::DATA,
+            Op::TURN, Op::TURN, Op::DATA, Op::NOOP, Op::DATA, Op::NOOP, Op::TURN, Op::DATA,
+            Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher->findOne(resumeFrom);
+
+        REQUIRE(tracker->getTotalSuccess() == 1);
+    }
 
     delete searcher;
     delete tracker;
