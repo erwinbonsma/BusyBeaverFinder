@@ -47,6 +47,8 @@ int readNextChar(FILE* file) {
     return ch;
 }
 
+// Not used anymore, but kept for reference. It helps understanding the findPeriod implementation
+// and has its own unit tests, which is possibly useful in troubleshooting.
 void calculateZArray(const char* input, int* output, int len) {
     int l, r;
     l = r = 0;
@@ -77,13 +79,45 @@ void calculateZArray(const char* input, int* output, int len) {
     }
 }
 
-int findPeriod(const char* sequence, int* buf, int len) {
-    calculateZArray(sequence, buf, len);
+int findPeriod(const char* input, int* buf, int len) {
+    int l, r;
+    l = r = 0;
+
+    buf[0] = 0; // Should not be used
+    int z;
     for (int i = 1; i < len; i++) {
-        if (i + buf[i] == len) {
+        if (i > r) {
+            l = r = i;
+            while (r < len && input[r - l] == input[r]) {
+                r++;
+            }
+            z = r - l;
+            r--;
+        } else {
+            int k = i - l;
+            if (buf[k] < r - i + 1) {
+                // z[k] is less than remaining interval
+                z = buf[k];
+            } else {
+                l = i;
+                while (r < len && input[r - l] == input[r]) {
+                    r++;
+                }
+                z = r - l;
+                r--;
+            }
+        }
+
+        if (z + i == len) {
+            // Done. Found position from where remainder of sequence matches start of sequence
             return i;
+        } else {
+            // Store z-value. It can potentially be used to determine later z-values (thereby
+            // ensuring the algorithm requires a minimal amount of comparisons).
+            buf[i] = z;
         }
     }
+
     return len;
 }
 

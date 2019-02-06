@@ -22,7 +22,7 @@ bool compareArrays(int* array1, int* array2, int len) {
             return false;
         }
     }
-//    std::cout << "\n";
+//    std::cout << std::endl;
     return true;
 }
 
@@ -79,6 +79,16 @@ TEST_CASE( "Z-array", "[util]" ) {
 
         REQUIRE(compareArrays(output, expected, len));
     }
+    SECTION( "abab_ababab_abab" ) {
+        const char* s = "abab_ababab_abab";
+        int len = (int)strlen(s);
+
+        calculateZArray(s, output, len);
+
+        int expected[] = { 0, 0, 2, 0, 0, 4, 0, 9, 0, 2, 0, 0, 4, 0, 2, 0 };
+
+        REQUIRE(compareArrays(output, expected, len));
+    }
 }
 
 TEST_CASE( "findPeriod", "[util]" ) {
@@ -126,6 +136,14 @@ TEST_CASE( "findPeriod", "[util]" ) {
     }
     SECTION( "ababcabababcabab" ) {
         const char* s = "ababcabababcabab";
+        int len = (int)strlen(s);
+
+        int period = findPeriod(s, output, len);
+
+        REQUIRE(period == 7);
+    }
+    SECTION( "abab_ababab_abab" ) {
+        const char* s = "abab_ababab_abab";
         int len = (int)strlen(s);
 
         int period = findPeriod(s, output, len);
