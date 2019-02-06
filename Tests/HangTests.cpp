@@ -53,6 +53,28 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
 
         REQUIRE(tracker->getTotalEarlyHangs() == 1);
     }
+    SECTION( "NonUniformCountingLoop" ) {
+        // Loop that increases counter, but with some instructions executed more frequently than
+        // others. Furthermore, another data cell switches between three possible values.
+        //
+        //     * *
+        // *   o o *
+        // o . . o *
+        // . * o . *
+        // .     *
+        Op resumeFrom[] = {
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher->findOne(resumeFrom);
+
+        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+    }
     SECTION( "InfSeq1" ) { // Extends leftwards
         //
         // *   *
@@ -78,7 +100,7 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
         // *   * o *
         // o . . o *
         // . * . o
-        // .   . *
+        // .     *
         Op resumeFrom[] = {
             Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
             Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
@@ -86,6 +108,49 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::DATA, Op::TURN,
             Op::NOOP, Op::TURN,
             Op::TURN,
+            Op::UNSET
+        };
+        searcher->findOne(resumeFrom);
+
+        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+    }
+    SECTION( "InfSeqNonUniform1" ) {
+        // Loop that generates an infinite sequence where some instructions are executed more
+        // frequently than others.
+        //
+        //   * * *
+        // * . o o *
+        // o . . . *
+        // . * . .
+        // .     *
+        Op resumeFrom[] = {
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher->findOne(resumeFrom);
+
+        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+    }
+    SECTION( "InfSeqNonUniform2" ) {
+        //   * * *
+        // * . o o *
+        // o . o . *
+        // . * . . *
+        // .     *
+        Op resumeFrom[] = {
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::DATA, Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
             Op::UNSET
         };
         searcher->findOne(resumeFrom);
