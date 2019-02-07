@@ -16,7 +16,7 @@
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
-    _program(width, height), _data(dataSize), _cycleDetector()
+    _program(width, height), _data(dataSize), _cycleDetector(), _dataTracker(_data)
 {
     initOpStack(width * height);
 
@@ -116,6 +116,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     int steps = 0;
 
     _data.resetHangDetection();
+    _dataTracker.reset();
     _cycleDetector.clearInstructionHistory();
     _sampleProgramPointer = nullptr;
 
@@ -208,24 +209,24 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
             if (!hangDetected) {
                 if (
-                    _data.getDataPointer() == _data.getNewSnapShot()->dataP &&
+                    _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
                     !_data.significantValueChange()
                 ) {
-                    SnapShotComparison result = _data.compareToSnapShot();
+                    SnapShotComparison result = _dataTracker.compareToSnapShot();
                     if (result != SnapShotComparison::IMPACTFUL) {
                         hangDetected = true;
                     }
                 }
                 else {
-                    if (_data.getOldSnapShot() != nullptr) {
-                        if (_data.areSnapShotDeltasAreIdentical()) {
+                    if (_dataTracker.getOldSnapShot() != nullptr) {
+                        if (_dataTracker.areSnapShotDeltasAreIdentical()) {
                             hangDetected = true;
                         }
                     } else {
                         _opsToWaitBeforeHangCheck = _cyclePeriod;
                     }
 
-                    _data.captureSnapShot();
+                    _dataTracker.captureSnapShot();
                     // TODO: Abort after X failed attempts?
                 }
             }
@@ -263,7 +264,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 //            std::cout << "period = " << _opsToWaitBeforeHangCheck << std::endl;
             _cycleDetector.clearInstructionHistory();
             _data.resetHangDetection();
-            _data.captureSnapShot();
+            _dataTracker.reset();
+            _dataTracker.captureSnapShot();
         }
     }
 }

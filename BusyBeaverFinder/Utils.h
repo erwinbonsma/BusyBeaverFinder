@@ -22,4 +22,6 @@ int findPeriod(const char *input, int* buf, int len);
 
 Op* loadResumeStackFromFile(std::string inputFile, int maxSize);
 
+void dumpDataBuffer(int* buf, int* dataP, int size);
+
 #endif /* Utils_h */

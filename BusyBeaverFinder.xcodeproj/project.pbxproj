@@ -22,6 +22,8 @@
 		AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */; };
 		AA28C0AB220CBC3700F7EC25 /* CycleDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */; };
 		AA28C0AC220CC2A000F7EC25 /* CycleDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */; };
+		AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */; };
+		AA28C0B0220CCE2A00F7EC25 /* DataTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
@@ -67,6 +69,8 @@
 		AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PeriodDetectionTests.cpp; sourceTree = "<group>"; };
 		AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CycleDetector.cpp; sourceTree = "<group>"; };
 		AA28C0AA220CBC3700F7EC25 /* CycleDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CycleDetector.h; sourceTree = "<group>"; };
+		AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DataTracker.cpp; sourceTree = "<group>"; };
+		AA28C0AE220CCE2A00F7EC25 /* DataTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataTracker.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
 		AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExhaustiveSearcher.h; sourceTree = "<group>"; };
 		AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgressTracker.cpp; sourceTree = "<group>"; };
@@ -122,6 +126,8 @@
 				AA11020921F32671005C67CF /* Consts.h */,
 				AA11020A21F327F4005C67CF /* Data.cpp */,
 				AA11020B21F327F4005C67CF /* Data.h */,
+				AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */,
+				AA28C0AE220CCE2A00F7EC25 /* DataTracker.h */,
 				AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */,
 				AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */,
 				AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */,
@@ -232,6 +238,7 @@
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
+				AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
 				AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -242,6 +249,7 @@
 			files = (
 				AA28C0A122073A1500F7EC25 /* Program.cpp in Sources */,
 				AA28C09D2207398C00F7EC25 /* BasicSearchTest.cpp in Sources */,
+				AA28C0B0220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
 				AA28C0A222073A1A00F7EC25 /* Utils.cpp in Sources */,
 				AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,

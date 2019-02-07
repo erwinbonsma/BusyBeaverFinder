@@ -14,15 +14,6 @@
 #include "Consts.h"
 #include "Enums.h"
 
-struct SnapShot {
-    int *buf;
-    int *dataP;
-
-    // Delimits the range of values that have been visisted since the last snapshot was taken.
-    // These are the date values that may have impacted program execution since then.
-    int *minVisitedP, *maxVisitedP;
-};
-
 class Data {
     int *_dataP;
     int *_minDataP, *_midDataP, *_maxDataP;
@@ -47,15 +38,7 @@ class Data {
     DataOp *_effective = nullptr;
 #endif
 
-    // Two snapshots. These should not be used directly, instead use oldSnapShot and newSnapShot
-    SnapShot _snapShotA;
-    SnapShot _snapShotB;
-
-    SnapShot *_oldSnapShotP;
-    SnapShot *_newSnapShotP;
     bool _significantValueChange;
-
-    void dumpDataBuffer(int* buf, int* dataP);
 
 public:
     Data(int size);
@@ -64,9 +47,17 @@ public:
     void setStackSize(int size);
     void setHangSamplePeriod(int period);
 
-    long getSize() { return _maxDataP - _minDataP + 1; }
+    int getSize() { return (int)(_maxDataP - _minDataP + 1); }
 
     void resetHangDetection();
+
+    void resetVisitedBounds();
+    int* getMinVisitedP() { return _minVisitedP; }
+    int* getMaxVisitedP() { return _maxVisitedP; }
+
+    int* getDataBuffer() { return _data; }
+    int* getMinDataP() { return _minDataP; }
+    int* getMaxDataP() { return _maxDataP; }
 
     /* Returns "true" if there have been effective data operations since the last snapshot.
      * Operations are effective if they do not cancel out the previous (effective) operation.
@@ -79,13 +70,6 @@ public:
     /* True if one or more values since last snapshot became zero, or moved away from zero.
      */
     bool significantValueChange() { return _significantValueChange; }
-
-    SnapShot* getOldSnapShot() { return _oldSnapShotP; }
-    SnapShot* getNewSnapShot() { return _newSnapShotP; }
-
-    void captureSnapShot();
-    SnapShotComparison compareToSnapShot();
-    bool areSnapShotDeltasAreIdentical();
 
     int* getDataPointer() { return _dataP; }
     int val() { return *_dataP; }

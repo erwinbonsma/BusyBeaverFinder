@@ -146,3 +146,19 @@ Op* loadResumeStackFromFile(std::string inputFile, int maxSize) {
 
     return resumeStack;
 }
+
+void dumpDataBuffer(int* buf, int* dataP, int size) {
+    for (int i = 0; i < size; i++) {
+        if (&buf[i] == dataP) {
+            std::cout << "[";
+        }
+        std::cout << buf[i];
+        if (&buf[i] == dataP) {
+            std::cout << "] ";
+        } else {
+            std::cout << " ";
+        }
+
+    }
+    std::cout << std::endl;
+}
