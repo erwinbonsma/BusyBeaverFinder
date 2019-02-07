@@ -3,7 +3,7 @@
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 03/02/19.
-//  Copyright © 2019 Erwin. All rights reserved.
+//  Copyright © 2019 Erwin Bonsma.
 //
 
 #include <stdio.h>

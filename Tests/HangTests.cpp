@@ -3,7 +3,7 @@
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 03/02/19.
-//  Copyright © 2019 Erwin. All rights reserved.
+//  Copyright © 2019 Erwin Bonsma.
 //
 
 #include <stdio.h>
@@ -55,7 +55,8 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
     }
     SECTION( "NonUniformCountingLoop" ) {
         // Loop that increases counter, but with some instructions executed more frequently than
-        // others. Furthermore, another data cell switches between three possible values.
+        // others. Furthermore, another data cell switches between three possible values, including
+        // zero.
         //
         //     * *
         // *   o o *

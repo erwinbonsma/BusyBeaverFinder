@@ -3,7 +3,7 @@
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 06/02/19.
-//  Copyright © 2019 Erwin. All rights reserved.
+//  Copyright © 2019 Erwin Bonsma.
 //
 
 #include <stdio.h>
@@ -17,12 +17,10 @@
 
 bool compareArrays(int* array1, int* array2, int len) {
     for (int i = 0; i < len; i++) {
-//        std::cout << array1[i] << "/" << array2[i] << " ";
         if (array1[i] != array2[i]) {
             return false;
         }
     }
-//    std::cout << std::endl;
     return true;
 }
 
