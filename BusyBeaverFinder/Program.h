@@ -25,15 +25,6 @@ class Program {
     // Instruction array
     Op _ops[programStorageSize];
 
-#ifdef HANG_DETECTION2B
-    // Hang detection
-    bool* _activeVisited;
-    bool* _prevVisited;
-    bool _visited1[programStorageSize];
-    bool _visited2[programStorageSize];
-    bool _firstPeriod;
-#endif
-
 public:
     Program(int width, int height);
 
@@ -44,17 +35,9 @@ public:
 
     Op* startProgramPointer() { return &(_ops[1]); /* Start at row = -1, col = 0 */ }
 
-    void resetHangDetection();
-    bool isHangDetected();
-
     void setOp(Op *pp, Op op) { (*pp) = op; }
     void clearOp(Op *pp) { (*pp) = Op::UNSET; }
-    Op getOp(Op *pp) {
-#ifdef HANG_DETECTION2B
-        _activeVisited[pp - _ops] = true;
-#endif
-        return (*pp);
-    }
+    Op getOp(Op *pp) { return (*pp); }
     Op getOp(int col, int row);
 
     /* Returns the number of possible programs in the search space that this program represents.

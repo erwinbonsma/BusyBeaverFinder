@@ -13,6 +13,7 @@
 
 #include "Data.h"
 #include "Program.h"
+#include "CycleDetector.h"
 #include "ProgressTracker.h"
 
 class ExhaustiveSearcher {
@@ -24,6 +25,7 @@ class ExhaustiveSearcher {
 
     Program _program;
     Data _data;
+    CycleDetector _cycleDetector;
 
     // When set to true, aborts the search. Note, the current program that is being built/evaluated
     // will end first. This is exploited by the findOne methods.
@@ -39,6 +41,8 @@ class ExhaustiveSearcher {
     // Hang detection
     Op* _sampleProgramPointer;
     Dir _sampleDir;
+    int _cyclePeriod;
+    int _opsToWaitBeforeHangCheck;
 
     ProgressTracker* _tracker;
 

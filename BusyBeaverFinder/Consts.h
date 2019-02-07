@@ -10,7 +10,6 @@
 #define Consts_h
 
 #define HANG_DETECTION1
-#define HANG_DETECTION2B
 
 //#define TRACK_EQUIVALENCE
 

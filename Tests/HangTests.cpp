@@ -16,7 +16,7 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
     ProgressTracker *tracker = new ProgressTracker(searcher);
 
     searcher->setProgressTracker(tracker);
-    searcher->setHangSamplePeriod(16);
+    searcher->setHangSamplePeriod(128);
 
     SECTION( "BasicLoop" ) {
         // *   *

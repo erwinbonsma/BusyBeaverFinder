@@ -31,59 +31,11 @@ Program::Program(int width, int height) {
             pp++;
         }
     }
-
-#ifdef HANG_DETECTION2B
-    _prevVisited = _visited1;
-    _activeVisited = _visited2;
-    resetHangDetection();
-#endif
-}
-
-void Program::resetHangDetection() {
-#ifdef HANG_DETECTION2B
-    _firstPeriod = true;
-#endif
-}
-
-bool Program::isHangDetected() {
-#ifdef HANG_DETECTION2B
-    bool *p1 = _prevVisited;
-    bool *p2 = _activeVisited;
-    bool hangDetected = !_firstPeriod; // First run never detects hangs
-    int i = programStorageSize;
-
-    // Check and clear
-    while (--i >= 0) {
-        if (*p2 && !(*p1)) {
-            hangDetected = false;
-            break;
-        }
-        p2++;
-        *(p1++) = false; // Clear previous for next period
-    }
-
-    // Clear remainder
-    while (--i >= 0) {
-        *(p1++) = false; // Clear previous for next period
-    }
-
-    // Swap arrays
-    bool *tmp = _prevVisited;
-    _prevVisited = _activeVisited;
-    _activeVisited = tmp;
-
-    _firstPeriod = false;
-
-    return hangDetected;
-#else
-    return false;
-#endif
 }
 
 Op Program::getOp(int col, int row) {
     return _ops[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
 }
-
 
 void Program::clone(Program& dest) {
     Op* ppSrc = startProgramPointer();

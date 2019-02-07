@@ -16,7 +16,7 @@
 Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
-    _program(width, height), _data(dataSize)
+    _program(width, height), _data(dataSize), _cycleDetector()
 {
     initOpStack(width * height);
 
@@ -46,6 +46,7 @@ void ExhaustiveSearcher::setHangSamplePeriod(int val) {
     _hangSamplePeriod = val;
     _hangSampleMask = val - 1;
     _data.setHangSamplePeriod(val);
+    _cycleDetector.setHangSamplePeriod(val);
 }
 
 void ExhaustiveSearcher::setHangDetectionTestMode(bool val) {
@@ -115,7 +116,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     int steps = 0;
 
     _data.resetHangDetection();
-    _program.resetHangDetection();
+    _cycleDetector.clearInstructionHistory();
     _sampleProgramPointer = nullptr;
 
     while (1) { // Run until branch, termination or error
@@ -125,7 +126,9 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 
             pp2 = pp + (int)dir;
 
-            switch (_program.getOp(pp2)) {
+            Op op = _program.getOp(pp2);
+            _cycleDetector.recordInstruction(op);
+            switch (op) {
                 case Op::DONE:
                     _tracker->reportDone(totalSteps + steps);
                     _data.undo(numDataOps);
@@ -181,15 +184,21 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                     }
                     break;
             }
+            _opsToWaitBeforeHangCheck--;
         } while (!done);
         pp = pp2;
         steps++;
 
+//        std::cout << "steps = " << steps << "depth = " << depth << std::endl;
+
         if (
             pp == _sampleProgramPointer &&
-            dir == _sampleDir
+            dir == _sampleDir &&
+            _opsToWaitBeforeHangCheck <= 0
         ) {
 //            std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
+//            _cycleDetector.dump();
+//            _data.dumpHangInfo();
 
             bool hangDetected = false;
 
@@ -212,6 +221,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                         if (_data.areSnapShotDeltasAreIdentical()) {
                             hangDetected = true;
                         }
+                    } else {
+                        _opsToWaitBeforeHangCheck = _cyclePeriod;
                     }
 
                     _data.captureSnapShot();
@@ -247,6 +258,10 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             // Initiate new sample (as it may not have been stuck yet)
             _sampleProgramPointer = pp;
             _sampleDir = dir;
+            _cyclePeriod = _cycleDetector.getCyclePeriod();
+            _opsToWaitBeforeHangCheck = _cyclePeriod;
+//            std::cout << "period = " << _opsToWaitBeforeHangCheck << std::endl;
+            _cycleDetector.clearInstructionHistory();
             _data.resetHangDetection();
             _data.captureSnapShot();
         }
