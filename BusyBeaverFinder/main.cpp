@@ -28,6 +28,7 @@ void init(int argc, char * argv[]) {
         ("max-steps", "Maximum steps per recursion level", cxxopts::value<int>())
         ("max-steps-total", "Total maximum steps", cxxopts::value<int>())
         ("p,hang-period", "Period for hang-detection", cxxopts::value<int>())
+        ("max-detect-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
         ("help", "Show help");
@@ -86,6 +87,10 @@ void init(int argc, char * argv[]) {
         std::cout << "Adjusted maxStepsTotal to equal maxStepsPerRun" << std::endl;
     }
     searcher->setMaxStepsTotal( maxStepsTotal );
+
+    if (result.count("max-detect-attempts")) {
+        searcher->setMaxHangDetectAttempts(result["max-detect-attempts"].as<int>());
+    }
 
     // Enable testing of hang detection?
     if (result.count("t")) {
