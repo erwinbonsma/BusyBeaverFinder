@@ -51,3 +51,23 @@ TEST_CASE( "4x4 Search", "[search]" ) {
     delete searcher;
     delete tracker;
 }
+
+
+TEST_CASE( "5x5 Search", "[search]" ) {
+    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(5, 5, 128);
+    ProgressTracker *tracker = new ProgressTracker(searcher);
+
+    searcher->setProgressTracker(tracker);
+    searcher->setMaxStepsPerRun(1024);
+    searcher->setHangSamplePeriod(32);
+
+    searcher->search();
+
+    REQUIRE(tracker->getMaxStepsFound() == 43);
+    REQUIRE(tracker->getTotalSuccess() == 51410);
+    // There are still two hangs that are not detected.
+    REQUIRE(tracker->getTotalHangs() - tracker->getTotalEarlyHangs() <= 2);
+
+    delete searcher;
+    delete tracker;
+}
