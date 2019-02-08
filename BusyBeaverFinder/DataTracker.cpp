@@ -81,7 +81,7 @@ SnapShotComparison  DataTracker::compareToSnapShot() {
     return result;
 }
 
-bool  DataTracker::areSnapShotDeltasAreIdentical() {
+bool DataTracker::compareSnapShotDeltas() {
     long _deltaNew = _data.getMaxVisitedP() - _data.getMinVisitedP();
     long _deltaOld = _newSnapShotP->maxVisitedP - _newSnapShotP->minVisitedP;
 
@@ -89,6 +89,8 @@ bool  DataTracker::areSnapShotDeltasAreIdentical() {
         // The number of cells visited differ
         return false;
     }
+
+    long shift = _data.getDataPointer() - _newSnapShotP->dataP;
 
     int *oldBeforeP = _oldSnapShotP->buf + (_newSnapShotP->minVisitedP - _data.getDataBuffer());
     int *oldAfterP = _newSnapShotP->buf + (_newSnapShotP->minVisitedP - _data.getDataBuffer());
@@ -101,15 +103,41 @@ bool  DataTracker::areSnapShotDeltasAreIdentical() {
             *oldBeforeP != *newBeforeP ||
             *oldAfterP != *newAfterP
         ) {
-            return false;
+            // When there is a change in values, only detect hangs when the data pointer did not
+            // move.
+            if (shift != 0) {
+                return false;
+            }
+
+            // The delta between both snapshots must be the same (i.e. both loops should have the
+            // same effect)
+            if ((*newAfterP - *newBeforeP) != (*oldAfterP - *oldBeforeP)) {
+                return false;
+            }
+
+            // Neither of the deltas should not have gone through zero (as this may result in
+            // different execution flows, possibly breaking the loop).
+            //
+            // Note, this check does not detect the following: a value is positive at the start and
+            // end of its snapshot, but actually was zero in between. It is assumed that when that
+            // happens, this happens in both cases. As this check is only invoked after a periodic
+            // loop is detected, it is very unlikely that this assumption is invalid. Should this
+            // happens, this check can be refined.
+            if (
+                (*newAfterP == 0) ||
+                (*newAfterP > 0 && (*oldAfterP <= 0 || *newBeforeP <= 0 || *oldBeforeP <= 0)) ||
+                (*newAfterP < 0 && (*oldAfterP >= 0 || *newBeforeP >= 0 || *oldBeforeP >= 0))
+            ) {
+                return false;
+            }
         }
+
         oldBeforeP++;
         newBeforeP++;
         oldAfterP++;
         newAfterP++;
     } while (newAfterP <= _data.getMaxVisitedP());
 
-    long shift = _data.getDataPointer() - _newSnapShotP->dataP;
     if (shift > 0) {
         // Check that the newly visited values were all zeros
         newBeforeP -= shift;

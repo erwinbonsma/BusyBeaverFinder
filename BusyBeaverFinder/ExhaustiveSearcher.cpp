@@ -127,7 +127,7 @@ bool ExhaustiveSearcher::earlyHangDetected() {
     }
     else {
         if (_dataTracker.getOldSnapShot() != nullptr) {
-            if (_dataTracker.areSnapShotDeltasAreIdentical()) {
+            if (_dataTracker.compareSnapShotDeltas()) {
                 return true;
             }
         } else {

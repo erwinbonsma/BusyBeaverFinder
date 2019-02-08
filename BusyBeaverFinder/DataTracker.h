@@ -51,7 +51,9 @@ public:
 
     void captureSnapShot();
     SnapShotComparison compareToSnapShot();
-    bool areSnapShotDeltasAreIdentical();
+
+    // Returns "true" if a hang is detected
+    bool compareSnapShotDeltas();
 
     void dump();
 };
