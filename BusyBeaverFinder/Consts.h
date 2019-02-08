@@ -9,7 +9,7 @@
 #ifndef Consts_h
 #define Consts_h
 
-#define HANG_DETECTION1
+//#define HANG_DETECTION1
 
 //#define TRACK_EQUIVALENCE
 
