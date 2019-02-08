@@ -130,6 +130,15 @@ bool DataTracker::compareSnapShotDeltas() {
             ) {
                 return false;
             }
+
+            // The change should be moving away from zero. Otherwise the loop may be broken once
+            // the value becomes zero.
+            if (
+                (*newAfterP > 0 && (*newAfterP - *newBeforeP) < 0) ||
+                (*newAfterP < 0 && (*newAfterP - *newBeforeP) > 0)
+            ) {
+                return false;
+            }
         }
 
         oldBeforeP++;
