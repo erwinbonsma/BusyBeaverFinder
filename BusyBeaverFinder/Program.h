@@ -57,7 +57,6 @@ public:
     ulonglong getEquivalenceNumber();
 
     void dump();
-    void dumpHangInfo();
 };
 
 #endif /* Program_h */

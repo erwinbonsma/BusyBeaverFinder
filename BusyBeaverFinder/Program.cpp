@@ -83,14 +83,3 @@ void Program::dump() {
         std::cout << std::endl;
     }
 }
-
-void Program::dumpHangInfo() {
-#ifdef HANG_DETECTION2B
-    bool *p1 = _prevVisited;
-    bool *p2 = _activeVisited;
-    for (int i = programStorageSize; --i >= 0; ) {
-        std::cout << *(p1++) << "/" << *(p2++) << " ";
-    }
-    std::cout << std::endl;
-#endif
-}

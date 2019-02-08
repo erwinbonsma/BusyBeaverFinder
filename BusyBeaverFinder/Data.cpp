@@ -214,13 +214,8 @@ void Data::dumpSettings() {
 #ifdef HANG_DETECTION1
     << " 1"
 #endif
-#ifdef HANG_DETECTION2B
-    << " 2B"
-#endif
 #ifndef HANG_DETECTION1
-#ifndef HANG_DETECTION2B
     << " None"
-#endif
 #endif
     << std::endl;
 }
