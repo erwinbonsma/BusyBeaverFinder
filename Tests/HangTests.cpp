@@ -53,7 +53,7 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
 
         REQUIRE(tracker->getTotalEarlyHangs() == 1);
     }
-    SECTION( "NonUniformCountingLoop" ) {
+    SECTION( "NonUniformCountingLoop1" ) {
         // Loop that increases counter, but with some instructions executed more frequently than
         // others. Furthermore, another data cell switches between three possible values, including
         // zero.
@@ -70,6 +70,27 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::NOOP, Op::TURN, Op::TURN,
             Op::DATA, Op::TURN,
             Op::DATA, Op::TURN, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher->findOne(resumeFrom);
+
+        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+    }
+    SECTION( "NonUniformCountingLoop2" ) {
+        //     * *
+        // * o o o *
+        //   . o o *
+        // * * o . *
+        // o o o *
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::DATA, Op::TURN,
+            Op::DATA, Op::DATA, Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
             Op::UNSET
         };
         searcher->findOne(resumeFrom);

@@ -165,7 +165,8 @@ bool DataTracker::compareSnapShotDeltas() {
             }
             newAfterP++;
         }
-    } else {
+    }
+    else if (shift < 0) {
         // Check that the newly visited values were all zeros
         newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _data.getDataBuffer());
         while (shift < 0) {
