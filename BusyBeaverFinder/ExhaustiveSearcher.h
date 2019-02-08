@@ -52,6 +52,8 @@ class ExhaustiveSearcher {
     void dumpOpStack(Op* op);
     void initOpStack(int size);
 
+    bool earlyHangDetected();
+
     void run(Op* pp, Dir dir, int totalSteps, int depth);
     void branch(Op* pp, Dir dir, int totalSteps, int depth);
 public:

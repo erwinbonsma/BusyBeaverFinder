@@ -111,6 +111,36 @@ void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
     _program.clearOp(pp2);
 }
 
+bool ExhaustiveSearcher::earlyHangDetected() {
+    if (!_data.effectiveDataOperations()) {
+        return true;
+    }
+
+    if (
+        _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
+        !_data.significantValueChange()
+    ) {
+        SnapShotComparison result = _dataTracker.compareToSnapShot();
+        if (result != SnapShotComparison::IMPACTFUL) {
+            return true;
+        }
+    }
+    else {
+        if (_dataTracker.getOldSnapShot() != nullptr) {
+            if (_dataTracker.areSnapShotDeltasAreIdentical()) {
+                return true;
+            }
+        } else {
+            _opsToWaitBeforeHangCheck = _cyclePeriod;
+        }
+
+        _dataTracker.captureSnapShot();
+        // TODO: Abort after X failed attempts?
+    }
+
+    return false;
+}
+
 void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     int numDataOps = 0;
     int steps = 0;
@@ -201,37 +231,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 //            _cycleDetector.dump();
 //            _data.dumpHangInfo();
 
-            bool hangDetected = false;
-
-            if (!_data.effectiveDataOperations()) {
-                hangDetected = true;
-            }
-
-            if (!hangDetected) {
-                if (
-                    _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
-                    !_data.significantValueChange()
-                ) {
-                    SnapShotComparison result = _dataTracker.compareToSnapShot();
-                    if (result != SnapShotComparison::IMPACTFUL) {
-                        hangDetected = true;
-                    }
-                }
-                else {
-                    if (_dataTracker.getOldSnapShot() != nullptr) {
-                        if (_dataTracker.areSnapShotDeltasAreIdentical()) {
-                            hangDetected = true;
-                        }
-                    } else {
-                        _opsToWaitBeforeHangCheck = _cyclePeriod;
-                    }
-
-                    _dataTracker.captureSnapShot();
-                    // TODO: Abort after X failed attempts?
-                }
-            }
-
-            if (hangDetected) {
+            if (earlyHangDetected()) {
                 _tracker->reportEarlyHang();
                 if (!_testHangDetection) {
                     _data.undo(numDataOps);
