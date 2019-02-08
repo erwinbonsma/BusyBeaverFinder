@@ -230,6 +230,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 //            std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
 //            _cycleDetector.dump();
 //            _data.dumpHangInfo();
+//            _dataTracker.dump();
 
             if (earlyHangDetected()) {
                 _tracker->reportEarlyHang();
@@ -261,7 +262,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             _sampleDir = dir;
             _cyclePeriod = _cycleDetector.getCyclePeriod();
             _opsToWaitBeforeHangCheck = _cyclePeriod;
-//            std::cout << "period = " << _opsToWaitBeforeHangCheck << std::endl;
+//            std::cout << "period = " << _cyclePeriod << std::endl;
             _cycleDetector.clearInstructionHistory();
             _data.resetHangDetection();
             _dataTracker.reset();

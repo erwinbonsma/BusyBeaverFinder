@@ -83,6 +83,7 @@ void ProgressTracker::reportHang() {
     } else {
 //        std::cout << "Undetected hang" << std::endl;
 //        _searcher->getProgram().dump();
+//        _searcher->dumpOpStack();
 //        std::cout << std::endl;
     }
 
