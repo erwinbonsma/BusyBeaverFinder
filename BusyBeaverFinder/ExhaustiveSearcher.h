@@ -24,13 +24,16 @@ enum SearchMode : char {
     FIND_ONE = 2,
 };
 
+struct SearchSettings {
+    int hangSamplePeriod;
+    int maxSteps;
+    int maxHangDetectAttempts;
+    bool testHangDetection;
+};
+
 class ExhaustiveSearcher {
-    int _hangSamplePeriod;
+    SearchSettings _settings;
     int _hangSampleMask;
-    int _maxStepsPerRun;
-    int _maxStepsTotal;
-    int _maxHangDetectAttempts;
-    bool _testHangDetection;
 
     Program _program;
     Data _data;
@@ -62,23 +65,21 @@ class ExhaustiveSearcher {
 
     bool earlyHangDetected();
 
+    void reconfigure();
+
     void run(Op* pp, Dir dir, int totalSteps, int depth);
     void branch(Op* pp, Dir dir, int totalSteps, int depth);
 public:
     ExhaustiveSearcher(int width, int height, int dataSize);
     ~ExhaustiveSearcher();
 
-    int getHangSamplePeriod() { return _hangSamplePeriod; }
-    int getMaxStepsPerRun() { return _maxStepsPerRun; }
-    int getMaxStepsTotal() { return _maxStepsTotal; }
-    int getMaxHangDetectAttempts() { return _maxHangDetectAttempts; }
-    bool getHangDetectionTestMode() { return _testHangDetection; }
 
-    void setMaxStepsTotal(int val);
-    void setMaxStepsPerRun(int val);
-    void setHangSamplePeriod(int val);
-    void setMaxHangDetectAttempts(int val);
-    void setHangDetectionTestMode(bool val);
+    SearchSettings getSettings() { return _settings; }
+
+    // Updates settings. It changes buffer allocations as needed.
+    void configure(SearchSettings settings);
+
+    bool getHangDetectionTestMode() { return _settings.testHangDetection; }
 
     void setProgressTracker(ProgressTracker* tracker) { _tracker = tracker; }
 

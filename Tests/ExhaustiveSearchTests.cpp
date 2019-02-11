@@ -36,8 +36,11 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-    searcher.setMaxStepsPerRun(1024);
-    searcher.setHangSamplePeriod(32);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 1024;
+    settings.hangSamplePeriod = 32;
+    searcher.configure(settings);
 
     searcher.search();
 
@@ -51,8 +54,11 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-    searcher.setMaxStepsPerRun(1024);
-    searcher.setHangSamplePeriod(32);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 1024;
+    settings.hangSamplePeriod = 32;
+    searcher.configure(settings);
 
     searcher.search();
 

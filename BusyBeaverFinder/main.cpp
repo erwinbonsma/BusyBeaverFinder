@@ -26,8 +26,7 @@ void init(int argc, char * argv[]) {
         ("w,width", "Program width", cxxopts::value<int>())
         ("h,height", "Program height", cxxopts::value<int>())
         ("d,datasize", "Data size", cxxopts::value<int>())
-        ("max-steps", "Maximum steps per recursion level", cxxopts::value<int>())
-        ("max-steps-total", "Total maximum steps", cxxopts::value<int>())
+        ("max-steps", "Maximum program execution steps", cxxopts::value<int>())
         ("p,hang-period", "Period for hang-detection", cxxopts::value<int>())
         ("max-detect-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
@@ -58,47 +57,32 @@ void init(int argc, char * argv[]) {
 
     searcher = new ExhaustiveSearcher(width, height, dataSize);
 
+    SearchSettings settings = searcher.getSettings();
+
     // Set hang sample period
-    int hangSamplePeriod = searcher->getHangSamplePeriod();
     if (result.count("p")) {
-        hangSamplePeriod = result["p"].as<int>();
+        settings.hangSamplePeriod = result["p"].as<int>();
     }
-    if (! isPowerOfTwo(hangSamplePeriod) ) {
-        hangSamplePeriod = makePowerOfTwo(hangSamplePeriod);
+    if (! isPowerOfTwo(settings.hangSamplePeriod) ) {
+        settings.hangSamplePeriod = makePowerOfTwo(settings.hangSamplePeriod);
         std::cout << "Adjusted hangSamplePeriod to be a power of two" << std::endl;
     }
-    searcher->setHangSamplePeriod(hangSamplePeriod);
-
-    // Set max steps per run
-    int maxStepsPerRun = searcher->getMaxStepsPerRun();
-    if (result.count("max-steps")) {
-        maxStepsPerRun = result["max-steps"].as<int>();
-    }
-    if (maxStepsPerRun % hangSamplePeriod != 0) {
-        maxStepsPerRun += hangSamplePeriod - (maxStepsPerRun % hangSamplePeriod);
-        std::cout << "Adjusted maxStepsPerRun to be multiple of hangSamplePeriod" << std::endl;
-    }
-    searcher->setMaxStepsPerRun( maxStepsPerRun );
 
     // Set max total steps
-    int maxStepsTotal = searcher->getMaxStepsTotal();
-    if (result.count("max-steps-total")) {
-        maxStepsTotal = result["max-steps-total"].as<int>();
+    if (result.count("max-steps")) {
+        settings.maxStepsTotal = result["max-steps"].as<int>();
     }
-    if (maxStepsTotal < maxStepsPerRun) {
-        maxStepsTotal = maxStepsPerRun;
-        std::cout << "Adjusted maxStepsTotal to equal maxStepsPerRun" << std::endl;
-    }
-    searcher->setMaxStepsTotal( maxStepsTotal );
 
     if (result.count("max-detect-attempts")) {
-        searcher->setMaxHangDetectAttempts(result["max-detect-attempts"].as<int>());
+        settings.maxHangDetectAttempts = result["max-detect-attempts"].as<int>();
     }
 
     // Enable testing of hang detection?
     if (result.count("t")) {
-        searcher->setHangDetectionTestMode(true);
+        settings.testHangDetection = true;
     }
+
+    searcher->configure(settings);
 
     // Load resume stack
     if (result.count("resume-from")) {

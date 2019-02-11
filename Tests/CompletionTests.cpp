@@ -18,9 +18,11 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-    searcher.setMaxStepsPerRun(10000);
-    searcher.setMaxStepsTotal(10000);
-    searcher.setHangSamplePeriod(64);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 10000;
+    settings.hangSamplePeriod = 64;
+    searcher.configure(settings);
 
     SECTION( "DivergingDeltaYetNoHang" ) {
         // A diverging change after 102 steps, however, not a hang as one value change touched zero
@@ -59,9 +61,11 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-    searcher.setMaxStepsPerRun(1000000);
-    searcher.setMaxStepsTotal(1000000);
-    searcher.setHangSamplePeriod(256);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 1000000;
+    settings.hangSamplePeriod = 256;
+    searcher.configure(settings);
 
     SECTION( "BB 7x7 #117272" ) {
         Op resumeFrom[] = {
