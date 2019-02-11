@@ -19,6 +19,7 @@ class ExhaustiveSearcher;
 class ProgressTracker {
     int _dumpStatsPeriod = 100000;
     int _dumpStackPeriod = 1000000;
+    bool _dumpUndetectedHangs = false;
 
     ExhaustiveSearcher *_searcher = nullptr;
 
@@ -45,6 +46,7 @@ public:
 
     void setDumpStatsPeriod(int val) { _dumpStatsPeriod = val; }
     void setDumpStackPeriod(int val) { _dumpStackPeriod = val; }
+    void setDumpUndetectedHangs(bool flag) { _dumpUndetectedHangs = flag; }
 
     long getTotalSuccess() { return _totalSuccess; }
     long getTotalHangs() { return _totalHangs; }
