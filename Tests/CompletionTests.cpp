@@ -108,4 +108,30 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
 
         REQUIRE(tracker.getMaxStepsFound() == 422154);
     }
+    SECTION( "BB 7x7 #582561" ) {
+        Op resumeFrom[] = {
+            Op::NOOP, Op::NOOP, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::NOOP, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::NOOP, Op::TURN,
+            Op::DATA, Op::DATA, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
+            Op::TURN, Op::TURN, Op::TURN, Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getMaxStepsFound() == 582561);
+    }
+    SECTION( "BB 7x7 #690345" ) {
+        Op resumeFrom[] = {
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP, Op::DATA, Op::TURN, Op::DATA,
+            Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN,
+            Op::DATA, Op::NOOP, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP,
+            Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::DATA,
+            Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
+            Op::TURN, Op::TURN, Op::TURN, Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getMaxStepsFound() == 690345);
+    }
 }
