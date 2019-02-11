@@ -107,7 +107,7 @@ void init(int argc, char * argv[]) {
         resumeStack = loadResumeStackFromFile(resumeFile, width * height);
     }
 
-    tracker = new ProgressTracker(searcher);
+    tracker = new ProgressTracker(*searcher);
     if (result.count("dump-period")) {
         tracker->setDumpStatsPeriod(result["dump-period"].as<int>());
     }

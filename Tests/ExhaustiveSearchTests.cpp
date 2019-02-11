@@ -12,61 +12,52 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(3, 3, 16);
-    ProgressTracker *tracker = new ProgressTracker(searcher);
+    ExhaustiveSearcher searcher(3, 3, 16);
+    ProgressTracker tracker(searcher);
 
-    searcher->setProgressTracker(tracker);
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "Find all" ) {
-        searcher->search();
+        searcher.search();
 
-        REQUIRE(tracker->getMaxStepsFound() == 4);
-        REQUIRE(tracker->getTotalSuccess() == 59);
+        REQUIRE(tracker.getMaxStepsFound() == 4);
+        REQUIRE(tracker.getTotalSuccess() == 59);
     }
     SECTION( "Find one" ) {
-        searcher->findOne();
+        searcher.findOne();
 
-        REQUIRE(tracker->getMaxStepsFound() == 3);
-        REQUIRE(tracker->getTotalSuccess() == 1);
+        REQUIRE(tracker.getMaxStepsFound() == 3);
+        REQUIRE(tracker.getTotalSuccess() == 1);
     }
-
-    delete searcher;
-    delete tracker;
 }
 
 TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(4, 4, 32);
-    ProgressTracker *tracker = new ProgressTracker(searcher);
+    ExhaustiveSearcher searcher(4, 4, 32);
+    ProgressTracker tracker(searcher);
 
-    searcher->setProgressTracker(tracker);
-    searcher->setMaxStepsPerRun(1024);
-    searcher->setHangSamplePeriod(32);
+    searcher.setProgressTracker(&tracker);
+    searcher.setMaxStepsPerRun(1024);
+    searcher.setHangSamplePeriod(32);
 
-    searcher->search();
+    searcher.search();
 
-    REQUIRE(tracker->getMaxStepsFound() == 14);
-    REQUIRE(tracker->getTotalSuccess() == 854);
-    REQUIRE(tracker->getTotalEarlyHangs() == tracker->getTotalHangs());
-
-    delete searcher;
-    delete tracker;
+    REQUIRE(tracker.getMaxStepsFound() == 14);
+    REQUIRE(tracker.getTotalSuccess() == 854);
+    REQUIRE(tracker.getTotalEarlyHangs() == tracker.getTotalHangs());
 }
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(5, 5, 128);
-    ProgressTracker *tracker = new ProgressTracker(searcher);
+    ExhaustiveSearcher searcher(5, 5, 128);
+    ProgressTracker tracker(searcher);
 
-    searcher->setProgressTracker(tracker);
-    searcher->setMaxStepsPerRun(1024);
-    searcher->setHangSamplePeriod(32);
+    searcher.setProgressTracker(&tracker);
+    searcher.setMaxStepsPerRun(1024);
+    searcher.setHangSamplePeriod(32);
 
-    searcher->search();
+    searcher.search();
 
-    REQUIRE(tracker->getMaxStepsFound() == 43);
-    REQUIRE(tracker->getTotalSuccess() == 51410);
+    REQUIRE(tracker.getMaxStepsFound() == 43);
+    REQUIRE(tracker.getTotalSuccess() == 51410);
     // There are still two hangs that are not detected.
-    REQUIRE(tracker->getTotalHangs() - tracker->getTotalEarlyHangs() <= 2);
-
-    delete searcher;
-    delete tracker;
+    REQUIRE(tracker.getTotalHangs() - tracker.getTotalEarlyHangs() <= 2);
 }

@@ -14,7 +14,7 @@
 
 TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     ExhaustiveSearcher searcher(5, 5, 128);
-    ProgressTracker tracker(&searcher);
+    ProgressTracker tracker(searcher);
     SearchOrchestrator orchestrator(searcher);
 
     searcher.setProgressTracker(&tracker);

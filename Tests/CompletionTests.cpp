@@ -14,13 +14,13 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(6, 6, 32);
-    ProgressTracker *tracker = new ProgressTracker(searcher);
+    ExhaustiveSearcher searcher(6, 6, 32);
+    ProgressTracker tracker(searcher);
 
-    searcher->setProgressTracker(tracker);
-    searcher->setMaxStepsPerRun(10000);
-    searcher->setMaxStepsTotal(10000);
-    searcher->setHangSamplePeriod(64);
+    searcher.setProgressTracker(&tracker);
+    searcher.setMaxStepsPerRun(10000);
+    searcher.setMaxStepsTotal(10000);
+    searcher.setHangSamplePeriod(64);
 
     SECTION( "DivergingDeltaYetNoHang" ) {
         // A diverging change after 102 steps, however, not a hang as one value change touched zero
@@ -33,9 +33,9 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
             Op::TURN, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::DATA,
             Op::NOOP, Op::TURN, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN, Op::TURN, Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalSuccess() == 1);
+        REQUIRE(tracker.getTotalSuccess() == 1);
     }
     SECTION( "IdenticalSnapshotDeltaButNonZeroNewlyVisited" ) {
         // An example where after 220 steps the snapshot delta is the same, but a newly visited
@@ -48,23 +48,20 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
             Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalSuccess() == 1);
+        REQUIRE(tracker.getTotalSuccess() == 1);
     }
-
-    delete searcher;
-    delete tracker;
 }
 
 TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(7, 7, 1024);
-    ProgressTracker *tracker = new ProgressTracker(searcher);
+    ExhaustiveSearcher searcher(7, 7, 1024);
+    ProgressTracker tracker(searcher);
 
-    searcher->setProgressTracker(tracker);
-    searcher->setMaxStepsPerRun(1000000);
-    searcher->setMaxStepsTotal(1000000);
-    searcher->setHangSamplePeriod(256);
+    searcher.setProgressTracker(&tracker);
+    searcher.setMaxStepsPerRun(1000000);
+    searcher.setMaxStepsTotal(1000000);
+    searcher.setHangSamplePeriod(256);
 
     SECTION( "BB 7x7 #117272" ) {
         Op resumeFrom[] = {
@@ -74,9 +71,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
             Op::TURN, Op::TURN, Op::DATA, Op::TURN, Op::TURN, Op::DATA, Op::NOOP, Op::TURN,
             Op::DATA, Op::TURN, Op::TURN, Op::NOOP, Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getMaxStepsFound() == 117272);
+        REQUIRE(tracker.getMaxStepsFound() == 117272);
     }
     SECTION( "BB 7x7 #140164" ) {
         //   *   * * *
@@ -93,9 +90,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
             Op::DATA, Op::DATA, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN,
             Op::NOOP, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::UNSET,
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getMaxStepsFound() == 140163);
+        REQUIRE(tracker.getMaxStepsFound() == 140163);
     }
     SECTION( "BB 7x7 #422154" ) {
         Op resumeFrom[] = {
@@ -105,11 +102,8 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
             Op::DATA, Op::TURN, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN,
             Op::NOOP, Op::NOOP, Op::TURN, Op::DATA, Op::NOOP, Op::NOOP, Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getMaxStepsFound() == 422154);
+        REQUIRE(tracker.getMaxStepsFound() == 422154);
     }
-
-    delete searcher;
-    delete tracker;
 }

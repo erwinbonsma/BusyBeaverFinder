@@ -12,11 +12,11 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
-    ExhaustiveSearcher *searcher = new ExhaustiveSearcher(5, 5, 64);
-    ProgressTracker *tracker = new ProgressTracker(searcher);
+    ExhaustiveSearcher searcher(5, 5, 64);
+    ProgressTracker tracker(searcher);
 
-    searcher->setProgressTracker(tracker);
-    searcher->setHangSamplePeriod(128);
+    searcher.setProgressTracker(&tracker);
+    searcher.setHangSamplePeriod(128);
 
     SECTION( "BasicLoop" ) {
         // *   *
@@ -31,9 +31,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "CountingLoop" ) {
         // *   *
@@ -49,9 +49,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::DATA, Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "NonUniformCountingLoop1" ) {
         // Loop that increases counter, but with some instructions executed more frequently than
@@ -72,9 +72,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::DATA, Op::TURN, Op::TURN, Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "NonUniformCountingLoop2" ) {
         //     * *
@@ -93,9 +93,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::NOOP, Op::TURN, Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "InfSeq1" ) { // Extends leftwards
         //
@@ -113,9 +113,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "InfSeq2" ) { // Extends rightwards
         //       *
@@ -132,9 +132,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "InfSeqNonUniform1" ) {
         // Loop that generates an infinite sequence where some instructions are executed more
@@ -155,9 +155,9 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::NOOP, Op::TURN, Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "InfSeqNonUniform2" ) {
         //   * * *
@@ -175,11 +175,8 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::NOOP, Op::TURN, Op::TURN,
             Op::UNSET
         };
-        searcher->findOne(resumeFrom);
+        searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker->getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
-
-    delete searcher;
-    delete tracker;
 }

@@ -13,10 +13,10 @@
 #include "ExhaustiveSearcher.h"
 #include "Program.h"
 
-ProgressTracker::ProgressTracker(ExhaustiveSearcher *searcher) :
-    _bestProgram(searcher->getProgram().getWidth(), searcher->getProgram().getHeight())
+ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
+    _searcher(searcher),
+    _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight())
 {
-    _searcher = searcher;
     _startTime = clock();
 }
 
@@ -29,30 +29,30 @@ void ProgressTracker::reportDone(int totalSteps) {
         _totalFaultyHangs++;
 
         std::cout << "Faulty hang, steps = " << totalSteps << std::endl;
-        _searcher->getProgram().dump();
-        _searcher->dumpOpStack();
+        _searcher.getProgram().dump();
+        _searcher.dumpOpStack();
     }
 
     if (totalSteps > _maxStepsSofar) {
         _maxStepsSofar = totalSteps;
-        _searcher->getProgram().clone(_bestProgram);
+        _searcher.getProgram().clone(_bestProgram);
         if (_maxStepsSofar > 256) {
             std::cout << "Best sofar = " << _maxStepsSofar << std::endl;
             _bestProgram.dump();
-            _searcher->dumpOpStack();
-            _searcher->getData().dump();
+            _searcher.dumpOpStack();
+            _searcher.getData().dump();
             dumpStats();
         }
     }
 
 #ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher->getProgram().getEquivalenceNumber();
+    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
 #endif
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
     }
     if (_total % _dumpStackPeriod == 0) {
-        _searcher->dumpOpStack();
+        _searcher.dumpOpStack();
     }
 }
 
@@ -66,7 +66,7 @@ void ProgressTracker::reportError() {
     }
 
 #ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher->getProgram().getEquivalenceNumber();
+    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
 #endif
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
@@ -82,13 +82,13 @@ void ProgressTracker::reportHang() {
         _totalEarlyHangs++;
     } else if (_dumpUndetectedHangs) {
         std::cout << "Undetected hang" << std::endl;
-        _searcher->getProgram().dump();
-        _searcher->dumpOpStack();
+        _searcher.getProgram().dump();
+        _searcher.dumpOpStack();
         std::cout << std::endl;
     }
 
 #ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher->getProgram().getEquivalenceNumber();
+    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
 #endif
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
@@ -96,22 +96,22 @@ void ProgressTracker::reportHang() {
 }
 
 void ProgressTracker::reportEarlyHang() {
-    if (_searcher->getHangDetectionTestMode()) {
+    if (_searcher.getHangDetectionTestMode()) {
         // Only signal it. The run continues so it can be verified if it was correctly signalled.
         _earlyHangSignalled = true;
         return;
     }
 
 //    std::cout << "Detected hang" << std::endl;
-//    _searcher->getProgram().dump();
-//    _searcher->getData().dump();
-//    _searcher->dumpOpStack();
+//    _searcher.getProgram().dump();
+//    _searcher.getData().dump();
+//    _searcher.dumpOpStack();
 
     _totalHangs++;
     _totalEarlyHangs++;
 
 #ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher->getProgram().getEquivalenceNumber();
+    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
 #endif
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
@@ -126,12 +126,12 @@ void ProgressTracker::dumpStats() {
     << "/" << _equivalenceTotal
 #endif
     << ", Success=";
-    if (_searcher->getHangDetectionTestMode()) {
+    if (_searcher.getHangDetectionTestMode()) {
          std::cout << _totalFaultyHangs << "/";
     }
     std::cout << _totalSuccess
     << ", Errors=";
-    if (_searcher->getHangDetectionTestMode()) {
+    if (_searcher.getHangDetectionTestMode()) {
         std::cout << _totalEarlyErrors << "/";
     }
     std::cout << _totalError
