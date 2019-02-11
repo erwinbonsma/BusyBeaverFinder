@@ -32,6 +32,7 @@ void init(int argc, char * argv[]) {
         ("max-detect-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
+        ("dump-period", "The period of dumping basic stats", cxxopts::value<int>())
         ("help", "Show help");
     auto result = options.parse(argc, argv);
 
@@ -106,6 +107,10 @@ void init(int argc, char * argv[]) {
     }
 
     tracker = new ProgressTracker(searcher);
+    if (result.count("dump-period")) {
+        tracker->setDumpStatsPeriod(result["dump-period"].as<int>());
+    }
+
     searcher->setProgressTracker(tracker);
 }
 
