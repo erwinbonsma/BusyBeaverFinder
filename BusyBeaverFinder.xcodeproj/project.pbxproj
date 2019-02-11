@@ -125,7 +125,6 @@
 			isa = PBXGroup;
 			children = (
 				AA11020D21F4D35C005C67CF /* cxxopts.hpp */,
-				AA1101FE21F32120005C67CF /* main.cpp */,
 				AA11020521F32538005C67CF /* Enums.h */,
 				AA11020921F32671005C67CF /* Consts.h */,
 				AA90A5882201052900242D3D /* Utils.cpp */,
@@ -134,6 +133,8 @@
 				AA11020B21F327F4005C67CF /* Data.h */,
 				AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */,
 				AA28C0AE220CCE2A00F7EC25 /* DataTracker.h */,
+				AA11020621F3258D005C67CF /* Program.h */,
+				AA11020721F3261F005C67CF /* Program.cpp */,
 				AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */,
 				AA28C0AA220CBC3700F7EC25 /* CycleDetector.h */,
 				AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */,
@@ -142,8 +143,7 @@
 				AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */,
 				AAD5C50C2211F7140057EDBC /* SearchOrchestrator.cpp */,
 				AAD5C50D2211F7140057EDBC /* SearchOrchestrator.h */,
-				AA11020621F3258D005C67CF /* Program.h */,
-				AA11020721F3261F005C67CF /* Program.cpp */,
+				AA1101FE21F32120005C67CF /* main.cpp */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";
