@@ -95,10 +95,12 @@ void ExhaustiveSearcher::dumpSettings() {
 
 void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
     Op* pp2 = pp + (int)dir;
+    bool resuming = *_resumeFrom != Op::UNSET;
+
     for (int i = 0; i < 3; i++) {
         Op op = validOps[i];
 
-        if (*_resumeFrom != Op::UNSET) {
+        if (resuming) {
             if (op == *_resumeFrom) {
                 _resumeFrom++;
             } else {
@@ -110,7 +112,10 @@ void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
         _opStack[depth] = op;
         run(pp, dir, totalSteps, depth + 1);
 
-        if (_abortSearch) {
+        if (
+            _searchMode == SearchMode::FIND_ONE ||
+            (_searchMode == SearchMode::SUB_TREE && resuming)
+        ) {
             break;
         }
     }
@@ -299,14 +304,20 @@ void ExhaustiveSearcher::search(Op* resumeFrom) {
     run(_program.startProgramPointer(), Dir::UP, 0, 0);
 }
 
+void ExhaustiveSearcher::searchSubTree(Op* resumeFrom) {
+    _searchMode = SearchMode::SUB_TREE;
+    search(resumeFrom);
+    _searchMode = SearchMode::FULL_TREE;
+}
+
 void ExhaustiveSearcher::findOne() {
-    _abortSearch = true;
+    _searchMode = SearchMode::FIND_ONE;
     search();
-    _abortSearch = false;
+    _searchMode = SearchMode::FULL_TREE;
 }
 
 void ExhaustiveSearcher::findOne(Op* resumeFrom) {
-    _abortSearch = true;
+    _searchMode = SearchMode::FIND_ONE;
     search(resumeFrom);
-    _abortSearch = false;
+    _searchMode = SearchMode::FULL_TREE;
 }

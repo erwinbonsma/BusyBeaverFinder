@@ -1,5 +1,5 @@
 //
-//  BasicSearchTest.cpp
+//  ExhaustiveSearchTests.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 03/02/19.
@@ -11,7 +11,7 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "3x3 Search", "[search]" ) {
+TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
     ExhaustiveSearcher *searcher = new ExhaustiveSearcher(3, 3, 16);
     ProgressTracker *tracker = new ProgressTracker(searcher);
 
@@ -34,7 +34,7 @@ TEST_CASE( "3x3 Search", "[search]" ) {
     delete tracker;
 }
 
-TEST_CASE( "4x4 Search", "[search]" ) {
+TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
     ExhaustiveSearcher *searcher = new ExhaustiveSearcher(4, 4, 32);
     ProgressTracker *tracker = new ProgressTracker(searcher);
 
@@ -52,8 +52,7 @@ TEST_CASE( "4x4 Search", "[search]" ) {
     delete tracker;
 }
 
-
-TEST_CASE( "5x5 Search", "[search]" ) {
+TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     ExhaustiveSearcher *searcher = new ExhaustiveSearcher(5, 5, 128);
     ProgressTracker *tracker = new ProgressTracker(searcher);
 

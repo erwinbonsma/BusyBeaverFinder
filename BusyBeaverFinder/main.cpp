@@ -13,6 +13,7 @@
 #include "Utils.h"
 #include "ExhaustiveSearcher.h"
 #include "ProgressTracker.h"
+#include "SearchOrchestrator.h"
 
 ExhaustiveSearcher* searcher;
 ProgressTracker* tracker;
@@ -115,7 +116,8 @@ int main(int argc, char * argv[]) {
     if (resumeStack != nullptr) {
         searcher->search((Op*)resumeStack);
     } else {
-        searcher->search();
+        SearchOrchestrator orchestrator(*searcher);
+        orchestrator.search();
     }
     tracker->dumpFinalStats();
 

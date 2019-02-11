@@ -18,6 +18,12 @@
 #include "DataTracker.h"
 #include "ProgressTracker.h"
 
+enum SearchMode : char {
+    FULL_TREE = 0,
+    SUB_TREE = 1,
+    FIND_ONE = 2,
+};
+
 class ExhaustiveSearcher {
     int _hangSamplePeriod;
     int _hangSampleMask;
@@ -31,9 +37,8 @@ class ExhaustiveSearcher {
     CycleDetector _cycleDetector;
     DataTracker _dataTracker;
 
-    // When set to true, aborts the search. Note, the current program that is being built/evaluated
-    // will end first. This is exploited by the findOne methods.
-    bool _abortSearch = false;
+    // Determines when to abort the search
+    SearchMode _searchMode;
 
     // Pointer to array that can be used to resume a previous search. The last operation must be
     // UNSET.
@@ -82,6 +87,8 @@ public:
 
     void search();
     void search(Op* resumeFrom);
+
+    void searchSubTree(Op* resumeFrom);
 
     void findOne();
     void findOne(Op* resumeFrom);
