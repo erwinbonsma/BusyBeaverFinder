@@ -57,20 +57,20 @@ void init(int argc, char * argv[]) {
 
     searcher = new ExhaustiveSearcher(width, height, dataSize);
 
-    SearchSettings settings = searcher.getSettings();
+    SearchSettings settings = searcher->getSettings();
 
     // Set hang sample period
     if (result.count("p")) {
-        settings.hangSamplePeriod = result["p"].as<int>();
+        settings.initialHangSamplePeriod = result["p"].as<int>();
     }
-    if (! isPowerOfTwo(settings.hangSamplePeriod) ) {
-        settings.hangSamplePeriod = makePowerOfTwo(settings.hangSamplePeriod);
-        std::cout << "Adjusted hangSamplePeriod to be a power of two" << std::endl;
+    if (! isPowerOfTwo(settings.initialHangSamplePeriod) ) {
+        settings.initialHangSamplePeriod = makePowerOfTwo(settings.initialHangSamplePeriod);
+        std::cout << "Adjusted initialHangSamplePeriod to be a power of two" << std::endl;
     }
 
     // Set max total steps
     if (result.count("max-steps")) {
-        settings.maxStepsTotal = result["max-steps"].as<int>();
+        settings.maxSteps = result["max-steps"].as<int>();
     }
 
     if (result.count("max-detect-attempts")) {

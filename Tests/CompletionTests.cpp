@@ -21,7 +21,6 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 10000;
-    settings.hangSamplePeriod = 64;
     searcher.configure(settings);
 
     SECTION( "DivergingDeltaYetNoHang" ) {
@@ -64,7 +63,6 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1000000;
-    settings.hangSamplePeriod = 256;
     searcher.configure(settings);
 
     SECTION( "BB 7x7 #117272" ) {

@@ -25,7 +25,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     // Init defaults
     _settings.maxSteps = 1024;
-    _settings.hangSamplePeriod = 64;
+    _settings.initialHangSamplePeriod = 16;
     _settings.maxHangDetectAttempts = 4;
     _settings.testHangDetection = false;
     reconfigure();
@@ -41,12 +41,19 @@ void ExhaustiveSearcher::configure(SearchSettings settings) {
 }
 
 void ExhaustiveSearcher::reconfigure() {
-    assert(isPowerOfTwo(_settings.hangSamplePeriod));
-    _hangSampleMask = _settings.hangSamplePeriod - 1;
-    _data.setHangSamplePeriod(_settings.hangSamplePeriod);
-    _cycleDetector.setHangSamplePeriod(_settings.hangSamplePeriod);
+    assert(isPowerOfTwo(_settings.initialHangSamplePeriod));
+    _initialHangSampleMask = _settings.initialHangSamplePeriod - 1;
 
-    _data.setStackSize(_settings.maxSteps + _settings.hangSamplePeriod);
+    // Determine the maximum sample period (it doubles after each failed attempt)
+    int maxHangSamplePeriod = _settings.initialHangSamplePeriod;
+    int i = _settings.maxHangDetectAttempts;
+    while (--i > 0) {
+        maxHangSamplePeriod <<= 1;
+    }
+
+    _data.setHangSamplePeriod(maxHangSamplePeriod);
+    _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod);
+    _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 }
 
 void ExhaustiveSearcher::initOpStack(int size) {
@@ -75,7 +82,7 @@ void ExhaustiveSearcher::dumpSettings() {
     << "Size = " << _program.getWidth() << "x" << _program.getHeight()
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _settings.maxSteps
-    << ", HangSamplePeriod = " << _settings.hangSamplePeriod
+    << ", IniHangSamplePeriod = " << _settings.initialHangSamplePeriod
     << ", MaxDetectAttempts = " << _settings.maxHangDetectAttempts
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
@@ -151,6 +158,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     _dataTracker.reset();
     _cycleDetector.clearInstructionHistory();
     _sampleProgramPointer = nullptr;
+
+    _hangSampleMask = _initialHangSampleMask;
     _remainingHangDetectAttempts = _settings.maxHangDetectAttempts;
 
     while (1) { // Run until branch, termination or error
@@ -271,6 +280,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 _data.resetHangDetection();
                 _dataTracker.reset();
                 _dataTracker.captureSnapShot();
+
+                _hangSampleMask = (_hangSampleMask << 1) | 1;
             }
         }
     }

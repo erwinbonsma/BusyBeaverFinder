@@ -21,7 +21,6 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1024;
-    settings.hangSamplePeriod = 32;
     searcher.configure(settings);
 
     orchestrator.search();

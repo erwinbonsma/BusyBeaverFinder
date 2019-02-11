@@ -18,7 +18,6 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.hangSamplePeriod = 128;
     searcher.configure(settings);
 
     SECTION( "BasicLoop" ) {

@@ -25,7 +25,7 @@ enum SearchMode : char {
 };
 
 struct SearchSettings {
-    int hangSamplePeriod;
+    int initialHangSamplePeriod;
     int maxSteps;
     int maxHangDetectAttempts;
     bool testHangDetection;
@@ -33,7 +33,8 @@ struct SearchSettings {
 
 class ExhaustiveSearcher {
     SearchSettings _settings;
-    int _hangSampleMask;
+    // Derived settings
+    int _initialHangSampleMask;
 
     Program _program;
     Data _data;
@@ -56,6 +57,7 @@ class ExhaustiveSearcher {
     int _cyclePeriod;
     int _opsToWaitBeforeHangCheck;
 
+    int _hangSampleMask;
     int _remainingHangDetectAttempts;
 
     ProgressTracker* _tracker;
