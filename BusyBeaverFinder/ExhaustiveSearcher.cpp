@@ -118,6 +118,7 @@ void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
         }
     }
     _program.clearOp(pp2);
+    _opStack[depth] = Op::UNSET;
 }
 
 bool ExhaustiveSearcher::earlyHangDetected() {

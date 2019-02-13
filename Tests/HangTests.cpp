@@ -201,4 +201,43 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
+    SECTION( "InfSeqExtendingBothWays1" ) {
+        //     *
+        //   * o . *
+        // * . o *
+        // * o *
+        // o o *
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "InfSeqExtendingBothWays2" ) {
+        //     *
+        //   * o . *
+        //   o o *
+        // * . o *
+        // o o *
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
 }
