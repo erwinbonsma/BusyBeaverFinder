@@ -181,4 +181,24 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
+    SECTION( "InfSeqNonUniform3" ) {
+        //   * * *
+        // * . o o *
+        // o . o o *
+        // . * . . *
+        // .     *
+        Op resumeFrom[] = {
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::DATA, Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
 }

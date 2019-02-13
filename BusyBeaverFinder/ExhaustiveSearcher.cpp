@@ -227,14 +227,14 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                     break;
             }
             if (_remainingHangDetectAttempts > 0) {
-                _cycleDetector.recordInstruction(op);
+                _cycleDetector.recordInstruction((char)op | (((char)dir) << 2));
                 _opsToWaitBeforeHangCheck--;
             }
         } while (!done);
         pp = pp2;
         steps++;
 
-//        std::cout << "steps = " << steps << "depth = " << depth << std::endl;
+//        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
 
         if (
             pp == _sampleProgramPointer &&
@@ -267,7 +267,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 //            _tracker->dumpStats();
 //            _data.dumpHangInfo();
 //            _data.dump();
-//            _program.dumpHangInfo();
+//            _dataTracker.dump();
+//            _cycleDetector.dump();
 
             if (_remainingHangDetectAttempts-- > 0) {
                 // Initiate new sample (as it may not have been stuck yet)

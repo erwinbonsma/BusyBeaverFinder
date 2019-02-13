@@ -30,7 +30,7 @@ void CycleDetector::setHangSamplePeriod(int period) {
     }
     // May access up to three instructions per execution step
     int size = (period + 2) * 3;
-    _opsHistory = new Op[size];
+    _opsHistory = new CycleInstruction[size];
     _findPeriodBuf = new int[size];
     _opsHistoryP = _opsHistory;
     _opsHistoryMaxP = _opsHistoryP + size; // Exclusive
@@ -41,11 +41,11 @@ void CycleDetector::clearInstructionHistory() {
 }
 
 int CycleDetector::getCyclePeriod() {
-    return findPeriod((char *)_opsHistory, _findPeriodBuf, (int)(_opsHistoryP - _opsHistory));
+    return findPeriod(_opsHistory, _findPeriodBuf, (int)(_opsHistoryP - _opsHistory));
 }
 
 void CycleDetector::dump() {
-    Op* opsP = _opsHistory;
+    CycleInstruction* opsP = _opsHistory;
     while (opsP < _opsHistoryP) {
         std::cout << (int)(*(opsP++)) << " ";
     }

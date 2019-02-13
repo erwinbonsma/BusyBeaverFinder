@@ -15,13 +15,15 @@
 
 #include "Enums.h"
 
+typedef char CycleInstruction;
+
 class CycleDetector {
     // Stack of recently requested/executed operations
-    Op* _opsHistory = nullptr;
+    CycleInstruction* _opsHistory = nullptr;
 
     // Pointer to current top of the stack
-    Op* _opsHistoryP = nullptr;
-    Op* _opsHistoryMaxP = nullptr;
+    CycleInstruction* _opsHistoryP = nullptr;
+    CycleInstruction* _opsHistoryMaxP = nullptr;
 
     // Temporary buffer needed by findPeriod function
     int* _findPeriodBuf;
@@ -32,8 +34,8 @@ public:
 
     void setHangSamplePeriod(int period);
 
-    void recordInstruction(Op op) {
-        *(_opsHistoryP++) = op;
+    void recordInstruction(CycleInstruction instruction) {
+        *(_opsHistoryP++) = instruction;
 //        std::cout << "op[" << (_opsHistoryP - _opsHistory) << "]=" << (int)op << std::endl;
         assert(_opsHistoryP < _opsHistoryMaxP);
     }
