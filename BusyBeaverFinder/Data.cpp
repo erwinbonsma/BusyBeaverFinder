@@ -6,6 +6,7 @@
 //  Copyright © 2019 Erwin Bonsma.
 //
 
+#include <assert.h>
 #include <stdio.h>
 #include <iostream>
 
@@ -64,13 +65,19 @@ void Data::updateBounds() {
             } while (*_maxBoundP == 0 && _maxBoundP >= _minBoundP);
         }
     } else {
-        if (_dataP < _minBoundP) {
+        if (_minBoundP > _maxBoundP) {
+            _minBoundP = _dataP;
+            _maxBoundP = _dataP;
+        }
+        else if (_dataP < _minBoundP) {
             _minBoundP = _dataP;
         }
         else if (_dataP > _maxBoundP) {
             _maxBoundP = _dataP;
         }
     }
+
+    assert((*_minBoundP && *_maxBoundP) || (_maxBoundP < _minBoundP));
 }
 
 void Data::setHangSamplePeriod(int period) {

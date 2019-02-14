@@ -99,6 +99,9 @@ SnapShotComparison  DataTracker::compareToSnapShot() {
     return result;
 }
 
+/* Checks for hangs that are periodic.
+ * It assumes that every period the same changes are made, possibly shifted.
+ */
 bool DataTracker::compareSnapShotDeltas() {
     long _deltaNew = _data.getMaxVisitedP() - _data.getMinVisitedP();
     long _deltaOld = _newSnapShotP->maxVisitedP - _newSnapShotP->minVisitedP;
@@ -177,11 +180,8 @@ bool DataTracker::compareSnapShotDeltas() {
         }
 
         // Check that there are only zeros ahead. Other values may break the repetitive behavior
-        while (newAfterP <= _data.getMaxDataP()) {
-            if (*newAfterP != 0) {
-                return false;
-            }
-            newAfterP++;
+        if (_data.getMaxVisitedP() < _data.getMaxBoundP()) {
+            return false;
         }
     }
     else if (shift < 0) {
@@ -196,12 +196,8 @@ bool DataTracker::compareSnapShotDeltas() {
         }
 
         // Check that there are only zeros ahead. Other values may break the repetitive behavior
-        newAfterP = _data.getMinVisitedP() - 1;
-        while (newAfterP >= _data.getMinDataP()) {
-            if (*newAfterP != 0) {
-                return false;
-            }
-            newAfterP--;
+        if (_data.getMinVisitedP() > _data.getMinBoundP()) {
+            return false;
         }
     }
 
