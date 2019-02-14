@@ -26,6 +26,28 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     orchestrator.search();
 
     REQUIRE(tracker.getMaxStepsFound() == 43);
-    // There are still two hangs that are not detected.
-    REQUIRE(tracker.getTotalHangs() - tracker.getTotalEarlyHangs() <= 2);
+    REQUIRE(tracker.getTotalSuccess() == 26319);
+    REQUIRE(tracker.getTotalEarlyHangs() == 4226);
+    REQUIRE(tracker.getTotalHangs() == 4228);
+    REQUIRE(tracker.getTotalErrors() == 0);
+}
+
+TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
+    ExhaustiveSearcher searcher(6, 6, 1024);
+    ProgressTracker tracker(searcher);
+    SearchOrchestrator orchestrator(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 1024;
+    searcher.configure(settings);
+
+    orchestrator.search();
+
+    REQUIRE(tracker.getMaxStepsFound() == 572);
+    REQUIRE(tracker.getTotalSuccess() == 6475715);
+    REQUIRE(tracker.getTotalEarlyHangs() == 1531870);
+    REQUIRE(tracker.getTotalHangs() == 1546939);
+    REQUIRE(tracker.getTotalErrors() == 0);
 }

@@ -49,6 +49,7 @@ public:
     void setDumpUndetectedHangs(bool flag) { _dumpUndetectedHangs = flag; }
 
     long getTotalSuccess() { return _totalSuccess; }
+    long getTotalErrors() { return _totalError; }
     long getTotalHangs() { return _totalHangs; }
     long getTotalEarlyHangs() { return _totalEarlyHangs; }
     int getMaxStepsFound() { return _maxStepsSofar; }
