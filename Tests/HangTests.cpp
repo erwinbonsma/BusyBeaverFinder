@@ -182,6 +182,11 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "InfSeqNonUniform3" ) {
+        // The period of this hang loop is a multiple of the period of the evaluated instructions.
+        // When the hang cycle is executed once, the instructions have been repeated twice. So when
+        // the cycle detector would only consider the latter it would not detect the hang. The hang
+        // is only detected when also the PP-direction is taken into account.
+        //
         //   * * *
         // * . o o *
         // o . o o *
