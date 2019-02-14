@@ -15,9 +15,17 @@
 #include "Data.h"
 #include "Utils.h"
 
+void DataTracker::initSnapShot(SnapShot& snapshot) {
+    snapshot.buf = new int[_data.getSize()];
+    snapshot.minBoundP = _data.getMinBoundP();
+    snapshot.maxBoundP = _data.getMaxBoundP();
+
+    memcpy(snapshot.buf, _data.getDataBuffer(), sizeof(int) * _data.getSize());
+}
+
 DataTracker::DataTracker(Data& data) : _data(data) {
-    _snapShotA.buf = new int[data.getSize()];
-    _snapShotB.buf = new int[data.getSize()];
+    initSnapShot(_snapShotA);
+    initSnapShot(_snapShotB);
 }
 
 DataTracker::~DataTracker() {
@@ -44,14 +52,24 @@ void DataTracker::captureSnapShot() {
         _oldSnapShotP = tmp;
     }
 
-    // TODO: A full copy is not needed when old snapshot is reused. In this case, a smart partial
-    // update suffices.
-    int *buf = _newSnapShotP->buf;
-    memcpy(buf, _data.getDataBuffer(), sizeof(int) * _data.getSize());
+    int *minP = ((_data.getMinBoundP() < _newSnapShotP->minBoundP)
+                 ? _data.getMinBoundP() : _newSnapShotP->minBoundP);
+    int *maxP = ((_data.getMaxBoundP() > _newSnapShotP->maxBoundP)
+                 ? _data.getMaxBoundP() : _newSnapShotP->maxBoundP);
+
+    // Copy the range of values that were non-zero or are non-zero.
+    if (minP <= maxP) {
+        int offset = (int)(minP - _data.getDataBuffer());
+        int len = (int)(maxP - minP + 1);
+
+        memcpy(_newSnapShotP->buf + offset, minP, sizeof(int) * len);
+    }
 
     _newSnapShotP->dataP = _data.getDataPointer();
     _newSnapShotP->minVisitedP = _data.getMinVisitedP();
     _newSnapShotP->maxVisitedP = _data.getMaxVisitedP();
+    _newSnapShotP->minBoundP = _data.getMinBoundP();
+    _newSnapShotP->maxBoundP = _data.getMaxBoundP();
 
     _data.resetVisitedBounds();
 }

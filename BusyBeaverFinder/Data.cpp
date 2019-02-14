@@ -23,6 +23,9 @@ Data::Data(int size) {
     _minDataP = &_data[0]; // Inclusive
     _maxDataP = &_data[size - 1]; // Inclusive
     _dataP = _midDataP;
+
+    _minBoundP = _midDataP;
+    _maxBoundP = _minBoundP - 1; // Empty bounds
 }
 
 Data::~Data() {
@@ -48,6 +51,28 @@ void Data::setStackSize(int size) {
     _undoP = &_undoStack[0];
 }
 
+void Data::updateBounds() {
+    if (*_dataP == 0) {
+        if (_dataP == _minBoundP) {
+            do {
+                _minBoundP++;
+            } while (*_minBoundP == 0 && _minBoundP <= _maxBoundP);
+        }
+        else if (_dataP == _maxBoundP) {
+            do {
+                _maxBoundP--;
+            } while (*_maxBoundP == 0 && _maxBoundP >= _minBoundP);
+        }
+    } else {
+        if (_dataP < _minBoundP) {
+            _minBoundP = _dataP;
+        }
+        else if (_dataP > _maxBoundP) {
+            _maxBoundP = _dataP;
+        }
+    }
+}
+
 void Data::setHangSamplePeriod(int period) {
 #ifdef HANG_DETECTION1
     if (_effective != nullptr) {
@@ -71,6 +96,8 @@ void Data::inc() {
     }
 #endif
 
+    updateBounds();
+
     if (*_dataP == 0 || *_dataP == 1) {
         _significantValueChange = true;
     }
@@ -87,6 +114,8 @@ void Data::dec() {
         *(_effectiveP++) = DataOp::DEC;
     }
 #endif
+
+    updateBounds();
 
     if (*_dataP == 0 || *_dataP == -1) {
         _significantValueChange = true;
@@ -134,8 +163,8 @@ bool Data::shl() {
 void Data::undo(int num) {
     while (--num >= 0) {
         switch (*(--_undoP)) {
-            case DataOp::INC: (*_dataP)--; break;
-            case DataOp::DEC: (*_dataP)++; break;
+            case DataOp::INC: (*_dataP)--; updateBounds(); break;
+            case DataOp::DEC: (*_dataP)++; updateBounds(); break;
             case DataOp::SHR: _dataP--; break;
             case DataOp::SHL: _dataP++; break;
             case DataOp::NONE: break;
@@ -182,10 +211,16 @@ void Data::dump() {
 
     std::cout << "Data: ";
     while (1) {
+        if (p == _minBoundP) {
+            std::cout << "<< ";
+        }
         if (p == _dataP) {
             std::cout << "[" << *p << "]";
         } else {
             std::cout << *p;
+        }
+        if (p == _maxBoundP) {
+            std::cout << " >>";
         }
         if (p < max) {
             p++;

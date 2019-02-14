@@ -18,6 +18,9 @@ struct SnapShot {
     // Delimits the range of values that have been visisted since the last snapshot was taken.
     // These are the date values that may have impacted program execution since then.
     int *minVisitedP, *maxVisitedP;
+
+    // The bounds of non-zero values
+    int *minBoundP, *maxBoundP;
 };
 
 enum class SnapShotComparison : char {
@@ -40,6 +43,8 @@ class DataTracker {
 
     SnapShot *_oldSnapShotP;
     SnapShot *_newSnapShotP;
+
+    void initSnapShot(SnapShot& snapshot);
 public:
     DataTracker(Data& data);
     ~DataTracker();

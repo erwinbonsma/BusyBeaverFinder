@@ -21,6 +21,9 @@ class Data {
     // Delimits the data cells that have been visisted (since the last snapshot was taken)
     int *_minVisitedP, *_maxVisitedP;
 
+    // Delimits the data cells that are non-zero.
+    int *_minBoundP, *_maxBoundP;
+
     // Array with data values
     int *_data;
 
@@ -40,6 +43,8 @@ class Data {
 
     bool _significantValueChange;
 
+    void updateBounds();
+
 public:
     Data(int size);
     ~Data();
@@ -58,6 +63,9 @@ public:
     int* getDataBuffer() { return _data; }
     int* getMinDataP() { return _minDataP; }
     int* getMaxDataP() { return _maxDataP; }
+
+    int* getMinBoundP() { return _minBoundP; }
+    int* getMaxBoundP() { return _maxBoundP; }
 
     /* Returns "true" if there have been effective data operations since the last snapshot.
      * Operations are effective if they do not cancel out the previous (effective) operation.
