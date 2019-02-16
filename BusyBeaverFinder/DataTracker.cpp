@@ -100,9 +100,13 @@ SnapShotComparison  DataTracker::compareToSnapShot() {
 }
 
 /* Checks for hangs that are periodic.
- * It assumes that every period the same changes are made, possibly shifted.
+ *
+ * This check should be invoked with two snapshots taken at identical spots in the program (same PP,
+ * including direction) separated in time by the periodic interval suggested by the cycle detector.
+ *
+ * It checks if during both periods the same data changes are made, possibly shifted.
  */
-bool DataTracker::compareSnapShotDeltas() {
+bool DataTracker::periodicHangDetected() {
     long _deltaNew = _data.getMaxVisitedP() - _data.getMinVisitedP();
     long _deltaOld = _newSnapShotP->maxVisitedP - _newSnapShotP->minVisitedP;
 
@@ -200,6 +204,51 @@ bool DataTracker::compareSnapShotDeltas() {
             return false;
         }
     }
+
+    return true;
+}
+
+// Note: Changes away from zero are allowed (at the ends of the data sequence, which itself does
+// not contain zeroes).
+#define IMPACTFUL_SWEEP_CHANGE(x, y) ((x < 0 && y > x) || (x > 0 && y < x))
+
+bool DataTracker::sweepHangDetected() {
+    int *p, *q;
+    int *pEnd;
+
+    // Check if the old snapshot contains zeros
+    p = _oldSnapShotP->buf + (_oldSnapShotP->minBoundP - _data.getDataBuffer());
+    pEnd = _oldSnapShotP->buf + (_oldSnapShotP->maxBoundP - _data.getDataBuffer());
+    do {
+        if (*p == 0) {
+            return false;
+        }
+        p++;
+    } while (p <= pEnd);
+
+    // Check if there was an impactful change from the old to the new snapshot
+    p = _oldSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
+    q = _newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
+    pEnd = _oldSnapShotP->buf + (_newSnapShotP->maxBoundP - _data.getDataBuffer());
+    do {
+        if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
+            return false;
+        }
+        p++;
+        q++;
+    } while (p <= pEnd);
+
+    // Check if there was an impactful change from the new snapshot to the current data state.
+    p = _newSnapShotP->buf + (_data.getMinBoundP() - _data.getDataBuffer());
+    q = _data.getMinBoundP();
+    pEnd = _newSnapShotP->buf + (_data.getMaxBoundP() - _data.getDataBuffer());
+    do {
+        if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
+            return false;
+        }
+        p++;
+        q++;
+    } while (p <= pEnd);
 
     return true;
 }

@@ -57,8 +57,11 @@ public:
     void captureSnapShot();
     SnapShotComparison compareToSnapShot();
 
-    // Returns "true" if a hang is detected
-    bool compareSnapShotDeltas();
+    // Returns "true" if a periodic hang is detected
+    bool periodicHangDetected();
+
+    // Returns "true" if a sweep hang is detected
+    bool sweepHangDetected();
 
     void dump();
 };

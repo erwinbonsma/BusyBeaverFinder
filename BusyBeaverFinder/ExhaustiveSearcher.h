@@ -24,6 +24,12 @@ enum SearchMode : char {
     FIND_ONE = 2,
 };
 
+enum DataDirection : char {
+    NONE = 0,
+    LEFT = 1,
+    RIGHT = 2
+};
+
 struct SearchSettings {
     int initialHangSamplePeriod;
     int maxSteps;
@@ -51,21 +57,28 @@ class ExhaustiveSearcher {
     // Stack of operations built up by the exhaustive search
     Op* _opStack;
 
-    // Hang detection
+    int _hangSampleMask;
+
+    // Periodic hang detection
     Op* _sampleProgramPointer;
     Dir _sampleDir;
     int _cyclePeriod;
-    int _opsToWaitBeforeHangCheck;
+    int _opsToWaitBeforePeriodicHangCheck;
+    int _remainingPeriodicHangDetectAttempts;
 
-    int _hangSampleMask;
-    int _remainingHangDetectAttempts;
+    // Sweep hang detection
+    int _remainingSweepHangDetectAttempts;
+    int *_prevMinBoundP, *_prevMaxBoundP;
+    DataDirection _prevExtensionDir;
+    int _extensionCount;
 
     ProgressTracker* _tracker;
 
     void dumpOpStack(Op* op);
     void initOpStack(int size);
 
-    bool earlyHangDetected();
+    bool periodicHangDetected();
+    bool sweepHangDetected();
 
     void reconfigure();
 

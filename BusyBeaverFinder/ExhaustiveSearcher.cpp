@@ -91,6 +91,40 @@ void ExhaustiveSearcher::dumpSettings() {
 }
 
 
+
+bool ExhaustiveSearcher::periodicHangDetected() {
+    if (!_data.effectiveDataOperations()) {
+        return true;
+    }
+
+    if (
+        _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
+        !_data.significantValueChange()
+        ) {
+        SnapShotComparison result = _dataTracker.compareToSnapShot();
+        if (result != SnapShotComparison::IMPACTFUL) {
+            return true;
+        }
+    }
+    else {
+        if (_dataTracker.getOldSnapShot() != nullptr) {
+            if (_dataTracker.periodicHangDetected()) {
+                return true;
+            }
+        } else {
+            _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
+        }
+
+        _dataTracker.captureSnapShot();
+    }
+
+    return false;
+}
+
+bool ExhaustiveSearcher::sweepHangDetected() {
+    return _dataTracker.sweepHangDetected();
+}
+
 void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
     Op* pp2 = pp + (int)dir;
     bool resuming = *_resumeFrom != Op::UNSET;
@@ -121,36 +155,6 @@ void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
     _opStack[depth] = Op::UNSET;
 }
 
-bool ExhaustiveSearcher::earlyHangDetected() {
-    if (!_data.effectiveDataOperations()) {
-        return true;
-    }
-
-    if (
-        _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
-        !_data.significantValueChange()
-    ) {
-        SnapShotComparison result = _dataTracker.compareToSnapShot();
-        if (result != SnapShotComparison::IMPACTFUL) {
-            return true;
-        }
-    }
-    else {
-        if (_dataTracker.getOldSnapShot() != nullptr) {
-            if (_dataTracker.compareSnapShotDeltas()) {
-                return true;
-            }
-        } else {
-            _opsToWaitBeforeHangCheck = _cyclePeriod;
-        }
-
-        _dataTracker.captureSnapShot();
-        // TODO: Abort after X failed attempts?
-    }
-
-    return false;
-}
-
 void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     int numDataOps = 0;
     int steps = 0;
@@ -161,7 +165,8 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     _sampleProgramPointer = nullptr;
 
     _hangSampleMask = _initialHangSampleMask;
-    _remainingHangDetectAttempts = _settings.maxHangDetectAttempts;
+    _remainingPeriodicHangDetectAttempts = _settings.maxHangDetectAttempts;
+    _remainingSweepHangDetectAttempts = 0; // Will be bumped after periodic hang checks are done
 
     while (1) { // Run until branch, termination or error
         Op* pp2;
@@ -227,9 +232,9 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                     }
                     break;
             }
-            if (_remainingHangDetectAttempts > 0) {
+            if (_remainingPeriodicHangDetectAttempts > 0) {
                 _cycleDetector.recordInstruction((char)op | (((char)dir) << 2));
-                _opsToWaitBeforeHangCheck--;
+                _opsToWaitBeforePeriodicHangCheck--;
             }
         } while (!done);
         pp = pp2;
@@ -240,20 +245,56 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
         if (
             pp == _sampleProgramPointer &&
             dir == _sampleDir &&
-            _remainingHangDetectAttempts > 0 &&
-            _opsToWaitBeforeHangCheck <= 0
+            _remainingPeriodicHangDetectAttempts > 0 &&
+            _opsToWaitBeforePeriodicHangCheck <= 0
         ) {
 //            std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
 //            _cycleDetector.dump();
 //            _data.dumpHangInfo();
 //            _dataTracker.dump();
 
-            if (earlyHangDetected()) {
+            if (periodicHangDetected()) {
                 _tracker->reportEarlyHang();
                 if (!_settings.testHangDetection) {
                     _data.undo(numDataOps);
                     return;
                 }
+            }
+        }
+
+        if (
+            _remainingSweepHangDetectAttempts > 0
+        ) {
+            DataDirection extensionDir = DataDirection::NONE;
+            if (_prevMinBoundP > _data.getMinBoundP()) {
+                // Extended leftwards
+                extensionDir = DataDirection::LEFT;
+            }
+            else if (_prevMaxBoundP < _data.getMaxBoundP()) {
+                // Extended rightwards
+                extensionDir = DataDirection::RIGHT;
+            }
+            _prevMinBoundP = _data.getMinBoundP();
+            _prevMaxBoundP = _data.getMaxBoundP();
+
+            if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
+                _prevExtensionDir = extensionDir;
+                _extensionCount++;
+                if (_extensionCount == 3) {
+                    if (sweepHangDetected()) {
+//                        std::cout << "Sweep hang detected!" << std::endl;
+//                        _data.dump();
+//                        _dataTracker.dump();
+                        _tracker->reportEarlyHang();
+                        if (!_settings.testHangDetection) {
+                            _data.undo(numDataOps);
+                            return;
+                        }
+                    }
+                    _remainingSweepHangDetectAttempts--;
+                    _extensionCount = 1; // Continue with next detection attempt
+                }
+                _dataTracker.captureSnapShot();
             }
         }
 
@@ -271,12 +312,14 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 //            _dataTracker.dump();
 //            _cycleDetector.dump();
 
-            if (_remainingHangDetectAttempts-- > 0) {
+            if (_remainingPeriodicHangDetectAttempts > 0) {
+                _remainingPeriodicHangDetectAttempts--;
+
                 // Initiate new sample (as it may not have been stuck yet)
                 _sampleProgramPointer = pp;
                 _sampleDir = dir;
                 _cyclePeriod = _cycleDetector.getCyclePeriod();
-                _opsToWaitBeforeHangCheck = _cyclePeriod;
+                _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
 //                std::cout << "period = " << _cyclePeriod << std::endl;
                 _cycleDetector.clearInstructionHistory();
                 _data.resetHangDetection();
@@ -284,6 +327,15 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                 _dataTracker.captureSnapShot();
 
                 _hangSampleMask = (_hangSampleMask << 1) | 1;
+            }
+            else if (_remainingPeriodicHangDetectAttempts == 0) {
+                _remainingPeriodicHangDetectAttempts--;
+
+                _remainingSweepHangDetectAttempts = 3;
+                _extensionCount = 0;
+                _prevExtensionDir = DataDirection::NONE;
+                _prevMinBoundP = _data.getMinBoundP();
+                _prevMaxBoundP = _data.getMaxBoundP();
             }
         }
     }
