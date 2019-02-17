@@ -159,6 +159,47 @@ bool ExhaustiveSearcher::sweepHangDetected() {
     return false;
 }
 
+void ExhaustiveSearcher::initiateNewHangCheck(Op* pp, Dir dir) {
+//    _program.dump();
+//    _tracker->dumpStats();
+//    _data.dumpHangInfo();
+//    _data.dump();
+//    _dataTracker.dump();
+//    _cycleDetector.dump();
+
+    if (_remainingPeriodicHangDetectAttempts > 0) {
+        _remainingPeriodicHangDetectAttempts--;
+
+        // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
+        // previous sample period was too low to detect the period of the hang cycle)
+        _activeHangCheck = HangCheck::PERIODIC;
+
+        _sampleProgramPointer = pp;
+        _sampleDir = dir;
+        _cyclePeriod = _cycleDetector.getCyclePeriod();
+        _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
+        //                    std::cout << "period = " << _cyclePeriod << std::endl;
+        _cycleDetector.clearInstructionHistory();
+        _data.resetHangDetection();
+        _dataTracker.reset();
+        _dataTracker.captureSnapShot();
+
+        _hangSampleMask = (_hangSampleMask << 1) | 1;
+    }
+    else if (_remainingPeriodicHangDetectAttempts == 0) {
+        _remainingPeriodicHangDetectAttempts--;
+
+        _activeHangCheck = HangCheck::SWEEP;
+
+        _remainingSweepHangDetectAttempts = 3;
+        _extensionCount = 0;
+        _prevExtensionDir = DataDirection::NONE;
+        _prevMinBoundP = _data.getMinBoundP();
+        _prevMaxBoundP = _data.getMaxBoundP();
+    }
+}
+
+
 void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
     Op* pp2 = pp + (int)dir;
     bool resuming = *_resumeFrom != Op::UNSET;
@@ -323,43 +364,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             }
 
             if (_activeHangCheck == HangCheck::NONE) {
-//                _program.dump();
-//                _tracker->dumpStats();
-//                _data.dumpHangInfo();
-//                _data.dump();
-//                _dataTracker.dump();
-//                _cycleDetector.dump();
-
-                if (_remainingPeriodicHangDetectAttempts > 0) {
-                    _remainingPeriodicHangDetectAttempts--;
-
-                    // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
-                    // previous sample period was too low to detect the period of the hang cycle)
-                    _activeHangCheck = HangCheck::PERIODIC;
-
-                    _sampleProgramPointer = pp;
-                    _sampleDir = dir;
-                    _cyclePeriod = _cycleDetector.getCyclePeriod();
-                    _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
-//                    std::cout << "period = " << _cyclePeriod << std::endl;
-                    _cycleDetector.clearInstructionHistory();
-                    _data.resetHangDetection();
-                    _dataTracker.reset();
-                    _dataTracker.captureSnapShot();
-
-                    _hangSampleMask = (_hangSampleMask << 1) | 1;
-                }
-                else if (_remainingPeriodicHangDetectAttempts == 0) {
-                    _remainingPeriodicHangDetectAttempts--;
-
-                    _activeHangCheck = HangCheck::SWEEP;
-
-                    _remainingSweepHangDetectAttempts = 3;
-                    _extensionCount = 0;
-                    _prevExtensionDir = DataDirection::NONE;
-                    _prevMinBoundP = _data.getMinBoundP();
-                    _prevMaxBoundP = _data.getMaxBoundP();
-                }
+                initiateNewHangCheck(pp, dir);
             }
         }
     }

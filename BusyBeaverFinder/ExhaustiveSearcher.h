@@ -84,6 +84,7 @@ class ExhaustiveSearcher {
     void dumpOpStack(Op* op);
     void initOpStack(int size);
 
+    void initiateNewHangCheck(Op* pp, Dir dir);
     bool periodicHangDetected();
     bool sweepHangDetected();
 
