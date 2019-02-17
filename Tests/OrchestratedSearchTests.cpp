@@ -37,6 +37,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     ProgressTracker tracker(searcher);
     SearchOrchestrator orchestrator(searcher);
 
+//    tracker.setDumpUndetectedHangs(true);
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
@@ -44,10 +45,11 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     searcher.configure(settings);
 
     orchestrator.search();
+    tracker.dumpFinalStats();
 
     REQUIRE(tracker.getMaxStepsFound() == 572);
     REQUIRE(tracker.getTotalSuccess() == 6475715);
-    REQUIRE(tracker.getTotalEarlyHangs() == 1535545);
+    REQUIRE(tracker.getTotalEarlyHangs() == 1542180);
     REQUIRE(tracker.getTotalHangs() == 1546939);
     REQUIRE(tracker.getTotalErrors() == 0);
 }
