@@ -338,3 +338,46 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
 }
+
+TEST_CASE( "6x6 Failing Hang tests", "[hang][sweep][6x6][.fail]" ) {
+    ExhaustiveSearcher searcher(6, 6, 256);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectAttempts = 4;
+    settings.initialHangSamplePeriod = 16;
+    searcher.configure(settings);
+
+    SECTION( "6x6-HangGlider") {
+        // Here a sweep is occuring over part of a sequence, where the midway point is a temporary
+        // zero. It has value one, which only briefly becomes zero, triggering the turn after
+        // which its value is restored to one.
+        //
+        // The name of this section is based on the program's shape. The type of hang is more
+        // accurately described by 6x6-InfSweepSeqExtendingOneWayWithNonZeroMidPoint
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-RunAwayGlider") {
+        // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
+        // zeroes in their wake. The amount of steps required to move one position on the tape
+        // doubles each time (as the left counter is decreased towards zero, the right counter is
+        // increased by two).
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+}
