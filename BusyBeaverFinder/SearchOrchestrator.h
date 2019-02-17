@@ -18,10 +18,10 @@ class ExhaustiveSearcher;
 class SearchOrchestrator {
     ExhaustiveSearcher& _searcher;
 
-    // Adds operations to the operation stack where topP points to the top of the stack. It first
-    // adds numNoop NOOP instructions, then numData DATA instructions followed by one turn
+    // Adds instructions to the instruction stack where topP points to the top of the stack. It
+    // first adds numNoop NOOP instructions, then numData DATA instructions followed by one turn
     // instruction. It returns the pointer to the new top of the stack.
-    Op* addOperationsUntilTurn(Op* topP, int numNoop, int numData);
+    Ins* addInstructionsUntilTurn(Ins* topP, int numNoop, int numData);
 
 public:
     SearchOrchestrator(ExhaustiveSearcher& searcher);

@@ -25,13 +25,13 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . . *
         // . * . .
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -43,13 +43,13 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // . . o .
         // . * . .
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -65,14 +65,14 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . o *
         // . * o . *
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -84,16 +84,16 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         //   . o o *
         // * * o . *
         // o o o *
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::DATA, Op::TURN,
-            Op::DATA, Op::DATA, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -106,14 +106,14 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // . * o .
         // .   . *
         // .   *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -125,14 +125,14 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . o *
         // . * . o
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -147,15 +147,15 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . . *
         // . * . .
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -167,15 +167,15 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . o . *
         // . * . . *
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::DATA, Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -192,15 +192,15 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . o o *
         // . * . . *
         // .     *
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::DATA, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -223,14 +223,14 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
         // * . o *
         // * o *
         // o o *
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -242,15 +242,15 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
         //   o o *
         // * . o *
         // o o *
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -270,17 +270,17 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     searcher.configure(settings);
 
     SECTION( "6x6-NonUniformCountingLoop1" ) {
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::DATA, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::NOOP, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -303,18 +303,18 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         // This program sweeps over the entire data sequence, which causes the hang cycle to
         // continuously increase. However, it only extends one way.
 
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -322,16 +322,16 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
     }
     SECTION( "6x6-InfSweepSeqExtendingOneWayWithZeroes") {
         // Here a sweep is occuring over a zero-delimited part of the sequence.
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::DATA, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN,
-            Op::NOOP, Op::TURN,
-            Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

@@ -10,7 +10,7 @@
 
 #include "Program.h"
 
-const char op_chars[5] = {'?', '_', 'o', '*', 'X' };
+const char ins_chars[5] = {'?', '_', 'o', '*', 'X' };
 
 Program::Program(int width, int height) {
     _width = width;
@@ -24,51 +24,51 @@ Program::Program(int width, int height) {
     //
     // Note, there's no extra rightmost column. This is not needed, the pointer will wrap and end
     // up in the leftmost "DONE" column.
-    Op* pp = _ops;
+    Ins* pp = _instructions;
     for (int row = -1; row <= MAX_HEIGHT; row++) {
         for (int col = -1; col < MAX_WIDTH; col++) {
-            *pp = (row >=0 && row < height && col >= 0 && col < width) ? Op::UNSET : Op::DONE;
+            *pp = (row >=0 && row < height && col >= 0 && col < width) ? Ins::UNSET : Ins::DONE;
             pp++;
         }
     }
 }
 
-Op Program::getOp(int col, int row) {
-    return _ops[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
+Ins Program::getInstruction(int col, int row) {
+    return _instructions[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
 }
 
 void Program::clone(Program& dest) {
-    Op* ppSrc = startProgramPointer();
-    Op* ppDst = dest.startProgramPointer();
+    Ins* ppSrc = startProgramPointer();
+    Ins* ppDst = dest.startProgramPointer();
     for (int i = programStorageSize; --i >= 0; ) {
-        dest.setOp(ppDst++, getOp(ppSrc++));
+        dest.setInstruction(ppDst++, getInstruction(ppSrc++));
     }
 }
 
 ulonglong Program::getEquivalenceNumber() {
     ulonglong num = 1;
-    Op op;
+    Ins ins;
     for (int x = _width - 1; --x >= 0; ) {
         for (int y = _height - 1; --y >= 0; ) {
-            if (getOp(x, y) == Op::UNSET) {
+            if (getInstruction(x, y) == Ins::UNSET) {
                 num *= 3;
             }
         }
 
-        op = getOp(x, _height - 1);
-        if (op == Op::UNSET) {
+        ins = getInstruction(x, _height - 1);
+        if (ins == Ins::UNSET) {
             num *= 2;
         }
-        else if (op == Op::DATA) {
+        else if (ins == Ins::DATA) {
             return 0;
         }
     }
     for (int y = _height - 1; --y >= 0; ) {
-        op = getOp(_width - 1, y);
-        if (op == Op::UNSET) {
+        ins = getInstruction(_width - 1, y);
+        if (ins == Ins::UNSET) {
             num *= 2;
         }
-        else if (op == Op::DATA) {
+        else if (ins == Ins::DATA) {
             return 0;
         }
     }
@@ -78,7 +78,7 @@ ulonglong Program::getEquivalenceNumber() {
 void Program::dump() {
     for (int y = _height; --y >= 0; ) {
         for (int x = 0; x < _width; x++) {
-            std::cout << " " << op_chars[(int)getOp(x, y)];
+            std::cout << " " << ins_chars[(int)getInstruction(x, y)];
         }
         std::cout << std::endl;
     }

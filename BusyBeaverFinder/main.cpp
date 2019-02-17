@@ -18,7 +18,7 @@
 ExhaustiveSearcher* searcher;
 ProgressTracker* tracker;
 
-Op* resumeStack = nullptr;
+Ins* resumeStack = nullptr;
 
 void init(int argc, char * argv[]) {
     cxxopts::Options options("BusyBeaverFinder", "Searcher for Busy Beaver Programs");
@@ -107,7 +107,7 @@ int main(int argc, char * argv[]) {
 
     searcher->dumpSettings();
     if (resumeStack != nullptr) {
-        searcher->search((Op*)resumeStack);
+        searcher->search((Ins*)resumeStack);
     } else {
         SearchOrchestrator orchestrator(*searcher);
         orchestrator.search();

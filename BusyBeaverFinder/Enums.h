@@ -11,7 +11,8 @@
 
 #include "Consts.h"
 
-enum class Op : char {
+// Program instructions
+enum class Ins : char {
     UNSET = 0,
     NOOP = 1,
     DATA = 2,
@@ -19,6 +20,7 @@ enum class Op : char {
     DONE = 4 // Guard instruction, signalling program completion
 };
 
+// Program pointer directions
 enum class Dir : int {
     UP = (MAX_WIDTH + 1),
     RIGHT = 1,
@@ -26,6 +28,7 @@ enum class Dir : int {
     LEFT = -1
 };
 
+// Data operations
 enum class DataOp : char {
     INC = 0,
     DEC = 1,

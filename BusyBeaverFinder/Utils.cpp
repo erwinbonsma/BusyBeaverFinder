@@ -121,18 +121,18 @@ int findPeriod(const char* input, int* buf, int len) {
     return len;
 }
 
-Op* loadResumeStackFromFile(std::string inputFile, int maxSize) {
-    Op* resumeStack = new Op[maxSize];
-    int numOps = 0;
+Ins* loadResumeStackFromFile(std::string inputFile, int maxSize) {
+    Ins* resumeStack = new Ins[maxSize];
+    int numInstructions = 0;
 
     std::cout << "Resuming from " << inputFile << std::endl;
     FILE *file = fopen(inputFile.c_str(), "r");
     if (file) {
         int ch;
-        while (numOps < maxSize - 1 && (ch = readNextChar(file)) != EOF) {
+        while (numInstructions < maxSize - 1 && (ch = readNextChar(file)) != EOF) {
             int intVal = ch - '0';
             assert(intVal >= 0 && intVal <= 3);
-            resumeStack[numOps++] = (Op)intVal;
+            resumeStack[numInstructions++] = (Ins)intVal;
 
             ch = readNextChar(file);
             assert(ch == ',' || ch == EOF);
@@ -142,7 +142,7 @@ Op* loadResumeStackFromFile(std::string inputFile, int maxSize) {
     else {
         std::cout << "Could not read file" << std::endl;
     }
-    resumeStack[numOps] = Op::UNSET; // Add UNSET operation as guard
+    resumeStack[numInstructions] = Ins::UNSET; // Add UNSET instruction as guard
 
     return resumeStack;
 }

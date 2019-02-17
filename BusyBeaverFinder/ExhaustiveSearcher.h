@@ -58,16 +58,16 @@ class ExhaustiveSearcher {
 
     // Pointer to array that can be used to resume a previous search. The last operation must be
     // UNSET.
-    Op* _resumeFrom;
+    Ins* _resumeFrom;
 
-    // Stack of operations built up by the exhaustive search
-    Op* _opStack;
+    // Stack of instructions built up by the exhaustive search
+    Ins* _instructionStack;
 
     int _hangSampleMask;
     HangCheck _activeHangCheck;
 
     // Periodic hang detection
-    Op* _sampleProgramPointer;
+    Ins* _sampleProgramPointer;
     Dir _sampleDir;
     int _cyclePeriod;
     int _opsToWaitBeforePeriodicHangCheck;
@@ -80,17 +80,17 @@ class ExhaustiveSearcher {
 
     ProgressTracker* _tracker;
 
-    void dumpOpStack(Op* op);
-    void initOpStack(int size);
+    void dumpInstructionStack(Ins* stack);
+    void initInstructionStack(int size);
 
-    void initiateNewHangCheck(Op* pp, Dir dir);
+    void initiateNewHangCheck(Ins* pp, Dir dir);
     bool periodicHangDetected();
     bool sweepHangDetected();
 
     void reconfigure();
 
-    void run(Op* pp, Dir dir, int totalSteps, int depth);
-    void branch(Op* pp, Dir dir, int totalSteps, int depth);
+    void run(Ins* pp, Dir dir, int totalSteps, int depth);
+    void branch(Ins* pp, Dir dir, int totalSteps, int depth);
 public:
     ExhaustiveSearcher(int width, int height, int dataSize);
     ~ExhaustiveSearcher();
@@ -109,14 +109,14 @@ public:
     Data& getData() { return _data; }
 
     void search();
-    void search(Op* resumeFrom);
+    void search(Ins* resumeFrom);
 
-    void searchSubTree(Op* resumeFrom);
+    void searchSubTree(Ins* resumeFrom);
 
     void findOne();
-    void findOne(Op* resumeFrom);
+    void findOne(Ins* resumeFrom);
 
-    void dumpOpStack();
+    void dumpInstructionStack();
     void dumpSettings();
 };
 

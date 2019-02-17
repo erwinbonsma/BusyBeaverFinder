@@ -13,7 +13,7 @@
 
 #include "Utils.h"
 
-Op validOps[] = { Op::NOOP, Op::DATA, Op::TURN };
+Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
@@ -21,7 +21,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _cycleDetector(),
     _dataTracker(_data)
 {
-    initOpStack(width * height);
+    initInstructionStack(width * height);
 
     // Init defaults
     _settings.maxSteps = 1024;
@@ -32,7 +32,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 }
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
-    delete[] _opStack;
+    delete[] _instructionStack;
 }
 
 void ExhaustiveSearcher::configure(SearchSettings settings) {
@@ -56,25 +56,25 @@ void ExhaustiveSearcher::reconfigure() {
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 }
 
-void ExhaustiveSearcher::initOpStack(int size) {
-    _opStack = new Op[size];
+void ExhaustiveSearcher::initInstructionStack(int size) {
+    _instructionStack = new Ins[size];
 
     for (int i = size; --i >= 0; ) {
-        _opStack[i] = Op::UNSET;
+        _instructionStack[i] = Ins::UNSET;
     }
 }
 
-void ExhaustiveSearcher::dumpOpStack(Op* op) {
-    while (*op != Op::UNSET) {
-        std::cout << (int)*op << ",";
-        op++;
+void ExhaustiveSearcher::dumpInstructionStack(Ins* stack) {
+    while (*stack != Ins::UNSET) {
+        std::cout << (int)*stack << ",";
+        stack++;
     }
     std::cout << std::endl;
 }
 
-void ExhaustiveSearcher::dumpOpStack() {
-    std::cout << "Op stack: ";
-    dumpOpStack(_opStack);
+void ExhaustiveSearcher::dumpInstructionStack() {
+    std::cout << "Instruction stack: ";
+    dumpInstructionStack(_instructionStack);
 }
 
 void ExhaustiveSearcher::dumpSettings() {
@@ -158,7 +158,7 @@ bool ExhaustiveSearcher::sweepHangDetected() {
     return false;
 }
 
-void ExhaustiveSearcher::initiateNewHangCheck(Op* pp, Dir dir) {
+void ExhaustiveSearcher::initiateNewHangCheck(Ins* pp, Dir dir) {
 //    _program.dump();
 //    _tracker->dumpStats();
 //    _data.dumpHangInfo();
@@ -197,23 +197,23 @@ void ExhaustiveSearcher::initiateNewHangCheck(Op* pp, Dir dir) {
 }
 
 
-void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
-    Op* pp2 = pp + (int)dir;
-    bool resuming = *_resumeFrom != Op::UNSET;
+void ExhaustiveSearcher::branch(Ins* pp, Dir dir, int totalSteps, int depth) {
+    Ins* pp2 = pp + (int)dir;
+    bool resuming = *_resumeFrom != Ins::UNSET;
 
     for (int i = 0; i < 3; i++) {
-        Op op = validOps[i];
+        Ins ins = validInstructions[i];
 
         if (resuming) {
-            if (op == *_resumeFrom) {
+            if (ins == *_resumeFrom) {
                 _resumeFrom++;
             } else {
                 continue;
             }
         }
 
-        _program.setOp(pp2, op);
-        _opStack[depth] = op;
+        _program.setInstruction(pp2, ins);
+        _instructionStack[depth] = ins;
         run(pp, dir, totalSteps, depth + 1);
 
         if (
@@ -223,11 +223,11 @@ void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
             break;
         }
     }
-    _program.clearOp(pp2);
-    _opStack[depth] = Op::UNSET;
+    _program.clearInstruction(pp2);
+    _instructionStack[depth] = Ins::UNSET;
 }
 
-void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
+void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
     int numDataOps = 0;
     int steps = 0;
 
@@ -242,26 +242,26 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
     _activeHangCheck = HangCheck::NONE;
 
     while (1) { // Run until branch, termination or error
-        Op* pp2;
+        Ins* pp2;
         bool done = false;
         do { // Execute single step
 
             pp2 = pp + (int)dir;
 
-            Op op = _program.getOp(pp2);
-            switch (op) {
-                case Op::DONE:
+            Ins ins = _program.getInstruction(pp2);
+            switch (ins) {
+                case Ins::DONE:
                     _tracker->reportDone(totalSteps + steps);
                     _data.undo(numDataOps);
                     return;
-                case Op::UNSET:
+                case Ins::UNSET:
                     branch(pp, dir, totalSteps + steps, depth);
                     _data.undo(numDataOps);
                     return;
-                case Op::NOOP:
+                case Ins::NOOP:
                     done = true;
                     break;
-                case Op::DATA:
+                case Ins::DATA:
                     numDataOps++;
                     switch (dir) {
                         case Dir::UP:
@@ -287,7 +287,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
                     }
                     done = true;
                     break;
-                case Op::TURN:
+                case Ins::TURN:
                     if (_data.val() == 0) {
                         switch (dir) {
                             case Dir::UP: dir = Dir::LEFT; break;
@@ -308,7 +308,7 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             if (_remainingPeriodicHangDetectAttempts >= 0) {
                 _opsToWaitBeforePeriodicHangCheck--;
                 if (_remainingPeriodicHangDetectAttempts > 0) {
-                    _cycleDetector.recordInstruction((char)op | (((char)dir) << 2));
+                    _cycleDetector.recordInstruction((char)ins | (((char)dir) << 2));
                 }
             }
         } while (!done);
@@ -368,22 +368,22 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
 }
 
 void ExhaustiveSearcher::search() {
-    _resumeFrom = new Op[1];
-    _resumeFrom[0] = Op::UNSET;
+    _resumeFrom = new Ins[1];
+    _resumeFrom[0] = Ins::UNSET;
 
     run(_program.startProgramPointer(), Dir::UP, 0, 0);
 }
 
-void ExhaustiveSearcher::search(Op* resumeFrom) {
+void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _resumeFrom = resumeFrom;
 
     std::cout << "Resuming from: ";
-    dumpOpStack(_resumeFrom);
+    dumpInstructionStack(_resumeFrom);
 
     run(_program.startProgramPointer(), Dir::UP, 0, 0);
 }
 
-void ExhaustiveSearcher::searchSubTree(Op* resumeFrom) {
+void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom) {
     _searchMode = SearchMode::SUB_TREE;
     search(resumeFrom);
     _searchMode = SearchMode::FULL_TREE;
@@ -395,7 +395,7 @@ void ExhaustiveSearcher::findOne() {
     _searchMode = SearchMode::FULL_TREE;
 }
 
-void ExhaustiveSearcher::findOne(Op* resumeFrom) {
+void ExhaustiveSearcher::findOne(Ins* resumeFrom) {
     _searchMode = SearchMode::FIND_ONE;
     search(resumeFrom);
     _searchMode = SearchMode::FULL_TREE;

@@ -28,11 +28,11 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
         // (it changed from one, to zero, back to one). At Step 102 this value is two (a diverging
         // delta) but it does not touch zero anymore, which means that subsequent program flow
         // diverges.
-        Op resumeFrom[] = {
-            Op::NOOP, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::DATA, Op::DATA, Op::TURN, Op::TURN, Op::NOOP, Op::TURN, Op::DATA, Op::DATA,
-            Op::TURN, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::DATA,
-            Op::NOOP, Op::TURN, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN, Op::TURN, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -42,12 +42,12 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
         // An example where after 220 steps the snapshot delta is the same, but a newly visited
         // value was not zero. This hang was not detected, as there was an error in the check for
         // sequences extending to the left.
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
-            Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN, Op::DATA,
-            Op::TURN, Op::TURN, Op::DATA, Op::NOOP, Op::DATA, Op::NOOP, Op::TURN, Op::DATA,
-            Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
-            Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -66,12 +66,12 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
     searcher.configure(settings);
 
     SECTION( "BB 7x7 #117272" ) {
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::DATA,
-            Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP,
-            Op::TURN, Op::NOOP, Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::NOOP,
-            Op::TURN, Op::TURN, Op::DATA, Op::TURN, Op::TURN, Op::DATA, Op::NOOP, Op::TURN,
-            Op::DATA, Op::TURN, Op::TURN, Op::NOOP, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
@@ -85,76 +85,76 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         // .   . * o .
         // . * . . . . *
         // .       *
-        Op resumeFrom[] = {
-            Op::DATA, Op::NOOP, Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::NOOP, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::NOOP, Op::TURN,
-            Op::DATA, Op::DATA, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::UNSET,
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET,
         };
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getMaxStepsFound() == 140163);
     }
     SECTION( "BB 7x7 #422154" ) {
-        Op resumeFrom[] = {
-            Op::DATA, Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::DATA,
-            Op::TURN, Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP,
-            Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN, Op::TURN,
-            Op::DATA, Op::TURN, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::TURN, Op::DATA, Op::NOOP, Op::NOOP, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getMaxStepsFound() == 422154);
     }
     SECTION( "BB 7x7 #582561" ) {
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN,
-            Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::NOOP, Op::TURN, Op::TURN,
-            Op::NOOP, Op::TURN, Op::DATA, Op::DATA, Op::DATA, Op::TURN, Op::NOOP, Op::TURN,
-            Op::DATA, Op::DATA, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN,
-            Op::NOOP, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
-            Op::TURN, Op::TURN, Op::TURN, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getMaxStepsFound() == 582561);
     }
     SECTION( "BB 7x7 #690345" ) {
-        Op resumeFrom[] = {
-            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP, Op::DATA, Op::TURN, Op::DATA,
-            Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN,
-            Op::DATA, Op::NOOP, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP,
-            Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::DATA,
-            Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
-            Op::TURN, Op::TURN, Op::TURN, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getMaxStepsFound() == 690345);
     }
     SECTION( "BB 7x7 #847272" ) {
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::NOOP, Op::DATA, Op::TURN, Op::NOOP,
-            Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::TURN, Op::NOOP,
-            Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA,
-            Op::DATA, Op::TURN, Op::NOOP, Op::TURN, Op::NOOP, Op::TURN, Op::DATA, Op::NOOP,
-            Op::TURN, Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::TURN,
-            Op::TURN, Op::TURN, Op::TURN, Op::TURN, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getMaxStepsFound() == 847272);
     }
     SECTION( "BB 7x7 #950174" ) {
-        Op resumeFrom[] = {
-            Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::NOOP,
-            Op::DATA, Op::DATA, Op::NOOP, Op::TURN, Op::DATA, Op::TURN, Op::NOOP, Op::TURN,
-            Op::DATA, Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::DATA, Op::DATA, Op::TURN,
-            Op::TURN, Op::TURN, Op::DATA, Op::TURN, Op::DATA, Op::DATA, Op::TURN, Op::NOOP,
-            Op::DATA, Op::TURN, Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN, Op::TURN, Op::TURN,
-            Op::TURN, Op::NOOP, Op::TURN, Op::TURN, Op::UNSET
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

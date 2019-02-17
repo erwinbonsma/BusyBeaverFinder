@@ -15,14 +15,14 @@ SearchOrchestrator::SearchOrchestrator(ExhaustiveSearcher& searcher)
     // void
 }
 
-Op* SearchOrchestrator::addOperationsUntilTurn(Op* topP, int numNoop, int numData) {
+Ins* SearchOrchestrator::addInstructionsUntilTurn(Ins* topP, int numNoop, int numData) {
     while (numNoop-- > 0) {
-        *(topP++) = Op::NOOP;
+        *(topP++) = Ins::NOOP;
     }
     while (numData-- > 0) {
-        *(topP++) = Op::DATA;
+        *(topP++) = Ins::DATA;
     }
-    *(topP++) = Op::TURN;
+    *(topP++) = Ins::TURN;
 
     return topP;
 }
@@ -30,8 +30,8 @@ Op* SearchOrchestrator::addOperationsUntilTurn(Op* topP, int numNoop, int numDat
 void SearchOrchestrator::search() {
     int h = _searcher.getProgram().getHeight();
     int w = _searcher.getProgram().getWidth();
-    int maxOps = (h + 1 > w + 2) ? h + 1 : w + 2;
-    Op* startFrom = new Op[maxOps];
+    int maxInstructions = (h + 1 > w + 2) ? h + 1 : w + 2;
+    Ins* startFrom = new Ins[maxInstructions];
 
     // Only the number of DATA instructions before the first TURN matters, not their position, as
     // they will only be visited once at the very start of the program (and possibly as final
@@ -48,7 +48,7 @@ void SearchOrchestrator::search() {
             int numData = n;
             int numNoop = y - numData;
 
-            Op* topP = addOperationsUntilTurn(startFrom, numNoop, numData);
+            Ins* topP = addInstructionsUntilTurn(startFrom, numNoop, numData);
 
             if (y == 1) {
                 // When the first TURN is at the second row, the program pointer traverses the first
@@ -61,14 +61,14 @@ void SearchOrchestrator::search() {
                     for (int m = 1; m < x; m++) {
                         numData = m;
                         numNoop = x - numData - 1;
-                        Op* topP2 = addOperationsUntilTurn(topP, numNoop, numData);
+                        Ins* topP2 = addInstructionsUntilTurn(topP, numNoop, numData);
 
-                        (*topP2) = Op::UNSET;
+                        (*topP2) = Ins::UNSET;
                         _searcher.searchSubTree(startFrom);
                     }
                 }
             } else {
-                (*topP) = Op::UNSET;
+                (*topP) = Ins::UNSET;
                 _searcher.searchSubTree(startFrom);
             }
         }

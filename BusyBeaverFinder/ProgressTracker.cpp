@@ -30,7 +30,7 @@ void ProgressTracker::reportDone(int totalSteps) {
 
         std::cout << "Faulty hang, steps = " << totalSteps << std::endl;
         _searcher.getProgram().dump();
-        _searcher.dumpOpStack();
+        _searcher.dumpInstructionStack();
     }
 
     if (totalSteps > _maxStepsSofar) {
@@ -39,7 +39,7 @@ void ProgressTracker::reportDone(int totalSteps) {
         if (_maxStepsSofar > 256) {
             std::cout << "Best sofar = " << _maxStepsSofar << std::endl;
             _bestProgram.dump();
-            _searcher.dumpOpStack();
+            _searcher.dumpInstructionStack();
             _searcher.getData().dump();
             dumpStats();
         }
@@ -52,7 +52,7 @@ void ProgressTracker::reportDone(int totalSteps) {
         dumpStats();
     }
     if (_total % _dumpStackPeriod == 0) {
-        _searcher.dumpOpStack();
+        _searcher.dumpInstructionStack();
     }
 }
 
@@ -83,7 +83,7 @@ void ProgressTracker::reportHang() {
     } else if (_dumpUndetectedHangs) {
         std::cout << "Undetected hang" << std::endl;
         _searcher.getProgram().dump();
-        _searcher.dumpOpStack();
+        _searcher.dumpInstructionStack();
         _searcher.getData().dump();
         std::cout << std::endl;
     }

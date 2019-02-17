@@ -23,7 +23,7 @@ class Program {
     int _height;
 
     // Instruction array
-    Op _ops[programStorageSize];
+    Ins _instructions[programStorageSize];
 
 public:
     Program(int width, int height);
@@ -33,12 +33,12 @@ public:
     int getWidth() { return _width; }
     int getHeight() { return _height; }
 
-    Op* startProgramPointer() { return &(_ops[1]); /* Start at row = -1, col = 0 */ }
+    Ins* startProgramPointer() { return &(_instructions[1]); /* Start at row = -1, col = 0 */ }
 
-    void setOp(Op *pp, Op op) { (*pp) = op; }
-    void clearOp(Op *pp) { (*pp) = Op::UNSET; }
-    Op getOp(Op *pp) { return (*pp); }
-    Op getOp(int col, int row);
+    void setInstruction(Ins *pp, Ins op) { (*pp) = op; }
+    void clearInstruction(Ins *pp) { (*pp) = Ins::UNSET; }
+    Ins getInstruction(Ins *pp) { return (*pp); }
+    Ins getInstruction(int col, int row);
 
     /* Returns the number of possible programs in the search space that this program represents.
      * The summed total over all programs visited can be used to get an indication of the search
