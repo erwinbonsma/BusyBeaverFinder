@@ -30,6 +30,8 @@ void CycleDetector::setHangSamplePeriod(int period) {
     }
     // May access up to three instructions per execution step
     int size = (period + 2) * 3;
+    // May sample up to three periods (as previous hang check may take that long)
+    size *= 3;
     _opsHistory = new CycleInstruction[size];
     _findPeriodBuf = new int[size];
     _opsHistoryP = _opsHistory;
