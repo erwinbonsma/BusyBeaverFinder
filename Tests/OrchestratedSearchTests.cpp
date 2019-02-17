@@ -49,7 +49,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
 
     REQUIRE(tracker.getMaxStepsFound() == 572);
     REQUIRE(tracker.getTotalSuccess() == 6475715);
-    REQUIRE(tracker.getTotalEarlyHangs() == 1544053);
+    REQUIRE(tracker.getTotalEarlyHangs() == 1543519);
     REQUIRE(tracker.getTotalHangs() == 1546939);
     REQUIRE(tracker.getTotalErrors() == 0);
 }
