@@ -93,6 +93,10 @@ void ExhaustiveSearcher::dumpSettings() {
 
 
 bool ExhaustiveSearcher::periodicHangDetected() {
+//    _cycleDetector.dump();
+//    _data.dumpHangInfo();
+//    _dataTracker.dump();
+
     if (!_data.effectiveDataOperations()) {
         return true;
     }
@@ -124,7 +128,35 @@ bool ExhaustiveSearcher::periodicHangDetected() {
 }
 
 bool ExhaustiveSearcher::sweepHangDetected() {
-    return _dataTracker.sweepHangDetected();
+    DataDirection extensionDir = DataDirection::NONE;
+    if (_prevMinBoundP > _data.getMinBoundP()) {
+        // Extended leftwards
+        extensionDir = DataDirection::LEFT;
+    }
+    else if (_prevMaxBoundP < _data.getMaxBoundP()) {
+        // Extended rightwards
+        extensionDir = DataDirection::RIGHT;
+    }
+    _prevMinBoundP = _data.getMinBoundP();
+    _prevMaxBoundP = _data.getMaxBoundP();
+
+    if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
+        _prevExtensionDir = extensionDir;
+        _extensionCount++;
+        if (_extensionCount == 3) {
+            if (_dataTracker.sweepHangDetected()) {
+//                std::cout << "Sweep hang detected!" << std::endl;
+//                _data.dump();
+//                _dataTracker.dump();
+                return true;
+            }
+            _remainingSweepHangDetectAttempts--;
+            _extensionCount = 1; // Continue with next detection attempt
+        }
+        _dataTracker.captureSnapShot();
+    }
+
+    return false;
 }
 
 void ExhaustiveSearcher::branch(Op* pp, Dir dir, int totalSteps, int depth) {
@@ -251,61 +283,30 @@ void ExhaustiveSearcher::run(Op* pp, Dir dir, int totalSteps, int depth) {
             _activeHangCheck == HangCheck::PERIODIC &&
             _opsToWaitBeforePeriodicHangCheck <= 0
         ) {
-            if (
-                pp != _sampleProgramPointer ||
-                dir != _sampleDir
-            ) {
+            if (pp != _sampleProgramPointer || dir != _sampleDir) {
                 // Not back at the sample point, so not on a hang cycle with assumed period
                 _activeHangCheck = HangCheck::NONE;
-            }
+            } else {
+//                std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
 
-//            std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
-//            _cycleDetector.dump();
-//            _data.dumpHangInfo();
-//            _dataTracker.dump();
-
-            if (periodicHangDetected()) {
-                _tracker->reportEarlyHang();
-                if (!_settings.testHangDetection) {
-                    _data.undo(numDataOps);
-                    return;
+                if (periodicHangDetected()) {
+                    _tracker->reportEarlyHang();
+                    if (!_settings.testHangDetection) {
+                        _data.undo(numDataOps);
+                        return;
+                    }
                 }
             }
         }
 
         if (
-            _activeHangCheck == HangCheck::SWEEP
+            _activeHangCheck == HangCheck::SWEEP &&
+            sweepHangDetected()
         ) {
-            DataDirection extensionDir = DataDirection::NONE;
-            if (_prevMinBoundP > _data.getMinBoundP()) {
-                // Extended leftwards
-                extensionDir = DataDirection::LEFT;
-            }
-            else if (_prevMaxBoundP < _data.getMaxBoundP()) {
-                // Extended rightwards
-                extensionDir = DataDirection::RIGHT;
-            }
-            _prevMinBoundP = _data.getMinBoundP();
-            _prevMaxBoundP = _data.getMaxBoundP();
-
-            if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
-                _prevExtensionDir = extensionDir;
-                _extensionCount++;
-                if (_extensionCount == 3) {
-                    if (sweepHangDetected()) {
-//                        std::cout << "Sweep hang detected!" << std::endl;
-//                        _data.dump();
-//                        _dataTracker.dump();
-                        _tracker->reportEarlyHang();
-                        if (!_settings.testHangDetection) {
-                            _data.undo(numDataOps);
-                            return;
-                        }
-                    }
-                    _remainingSweepHangDetectAttempts--;
-                    _extensionCount = 1; // Continue with next detection attempt
-                }
-                _dataTracker.captureSnapShot();
+            _tracker->reportEarlyHang();
+            if (!_settings.testHangDetection) {
+                _data.undo(numDataOps);
+                return;
             }
         }
 
