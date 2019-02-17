@@ -11,7 +11,7 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
+TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
     ExhaustiveSearcher searcher(5, 5, 64);
     ProgressTracker tracker(searcher);
 
@@ -206,6 +206,17 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
+}
+
+TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
+    ExhaustiveSearcher searcher(5, 5, 64);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    searcher.configure(settings);
+
     SECTION( "InfSeqExtendingBothWays1" ) {
         //     *
         //   * o . *
@@ -239,6 +250,36 @@ TEST_CASE( "5x5 Hang tests", "[hang][5x5]" ) {
             Op::DATA, Op::TURN,
             Op::NOOP, Op::TURN,
             Op::DATA, Op::TURN,
+            Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+}
+
+TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
+    ExhaustiveSearcher searcher(6, 6, 256);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectAttempts = 4;
+    settings.initialHangSamplePeriod = 16;
+    searcher.configure(settings);
+
+    SECTION( "6x6-NonUniformCountingLoop1" ) {
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::DATA, Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::NOOP, Op::TURN, Op::TURN,
             Op::UNSET
         };
         searcher.findOne(resumeFrom);
