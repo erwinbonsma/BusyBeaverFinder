@@ -79,6 +79,8 @@ class ExhaustiveSearcher {
     DataDirection _prevExtensionDir;
     int _extensionCount;
     int* _sweepMidTurningPoint;
+    DataDirection _sweepMidTurningDir;
+    ProgramPointer _sweepStartPp;
 
     ProgressTracker* _tracker;
 
@@ -88,6 +90,8 @@ class ExhaustiveSearcher {
     void initiateNewHangCheck();
     bool periodicHangDetected();
     bool sweepHangDetected();
+    bool isPossibleMidSweepPoint();
+    bool isSweepDiverging();
 
     void reconfigure();
 

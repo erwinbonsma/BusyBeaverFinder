@@ -213,23 +213,10 @@ bool DataTracker::periodicHangDetected() {
 #define IMPACTFUL_SWEEP_CHANGE(x, y) ((x < 0 && y > x) || (x > 0 && y < x))
 
 bool DataTracker::sweepHangDetected() {
-    int *p, *q;
-    int *pEnd;
-
-    // Check if the old snapshot contains zeros
-    p = _oldSnapShotP->buf + (_oldSnapShotP->minBoundP - _data.getDataBuffer());
-    pEnd = _oldSnapShotP->buf + (_oldSnapShotP->maxBoundP - _data.getDataBuffer());
-    do {
-        if (*p == 0) {
-            return false;
-        }
-        p++;
-    } while (p <= pEnd);
-
     // Check if there was an impactful change from the old to the new snapshot
-    p = _oldSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
-    q = _newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
-    pEnd = _oldSnapShotP->buf + (_newSnapShotP->maxBoundP - _data.getDataBuffer());
+    int *p = _oldSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
+    int *q = _newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
+    int *pEnd = _oldSnapShotP->buf + (_newSnapShotP->maxBoundP - _data.getDataBuffer());
     do {
         if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
             return false;
@@ -259,9 +246,9 @@ void DataTracker::dump() {
         << ", p = " << (_newSnapShotP->dataP - _data.getDataBuffer())
         << ", max = " << (_newSnapShotP->maxVisitedP - _data.getDataBuffer())
         << std::endl;
-        dumpDataBuffer(_newSnapShotP->buf,
+        dumpDataBuffer(_newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer()),
                        _newSnapShotP->buf + (_newSnapShotP->dataP - _data.getDataBuffer()),
-                       _data.getSize());
+                       (int)(_newSnapShotP->maxBoundP - _newSnapShotP->minBoundP + 1));
     }
 
     if (_oldSnapShotP != nullptr) {
@@ -269,8 +256,8 @@ void DataTracker::dump() {
         << ", p = " << (_oldSnapShotP->dataP - _data.getDataBuffer())
         << ", max = " << (_oldSnapShotP->maxVisitedP - _data.getDataBuffer())
         << std::endl;
-        dumpDataBuffer(_oldSnapShotP->buf,
+        dumpDataBuffer(_oldSnapShotP->buf + (_oldSnapShotP->minBoundP - _data.getDataBuffer()),
                        _oldSnapShotP->buf + (_oldSnapShotP->dataP - _data.getDataBuffer()),
-                       _data.getSize());
+                       (int)(_oldSnapShotP->maxBoundP - _oldSnapShotP->minBoundP + 1));
     }
 }

@@ -126,6 +126,72 @@ bool ExhaustiveSearcher::periodicHangDetected() {
     return false;
 }
 
+// Checks if the current position is one where the sweep reverses, even though the data pointer is
+// not at the bounds of the data store.
+bool ExhaustiveSearcher::isPossibleMidSweepPoint() {
+    if (_extensionCount != 1 || _data.val() != 0) {
+        return false;
+    }
+
+    int *dp = _data.getDataPointer();
+    if (_prevExtensionDir == DataDirection::LEFT) {
+        if (dp < _data.getMinBoundP()) {
+            // Zero value is outside sequence, extending the sequence at its first end point
+            return false;
+        }
+        if ((dp - _data.getMinBoundP()) < 8) {
+            // The sequence is too short.
+            return false;
+        }
+    } else {
+        if (dp > _data.getMaxBoundP()) {
+            return false;
+        }
+        if ((_data.getMaxBoundP() - dp) < 8) {
+            return false;
+        }
+    }
+
+    long dataIndex = _data.getDataPointer() - _data.getDataBuffer();
+
+    if (_dataTracker.getNewSnapShot()->buf[dataIndex] != 0) {
+        // The value just became zero. It should have been zero to be a possible turning point.
+        return false;
+    }
+
+    _sweepMidTurningPoint = _data.getDataPointer();
+    _sweepMidTurningDir = (_prevExtensionDir == DataDirection::LEFT)
+        ? DataDirection::RIGHT
+        : DataDirection::LEFT;
+    return true;
+}
+
+// Should be invoked after a full sweep has been completed. It returns "true" if the data value
+// changes are diverging and therefore, the program is considered hanging.
+bool ExhaustiveSearcher::isSweepDiverging() {
+//    std::cout << "Checking for sweep hang " << std::endl;
+//    _data.dump();
+//    _dataTracker.dump();
+
+    if (_sweepMidTurningPoint != nullptr) {
+        long dataIndex = _sweepMidTurningPoint - _data.getDataBuffer();
+        if (
+            *_sweepMidTurningPoint != 0 ||
+            _dataTracker.getNewSnapShot()->buf[dataIndex] != 0
+        ) {
+            // The mid-turning point is not zero anymore
+            return false;
+        }
+    }
+
+    if (_pp.p != _sweepStartPp.p || _pp.dir != _sweepStartPp.dir) {
+        // Current program location differs from program location at start of sweep
+        return false;
+    }
+
+    return _dataTracker.sweepHangDetected();
+}
+
 bool ExhaustiveSearcher::sweepHangDetected() {
     DataDirection extensionDir = DataDirection::NONE;
     if (_data.getDataPointer() == _data.getMinBoundP()) {
@@ -136,25 +202,51 @@ bool ExhaustiveSearcher::sweepHangDetected() {
         // At right end of sequence
         extensionDir = DataDirection::RIGHT;
     }
-    else if (_extensionCount == 1 && _data.val() == 0) {
-        // Also allow sweep over a partial, zero-terminated part of the sequence
-        _sweepMidTurningPoint = _data.getDataPointer();
+    else if (_sweepMidTurningPoint == nullptr && isPossibleMidSweepPoint()) {
+        // Possible mid-sequence turning point
+        extensionDir = _sweepMidTurningDir;
+    }
+
+    // The mid-turning point should not be crossed
+    if (_sweepMidTurningPoint != nullptr) {
+        int* dp = _data.getDataPointer();
+        if (
+            (_sweepMidTurningDir == DataDirection::RIGHT && dp > _sweepMidTurningPoint) ||
+            (_sweepMidTurningDir == DataDirection::LEFT && dp < _sweepMidTurningPoint)
+        ) {
+//            std::cout << "Crossed the mid-turning point" << std::endl;
+            _remainingSweepHangDetectAttempts--;
+            _sweepMidTurningPoint = nullptr;
+            // Start new detection attempt afresh
+            _extensionCount = 0;
+            return false;
+        }
     }
 
     if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
+//        std::cout << "Sweep endpoint detected" << std::endl;
+//        _program.dump(_pp.p);
+
         _prevExtensionDir = extensionDir;
         _extensionCount++;
-        if (_extensionCount == 3) {
-//            std::cout << "Checking for sweep hang " << std::endl;
-            if (_dataTracker.sweepHangDetected()) {
+        if (_extensionCount == 1) {
+            _sweepStartPp = _pp;
+        }
+        else if (_extensionCount == 3) {
+            if (isSweepDiverging()) {
 //                std::cout << "Sweep hang detected!" << std::endl;
 //                _data.dump();
 //                _dataTracker.dump();
                 return true;
             }
-            _remainingSweepHangDetectAttempts--;
-            _extensionCount = 1; // Continue with next detection attempt
-            _sweepMidTurningPoint = nullptr;
+            if (_remainingSweepHangDetectAttempts-- > 0) {
+                _sweepMidTurningPoint = nullptr;
+                // Continue next detection attempt starting from current end point
+                _extensionCount = 1;
+                _sweepStartPp = _pp;
+            } else {
+                _activeHangCheck = HangCheck::NONE;
+            }
         }
         _dataTracker.captureSnapShot();
     }
