@@ -60,6 +60,9 @@ class ExhaustiveSearcher {
     // UNSET.
     Ins* _resumeFrom;
 
+    Ins* _pp;
+    Dir _dir;
+
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
 
@@ -83,14 +86,14 @@ class ExhaustiveSearcher {
     void dumpInstructionStack(Ins* stack);
     void initInstructionStack(int size);
 
-    void initiateNewHangCheck(Ins* pp, Dir dir);
+    void initiateNewHangCheck();
     bool periodicHangDetected();
     bool sweepHangDetected();
 
     void reconfigure();
 
-    void run(Ins* pp, Dir dir, int totalSteps, int depth);
-    void branch(Ins* pp, Dir dir, int totalSteps, int depth);
+    void run(int totalSteps, int depth);
+    void branch(int totalSteps, int depth);
 public:
     ExhaustiveSearcher(int width, int height, int dataSize);
     ~ExhaustiveSearcher();

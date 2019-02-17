@@ -97,6 +97,13 @@ bool ExhaustiveSearcher::periodicHangDetected() {
 //    _data.dumpHangInfo();
 //    _dataTracker.dump();
 
+    if (_pp != _sampleProgramPointer || _dir != _sampleDir) {
+        // Not back at the sample point, so not on a hang cycle with assumed period. Fail this
+        // attempt and initiate a new one.
+        _activeHangCheck = HangCheck::NONE;
+        return false;
+    }
+
     if (!_data.effectiveDataOperations()) {
         return true;
     }
@@ -104,7 +111,7 @@ bool ExhaustiveSearcher::periodicHangDetected() {
     if (
         _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
         !_data.significantValueChange()
-        ) {
+    ) {
         SnapShotComparison result = _dataTracker.compareToSnapShot();
         if (result != SnapShotComparison::IMPACTFUL) {
             return true;
@@ -158,7 +165,7 @@ bool ExhaustiveSearcher::sweepHangDetected() {
     return false;
 }
 
-void ExhaustiveSearcher::initiateNewHangCheck(Ins* pp, Dir dir) {
+void ExhaustiveSearcher::initiateNewHangCheck() {
 //    _program.dump();
 //    _tracker->dumpStats();
 //    _data.dumpHangInfo();
@@ -173,8 +180,8 @@ void ExhaustiveSearcher::initiateNewHangCheck(Ins* pp, Dir dir) {
         // previous sample period was too low to detect the period of the hang cycle)
         _activeHangCheck = HangCheck::PERIODIC;
 
-        _sampleProgramPointer = pp;
-        _sampleDir = dir;
+        _sampleProgramPointer = _pp;
+        _sampleDir = _dir;
         _cyclePeriod = _cycleDetector.getCyclePeriod();
         _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
         //                    std::cout << "period = " << _cyclePeriod << std::endl;
@@ -197,8 +204,10 @@ void ExhaustiveSearcher::initiateNewHangCheck(Ins* pp, Dir dir) {
 }
 
 
-void ExhaustiveSearcher::branch(Ins* pp, Dir dir, int totalSteps, int depth) {
-    Ins* pp2 = pp + (int)dir;
+void ExhaustiveSearcher::branch(int totalSteps, int depth) {
+    Ins* pp0 = _pp;
+    Dir dir0 = _dir;
+    Ins* pp2 = _pp + (int)_dir;
     bool resuming = *_resumeFrom != Ins::UNSET;
 
     for (int i = 0; i < 3; i++) {
@@ -214,7 +223,9 @@ void ExhaustiveSearcher::branch(Ins* pp, Dir dir, int totalSteps, int depth) {
 
         _program.setInstruction(pp2, ins);
         _instructionStack[depth] = ins;
-        run(pp, dir, totalSteps, depth + 1);
+        run(totalSteps, depth + 1);
+        _pp = pp0;
+        _dir = dir0;
 
         if (
             _searchMode == SearchMode::FIND_ONE ||
@@ -227,7 +238,7 @@ void ExhaustiveSearcher::branch(Ins* pp, Dir dir, int totalSteps, int depth) {
     _instructionStack[depth] = Ins::UNSET;
 }
 
-void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
+void ExhaustiveSearcher::run(int totalSteps, int depth) {
     int numDataOps = 0;
     int steps = 0;
 
@@ -246,7 +257,7 @@ void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
         bool done = false;
         do { // Execute single step
 
-            pp2 = pp + (int)dir;
+            pp2 = _pp + (int)_dir;
 
             Ins ins = _program.getInstruction(pp2);
             switch (ins) {
@@ -255,7 +266,7 @@ void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
                     _data.undo(numDataOps);
                     return;
                 case Ins::UNSET:
-                    branch(pp, dir, totalSteps + steps, depth);
+                    branch(totalSteps + steps, depth);
                     _data.undo(numDataOps);
                     return;
                 case Ins::NOOP:
@@ -263,7 +274,7 @@ void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
                     break;
                 case Ins::DATA:
                     numDataOps++;
-                    switch (dir) {
+                    switch (_dir) {
                         case Dir::UP:
                             _data.inc();
                             break;
@@ -289,18 +300,18 @@ void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
                     break;
                 case Ins::TURN:
                     if (_data.val() == 0) {
-                        switch (dir) {
-                            case Dir::UP: dir = Dir::LEFT; break;
-                            case Dir::RIGHT: dir = Dir::UP; break;
-                            case Dir::DOWN: dir = Dir::RIGHT; break;
-                            case Dir::LEFT: dir = Dir::DOWN; break;
+                        switch (_dir) {
+                            case Dir::UP: _dir = Dir::LEFT; break;
+                            case Dir::RIGHT: _dir = Dir::UP; break;
+                            case Dir::DOWN: _dir = Dir::RIGHT; break;
+                            case Dir::LEFT: _dir = Dir::DOWN; break;
                         }
                     } else {
-                        switch (dir) {
-                            case Dir::UP: dir = Dir::RIGHT; break;
-                            case Dir::RIGHT: dir = Dir::DOWN; break;
-                            case Dir::DOWN: dir = Dir::LEFT; break;
-                            case Dir::LEFT: dir = Dir::UP; break;
+                        switch (_dir) {
+                            case Dir::UP: _dir = Dir::RIGHT; break;
+                            case Dir::RIGHT: _dir = Dir::DOWN; break;
+                            case Dir::DOWN: _dir = Dir::LEFT; break;
+                            case Dir::LEFT: _dir = Dir::UP; break;
                         }
                     }
                     break;
@@ -308,32 +319,24 @@ void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
             if (_remainingPeriodicHangDetectAttempts >= 0) {
                 _opsToWaitBeforePeriodicHangCheck--;
                 if (_remainingPeriodicHangDetectAttempts > 0) {
-                    _cycleDetector.recordInstruction((char)ins | (((char)dir) << 2));
+                    _cycleDetector.recordInstruction((char)ins | (((char)_dir) << 2));
                 }
             }
         } while (!done);
-        pp = pp2;
+        _pp = pp2;
         steps++;
 
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
 
         if (
             _activeHangCheck == HangCheck::PERIODIC &&
-            _opsToWaitBeforePeriodicHangCheck <= 0
+            _opsToWaitBeforePeriodicHangCheck <= 0 &&
+            periodicHangDetected()
         ) {
-            if (pp != _sampleProgramPointer || dir != _sampleDir) {
-                // Not back at the sample point, so not on a hang cycle with assumed period
-                _activeHangCheck = HangCheck::NONE;
-            } else {
-//                std::cout << "Back at sample PP: Steps = " << (steps + totalSteps) << std::endl;
-
-                if (periodicHangDetected()) {
-                    _tracker->reportEarlyHang();
-                    if (!_settings.testHangDetection) {
-                        _data.undo(numDataOps);
-                        return;
-                    }
-                }
+            _tracker->reportEarlyHang();
+            if (!_settings.testHangDetection) {
+                _data.undo(numDataOps);
+                return;
             }
         }
 
@@ -361,7 +364,7 @@ void ExhaustiveSearcher::run(Ins* pp, Dir dir, int totalSteps, int depth) {
             }
 
             if (_activeHangCheck == HangCheck::NONE) {
-                initiateNewHangCheck(pp, dir);
+                initiateNewHangCheck();
             }
         }
     }
@@ -371,7 +374,9 @@ void ExhaustiveSearcher::search() {
     _resumeFrom = new Ins[1];
     _resumeFrom[0] = Ins::UNSET;
 
-    run(_program.startProgramPointer(), Dir::UP, 0, 0);
+    _pp = _program.startProgramPointer();
+    _dir = Dir::UP;
+    run(0, 0);
 }
 
 void ExhaustiveSearcher::search(Ins* resumeFrom) {
@@ -380,7 +385,9 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     std::cout << "Resuming from: ";
     dumpInstructionStack(_resumeFrom);
 
-    run(_program.startProgramPointer(), Dir::UP, 0, 0);
+    _pp = _program.startProgramPointer();
+    _dir = Dir::UP;
+    run(0, 0);
 }
 
 void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom) {
