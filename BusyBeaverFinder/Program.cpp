@@ -33,8 +33,8 @@ Program::Program(int width, int height) {
     }
 }
 
-Ins Program::getInstruction(int col, int row) {
-    return _instructions[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
+Ins* Program::getInstructionP(int col, int row) {
+    return &_instructions[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
 }
 
 void Program::clone(Program& dest) {
@@ -81,5 +81,20 @@ void Program::dump() {
             std::cout << " " << ins_chars[(int)getInstruction(x, y)];
         }
         std::cout << std::endl;
+    }
+}
+
+void Program::dump(Ins* pp) {
+    char sepChar = ' ';
+    for (int y = _height; --y >= 0; ) {
+        for (int x = 0; x < _width; x++) {
+            Ins* insP = getInstructionP(x, y);
+            if (insP == pp) {
+                sepChar = '[';
+            }
+            std::cout << sepChar << ins_chars[(int)*insP];
+            sepChar = (insP == pp) ? ']' : ' ';
+        }
+        std::cout << sepChar << std::endl;
     }
 }

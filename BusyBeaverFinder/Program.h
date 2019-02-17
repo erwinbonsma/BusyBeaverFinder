@@ -25,6 +25,9 @@ class Program {
     // Instruction array
     Ins _instructions[programStorageSize];
 
+    Ins* getInstructionP(int col, int row);
+    Ins getInstruction(int col, int row) { return *getInstructionP(col, row); }
+
 public:
     Program(int width, int height);
 
@@ -39,7 +42,6 @@ public:
     void setInstruction(Ins *pp, Ins op) { (*pp) = op; }
     void clearInstruction(Ins *pp) { (*pp) = Ins::UNSET; }
     Ins getInstruction(Ins *pp) { return (*pp); }
-    Ins getInstruction(int col, int row);
 
     /* Returns the number of possible programs in the search space that this program represents.
      * The summed total over all programs visited can be used to get an indication of the search
@@ -58,6 +60,7 @@ public:
     ulonglong getEquivalenceNumber();
 
     void dump();
+    void dump(Ins* pp);
 };
 
 #endif /* Program_h */
