@@ -319,6 +319,22 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-InfSweepSeqExtendingOneWayWithZeroes") {
+        // Here a sweep is occuring over a zero-delimited part of the sequence.
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::DATA, Op::NOOP, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::NOOP, Op::DATA, Op::DATA, Op::TURN, Op::TURN, Op::TURN,
+            Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
 
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
 }
