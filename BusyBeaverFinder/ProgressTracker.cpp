@@ -36,7 +36,7 @@ void ProgressTracker::reportDone(int totalSteps) {
     if (totalSteps > _maxStepsSofar) {
         _maxStepsSofar = totalSteps;
         _searcher.getProgram().clone(_bestProgram);
-        if (_maxStepsSofar > 256) {
+        if (_maxStepsSofar > _dumpBestSofarLimit) {
             std::cout << "Best sofar = " << _maxStepsSofar << std::endl;
             _bestProgram.dump();
             _searcher.dumpInstructionStack();

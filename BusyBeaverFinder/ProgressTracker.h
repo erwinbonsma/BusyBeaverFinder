@@ -19,6 +19,7 @@ class ExhaustiveSearcher;
 class ProgressTracker {
     int _dumpStatsPeriod = 100000;
     int _dumpStackPeriod = 1000000;
+    int _dumpBestSofarLimit = 256;
     bool _dumpUndetectedHangs = false;
 
     ExhaustiveSearcher& _searcher;
@@ -47,6 +48,7 @@ public:
     void setDumpStatsPeriod(int val) { _dumpStatsPeriod = val; }
     void setDumpStackPeriod(int val) { _dumpStackPeriod = val; }
     void setDumpUndetectedHangs(bool flag) { _dumpUndetectedHangs = flag; }
+    void setDumpBestSofarLimit(int minSteps) { _dumpBestSofarLimit = minSteps; }
 
     long getTotalSuccess() { return _totalSuccess; }
     long getTotalErrors() { return _totalError; }

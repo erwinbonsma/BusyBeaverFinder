@@ -17,6 +17,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     ProgressTracker tracker(searcher);
     SearchOrchestrator orchestrator(searcher);
 
+    tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();

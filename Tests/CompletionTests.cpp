@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 
-
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"
@@ -17,6 +16,7 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
     ExhaustiveSearcher searcher(6, 6, 32);
     ProgressTracker tracker(searcher);
 
+    tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
@@ -59,6 +59,7 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
     ExhaustiveSearcher searcher(7, 7, 2048);
     ProgressTracker tracker(searcher);
 
+    tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
