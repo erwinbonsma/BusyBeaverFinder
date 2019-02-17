@@ -129,21 +129,20 @@ bool ExhaustiveSearcher::periodicHangDetected() {
 
 bool ExhaustiveSearcher::sweepHangDetected() {
     DataDirection extensionDir = DataDirection::NONE;
-    if (_prevMinBoundP > _data.getMinBoundP()) {
-        // Extended leftwards
+    if (_data.getDataPointer() == _data.getMinBoundP()) {
+        // At left end of sequence
         extensionDir = DataDirection::LEFT;
     }
-    else if (_prevMaxBoundP < _data.getMaxBoundP()) {
-        // Extended rightwards
+    else if (_data.getDataPointer() == _data.getMaxBoundP()) {
+        // At right end of sequence
         extensionDir = DataDirection::RIGHT;
     }
-    _prevMinBoundP = _data.getMinBoundP();
-    _prevMaxBoundP = _data.getMaxBoundP();
 
     if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
         _prevExtensionDir = extensionDir;
         _extensionCount++;
         if (_extensionCount == 3) {
+//            std::cout << "Checking for sweep hang " << std::endl;
             if (_dataTracker.sweepHangDetected()) {
 //                std::cout << "Sweep hang detected!" << std::endl;
 //                _data.dump();
@@ -194,8 +193,6 @@ void ExhaustiveSearcher::initiateNewHangCheck(Op* pp, Dir dir) {
         _remainingSweepHangDetectAttempts = 3;
         _extensionCount = 0;
         _prevExtensionDir = DataDirection::NONE;
-        _prevMinBoundP = _data.getMinBoundP();
-        _prevMaxBoundP = _data.getMaxBoundP();
     }
 }
 

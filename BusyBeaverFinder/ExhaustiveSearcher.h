@@ -75,7 +75,6 @@ class ExhaustiveSearcher {
 
     // Sweep hang detection
     int _remainingSweepHangDetectAttempts;
-    int *_prevMinBoundP, *_prevMaxBoundP;
     DataDirection _prevExtensionDir;
     int _extensionCount;
 
