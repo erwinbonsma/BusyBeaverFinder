@@ -18,16 +18,22 @@
 #include "DataTracker.h"
 #include "ProgressTracker.h"
 
-enum SearchMode : char {
+enum class SearchMode : char {
     FULL_TREE = 0,
     SUB_TREE = 1,
     FIND_ONE = 2,
 };
 
-enum DataDirection : char {
+enum class DataDirection : char {
     NONE = 0,
     LEFT = 1,
     RIGHT = 2
+};
+
+enum class HangCheck : char {
+    NONE = 0,
+    PERIODIC = 1,
+    SWEEP = 2
 };
 
 struct SearchSettings {
@@ -58,6 +64,7 @@ class ExhaustiveSearcher {
     Op* _opStack;
 
     int _hangSampleMask;
+    HangCheck _activeHangCheck;
 
     // Periodic hang detection
     Op* _sampleProgramPointer;
