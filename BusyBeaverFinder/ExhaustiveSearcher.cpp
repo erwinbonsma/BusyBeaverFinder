@@ -86,11 +86,7 @@ void ExhaustiveSearcher::dumpSettings() {
     << ", MaxDetectAttempts = " << _settings.maxHangDetectAttempts
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
-
-    _data.dumpSettings();
 }
-
-
 
 bool ExhaustiveSearcher::periodicHangDetected() {
 //    _cycleDetector.dump();
@@ -102,10 +98,6 @@ bool ExhaustiveSearcher::periodicHangDetected() {
         // attempt and initiate a new one.
         _activeHangCheck = HangCheck::NONE;
         return false;
-    }
-
-    if (!_data.effectiveDataOperations()) {
-        return true;
     }
 
     if (

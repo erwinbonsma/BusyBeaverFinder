@@ -31,16 +31,6 @@ class Data {
     // Undo-stack for data operations
     DataOp *_undoStack = nullptr;
 
-/* Hang Detection 1 collects effective data instruction. It collapses subsequent data instructions
- * that cancel each other out, e.g. DEC after INC, SHL after SHR. If at the end of the hang sample
- * period there are no effective instructions, it concludes that the program hangs.
- */
-#ifdef HANG_DETECTION1
-    DataOp *_effectiveP = nullptr;
-    // Stack with effective instruction in current hang sample period
-    DataOp *_effective = nullptr;
-#endif
-
     bool _significantValueChange;
 
     void updateBounds();
@@ -67,14 +57,6 @@ public:
     int* getMinBoundP() { return _minBoundP; }
     int* getMaxBoundP() { return _maxBoundP; }
 
-    /* Returns "true" if there have been effective data operations since the last snapshot.
-     * Operations are effective if they do not cancel out the previous (effective) operation.
-     * E.g. a DEC that follows an INC is not effective.
-     *
-     * TODO: Check why this detects hangs not detected by the snapshot-based hang detection.
-     */
-    bool effectiveDataOperations();
-
     /* True if one or more values since last snapshot became zero, or moved away from zero.
      */
     bool significantValueChange() { return _significantValueChange; }
@@ -91,7 +73,6 @@ public:
 
     void dump();
     void dumpStack();
-    void dumpSettings();
     void dumpHangInfo();
 };
 
