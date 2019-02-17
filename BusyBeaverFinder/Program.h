@@ -33,7 +33,8 @@ public:
     int getWidth() { return _width; }
     int getHeight() { return _height; }
 
-    Ins* startProgramPointer() { return &(_instructions[1]); /* Start at row = -1, col = 0 */ }
+    Ins* getInstructionBuffer() { return _instructions; }
+    Ins* getStartProgramPointer() { return &(_instructions[1]); /* Start at row = -1, col = 0 */ }
 
     void setInstruction(Ins *pp, Ins op) { (*pp) = op; }
     void clearInstruction(Ins *pp) { (*pp) = Ins::UNSET; }

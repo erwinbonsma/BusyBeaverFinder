@@ -308,7 +308,9 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
             if (_remainingPeriodicHangDetectAttempts >= 0) {
                 _opsToWaitBeforePeriodicHangCheck--;
                 if (_remainingPeriodicHangDetectAttempts > 0) {
-                    _cycleDetector.recordInstruction((char)ins | (((char)_pp.dir) << 2));
+                    _cycleDetector.recordInstruction(
+                        (char)((insP - _program.getInstructionBuffer()) ^ (int)_pp.dir)
+                    );
                 }
             }
         } while (!done);
@@ -363,7 +365,7 @@ void ExhaustiveSearcher::search() {
     _resumeFrom = new Ins[1];
     _resumeFrom[0] = Ins::UNSET;
 
-    _pp.p = _program.startProgramPointer();
+    _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
     run(0, 0);
 }
@@ -374,7 +376,7 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     std::cout << "Resuming from: ";
     dumpInstructionStack(_resumeFrom);
 
-    _pp.p = _program.startProgramPointer();
+    _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
     run(0, 0);
 }

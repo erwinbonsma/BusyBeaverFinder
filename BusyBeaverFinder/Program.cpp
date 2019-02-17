@@ -38,8 +38,8 @@ Ins Program::getInstruction(int col, int row) {
 }
 
 void Program::clone(Program& dest) {
-    Ins* ppSrc = startProgramPointer();
-    Ins* ppDst = dest.startProgramPointer();
+    Ins* ppSrc = getInstructionBuffer();
+    Ins* ppDst = dest.getInstructionBuffer();
     for (int i = programStorageSize; --i >= 0; ) {
         dest.setInstruction(ppDst++, getInstruction(ppSrc++));
     }
