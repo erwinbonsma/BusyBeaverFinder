@@ -287,3 +287,38 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
 }
+
+TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
+    ExhaustiveSearcher searcher(6, 6, 256);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectAttempts = 4;
+    settings.initialHangSamplePeriod = 16;
+    searcher.configure(settings);
+
+    SECTION( "6x6-InfSweepSeqExtendingOneWay") {
+        // This program sweeps over the entire data sequence, which causes the hang cycle to
+        // continuously increase. However, it only extends one way.
+
+        Op resumeFrom[] = {
+            Op::DATA, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::NOOP, Op::NOOP, Op::NOOP, Op::NOOP, Op::TURN,
+            Op::DATA, Op::TURN, Op::TURN,
+            Op::NOOP, Op::TURN,
+            Op::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+
+    }
+}
