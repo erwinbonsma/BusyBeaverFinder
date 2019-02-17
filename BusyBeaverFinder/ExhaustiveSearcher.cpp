@@ -136,6 +136,10 @@ bool ExhaustiveSearcher::sweepHangDetected() {
         // At right end of sequence
         extensionDir = DataDirection::RIGHT;
     }
+    else if (_extensionCount == 1 && _data.val() == 0) {
+        // Also allow sweep over a partial, zero-terminated part of the sequence
+        _sweepMidTurningPoint = _data.getDataPointer();
+    }
 
     if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
         _prevExtensionDir = extensionDir;
@@ -150,6 +154,7 @@ bool ExhaustiveSearcher::sweepHangDetected() {
             }
             _remainingSweepHangDetectAttempts--;
             _extensionCount = 1; // Continue with next detection attempt
+            _sweepMidTurningPoint = nullptr;
         }
         _dataTracker.captureSnapShot();
     }
@@ -184,13 +189,14 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
         _hangSampleMask = (_hangSampleMask << 1) | 1;
     }
     else if (_remainingPeriodicHangDetectAttempts == 0) {
-        _remainingPeriodicHangDetectAttempts--;
+        _remainingPeriodicHangDetectAttempts = -1; // Ensure this block is only executed once
 
         _activeHangCheck = HangCheck::SWEEP;
 
         _remainingSweepHangDetectAttempts = 3;
         _extensionCount = 0;
         _prevExtensionDir = DataDirection::NONE;
+        _sweepMidTurningPoint = nullptr;
     }
 }
 

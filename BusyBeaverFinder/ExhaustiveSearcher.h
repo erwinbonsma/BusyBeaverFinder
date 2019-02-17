@@ -78,6 +78,7 @@ class ExhaustiveSearcher {
     int _remainingSweepHangDetectAttempts;
     DataDirection _prevExtensionDir;
     int _extensionCount;
+    int* _sweepMidTurningPoint;
 
     ProgressTracker* _tracker;
 
