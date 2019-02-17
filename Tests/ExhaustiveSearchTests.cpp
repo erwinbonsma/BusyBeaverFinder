@@ -52,6 +52,7 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     ExhaustiveSearcher searcher(5, 5, 128);
     ProgressTracker tracker(searcher);
 
+    tracker.setDumpUndetectedHangs(true);
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
@@ -59,6 +60,7 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     searcher.configure(settings);
 
     searcher.search();
+    tracker.dumpFinalStats();
 
     REQUIRE(tracker.getMaxStepsFound() == 43);
     REQUIRE(tracker.getTotalSuccess() == 51410);
