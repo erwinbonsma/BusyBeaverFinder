@@ -60,8 +60,7 @@ class ExhaustiveSearcher {
     // UNSET.
     Ins* _resumeFrom;
 
-    Ins* _pp;
-    Dir _dir;
+    ProgramPointer _pp;
 
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
@@ -70,8 +69,7 @@ class ExhaustiveSearcher {
     HangCheck _activeHangCheck;
 
     // Periodic hang detection
-    Ins* _sampleProgramPointer;
-    Dir _sampleDir;
+    ProgramPointer _samplePp;
     int _cyclePeriod;
     int _opsToWaitBeforePeriodicHangCheck;
     int _remainingPeriodicHangDetectAttempts;

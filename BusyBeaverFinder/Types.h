@@ -1,13 +1,13 @@
 //
-//  Enums.h
+//  Types.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 19/01/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#ifndef Enums_h
-#define Enums_h
+#ifndef Types_h
+#define Types_h
 
 #include "Consts.h"
 
@@ -28,6 +28,11 @@ enum class Dir : int {
     LEFT = -1
 };
 
+struct ProgramPointer {
+    Ins* p;
+    Dir dir;
+};
+
 // Data operations
 enum class DataOp : char {
     INC = 0,
@@ -37,4 +42,4 @@ enum class DataOp : char {
     NONE = 4
 };
 
-#endif /* Enums_h */
+#endif /* Types_h */

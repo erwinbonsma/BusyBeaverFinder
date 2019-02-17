@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "Enums.h"
+#include "Types.h"
 
 bool isPowerOfTwo(int val);
 int makePowerOfTwo(int val);

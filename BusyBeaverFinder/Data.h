@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #include "Consts.h"
-#include "Enums.h"
+#include "Types.h"
 
 class Data {
     int *_dataP;

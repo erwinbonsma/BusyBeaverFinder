@@ -13,7 +13,7 @@
 #include <iostream>
 #include <stdio.h>
 
-#include "Enums.h"
+#include "Types.h"
 
 typedef char CycleInstruction;
 

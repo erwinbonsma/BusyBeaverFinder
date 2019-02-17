@@ -93,7 +93,7 @@ bool ExhaustiveSearcher::periodicHangDetected() {
 //    _data.dumpHangInfo();
 //    _dataTracker.dump();
 
-    if (_pp != _sampleProgramPointer || _dir != _sampleDir) {
+    if (_pp.p != _samplePp.p || _pp.dir != _samplePp.dir) {
         // Not back at the sample point, so not on a hang cycle with assumed period. Fail this
         // attempt and initiate a new one.
         _activeHangCheck = HangCheck::NONE;
@@ -172,11 +172,10 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
         // previous sample period was too low to detect the period of the hang cycle)
         _activeHangCheck = HangCheck::PERIODIC;
 
-        _sampleProgramPointer = _pp;
-        _sampleDir = _dir;
+        _samplePp = _pp;
         _cyclePeriod = _cycleDetector.getCyclePeriod();
         _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
-        //                    std::cout << "period = " << _cyclePeriod << std::endl;
+//        std::cout << "period = " << _cyclePeriod << std::endl;
         _cycleDetector.clearInstructionHistory();
         _data.resetHangDetection();
         _dataTracker.reset();
@@ -197,9 +196,8 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 
 
 void ExhaustiveSearcher::branch(int totalSteps, int depth) {
-    Ins* pp0 = _pp;
-    Dir dir0 = _dir;
-    Ins* pp2 = _pp + (int)_dir;
+    ProgramPointer pp0 = _pp;
+    Ins* insP = _pp.p + (int)_pp.dir;
     bool resuming = *_resumeFrom != Ins::UNSET;
 
     for (int i = 0; i < 3; i++) {
@@ -213,11 +211,10 @@ void ExhaustiveSearcher::branch(int totalSteps, int depth) {
             }
         }
 
-        _program.setInstruction(pp2, ins);
+        _program.setInstruction(insP, ins);
         _instructionStack[depth] = ins;
         run(totalSteps, depth + 1);
         _pp = pp0;
-        _dir = dir0;
 
         if (
             _searchMode == SearchMode::FIND_ONE ||
@@ -226,7 +223,7 @@ void ExhaustiveSearcher::branch(int totalSteps, int depth) {
             break;
         }
     }
-    _program.clearInstruction(pp2);
+    _program.clearInstruction(insP);
     _instructionStack[depth] = Ins::UNSET;
 }
 
@@ -237,7 +234,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     _data.resetHangDetection();
     _dataTracker.reset();
     _cycleDetector.clearInstructionHistory();
-    _sampleProgramPointer = nullptr;
+    _samplePp.p = nullptr;
 
     _hangSampleMask = _initialHangSampleMask;
     _remainingPeriodicHangDetectAttempts = _settings.maxHangDetectAttempts;
@@ -245,13 +242,13 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     _activeHangCheck = HangCheck::NONE;
 
     while (1) { // Run until branch, termination or error
-        Ins* pp2;
+        Ins* insP;
         bool done = false;
         do { // Execute single step
 
-            pp2 = _pp + (int)_dir;
+            insP = _pp.p + (int)_pp.dir;
 
-            Ins ins = _program.getInstruction(pp2);
+            Ins ins = _program.getInstruction(insP);
             switch (ins) {
                 case Ins::DONE:
                     _tracker->reportDone(totalSteps + steps);
@@ -266,7 +263,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     break;
                 case Ins::DATA:
                     numDataOps++;
-                    switch (_dir) {
+                    switch (_pp.dir) {
                         case Dir::UP:
                             _data.inc();
                             break;
@@ -292,18 +289,18 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     break;
                 case Ins::TURN:
                     if (_data.val() == 0) {
-                        switch (_dir) {
-                            case Dir::UP: _dir = Dir::LEFT; break;
-                            case Dir::RIGHT: _dir = Dir::UP; break;
-                            case Dir::DOWN: _dir = Dir::RIGHT; break;
-                            case Dir::LEFT: _dir = Dir::DOWN; break;
+                        switch (_pp.dir) {
+                            case Dir::UP: _pp.dir = Dir::LEFT; break;
+                            case Dir::RIGHT: _pp.dir = Dir::UP; break;
+                            case Dir::DOWN: _pp.dir = Dir::RIGHT; break;
+                            case Dir::LEFT: _pp.dir = Dir::DOWN; break;
                         }
                     } else {
-                        switch (_dir) {
-                            case Dir::UP: _dir = Dir::RIGHT; break;
-                            case Dir::RIGHT: _dir = Dir::DOWN; break;
-                            case Dir::DOWN: _dir = Dir::LEFT; break;
-                            case Dir::LEFT: _dir = Dir::UP; break;
+                        switch (_pp.dir) {
+                            case Dir::UP: _pp.dir = Dir::RIGHT; break;
+                            case Dir::RIGHT: _pp.dir = Dir::DOWN; break;
+                            case Dir::DOWN: _pp.dir = Dir::LEFT; break;
+                            case Dir::LEFT: _pp.dir = Dir::UP; break;
                         }
                     }
                     break;
@@ -311,11 +308,11 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
             if (_remainingPeriodicHangDetectAttempts >= 0) {
                 _opsToWaitBeforePeriodicHangCheck--;
                 if (_remainingPeriodicHangDetectAttempts > 0) {
-                    _cycleDetector.recordInstruction((char)ins | (((char)_dir) << 2));
+                    _cycleDetector.recordInstruction((char)ins | (((char)_pp.dir) << 2));
                 }
             }
         } while (!done);
-        _pp = pp2;
+        _pp.p = insP;
         steps++;
 
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
@@ -366,8 +363,8 @@ void ExhaustiveSearcher::search() {
     _resumeFrom = new Ins[1];
     _resumeFrom[0] = Ins::UNSET;
 
-    _pp = _program.startProgramPointer();
-    _dir = Dir::UP;
+    _pp.p = _program.startProgramPointer();
+    _pp.dir = Dir::UP;
     run(0, 0);
 }
 
@@ -377,8 +374,8 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     std::cout << "Resuming from: ";
     dumpInstructionStack(_resumeFrom);
 
-    _pp = _program.startProgramPointer();
-    _dir = Dir::UP;
+    _pp.p = _program.startProgramPointer();
+    _pp.dir = Dir::UP;
     run(0, 0);
 }
 

@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-#include "Enums.h"
+#include "Types.h"
 
 class ExhaustiveSearcher;
 
