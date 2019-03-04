@@ -105,8 +105,8 @@ void ProgressTracker::reportEarlyHang() {
 
 //    std::cout << "Detected hang" << std::endl;
 //    _searcher.getProgram().dump();
+//    _searcher.dumpInstructionStack();
 //    _searcher.getData().dump();
-//    _searcher.dumpOpStack();
 
     _totalHangs++;
     _totalEarlyHangs++;

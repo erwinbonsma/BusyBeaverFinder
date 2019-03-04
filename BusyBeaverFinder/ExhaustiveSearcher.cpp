@@ -126,46 +126,6 @@ bool ExhaustiveSearcher::periodicHangDetected() {
     return false;
 }
 
-// Checks if the current position is one where the sweep reverses, even though the data pointer is
-// not at the bounds of the data store.
-bool ExhaustiveSearcher::isPossibleMidSweepPoint() {
-    if (_extensionCount != 1 || _data.val() != 0) {
-        return false;
-    }
-
-    int *dp = _data.getDataPointer();
-    if (_prevExtensionDir == DataDirection::LEFT) {
-        if (dp < _data.getMinBoundP()) {
-            // Zero value is outside sequence, extending the sequence at its first end point
-            return false;
-        }
-        if ((dp - _data.getMinBoundP()) < 8) {
-            // The sequence is too short.
-            return false;
-        }
-    } else {
-        if (dp > _data.getMaxBoundP()) {
-            return false;
-        }
-        if ((_data.getMaxBoundP() - dp) < 8) {
-            return false;
-        }
-    }
-
-    long dataIndex = _data.getDataPointer() - _data.getDataBuffer();
-
-    if (_dataTracker.getNewSnapShot()->buf[dataIndex] != 0) {
-        // The value just became zero. It should have been zero to be a possible turning point.
-        return false;
-    }
-
-    _sweepMidTurningPoint = _data.getDataPointer();
-    _sweepMidTurningDir = (_prevExtensionDir == DataDirection::LEFT)
-        ? DataDirection::RIGHT
-        : DataDirection::LEFT;
-    return true;
-}
-
 // Should be invoked after a full sweep has been completed. It returns "true" if the data value
 // changes are diverging and therefore, the program is considered hanging.
 bool ExhaustiveSearcher::isSweepDiverging() {
@@ -176,10 +136,9 @@ bool ExhaustiveSearcher::isSweepDiverging() {
     if (_sweepMidTurningPoint != nullptr) {
         long dataIndex = _sweepMidTurningPoint - _data.getDataBuffer();
         if (
-            *_sweepMidTurningPoint != 0 ||
-            _dataTracker.getNewSnapShot()->buf[dataIndex] != 0
+            *_sweepMidTurningPoint != _dataTracker.getNewSnapShot()->buf[dataIndex]
         ) {
-            // The mid-turning point is not zero anymore
+            // The mid-turning point should be a fixed value
             return false;
         }
     }
@@ -193,20 +152,6 @@ bool ExhaustiveSearcher::isSweepDiverging() {
 }
 
 bool ExhaustiveSearcher::sweepHangDetected() {
-    DataDirection extensionDir = DataDirection::NONE;
-    if (_data.getDataPointer() == _data.getMinBoundP()) {
-        // At left end of sequence
-        extensionDir = DataDirection::LEFT;
-    }
-    else if (_data.getDataPointer() == _data.getMaxBoundP()) {
-        // At right end of sequence
-        extensionDir = DataDirection::RIGHT;
-    }
-    else if (_sweepMidTurningPoint == nullptr && isPossibleMidSweepPoint()) {
-        // Possible mid-sequence turning point
-        extensionDir = _sweepMidTurningDir;
-    }
-
     // The mid-turning point should not be crossed
     if (_sweepMidTurningPoint != nullptr) {
         int* dp = _data.getDataPointer();
@@ -223,12 +168,50 @@ bool ExhaustiveSearcher::sweepHangDetected() {
         }
     }
 
-    if (extensionDir != DataDirection::NONE && extensionDir != _prevExtensionDir) {
-//        std::cout << "Sweep endpoint detected" << std::endl;
-//        _program.dump(_pp.p);
+    if (!_performedTurn) {
+        return false;
+    }
 
+    if (_lastTurnWasRight) {
+        _midSequence = true;
+        return false;
+    }
+
+    DataDirection extensionDir = DataDirection::NONE;
+
+    if (_data.getDataPointer() <= _data.getMinBoundP()) {
+        // At left end of sequence
+        extensionDir = DataDirection::LEFT;
+    }
+    else if (_data.getDataPointer() >= _data.getMaxBoundP()) {
+        // At right end of sequence
+        extensionDir = DataDirection::RIGHT;
+    }
+    else if (_sweepMidTurningPoint == nullptr && _extensionCount == 1) {
+        // Possible mid-sequence turning point
+        _sweepMidTurningPoint = _data.getDataPointer();
+        _sweepMidTurningDir = (_prevExtensionDir == DataDirection::LEFT)
+            ? DataDirection::RIGHT
+            : DataDirection::LEFT;
+
+        extensionDir = _sweepMidTurningDir;
+    }
+
+    if (
+        extensionDir != DataDirection::NONE &&
+        extensionDir != _prevExtensionDir &&
+        _midSequence
+    ) {
         _prevExtensionDir = extensionDir;
         _extensionCount++;
+        _midSequence = false; // We're at an end of the sequence
+
+//        std::cout << "Sweep endpoint detected #"
+//        << _extensionCount
+//        << std::endl;
+//        _program.dump(_pp.p);
+//        _data.dump();
+
         if (_extensionCount == 1) {
             _sweepStartPp = _pp;
         }
@@ -342,6 +325,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     while (1) { // Run until branch, termination or error
         Ins* insP;
         bool done = false;
+        _performedTurn = false;
         do { // Execute single step
 
             insP = _pp.p + (int)_pp.dir;
@@ -386,6 +370,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     done = true;
                     break;
                 case Ins::TURN:
+                    _performedTurn = true;
                     if (_data.val() == 0) {
                         switch (_pp.dir) {
                             case Dir::UP: _pp.dir = Dir::LEFT; break;
@@ -393,6 +378,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                             case Dir::DOWN: _pp.dir = Dir::RIGHT; break;
                             case Dir::LEFT: _pp.dir = Dir::DOWN; break;
                         }
+                        _lastTurnWasRight = false;
                     } else {
                         switch (_pp.dir) {
                             case Dir::UP: _pp.dir = Dir::RIGHT; break;
@@ -400,6 +386,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                             case Dir::DOWN: _pp.dir = Dir::LEFT; break;
                             case Dir::LEFT: _pp.dir = Dir::UP; break;
                         }
+                        _lastTurnWasRight = true;
                     }
                     break;
             }

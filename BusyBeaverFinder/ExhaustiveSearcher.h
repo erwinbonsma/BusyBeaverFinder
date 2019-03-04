@@ -65,6 +65,10 @@ class ExhaustiveSearcher {
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
 
+    // Recent turn status, which is generally useful for hang detection
+    bool _performedTurn;
+    bool _lastTurnWasRight;
+
     int _hangSampleMask;
     HangCheck _activeHangCheck;
 
@@ -81,6 +85,7 @@ class ExhaustiveSearcher {
     int* _sweepMidTurningPoint;
     DataDirection _sweepMidTurningDir;
     ProgramPointer _sweepStartPp;
+    bool _midSequence;
 
     ProgressTracker* _tracker;
 
@@ -90,7 +95,6 @@ class ExhaustiveSearcher {
     void initiateNewHangCheck();
     bool periodicHangDetected();
     bool sweepHangDetected();
-    bool isPossibleMidSweepPoint();
     bool isSweepDiverging();
 
     void reconfigure();
