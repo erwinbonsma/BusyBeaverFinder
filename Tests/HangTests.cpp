@@ -360,6 +360,25 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
+    SECTION( "6x6-InfSweepSeqExtendingOneWay2" ) {
+        // Resembles the previous, but here the mid-sequence turning point does not have a fixed
+        // value. It briefly becomes zero, then becomes non-zero again.
+        //
+        //     * *
+        //   * o o _ *
+        //   o o _ *
+        // * _ _ o *
+        // * _ o *
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
     SECTION( "6x6-InfSweepSeqExtendingOneWayWithZeroes") {
         // Here a sweep is occuring over a zero-delimited part of the sequence.
         //
@@ -420,16 +439,26 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
-//    SECTION( "6x6-RunAwayGlider") {
-//        // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
-//        // zeroes in their wake. The amount of steps required to move one position on the tape
-//        // doubles each time (as the left counter is decreased towards zero, the right counter is
-//        // increased by two).
-//        Ins resumeFrom[] = {
-//            // OOPS - Did not get correct program
-//        };
-//        searcher.findOne(resumeFrom);
-//
-//        REQUIRE(tracker.getTotalEarlyHangs() == 1);
-//    }
+    SECTION( "6x6-RunAwayGlider") {
+        //     * *
+        //   * _ _ o *
+        //   o _ o o *
+        //   _ * o o
+        // * _ o o *
+        // o o * *
+        //
+        // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
+        // zeroes in their wake. The amount of steps required to move one position on the tape
+        // doubles each time (as the left counter is decreased towards zero, the right counter is
+        // increased by two).
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
 }

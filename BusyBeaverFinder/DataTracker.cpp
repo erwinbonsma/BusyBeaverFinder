@@ -212,14 +212,17 @@ bool DataTracker::periodicHangDetected() {
 // not contain zeroes).
 #define IMPACTFUL_SWEEP_CHANGE(x, y) ((x < 0 && y > x) || (x > 0 && y < x))
 
-bool DataTracker::sweepHangDetected() {
+bool DataTracker::sweepHangDetected(int* sweepMidTurningPoint) {
     // Check if there was an impactful change from the old to the new snapshot
     int *p = _oldSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
     int *q = _newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
     int *pEnd = _oldSnapShotP->buf + (_newSnapShotP->maxBoundP - _data.getDataBuffer());
     do {
         if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
-            return false;
+            // Check if it's a mid-sequence turning point. This one may (briefly) become zero
+            if ((p - _oldSnapShotP->buf) != (sweepMidTurningPoint - _data.getDataBuffer())) {
+                return false;
+            }
         }
         p++;
         q++;
@@ -231,7 +234,10 @@ bool DataTracker::sweepHangDetected() {
     pEnd = _newSnapShotP->buf + (_data.getMaxBoundP() - _data.getDataBuffer());
     do {
         if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
-            return false;
+            // Check if it's a mid-sequence turning point. This one may (briefly) become zero
+            if (q != sweepMidTurningPoint) {
+                return false;
+            }
         }
         p++;
         q++;

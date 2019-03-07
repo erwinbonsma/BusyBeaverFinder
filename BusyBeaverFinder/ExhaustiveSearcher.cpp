@@ -142,9 +142,9 @@ bool ExhaustiveSearcher::isSweepDiverging() {
     if (_sweepMidTurningPoint != nullptr) {
         long dataIndex = _sweepMidTurningPoint - _data.getDataBuffer();
         if (
-            *_sweepMidTurningPoint != _dataTracker.getNewSnapShot()->buf[dataIndex]
+            *_sweepMidTurningPoint != _dataTracker.getOldSnapShot()->buf[dataIndex]
         ) {
-            // The mid-turning point should be a fixed value
+            // The mid-turning point should be a fixed value (when at other side of the sequence)
             return false;
         }
     }
@@ -154,7 +154,7 @@ bool ExhaustiveSearcher::isSweepDiverging() {
         return false;
     }
 
-    return _dataTracker.sweepHangDetected();
+    return _dataTracker.sweepHangDetected(_sweepMidTurningPoint);
 }
 
 bool ExhaustiveSearcher::sweepHangDetected() {

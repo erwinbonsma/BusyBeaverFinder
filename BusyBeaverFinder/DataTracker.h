@@ -61,7 +61,7 @@ public:
     bool periodicHangDetected();
 
     // Returns "true" if a sweep hang is detected
-    bool sweepHangDetected();
+    bool sweepHangDetected(int* sweepMidTurningPoint);
 
     void dump();
 };
