@@ -439,6 +439,63 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
+    SECTION( "6x6-IrregularSweep") {
+        // An irregular sweep. Its turning point at one end of the sequence varies. The reason is
+        // that it shifts DP two positions, which means it can ignore a mid-sequence zero.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        //   _ o _
+        // * _ _ o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-IrregularSweep2") {
+        // Another irregular sweep.
+        //
+        //       *
+        //   * * o _ *
+        //   o o o *
+        // * _ _ o *
+        // * _   *
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-IrregularSweep3") {
+        // Another irregular sweep.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        // * _ o o *
+        // * _ o *
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
     SECTION( "6x6-RunAwayGlider") {
         //     * *
         //   * _ _ o *
