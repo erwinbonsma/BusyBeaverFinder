@@ -149,11 +149,6 @@ bool ExhaustiveSearcher::isSweepDiverging() {
         }
     }
 
-    if (_pp.p != _sweepStartPp.p || _pp.dir != _sweepStartPp.dir) {
-        // Current program location differs from program location at start of sweep
-        return false;
-    }
-
     return _dataTracker.sweepHangDetected(_sweepMidTurningPoint);
 }
 
@@ -222,13 +217,24 @@ bool ExhaustiveSearcher::sweepHangDetected() {
             _sweepStartPp = _pp;
         }
         else if (_extensionCount % 2 == 1) {
+            bool abortCurrentAttempt = false;
             if (isSweepDiverging()) {
-//                std::cout << "Sweep hang detected!" << std::endl;
-//                _data.dump();
-//                _dataTracker.dump();
-                return true;
+                if (_pp.p == _sweepStartPp.p && _pp.dir == _sweepStartPp.dir) {
+                    // PP is same as it was at during the first turn, so an actual repetition/hang
+//                    std::cout << "Sweep hang detected!" << std::endl;
+//                    _data.dump();
+//                    _dataTracker.dump();
+
+                    return true;
+                } else {
+                    // This may be a non-symmetric sweep.
+                    abortCurrentAttempt = (_extensionCount >= maxSweepExtensionCount);
+                }
+            } else {
+                // Values do not diverge so we cannot conclude it is a hang.
+                abortCurrentAttempt = true;
             }
-            if (_extensionCount >= maxSweepExtensionCount) {
+            if (abortCurrentAttempt) {
                 if (_remainingSweepHangDetectAttempts-- > 0) {
                     _sweepMidTurningPoint = nullptr;
                     // Continue next detection attempt starting from current end point
