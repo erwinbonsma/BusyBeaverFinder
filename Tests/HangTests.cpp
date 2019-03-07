@@ -257,17 +257,6 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
-}
-
-TEST_CASE( "5x5 Failing Hang tests", "[hang][5x5][.fail]" ) {
-    ExhaustiveSearcher searcher(5, 5, 64);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    searcher.configure(settings);
-
     SECTION( "InfSeqExtendingBothWays2" ) {
         // Sequence that extends both ways, but to the right it extends only at half the speed.
         //

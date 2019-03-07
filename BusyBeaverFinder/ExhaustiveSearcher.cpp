@@ -15,6 +15,12 @@
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
+// Limits how many sweeps to check for repetition
+const int maxSweepExtensionCount = 5;
+
+// The number of sweep hang detect attempts
+const int maxSweepHangDetectAttempts = 3;
+
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
@@ -215,20 +221,22 @@ bool ExhaustiveSearcher::sweepHangDetected() {
         if (_extensionCount == 1) {
             _sweepStartPp = _pp;
         }
-        else if (_extensionCount == 3) {
+        else if (_extensionCount % 2 == 1) {
             if (isSweepDiverging()) {
 //                std::cout << "Sweep hang detected!" << std::endl;
 //                _data.dump();
 //                _dataTracker.dump();
                 return true;
             }
-            if (_remainingSweepHangDetectAttempts-- > 0) {
-                _sweepMidTurningPoint = nullptr;
-                // Continue next detection attempt starting from current end point
-                _extensionCount = 1;
-                _sweepStartPp = _pp;
-            } else {
-                _activeHangCheck = HangCheck::NONE;
+            if (_extensionCount >= maxSweepExtensionCount) {
+                if (_remainingSweepHangDetectAttempts-- > 0) {
+                    _sweepMidTurningPoint = nullptr;
+                    // Continue next detection attempt starting from current end point
+                    _extensionCount = 1;
+                    _sweepStartPp = _pp;
+                } else {
+                    _activeHangCheck = HangCheck::NONE;
+                }
             }
         }
         _dataTracker.captureSnapShot();
@@ -268,7 +276,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 
         _activeHangCheck = HangCheck::SWEEP;
 
-        _remainingSweepHangDetectAttempts = 3;
+        _remainingSweepHangDetectAttempts = maxSweepHangDetectAttempts;
         _extensionCount = 0;
         _prevExtensionDir = DataDirection::NONE;
         _sweepMidTurningPoint = nullptr;
