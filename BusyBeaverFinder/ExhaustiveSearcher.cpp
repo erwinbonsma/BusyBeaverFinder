@@ -29,6 +29,8 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 {
     initInstructionStack(width * height);
 
+    _periodicHangDetector = new PeriodicHangDetector(*this);
+
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.initialHangSamplePeriod = 16;
@@ -39,6 +41,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
+    delete _periodicHangDetector;
 }
 
 void ExhaustiveSearcher::configure(SearchSettings settings) {
@@ -94,43 +97,11 @@ void ExhaustiveSearcher::dumpSettings() {
     << std::endl;
 }
 
-bool ExhaustiveSearcher::periodicHangDetected() {
-//    _program.dump();
-//    _cycleDetector.dump();
-//    _data.dumpHangInfo();
-//    _dataTracker.dump();
-
-    if (_pp.p != _samplePp.p || _pp.dir != _samplePp.dir) {
-        // Not back at the sample point, so not on a hang cycle with assumed period. Fail this
-        // attempt and initiate a new one.
-        _activeHangCheck = HangCheck::NONE;
-        return false;
-    }
-
-    if (
-        _data.getDataPointer() == _dataTracker.getNewSnapShot()->dataP &&
-        !_data.significantValueChange()
-    ) {
-        SnapShotComparison result = _dataTracker.compareToSnapShot();
-        if (result != SnapShotComparison::IMPACTFUL) {
-            return true;
-        }
-    }
-    else {
-        if (_dataTracker.getOldSnapShot() != nullptr) {
-            if (_dataTracker.periodicHangDetected()) {
-                return true;
-            } else {
-                _activeHangCheck = HangCheck::NONE;
-            }
-        } else {
-            _periodicHangCheckAt = _cyclePeriod * 2;
-        }
-
-        _dataTracker.captureSnapShot();
-    }
-
-    return false;
+void ExhaustiveSearcher::dump() {
+    _program.dump();
+    _cycleDetector.dump();
+    _data.dumpHangInfo();
+    _dataTracker.dump();
 }
 
 // Should be invoked after a full sweep has been completed. It returns "true" if the data value
@@ -266,15 +237,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
         // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
         // previous sample period was too low to detect the period of the hang cycle)
         _activeHangCheck = HangCheck::PERIODIC;
-
-        _samplePp = _pp;
-        _cyclePeriod = _cycleDetector.getCyclePeriod();
-        _periodicHangCheckAt = _cyclePeriod;
-//        std::cout << "period = " << _cyclePeriod << std::endl;
-        _cycleDetector.clearInstructionHistory();
-        _data.resetHangDetection();
-        _dataTracker.reset();
-        _dataTracker.captureSnapShot();
+        _periodicHangDetector->start();
 
         _hangSampleMask = (_hangSampleMask << 1) | 1;
     }
@@ -332,7 +295,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     _dataTracker.reset();
     _cycleDetectorEnabled = true;
     _cycleDetector.clearInstructionHistory();
-    _samplePp.p = nullptr;
 
     _hangSampleMask = _initialHangSampleMask;
     _remainingPeriodicHangDetectAttempts = _settings.maxHangDetectAttempts;
@@ -419,14 +381,23 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
 
         if (
-            _activeHangCheck == HangCheck::PERIODIC &&
-            _cycleDetector.getNumRecordedInstructions() >= _periodicHangCheckAt &&
-            periodicHangDetected()
+            _activeHangCheck == HangCheck::PERIODIC
         ) {
-            _tracker->reportEarlyHang();
-            if (!_settings.testHangDetection) {
-                _data.undo(numDataOps);
-                return;
+            HangDetectionResult result = _periodicHangDetector->detectHang();
+
+            switch (result) {
+                case HangDetectionResult::FAILED:
+                    _activeHangCheck = HangCheck::NONE;
+                    break;
+                case HangDetectionResult::HANGING:
+                    _tracker->reportEarlyHang();
+                    if (!_settings.testHangDetection) {
+                        _data.undo(numDataOps);
+                        return;
+                    }
+                    break;
+                case HangDetectionResult::ONGOING:
+                    break;
             }
         }
 

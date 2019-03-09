@@ -17,6 +17,7 @@
 #include "CycleDetector.h"
 #include "DataTracker.h"
 #include "ProgressTracker.h"
+#include "PeriodicHangDetector.h"
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -72,13 +73,9 @@ class ExhaustiveSearcher {
 
     int _hangSampleMask;
     HangCheck _activeHangCheck;
-
-    // Periodic hang detection
-    ProgramPointer _samplePp;
-    int _cyclePeriod;
-    // When to perform the periodic hang check (in number of recorded instructions)
-    int _periodicHangCheckAt;
     int _remainingPeriodicHangDetectAttempts;
+
+    PeriodicHangDetector* _periodicHangDetector;
 
     // Sweep hang detection
     int _remainingSweepHangDetectAttempts;
@@ -119,6 +116,9 @@ public:
 
     Program& getProgram() { return _program; }
     Data& getData() { return _data; }
+    CycleDetector& getCycleDetector() { return _cycleDetector; }
+    DataTracker& getDataTracker() { return _dataTracker; }
+    ProgramPointer getProgramPointer() { return _pp; }
 
     void search();
     void search(Ins* resumeFrom);
@@ -130,6 +130,7 @@ public:
 
     void dumpInstructionStack();
     void dumpSettings();
+    void dump();
 };
 
 #endif /* ExhaustiveSearcher_h */
