@@ -52,11 +52,8 @@ void ExhaustiveSearcher::reconfigure() {
     _initialHangSampleMask = _settings.initialHangSamplePeriod - 1;
 
     // Determine the maximum sample period (it doubles after each failed attempt)
-    int maxHangSamplePeriod = _settings.initialHangSamplePeriod;
-    int i = _settings.maxPeriodicHangDetectAttempts;
-    while (--i > 0) {
-        maxHangSamplePeriod <<= 1;
-    }
+    int maxHangSamplePeriod =
+        _settings.initialHangSamplePeriod << _settings.maxPeriodicHangDetectAttempts;
 
     _data.setHangSamplePeriod(maxHangSamplePeriod);
     _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod * 2);
@@ -182,7 +179,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
 
     _hangSampleMask = _initialHangSampleMask;
     _numHangDetectAttempts = 0;
-
     _activeHangCheck = nullptr;
 
     while (1) { // Run until branch, termination or error

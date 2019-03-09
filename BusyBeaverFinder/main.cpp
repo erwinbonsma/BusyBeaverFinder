@@ -27,8 +27,10 @@ void init(int argc, char * argv[]) {
         ("h,height", "Program height", cxxopts::value<int>())
         ("d,datasize", "Data size", cxxopts::value<int>())
         ("max-steps", "Maximum program execution steps", cxxopts::value<int>())
-        ("p,hang-period", "Period for hang-detection", cxxopts::value<int>())
-        ("max-detect-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
+        ("p,hang-period", "Initial hang detection period", cxxopts::value<int>())
+        ("periodic-attempts", "Maximum Periodic Hang detect attempts", cxxopts::value<int>())
+        ("regsweep-attempts", "Maximum Regular Sweep Hang detect attempts", cxxopts::value<int>())
+        ("max-regular-sweeps", "Maximum Number of Sweeps", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
         ("dump-period", "The period of dumping basic stats", cxxopts::value<int>())
@@ -73,8 +75,14 @@ void init(int argc, char * argv[]) {
         settings.maxSteps = result["max-steps"].as<int>();
     }
 
-    if (result.count("max-detect-attempts")) {
-        settings.maxHangDetectAttempts = result["max-detect-attempts"].as<int>();
+    if (result.count("periodic-attempts")) {
+        settings.maxPeriodicHangDetectAttempts = result["periodic-attempts"].as<int>();
+    }
+    if (result.count("regsweep-attempts")) {
+        settings.maxRegularSweepHangDetectAttempts = result["regsweep-attempts"].as<int>();
+    }
+    if (result.count("max-regular-sweeps")) {
+        settings.maxRegularSweepExtensionCount = result["max-regular-sweeps"].as<int>();
     }
 
     // Enable testing of hang detection?
