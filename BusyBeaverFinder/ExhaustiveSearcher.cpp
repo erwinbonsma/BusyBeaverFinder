@@ -15,12 +15,6 @@
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
-// Limits how many sweeps to check for repetition
-const int maxSweepExtensionCount = 5;
-
-// The number of sweep hang detect attempts
-const int maxSweepHangDetectAttempts = 3;
-
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
@@ -30,11 +24,14 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     initInstructionStack(width * height);
 
     _periodicHangDetector = new PeriodicHangDetector(*this);
+    _regularSweepHangDetector = new RegularSweepHangDetector(*this);
 
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.initialHangSamplePeriod = 16;
-    _settings.maxHangDetectAttempts = 5;
+    _settings.maxPeriodicHangDetectAttempts = 5;
+    _settings.maxRegularSweepHangDetectAttempts = 3;
+    _settings.maxRegularSweepExtensionCount = 5;
     _settings.testHangDetection = false;
     reconfigure();
 }
@@ -42,6 +39,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
     delete _periodicHangDetector;
+    delete _regularSweepHangDetector;
 }
 
 void ExhaustiveSearcher::configure(SearchSettings settings) {
@@ -55,7 +53,7 @@ void ExhaustiveSearcher::reconfigure() {
 
     // Determine the maximum sample period (it doubles after each failed attempt)
     int maxHangSamplePeriod = _settings.initialHangSamplePeriod;
-    int i = _settings.maxHangDetectAttempts;
+    int i = _settings.maxPeriodicHangDetectAttempts;
     while (--i > 0) {
         maxHangSamplePeriod <<= 1;
     }
@@ -63,6 +61,8 @@ void ExhaustiveSearcher::reconfigure() {
     _data.setHangSamplePeriod(maxHangSamplePeriod);
     _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod * 2);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
+
+    _regularSweepHangDetector->setMaxSweepExtensionCount(_settings.maxRegularSweepExtensionCount);
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -92,7 +92,9 @@ void ExhaustiveSearcher::dumpSettings() {
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _settings.maxSteps
     << ", IniHangSamplePeriod = " << _settings.initialHangSamplePeriod
-    << ", MaxDetectAttempts = " << _settings.maxHangDetectAttempts
+    << ", MaxPeriodicHangDetectAttempts = " << _settings.maxPeriodicHangDetectAttempts
+    << ", MaxRegularSweepDetectAttempts = " << _settings.maxRegularSweepHangDetectAttempts
+    << ", MaxRegularSweepExtensionCount = " << _settings.maxRegularSweepExtensionCount
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }
@@ -104,125 +106,6 @@ void ExhaustiveSearcher::dump() {
     _dataTracker.dump();
 }
 
-// Should be invoked after a full sweep has been completed. It returns "true" if the data value
-// changes are diverging and therefore, the program is considered hanging.
-bool ExhaustiveSearcher::isSweepDiverging() {
-//    std::cout << "Checking for sweep hang " << std::endl;
-//    _data.dump();
-//    _dataTracker.dump();
-
-    if (_sweepMidTurningPoint != nullptr) {
-        long dataIndex = _sweepMidTurningPoint - _data.getDataBuffer();
-        if (
-            *_sweepMidTurningPoint != _dataTracker.getOldSnapShot()->buf[dataIndex]
-        ) {
-            // The mid-turning point should be a fixed value (when at other side of the sequence)
-            return false;
-        }
-    }
-
-    return _dataTracker.sweepHangDetected(_sweepMidTurningPoint);
-}
-
-bool ExhaustiveSearcher::sweepHangDetected() {
-    // The mid-turning point should not be crossed
-    if (_sweepMidTurningPoint != nullptr) {
-        int* dp = _data.getDataPointer();
-        if (
-            (_sweepMidTurningDir == DataDirection::RIGHT && dp > _sweepMidTurningPoint) ||
-            (_sweepMidTurningDir == DataDirection::LEFT && dp < _sweepMidTurningPoint)
-        ) {
-//            std::cout << "Crossed the mid-turning point" << std::endl;
-            _remainingSweepHangDetectAttempts--;
-            _sweepMidTurningPoint = nullptr;
-            // Start new detection attempt afresh
-            _extensionCount = 0;
-            return false;
-        }
-    }
-
-    if (!_performedTurn) {
-        return false;
-    }
-
-    if (_lastTurnWasRight) {
-        _midSequence = true;
-        return false;
-    }
-
-    DataDirection extensionDir = DataDirection::NONE;
-
-    if (_data.getDataPointer() <= _data.getMinBoundP()) {
-        // At left end of sequence
-        extensionDir = DataDirection::LEFT;
-    }
-    else if (_data.getDataPointer() >= _data.getMaxBoundP()) {
-        // At right end of sequence
-        extensionDir = DataDirection::RIGHT;
-    }
-    else if (_sweepMidTurningPoint == nullptr && _extensionCount == 1) {
-        // Possible mid-sequence turning point
-        _sweepMidTurningPoint = _data.getDataPointer();
-        _sweepMidTurningDir = (_prevExtensionDir == DataDirection::LEFT)
-            ? DataDirection::RIGHT
-            : DataDirection::LEFT;
-
-        extensionDir = _sweepMidTurningDir;
-    }
-
-    if (
-        extensionDir != DataDirection::NONE &&
-        extensionDir != _prevExtensionDir &&
-        _midSequence
-    ) {
-        _prevExtensionDir = extensionDir;
-        _extensionCount++;
-        _midSequence = false; // We're at an end of the sequence
-
-//        std::cout << "Sweep endpoint detected #"
-//        << _extensionCount
-//        << std::endl;
-//        _program.dump(_pp.p);
-//        _data.dump();
-
-        if (_extensionCount == 1) {
-            _sweepStartPp = _pp;
-        }
-        else if (_extensionCount % 2 == 1) {
-            bool abortCurrentAttempt = false;
-            if (isSweepDiverging()) {
-                if (_pp.p == _sweepStartPp.p && _pp.dir == _sweepStartPp.dir) {
-                    // PP is same as it was at during the first turn, so an actual repetition/hang
-//                    std::cout << "Sweep hang detected!" << std::endl;
-//                    _data.dump();
-//                    _dataTracker.dump();
-
-                    return true;
-                } else {
-                    // This may be a non-symmetric sweep.
-                    abortCurrentAttempt = (_extensionCount >= maxSweepExtensionCount);
-                }
-            } else {
-                // Values do not diverge so we cannot conclude it is a hang.
-                abortCurrentAttempt = true;
-            }
-            if (abortCurrentAttempt) {
-                if (_remainingSweepHangDetectAttempts-- > 0) {
-                    _sweepMidTurningPoint = nullptr;
-                    // Continue next detection attempt starting from current end point
-                    _extensionCount = 1;
-                    _sweepStartPp = _pp;
-                } else {
-                    _activeHangCheck = HangCheck::NONE;
-                }
-            }
-        }
-        _dataTracker.captureSnapShot();
-    }
-
-    return false;
-}
-
 void ExhaustiveSearcher::initiateNewHangCheck() {
 //    _program.dump();
 //    _tracker->dumpStats();
@@ -231,26 +114,27 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 //    _dataTracker.dump();
 //    _cycleDetector.dump();
 
-    if (_remainingPeriodicHangDetectAttempts > 0) {
-        _remainingPeriodicHangDetectAttempts--;
-
+    int attempts = _numHangDetectAttempts;
+    if (attempts < _settings.maxPeriodicHangDetectAttempts) {
         // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
         // previous sample period was too low to detect the period of the hang cycle)
-        _activeHangCheck = HangCheck::PERIODIC;
-        _periodicHangDetector->start();
+        _activeHangCheck = _periodicHangDetector;
 
         _hangSampleMask = (_hangSampleMask << 1) | 1;
-    }
-    else if (_remainingPeriodicHangDetectAttempts == 0) {
-        _remainingPeriodicHangDetectAttempts = -1; // Ensure this block is only executed once
-
+    } else {
+        attempts -= _settings.maxPeriodicHangDetectAttempts;
         _cycleDetectorEnabled = false;
-        _activeHangCheck = HangCheck::SWEEP;
 
-        _remainingSweepHangDetectAttempts = maxSweepHangDetectAttempts;
-        _extensionCount = 0;
-        _prevExtensionDir = DataDirection::NONE;
-        _sweepMidTurningPoint = nullptr;
+        if (attempts < _settings.maxRegularSweepHangDetectAttempts) {
+            _activeHangCheck = _regularSweepHangDetector;
+        } else {
+            _activeHangCheck = nullptr;
+        }
+    }
+
+    if (_activeHangCheck != nullptr) {
+        _numHangDetectAttempts++;
+        _activeHangCheck->start();
     }
 }
 
@@ -297,9 +181,9 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     _cycleDetector.clearInstructionHistory();
 
     _hangSampleMask = _initialHangSampleMask;
-    _remainingPeriodicHangDetectAttempts = _settings.maxHangDetectAttempts;
+    _numHangDetectAttempts = 0;
 
-    _activeHangCheck = HangCheck::NONE;
+    _activeHangCheck = nullptr;
 
     while (1) { // Run until branch, termination or error
         Ins* insP;
@@ -380,14 +264,12 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
 
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
 
-        if (
-            _activeHangCheck == HangCheck::PERIODIC
-        ) {
-            HangDetectionResult result = _periodicHangDetector->detectHang();
+        if (_activeHangCheck != nullptr) {
+            HangDetectionResult result = _activeHangCheck->detectHang();
 
             switch (result) {
                 case HangDetectionResult::FAILED:
-                    _activeHangCheck = HangCheck::NONE;
+                    _activeHangCheck = nullptr;
                     break;
                 case HangDetectionResult::HANGING:
                     _tracker->reportEarlyHang();
@@ -400,18 +282,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     break;
             }
         }
-
-        if (
-            _activeHangCheck == HangCheck::SWEEP &&
-            sweepHangDetected()
-        ) {
-            _tracker->reportEarlyHang();
-            if (!_settings.testHangDetection) {
-                _data.undo(numDataOps);
-                return;
-            }
-        }
-
         if (! (steps & _hangSampleMask)) {
 //            std::cout << "Monitor Hang Detection: Steps = " << (steps + totalSteps)
 //            << ", active hang check = " << (int)_activeHangCheck
@@ -423,7 +293,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                 return;
             }
 
-            if (_activeHangCheck == HangCheck::NONE) {
+            if (_activeHangCheck == nullptr) {
                 initiateNewHangCheck();
             }
         }

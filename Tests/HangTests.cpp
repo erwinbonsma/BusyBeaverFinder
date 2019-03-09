@@ -289,7 +289,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectAttempts = 5;
+    settings.maxPeriodicHangDetectAttempts = 5;
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
@@ -352,7 +352,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectAttempts = 4;
+    settings.maxPeriodicHangDetectAttempts = 4;
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
@@ -458,7 +458,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectAttempts = 4;
+    settings.maxPeriodicHangDetectAttempts = 4;
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 

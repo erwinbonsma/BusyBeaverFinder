@@ -17,7 +17,9 @@
 #include "CycleDetector.h"
 #include "DataTracker.h"
 #include "ProgressTracker.h"
+
 #include "PeriodicHangDetector.h"
+#include "RegularSweepHangDetector.h"
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -25,22 +27,12 @@ enum class SearchMode : char {
     FIND_ONE = 2,
 };
 
-enum class DataDirection : char {
-    NONE = 0,
-    LEFT = 1,
-    RIGHT = 2
-};
-
-enum class HangCheck : char {
-    NONE = 0,
-    PERIODIC = 1,
-    SWEEP = 2
-};
-
 struct SearchSettings {
     int initialHangSamplePeriod;
     int maxSteps;
-    int maxHangDetectAttempts;
+    int maxPeriodicHangDetectAttempts;
+    int maxRegularSweepHangDetectAttempts;
+    int maxRegularSweepExtensionCount;
     bool testHangDetection;
 };
 
@@ -72,19 +64,11 @@ class ExhaustiveSearcher {
     bool _lastTurnWasRight;
 
     int _hangSampleMask;
-    HangCheck _activeHangCheck;
-    int _remainingPeriodicHangDetectAttempts;
+    int _numHangDetectAttempts;
 
+    HangDetector* _activeHangCheck;
     PeriodicHangDetector* _periodicHangDetector;
-
-    // Sweep hang detection
-    int _remainingSweepHangDetectAttempts;
-    DataDirection _prevExtensionDir;
-    int _extensionCount;
-    int* _sweepMidTurningPoint;
-    DataDirection _sweepMidTurningDir;
-    ProgramPointer _sweepStartPp;
-    bool _midSequence;
+    RegularSweepHangDetector* _regularSweepHangDetector;
 
     ProgressTracker* _tracker;
 
@@ -118,7 +102,10 @@ public:
     Data& getData() { return _data; }
     CycleDetector& getCycleDetector() { return _cycleDetector; }
     DataTracker& getDataTracker() { return _dataTracker; }
+
     ProgramPointer getProgramPointer() { return _pp; }
+    bool performedTurn() { return _performedTurn; }
+    bool lastTurnWasRight() { return _lastTurnWasRight; }
 
     void search();
     void search(Ins* resumeFrom);

@@ -16,7 +16,7 @@
 
 class ExhaustiveSearcher;
 
-class PeriodicHangDetector : HangDetector {
+class PeriodicHangDetector : public HangDetector {
 
     ExhaustiveSearcher& _searcher;
 
