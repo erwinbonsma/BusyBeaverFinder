@@ -324,6 +324,13 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     SECTION( "6x6-DelayedHang") {
         // Classification: Periodic, Constant, Non-Uniform(?), Travelling
         //
+        //   * *   *
+        // * o o o _ *
+        //   * o o o *
+        // * _ o * *
+        // * o *
+        // o o *
+        //
         // For this program it takes a relatively long time before the hang is started. The hang
         // only starts at Step 158.
         Ins resumeFrom[] = {
