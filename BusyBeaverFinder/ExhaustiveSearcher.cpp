@@ -32,7 +32,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.initialHangSamplePeriod = 16;
-    _settings.maxHangDetectAttempts = 4;
+    _settings.maxHangDetectAttempts = 5;
     _settings.testHangDetection = false;
     reconfigure();
 }
@@ -58,7 +58,7 @@ void ExhaustiveSearcher::reconfigure() {
     }
 
     _data.setHangSamplePeriod(maxHangSamplePeriod);
-    _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod);
+    _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod * 2);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 }
 
@@ -95,6 +95,7 @@ void ExhaustiveSearcher::dumpSettings() {
 }
 
 bool ExhaustiveSearcher::periodicHangDetected() {
+//    _program.dump();
 //    _cycleDetector.dump();
 //    _data.dumpHangInfo();
 //    _dataTracker.dump();
@@ -123,7 +124,7 @@ bool ExhaustiveSearcher::periodicHangDetected() {
                 _activeHangCheck = HangCheck::NONE;
             }
         } else {
-            _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
+            _periodicHangCheckAt = _cyclePeriod * 2;
         }
 
         _dataTracker.captureSnapShot();
@@ -268,7 +269,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 
         _samplePp = _pp;
         _cyclePeriod = _cycleDetector.getCyclePeriod();
-        _opsToWaitBeforePeriodicHangCheck = _cyclePeriod;
+        _periodicHangCheckAt = _cyclePeriod;
 //        std::cout << "period = " << _cyclePeriod << std::endl;
         _cycleDetector.clearInstructionHistory();
         _data.resetHangDetection();
@@ -280,6 +281,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
     else if (_remainingPeriodicHangDetectAttempts == 0) {
         _remainingPeriodicHangDetectAttempts = -1; // Ensure this block is only executed once
 
+        _cycleDetectorEnabled = false;
         _activeHangCheck = HangCheck::SWEEP;
 
         _remainingSweepHangDetectAttempts = maxSweepHangDetectAttempts;
@@ -328,6 +330,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
 
     _data.resetHangDetection();
     _dataTracker.reset();
+    _cycleDetectorEnabled = true;
     _cycleDetector.clearInstructionHistory();
     _samplePp.p = nullptr;
 
@@ -404,13 +407,10 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     }
                     break;
             }
-            if (_remainingPeriodicHangDetectAttempts >= 0) {
-                _opsToWaitBeforePeriodicHangCheck--;
-                if (_remainingPeriodicHangDetectAttempts > 0) {
-                    _cycleDetector.recordInstruction(
-                        (char)((insP - _program.getInstructionBuffer()) ^ (int)_pp.dir)
-                    );
-                }
+            if (_cycleDetectorEnabled) {
+                _cycleDetector.recordInstruction(
+                    (char)((insP - _program.getInstructionBuffer()) ^ (int)_pp.dir)
+                );
             }
         } while (!done);
         _pp.p = insP;
@@ -420,7 +420,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
 
         if (
             _activeHangCheck == HangCheck::PERIODIC &&
-            _opsToWaitBeforePeriodicHangCheck <= 0 &&
+            _cycleDetector.getNumRecordedInstructions() >= _periodicHangCheckAt &&
             periodicHangDetected()
         ) {
             _tracker->reportEarlyHang();
@@ -444,7 +444,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
         if (! (steps & _hangSampleMask)) {
 //            std::cout << "Monitor Hang Detection: Steps = " << (steps + totalSteps)
 //            << ", active hang check = " << (int)_activeHangCheck
-//            << ", _opsToWaitBeforePeriodicHangCheck = " << _opsToWaitBeforePeriodicHangCheck
 //            << std::endl;
 
             if (steps + totalSteps >= _settings.maxSteps) {

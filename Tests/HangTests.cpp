@@ -236,6 +236,7 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 2048;
     searcher.configure(settings);
 
     SECTION( "InfSeqExtendingBothWays1" ) {
@@ -288,7 +289,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectAttempts = 4;
+    settings.maxHangDetectAttempts = 5;
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
@@ -315,6 +316,21 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
             Ins::DATA, Ins::TURN,
             Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
             Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-DelayedHang") {
+        // Classification: Periodic, Constant, Non-Uniform(?), Travelling
+        //
+        // For this program it takes a relatively long time before the hang is started. The hang
+        // only starts at Step 158.
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN,Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

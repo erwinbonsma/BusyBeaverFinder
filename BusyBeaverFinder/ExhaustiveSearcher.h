@@ -50,6 +50,7 @@ class ExhaustiveSearcher {
 
     Program _program;
     Data _data;
+    bool _cycleDetectorEnabled;
     CycleDetector _cycleDetector;
     DataTracker _dataTracker;
 
@@ -75,7 +76,8 @@ class ExhaustiveSearcher {
     // Periodic hang detection
     ProgramPointer _samplePp;
     int _cyclePeriod;
-    int _opsToWaitBeforePeriodicHangCheck;
+    // When to perform the periodic hang check (in number of recorded instructions)
+    int _periodicHangCheckAt;
     int _remainingPeriodicHangDetectAttempts;
 
     // Sweep hang detection

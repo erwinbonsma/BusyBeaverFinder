@@ -39,6 +39,7 @@ public:
 //        std::cout << "op[" << (_opsHistoryP - _opsHistory) << "]=" << (int)op << std::endl;
         assert(_opsHistoryP < _opsHistoryMaxP);
     }
+    int getNumRecordedInstructions() { return (int)(_opsHistoryP - _opsHistory); }
 
     void clearInstructionHistory();
     int getCyclePeriod();

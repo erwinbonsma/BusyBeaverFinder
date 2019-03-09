@@ -59,13 +59,12 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1024;
+    settings.maxSteps = 2048;
     searcher.configure(settings);
 
     searcher.search();
 
     REQUIRE(tracker.getMaxStepsFound() == 43);
     REQUIRE(tracker.getTotalSuccess() == 51410);
-    // There are still two hangs that are not detected.
-    REQUIRE(tracker.getTotalHangs() - tracker.getTotalEarlyHangs() <= 2);
+    REQUIRE(tracker.getTotalHangs() - tracker.getTotalEarlyHangs() == 0);
 }

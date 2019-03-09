@@ -21,7 +21,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1024;
+    settings.maxSteps = 2048;
     searcher.configure(settings);
 
     orchestrator.search();
@@ -34,7 +34,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
 }
 
 TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
-    ExhaustiveSearcher searcher(6, 6, 1024);
+    ExhaustiveSearcher searcher(6, 6, 4096);
     ProgressTracker tracker(searcher);
     SearchOrchestrator orchestrator(searcher);
 
@@ -42,7 +42,8 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1024;
+    settings.maxSteps = 16384;
+    settings.maxHangDetectAttempts = 6;
     searcher.configure(settings);
 
     orchestrator.search();
@@ -50,7 +51,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
 
     REQUIRE(tracker.getMaxStepsFound() == 572);
     REQUIRE(tracker.getTotalSuccess() == 6475715);
-    REQUIRE(tracker.getTotalEarlyHangs() == 1543614);
+    REQUIRE(tracker.getTotalEarlyHangs() == 1544604);
     REQUIRE(tracker.getTotalHangs() == 1546939);
     REQUIRE(tracker.getTotalErrors() == 0);
 }
