@@ -191,9 +191,9 @@ void Data::dumpStack() {
 }
 
 void Data::dumpHangInfo() {
-    std::cout << "DATA: min = " << (_minVisitedP - _data)
+    std::cout << "DATA: min = " << (_minBoundP - _data)
     << ", p = " << (_dataP - _data)
-    << ", max = " << (_maxVisitedP - _data)
+    << ", max = " << (_maxBoundP - _data)
     << std::endl;
     dumpDataBuffer(_data, _dataP, getSize());
 }
