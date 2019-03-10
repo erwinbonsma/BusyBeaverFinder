@@ -54,6 +54,17 @@ bool SweepHangDetector::updateSweepStatus() {
     }
 
     if (_isReversing) {
+        // No right-turn since reverse started, so this is a continuation of the same reversal
+        return true;
+    }
+
+    if (dp == _prevSweepTurnDp) {
+        // Although there were one or more right-turns since the previous reveral, we are still at
+        // the same data location. This can happen when the reversal logic contains one or more
+        // operations that cancel each other out (e.g. a left-shift towards a non-zero value
+        // followed by a right-shift towards the zero reversal location). This is also considered
+        // part of the same reversal.
+        _isReversing = true;
         return true;
     }
 

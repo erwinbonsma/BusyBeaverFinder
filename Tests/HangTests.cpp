@@ -449,6 +449,26 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
+    SECTION( "6x6-SweepReversalWithShifts" ) {
+        // Here the sweep reversal at the right side of the sequence consists of a few left turns,
+        // followed by two right turns, followed by another left turn. The left turns are all at
+        // the same data location, as the left-shift is cancelled by a right-shift
+        //
+        // *     *
+        // o _ * o _ *
+        // _ o _ o *
+        // _ * _ o _ *
+        // _     *
+        // _
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
 }
 
 TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
