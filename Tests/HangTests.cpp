@@ -558,7 +558,8 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        // This is a hang, but the current logic should not be able to detect it yet.
+        REQUIRE(tracker.getTotalEarlyHangs() == 0);
     }
     SECTION( "6x6-IrregularSweep3") {
         // Another irregular sweep.
@@ -614,6 +615,66 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
             Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-Glider3" ) {
+        // Another leftward moving glider.
+        //
+        //     *   *
+        // * o o o _ *
+        // o _ _ _ _ *
+        // o _ o * _
+        // o * _ o o *
+        // _   *   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-ComplexGlider" ) {
+        // Another leftward moving glider, but with relatively complex logic
+        //
+        //   * *   *
+        // * o o o _ *
+        // o _ _ * o
+        // o _ o * o
+        // o * _ _ o *
+        // o   *   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-MidSweepLeftTurn" ) {
+        // This program contains a mid-sweep left turn. It is caused by a mid-sequence one, which
+        // is decreased to zero. It then is increased twice and decreased once and back at the
+        // location where it carried out the left turn. Now, as the value is one again, it
+        // continues the sweep loop with a right turn.
+        //
+        //       * *
+        // *   * _ o *
+        // o _ _ o o *
+        // o _ * _ _ *
+        // o * o _ *
+        // _   * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
