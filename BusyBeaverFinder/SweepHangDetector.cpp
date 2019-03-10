@@ -20,6 +20,7 @@ SweepHangDetector::SweepHangDetector(ExhaustiveSearcher& searcher) :
 
 void SweepHangDetector::start() {
     _sweepCount = 0;
+    _lastTurnDp = nullptr;
 }
 
 void SweepHangDetector::signalLeftTurn() {
@@ -36,9 +37,9 @@ void SweepHangDetector::signalLeftTurn() {
             _isStartAtRight = (dp >= data.getMaxBoundP());
             _prevSweepTurnDp = dp;
             if (_isStartAtRight) {
-                _prevRightReversalDp = dp;
+                _rightReversalDp = dp;
             } else {
-                _prevLeftReversalDp = dp;
+                _leftReversalDp = dp;
             }
             _movingRightwards = !_isStartAtRight; // Direction of upcoming sweep
             _sweepCount++;
@@ -59,33 +60,36 @@ void SweepHangDetector::signalLeftTurn() {
     }
 
     // Check adherence to sweep contract
-    if (
-        (_movingRightwards && dp <= _prevSweepTurnDp) ||
-        (!_movingRightwards && dp >= _prevSweepTurnDp)
-    ) {
-        // DP continued moving in the same direction since the last expected sweep reversal
-        sweepBroken();
-        return;
-    }
+    if (_movingRightwards) {
+        if (
+            // Continued beyond expected sweep reveral point?
+            dp <= _prevSweepTurnDp ||
+            // Premature turn?
+            (_sweepCount >= 2 && dp < _rightReversalDp)
+        ) {
+            sweepBroken();
+            return;
+        }
 
-    if (
-        _sweepCount >= 2 && (
-            (_movingRightwards && dp < _prevRightReversalDp) ||
-            (!_movingRightwards && dp > _prevLeftReversalDp)
-        )
-    ) {
-        // Premature turn
-        sweepBroken();
-        return;
+    } else {
+        if (
+            // Continued beyond expected sweep reveral point?
+            dp >= _prevSweepTurnDp ||
+            // Premature turn?
+            (_sweepCount >= 2 && dp > _leftReversalDp)
+        ) {
+            sweepBroken();
+            return;
+        }
     }
 
 //    std::cout << "Sweep reversal" << std::endl;
 
     _sweepCount++;
     if (_movingRightwards) {
-        _prevRightReversalDp = dp;
+        _rightReversalDp = dp;
     } else {
-        _prevLeftReversalDp = dp;
+        _leftReversalDp = dp;
     }
     _movingRightwards = !_movingRightwards;
     _prevSweepTurnDp = dp;

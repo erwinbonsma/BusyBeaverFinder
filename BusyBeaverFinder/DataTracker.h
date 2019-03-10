@@ -11,16 +11,18 @@
 
 #include <stdio.h>
 
+#include "Types.h"
+
 struct SnapShot {
     int *buf;
-    int *dataP;
+    DataPointer dataP;
 
     // Delimits the range of values that have been visisted since the last snapshot was taken.
     // These are the date values that may have impacted program execution since then.
-    int *minVisitedP, *maxVisitedP;
+    DataPointer minVisitedP, maxVisitedP;
 
     // The bounds of non-zero values
-    int *minBoundP, *maxBoundP;
+    DataPointer minBoundP, maxBoundP;
 };
 
 enum class SnapShotComparison : char {

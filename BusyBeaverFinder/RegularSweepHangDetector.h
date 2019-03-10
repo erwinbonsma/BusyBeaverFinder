@@ -20,7 +20,7 @@ class RegularSweepHangDetector : public SweepHangDetector {
 
     // Hang detection state
     HangDetectionResult _status;
-    int* _sweepMidTurningPoint;
+    DataPointer _sweepMidTurningPoint;
 
     bool isSweepDiverging();
 

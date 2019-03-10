@@ -33,6 +33,8 @@ struct ProgramPointer {
     Dir dir;
 };
 
+typedef int* DataPointer;
+
 // Data operations
 enum class DataOp : char {
     INC = 0,

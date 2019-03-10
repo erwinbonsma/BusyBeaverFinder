@@ -15,14 +15,14 @@
 #include "Types.h"
 
 class Data {
-    int *_dataP;
-    int *_minDataP, *_midDataP, *_maxDataP;
+    DataPointer _dataP;
+    DataPointer _minDataP, _midDataP, _maxDataP;
 
     // Delimits the data cells that have been visisted (since the last snapshot was taken)
-    int *_minVisitedP, *_maxVisitedP;
+    DataPointer _minVisitedP, _maxVisitedP;
 
     // Delimits the data cells that are non-zero.
-    int *_minBoundP, *_maxBoundP;
+    DataPointer _minBoundP, _maxBoundP;
 
     // Array with data values
     int *_data;
@@ -47,21 +47,21 @@ public:
     void resetHangDetection();
 
     void resetVisitedBounds();
-    int* getMinVisitedP() { return _minVisitedP; }
-    int* getMaxVisitedP() { return _maxVisitedP; }
+    DataPointer getMinVisitedP() { return _minVisitedP; }
+    DataPointer getMaxVisitedP() { return _maxVisitedP; }
 
     int* getDataBuffer() { return _data; }
-    int* getMinDataP() { return _minDataP; }
-    int* getMaxDataP() { return _maxDataP; }
+    DataPointer getMinDataP() { return _minDataP; }
+    DataPointer getMaxDataP() { return _maxDataP; }
 
-    int* getMinBoundP() { return _minBoundP; }
-    int* getMaxBoundP() { return _maxBoundP; }
+    DataPointer getMinBoundP() { return _minBoundP; }
+    DataPointer getMaxBoundP() { return _maxBoundP; }
 
     /* True if one or more values since last snapshot became zero, or moved away from zero.
      */
     bool significantValueChange() { return _significantValueChange; }
 
-    int* getDataPointer() { return _dataP; }
+    DataPointer getDataPointer() { return _dataP; }
     int val() { return *_dataP; }
 
     void inc();

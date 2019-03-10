@@ -55,6 +55,7 @@ class ExhaustiveSearcher {
     Ins* _resumeFrom;
 
     ProgramPointer _pp;
+    DataPointer _lastTurnDp;
 
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
@@ -100,6 +101,7 @@ public:
     DataTracker& getDataTracker() { return _dataTracker; }
 
     ProgramPointer getProgramPointer() { return _pp; }
+    DataPointer getLastTurnDataPointer() { return _lastTurnDp; }
 
     void search();
     void search(Ins* resumeFrom);
@@ -111,6 +113,7 @@ public:
 
     void dumpInstructionStack();
     void dumpSettings();
+    void dumpHangDetection();
     void dump();
 };
 

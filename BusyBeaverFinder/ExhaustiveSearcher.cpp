@@ -96,13 +96,17 @@ void ExhaustiveSearcher::dumpSettings() {
     << std::endl;
 }
 
-void ExhaustiveSearcher::dump() {
-    _program.dump(_pp.p);
+void ExhaustiveSearcher::dumpHangDetection() {
     _data.dumpHangInfo();
     _dataTracker.dump();
     if (_cycleDetectorEnabled) {
         _cycleDetector.dump();
     }
+}
+
+void ExhaustiveSearcher::dump() {
+    _program.dump(_pp.p);
+    _data.dump();
 }
 
 void ExhaustiveSearcher::initiateNewHangCheck() {
@@ -230,6 +234,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     done = true;
                     break;
                 case Ins::TURN:
+                    _lastTurnDp = _data.getDataPointer();
                     if (_data.val() == 0) {
                         switch (_pp.dir) {
                             case Dir::UP: _pp.dir = Dir::LEFT; break;

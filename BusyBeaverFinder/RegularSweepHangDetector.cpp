@@ -47,18 +47,23 @@ bool RegularSweepHangDetector::isSweepDiverging() {
 
 void RegularSweepHangDetector::sweepStarted() {
     _searcher.getDataTracker().captureSnapShot();
+
+//    std::cout << "Sweep started" << std::endl;
+//    _searcher.dump();
 }
 
 void RegularSweepHangDetector::sweepReversed() {
     Data& data = _searcher.getData();
     int* dp = data.getDataPointer();
 
+//    std::cout << "Sweep reversed" << std::endl;
+//    _searcher.dump();
+
     if (sweepCount() == 2 && dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
         _sweepMidTurningPoint = data.getDataPointer();
     }
     else if (sweepCount() % 2 == 1) {
 //        std::cout << "Checking divergence" << std::endl;
-//        _searcher.dump();
         if (isSweepDiverging()) {
             ProgramPointer pp = _searcher.getProgramPointer();
             ProgramPointer startPp = sweepStartProgramPointer();
@@ -78,7 +83,6 @@ void RegularSweepHangDetector::sweepReversed() {
     }
 
     _searcher.getDataTracker().captureSnapShot();
-//    _searcher.dump();
 }
 
 void RegularSweepHangDetector::sweepBroken() {

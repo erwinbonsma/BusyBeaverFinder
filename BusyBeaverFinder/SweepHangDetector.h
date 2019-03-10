@@ -32,9 +32,13 @@ class SweepHangDetector : public HangDetector {
 
     // DP at moment of last sweep reversal (which was then zero, triggering a left turn). It is
     // used to check if the program actually carries out a sweep.
-    int* _prevSweepTurnDp;
-    int* _prevLeftReversalDp;
-    int* _prevRightReversalDp;
+    DataPointer _prevSweepTurnDp;
+
+    // The current bounds of sweep. They are used to check that the sweep area does not shrink
+    DataPointer _leftReversalDp, _rightReversalDp;
+
+    // The last value that impacted a turn
+    DataPointer _lastTurnDp;
 
     // The direction of the current sweep (or upcoming sweep, in case a turn is in progress)
     bool _movingRightwards;
