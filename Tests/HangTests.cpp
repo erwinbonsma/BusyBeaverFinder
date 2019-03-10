@@ -469,6 +469,46 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
+    SECTION( "6x6-MidSweepReversalWithShifts" ) {
+        // Here the mid-sweep reversal consists of a few left turns, followed by two right turns,
+        // followed by another left turn. The left turns are all at the same data location, as the
+        // left-shift is cancelled by a right-shift
+        //
+        //       *
+        // * _ * o _ *
+        // o o _ o *
+        // _ * _ o _ *
+        // _     *
+        // _
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-SweepReveralWithOscillation" ) {
+        // Here the sweep reversal at the right side will first increment the zero turning value,
+        // turn right twice as a result, then decrease it again (so it's back to zero), before
+        // decreasing it once more and starting the leftwards sweep.
+        //
+        //         *
+        // *     * _
+        // o o o _ _ *
+        // o   * o o *
+        // o * _ o *
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
 }
 
 TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
@@ -539,23 +579,41 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
-    SECTION( "6x6-RunAwayGlider") {
+    SECTION( "6x6-Glider1") {
+        // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
+        // zeroes in their wake. The amount of steps required to move one position on the tape
+        // doubles each time (as the left counter is decreased towards zero, the right counter is
+        // increased by two).
+        //
         //     * *
         //   * _ _ o *
         //   o _ o o *
         //   _ * o o
         // * _ o o *
         // o o * *
-        //
-        // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
-        // zeroes in their wake. The amount of steps required to move one position on the tape
-        // doubles each time (as the left counter is decreased towards zero, the right counter is
-        // increased by two).
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
             Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
             Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
+    SECTION( "6x6-Glider2" ) {
+        // A glider that moves leftwards.
+        //
+        //     *
+        // *   o o *
+        // o _ _ _ *
+        // o * o o _ *
+        // o   _ *
+        // o   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

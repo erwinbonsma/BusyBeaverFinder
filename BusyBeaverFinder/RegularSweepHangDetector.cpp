@@ -45,7 +45,7 @@ bool RegularSweepHangDetector::isSweepDiverging() {
 }
 
 HangDetectionResult RegularSweepHangDetector::detectHang() {
-    bool wasReversing = isReversing();
+    int prevSweepCount = sweepCount();
 
     if (!updateSweepStatus()) {
         return HangDetectionResult::FAILED;
@@ -66,14 +66,15 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
         }
     }
 
-    if (isReversing() && !wasReversing) {
+    if (sweepCount() > prevSweepCount) {
+        ProgramPointer pp = _searcher.getProgramPointer();
+
         if (sweepCount() == 2 && dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
             _sweepMidTurningPoint = data.getDataPointer();
         }
 
         if (sweepCount() > 1 && sweepCount() % 2 == 1) {
             if (isSweepDiverging()) {
-                ProgramPointer pp = _searcher.getProgramPointer();
                 ProgramPointer startPp = sweepStartProgramPointer();
 
                 if (pp.p == startPp.p && pp.dir == startPp.dir) {
@@ -92,6 +93,16 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
             }
         }
         dataTracker.captureSnapShot();
+
+        if (*(pp.p) == Ins::DATA && (pp.dir == Dir::UP || pp.dir == Dir::DOWN)) {
+            // Restore the data value that caused the reveral to be zero in the snapshot. It is
+            // non-zero now, as the same step that executed the left turn also executed an INC or
+            // DEC operation.
+            //
+            // It is cleared so that DataTracker::isSweepDiverging() ignores this value.
+            SnapShot* snapShot = dataTracker.getNewSnapShot();
+            snapShot->buf[dp - data.getDataBuffer()] = 0;
+        }
     }
 
     return HangDetectionResult::ONGOING;
