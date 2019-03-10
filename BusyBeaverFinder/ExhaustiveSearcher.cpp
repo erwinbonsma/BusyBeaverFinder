@@ -97,10 +97,12 @@ void ExhaustiveSearcher::dumpSettings() {
 }
 
 void ExhaustiveSearcher::dump() {
-    _program.dump();
-    _cycleDetector.dump();
+    _program.dump(_pp.p);
     _data.dumpHangInfo();
     _dataTracker.dump();
+    if (_cycleDetectorEnabled) {
+        _cycleDetector.dump();
+    }
 }
 
 void ExhaustiveSearcher::initiateNewHangCheck() {
