@@ -20,7 +20,6 @@ SweepHangDetector::SweepHangDetector(ExhaustiveSearcher& searcher) :
 
 void SweepHangDetector::start() {
     _sweepCount = 0;
-    _lastTurnDp = nullptr;
 }
 
 void SweepHangDetector::signalLeftTurn() {
@@ -62,7 +61,7 @@ void SweepHangDetector::signalLeftTurn() {
     // Check adherence to sweep contract
     if (_movingRightwards) {
         if (
-            // Continued beyond expected sweep reveral point?
+            // Continued beyond expected sweep reversal point?
             dp <= _prevSweepTurnDp ||
             // Premature turn?
             (_sweepCount >= 2 && dp < _rightReversalDp)
@@ -73,7 +72,7 @@ void SweepHangDetector::signalLeftTurn() {
 
     } else {
         if (
-            // Continued beyond expected sweep reveral point?
+            // Continued beyond expected sweep reversal point?
             dp >= _prevSweepTurnDp ||
             // Premature turn?
             (_sweepCount >= 2 && dp > _leftReversalDp)

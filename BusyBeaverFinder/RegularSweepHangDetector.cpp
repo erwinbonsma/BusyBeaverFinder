@@ -47,6 +47,7 @@ bool RegularSweepHangDetector::isSweepDiverging() {
 
 void RegularSweepHangDetector::sweepStarted() {
     _searcher.getDataTracker().captureSnapShot();
+    _lastTurnDp = _searcher.getLastTurnDataPointer();
 
 //    std::cout << "Sweep started" << std::endl;
 //    _searcher.dump();
@@ -83,29 +84,47 @@ void RegularSweepHangDetector::sweepReversed() {
     }
 
     _searcher.getDataTracker().captureSnapShot();
+    _lastTurnDp = _searcher.getLastTurnDataPointer();
 }
 
 void RegularSweepHangDetector::sweepBroken() {
     _status = HangDetectionResult::FAILED;
+
+//    std::cout << "Sweep Broken" << std::endl;
+//    _searcher.dump();
 }
 
 HangDetectionResult RegularSweepHangDetector::detectHang() {
     if (_status != HangDetectionResult::ONGOING) {
         return _status;
     }
-
-    int* dp = _searcher.getData().getDataPointer();
+    if (sweepCount() == 0) {
+        return HangDetectionResult::ONGOING;
+    }
 
     // The mid-turning point should not be crossed
     if (_sweepMidTurningPoint != nullptr) {
+        int* dp = _searcher.getData().getDataPointer();
+
         if (
             (isStartAtRight() && dp < _sweepMidTurningPoint) ||
             (!isStartAtRight() && dp > _sweepMidTurningPoint)
         ) {
-//            std::cout << "Crossed the mid-turning point" << std::endl;
+            // Crossed the mid-sweep turning point which breaks the assumption that it is a fixed
+            // turning point.
             return HangDetectionResult::FAILED;
         }
     }
+
+    if (
+        (movingRightwards() && (_searcher.getLastTurnDataPointer() - _lastTurnDp) > 1) ||
+        (!movingRightwards() && (_lastTurnDp - _searcher.getLastTurnDataPointer()) > 1)
+    ) {
+        // Moved past a data value without evaluating it. This may not be a regular sweep hang, as
+        // the skipped value might impact execution if it is encountered later.
+        return HangDetectionResult::FAILED;
+    }
+    _lastTurnDp = _searcher.getLastTurnDataPointer();
 
     return HangDetectionResult::ONGOING;
 }

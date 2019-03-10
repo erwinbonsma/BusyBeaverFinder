@@ -383,25 +383,6 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
-    SECTION( "6x6-InfSweepSeqExtendingOneWay2" ) {
-        // Resembles the previous, but here the mid-sequence turning point does not have a fixed
-        // value. It briefly becomes zero, then becomes non-zero again.
-        //
-        //     * *
-        //   * o o _ *
-        //   o o _ *
-        // * _ _ o *
-        // * _ o *
-        // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
-    }
     SECTION( "6x6-InfSweepSeqExtendingOneWayWithZeroes") {
         // Here a sweep is occuring over a zero-delimited part of the sequence.
         //
@@ -522,6 +503,28 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
+    SECTION( "6x6-RegularSweepWithDoubleShift" ) {
+        // This program has two noteworthy features:
+        // - Its mid-sequence turning point does not have a fixed value. It briefly becomes zero,
+        //   then becomes non-zero again.
+        // - When sweeping leftwards, it shifts left twice, which causes the strict regular hang
+        //   detection to fail (as skipped values could possibly have an impact)
+        //
+        //     * *
+        //   * o o _ *
+        //   o o _ *
+        // * _ _ o *
+        // * _ o *
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+    }
     SECTION( "6x6-IrregularSweep") {
         // An irregular sweep. Its turning point at one end of the sequence varies. The reason is
         // that it shifts DP two positions, which means it can ignore a mid-sequence zero.
@@ -558,8 +561,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        // This is a hang, but the current logic should not be able to detect it yet.
-        REQUIRE(tracker.getTotalEarlyHangs() == 0);
+        REQUIRE(tracker.getTotalEarlyHangs() == 1);
     }
     SECTION( "6x6-IrregularSweep3") {
         // Another irregular sweep.

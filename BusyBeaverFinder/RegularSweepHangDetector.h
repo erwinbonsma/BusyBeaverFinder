@@ -18,9 +18,13 @@ class ExhaustiveSearcher;
 
 class RegularSweepHangDetector : public SweepHangDetector {
 
+    //----------------------
     // Hang detection state
     HangDetectionResult _status;
     DataPointer _sweepMidTurningPoint;
+
+    // The last value that impacted a turn
+    DataPointer _lastTurnDp;
 
     bool isSweepDiverging();
 

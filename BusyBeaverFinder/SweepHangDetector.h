@@ -37,9 +37,6 @@ class SweepHangDetector : public HangDetector {
     // The current bounds of sweep. They are used to check that the sweep area does not shrink
     DataPointer _leftReversalDp, _rightReversalDp;
 
-    // The last value that impacted a turn
-    DataPointer _lastTurnDp;
-
     // The direction of the current sweep (or upcoming sweep, in case a turn is in progress)
     bool _movingRightwards;
 
@@ -53,6 +50,7 @@ protected:
     int sweepCount() { return _sweepCount; }
 
     bool isStartAtRight() { return _isStartAtRight; }
+    bool movingRightwards() { return _movingRightwards; }
 
     // Invoked when the sweep started (this is always at one end of the data sequence)
     virtual void sweepStarted() = 0;
