@@ -186,7 +186,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     while (1) { // Run until branch, termination or error
         Ins* insP;
         bool done = false;
-        _performedTurn = false;
         do { // Execute single step
 
             insP = _pp.p + (int)_pp.dir;
@@ -231,7 +230,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     done = true;
                     break;
                 case Ins::TURN:
-                    _performedTurn = true;
                     if (_data.val() == 0) {
                         switch (_pp.dir) {
                             case Dir::UP: _pp.dir = Dir::LEFT; break;
@@ -239,7 +237,9 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                             case Dir::DOWN: _pp.dir = Dir::RIGHT; break;
                             case Dir::LEFT: _pp.dir = Dir::DOWN; break;
                         }
-                        _lastTurnWasRight = false;
+                        if (_activeHangCheck != nullptr) {
+                            _activeHangCheck->signalLeftTurn();
+                        }
                     } else {
                         switch (_pp.dir) {
                             case Dir::UP: _pp.dir = Dir::RIGHT; break;
@@ -247,7 +247,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                             case Dir::DOWN: _pp.dir = Dir::LEFT; break;
                             case Dir::LEFT: _pp.dir = Dir::UP; break;
                         }
-                        _lastTurnWasRight = true;
                     }
                     break;
             }

@@ -33,15 +33,13 @@ class SweepHangDetector : public HangDetector {
     // DP at moment of last sweep reversal (which was then zero, triggering a left turn). It is
     // used to check if the program actually carries out a sweep.
     int* _prevSweepTurnDp;
-
-    // True when a sweep reversal is in progress. When reversing, there may be multiple left-turns
-    // based on the same data value. These are all considered part of the same reversal.
-    bool _isReversing;
+    int* _prevLeftReversalDp;
+    int* _prevRightReversalDp;
 
     // The direction of the current sweep (or upcoming sweep, in case a turn is in progress)
     bool _movingRightwards;
 
-    // The number of sweeps so far. It counts the
+    // The number of sweeps so far.
     int _sweepCount;
 
 protected:
@@ -50,19 +48,16 @@ protected:
     ProgramPointer sweepStartProgramPointer() { return _sweepStartPp; }
     int sweepCount() { return _sweepCount; }
 
-    // Returns "true" while the sweep start point has not yet been set.
-    bool isStarting() { return _sweepCount == 0; }
-
     bool isStartAtRight() { return _isStartAtRight; }
 
-    bool isReversing() { return _isReversing; }
+    // Invoked when the sweep started (this is always at one end of the data sequence)
+    virtual void sweepStarted() = 0;
 
-    bool isMovingRightwards() { return _movingRightwards; }
+    // Invoked when the sweep reversed
+    virtual void sweepReversed() = 0;
 
-    // Updates sweep status. Returns "false" when the program does not execute a sweep. This is the
-    // case when after an expected change of sweep direction, DP continued moving in the same
-    // direction. The hang detection should be aborted.
-    bool updateSweepStatus();
+    // Invoked when the assumed sweep was not a sweep. The hang detection should be aborted.
+    virtual void sweepBroken() = 0;
 
 public:
     SweepHangDetector(ExhaustiveSearcher& searcher);
@@ -70,6 +65,7 @@ public:
     void setMaxSweepCount(int val) { _maxSweepCount = val; }
 
     virtual void start();
+    void signalLeftTurn();
 };
 
 #endif /* SweepHangDetector_h */

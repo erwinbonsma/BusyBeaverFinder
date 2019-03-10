@@ -25,6 +25,7 @@ public:
     virtual ~HangDetector() {}
 
     virtual void start() = 0;
+    virtual void signalLeftTurn() {}
     virtual HangDetectionResult detectHang() = 0;
 };
 

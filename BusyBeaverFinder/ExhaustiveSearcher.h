@@ -59,10 +59,6 @@ class ExhaustiveSearcher {
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
 
-    // Recent turn status, which is generally useful for hang detection
-    bool _performedTurn;
-    bool _lastTurnWasRight;
-
     int _hangSampleMask;
     int _numHangDetectAttempts;
 
@@ -104,8 +100,6 @@ public:
     DataTracker& getDataTracker() { return _dataTracker; }
 
     ProgramPointer getProgramPointer() { return _pp; }
-    bool performedTurn() { return _performedTurn; }
-    bool lastTurnWasRight() { return _lastTurnWasRight; }
 
     void search();
     void search(Ins* resumeFrom);

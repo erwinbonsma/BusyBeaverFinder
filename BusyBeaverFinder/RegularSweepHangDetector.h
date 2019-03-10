@@ -19,9 +19,15 @@ class ExhaustiveSearcher;
 class RegularSweepHangDetector : public SweepHangDetector {
 
     // Hang detection state
+    HangDetectionResult _status;
     int* _sweepMidTurningPoint;
 
     bool isSweepDiverging();
+
+protected:
+    void sweepStarted();
+    void sweepReversed();
+    void sweepBroken();
 
 public:
     RegularSweepHangDetector(ExhaustiveSearcher& searcher);

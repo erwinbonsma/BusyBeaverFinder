@@ -22,20 +22,11 @@ void SweepHangDetector::start() {
     _sweepCount = 0;
 }
 
-bool SweepHangDetector::updateSweepStatus() {
-    if (!_searcher.performedTurn()) {
-        return true;
-    }
-
-    if (_searcher.lastTurnWasRight()) {
-        _isReversing = false;
-        return (_sweepCount < _maxSweepCount);
-    }
-
+void SweepHangDetector::signalLeftTurn() {
     Data& data = _searcher.getData();
     int* dp = data.getDataPointer();
 
-    if (isStarting()) {
+    if (_sweepCount == 0) {
         if (dp <= data.getMinBoundP() || dp >= data.getMaxBoundP()) {
             // Sweep starting-point found
 //            std::cout << "Sweep start found" << std::endl;
@@ -44,18 +35,18 @@ bool SweepHangDetector::updateSweepStatus() {
             _sweepStartPp = _searcher.getProgramPointer();
             _isStartAtRight = (dp >= data.getMaxBoundP());
             _prevSweepTurnDp = dp;
-
-            _isReversing = true;
+            if (_isStartAtRight) {
+                _prevRightReversalDp = dp;
+            } else {
+                _prevLeftReversalDp = dp;
+            }
             _movingRightwards = !_isStartAtRight; // Direction of upcoming sweep
             _sweepCount++;
+
+            sweepStarted();
         }
 
-        return true;
-    }
-
-    if (_isReversing) {
-        // No right-turn since reverse started, so this is a continuation of the same reversal
-        return true;
+        return;
     }
 
     if (dp == _prevSweepTurnDp) {
@@ -64,8 +55,7 @@ bool SweepHangDetector::updateSweepStatus() {
         // operations that cancel each other out (e.g. a left-shift towards a non-zero value
         // followed by a right-shift towards the zero reversal location). This is also considered
         // part of the same reversal.
-        _isReversing = true;
-        return true;
+        return;
     }
 
     // Check adherence to sweep contract
@@ -74,16 +64,31 @@ bool SweepHangDetector::updateSweepStatus() {
         (!_movingRightwards && dp >= _prevSweepTurnDp)
     ) {
         // DP continued moving in the same direction since the last expected sweep reversal
-        return false;
+        sweepBroken();
+        return;
+    }
+
+    if (
+        _sweepCount >= 2 && (
+            (_movingRightwards && dp < _prevRightReversalDp) ||
+            (!_movingRightwards && dp > _prevLeftReversalDp)
+        )
+    ) {
+        // Premature turn
+        sweepBroken();
+        return;
     }
 
 //    std::cout << "Sweep reversal" << std::endl;
-//    _searcher.dump();
 
     _sweepCount++;
-    _isReversing = true;
+    if (_movingRightwards) {
+        _prevRightReversalDp = dp;
+    } else {
+        _prevLeftReversalDp = dp;
+    }
     _movingRightwards = !_movingRightwards;
     _prevSweepTurnDp = dp;
 
-    return true;
+    sweepReversed();
 }

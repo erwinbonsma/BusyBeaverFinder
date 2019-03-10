@@ -19,6 +19,7 @@ void RegularSweepHangDetector::start() {
     SweepHangDetector::start();
 
     _sweepMidTurningPoint = nullptr;
+    _status = HangDetectionResult::ONGOING;
 }
 
 // Should be invoked after a full sweep has been completed. It returns "true" if the data value
@@ -44,16 +45,52 @@ bool RegularSweepHangDetector::isSweepDiverging() {
     return dataTracker.sweepHangDetected(_sweepMidTurningPoint);
 }
 
-HangDetectionResult RegularSweepHangDetector::detectHang() {
-    int prevSweepCount = sweepCount();
+void RegularSweepHangDetector::sweepStarted() {
+    _searcher.getDataTracker().captureSnapShot();
+}
 
-    if (!updateSweepStatus()) {
-        return HangDetectionResult::FAILED;
+void RegularSweepHangDetector::sweepReversed() {
+    Data& data = _searcher.getData();
+    int* dp = data.getDataPointer();
+
+    if (sweepCount() == 2 && dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
+        _sweepMidTurningPoint = data.getDataPointer();
+    }
+    else if (sweepCount() % 2 == 1) {
+//        std::cout << "Checking divergence" << std::endl;
+//        _searcher.dump();
+        if (isSweepDiverging()) {
+            ProgramPointer pp = _searcher.getProgramPointer();
+            ProgramPointer startPp = sweepStartProgramPointer();
+
+            if (pp.p == startPp.p && pp.dir == startPp.dir) {
+                // PP is same as it was at during the first turn, so an actual repetition/hang
+                _status = HangDetectionResult::HANGING;
+                return;
+            } else {
+                // This may be a sweep with Unbalanced Growth. Continue detection
+            }
+        } else {
+            // Values do not diverge so we cannot conclude it is a hang.
+            _status = HangDetectionResult::FAILED;
+            return;
+        }
     }
 
-    Data& data = _searcher.getData();
-    DataTracker& dataTracker = _searcher.getDataTracker();
-    int* dp = data.getDataPointer();
+    _searcher.getDataTracker().captureSnapShot();
+//    _searcher.dump();
+}
+
+void RegularSweepHangDetector::sweepBroken() {
+    _status = HangDetectionResult::FAILED;
+}
+
+HangDetectionResult RegularSweepHangDetector::detectHang() {
+    if (_status != HangDetectionResult::ONGOING) {
+        return _status;
+    }
+
+    int* dp = _searcher.getData().getDataPointer();
 
     // The mid-turning point should not be crossed
     if (_sweepMidTurningPoint != nullptr) {
@@ -63,45 +100,6 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
         ) {
 //            std::cout << "Crossed the mid-turning point" << std::endl;
             return HangDetectionResult::FAILED;
-        }
-    }
-
-    if (sweepCount() > prevSweepCount) {
-        ProgramPointer pp = _searcher.getProgramPointer();
-
-        if (sweepCount() == 2 && dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
-            _sweepMidTurningPoint = data.getDataPointer();
-        }
-
-        if (sweepCount() > 1 && sweepCount() % 2 == 1) {
-            if (isSweepDiverging()) {
-                ProgramPointer startPp = sweepStartProgramPointer();
-
-                if (pp.p == startPp.p && pp.dir == startPp.dir) {
-                    // PP is same as it was at during the first turn, so an actual repetition/hang
-//                    std::cout << "Sweep hang detected!" << std::endl;
-//                    _data.dump();
-//                    _dataTracker.dump();
-
-                    return HangDetectionResult::HANGING;
-                } else {
-                    // This may be a sweep with Unbalanced Growth. Continue detection
-                }
-            } else {
-                // Values do not diverge so we cannot conclude it is a hang.
-                return HangDetectionResult::FAILED;
-            }
-        }
-        dataTracker.captureSnapShot();
-
-        if (*(pp.p) == Ins::DATA && (pp.dir == Dir::UP || pp.dir == Dir::DOWN)) {
-            // Restore the data value that caused the reveral to be zero in the snapshot. It is
-            // non-zero now, as the same step that executed the left turn also executed an INC or
-            // DEC operation.
-            //
-            // It is cleared so that DataTracker::isSweepDiverging() ignores this value.
-            SnapShot* snapShot = dataTracker.getNewSnapShot();
-            snapShot->buf[dp - data.getDataBuffer()] = 0;
         }
     }
 
