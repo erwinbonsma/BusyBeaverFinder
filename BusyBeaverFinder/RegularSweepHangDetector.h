@@ -12,38 +12,19 @@
 #include <stdio.h>
 
 #include "Types.h"
-#include "HangDetector.h"
+#include "SweepHangDetector.h"
 
 class ExhaustiveSearcher;
 
-enum class DataDirection : char {
-    NONE = 0,
-    LEFT = 1,
-    RIGHT = 2
-};
-
-class RegularSweepHangDetector : public HangDetector {
-
-    ExhaustiveSearcher& _searcher;
-
-    // Configuration
-    int _maxSweepExtensionCount;
+class RegularSweepHangDetector : public SweepHangDetector {
 
     // Hang detection state
-    int _remainingSweepHangDetectAttempts;
-    DataDirection _prevExtensionDir;
-    int _extensionCount;
     int* _sweepMidTurningPoint;
-    DataDirection _sweepMidTurningDir;
-    ProgramPointer _sweepStartPp;
-    bool _midSequence;
 
     bool isSweepDiverging();
 
 public:
     RegularSweepHangDetector(ExhaustiveSearcher& searcher);
-
-    void setMaxSweepExtensionCount(int val) { _maxSweepExtensionCount = val; }
 
     void start();
     HangDetectionResult detectHang();

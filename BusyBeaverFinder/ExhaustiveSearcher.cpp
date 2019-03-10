@@ -59,7 +59,7 @@ void ExhaustiveSearcher::reconfigure() {
     _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod * 2);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 
-    _regularSweepHangDetector->setMaxSweepExtensionCount(_settings.maxRegularSweepExtensionCount);
+    _regularSweepHangDetector->setMaxSweepCount(_settings.maxRegularSweepExtensionCount);
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {

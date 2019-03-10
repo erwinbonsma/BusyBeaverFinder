@@ -11,15 +11,13 @@
 #include "ExhaustiveSearcher.h"
 
 RegularSweepHangDetector::RegularSweepHangDetector(ExhaustiveSearcher& searcher) :
-    _searcher(searcher)
+    SweepHangDetector(searcher)
 {
-    // Set defaults
-    _maxSweepExtensionCount = 5;
 }
 
 void RegularSweepHangDetector::start() {
-    _extensionCount = 0;
-    _prevExtensionDir = DataDirection::NONE;
+    SweepHangDetector::start();
+
     _sweepMidTurningPoint = nullptr;
 }
 
@@ -47,75 +45,38 @@ bool RegularSweepHangDetector::isSweepDiverging() {
 }
 
 HangDetectionResult RegularSweepHangDetector::detectHang() {
+    bool wasReversing = isReversing();
+
+    if (!updateSweepStatus()) {
+        return HangDetectionResult::FAILED;
+    }
+
     Data& data = _searcher.getData();
     DataTracker& dataTracker = _searcher.getDataTracker();
+    int* dp = data.getDataPointer();
 
     // The mid-turning point should not be crossed
     if (_sweepMidTurningPoint != nullptr) {
-        int* dp = data.getDataPointer();
         if (
-            (_sweepMidTurningDir == DataDirection::RIGHT && dp > _sweepMidTurningPoint) ||
-            (_sweepMidTurningDir == DataDirection::LEFT && dp < _sweepMidTurningPoint)
+            (isStartAtRight() && dp < _sweepMidTurningPoint) ||
+            (!isStartAtRight() && dp > _sweepMidTurningPoint)
         ) {
 //            std::cout << "Crossed the mid-turning point" << std::endl;
-            _sweepMidTurningPoint = nullptr;
-            // Start new detection attempt afresh
             return HangDetectionResult::FAILED;
         }
     }
 
-    if (!_searcher.performedTurn()) {
-        return HangDetectionResult::ONGOING;
-    }
-
-    if (_searcher.lastTurnWasRight()) {
-        _midSequence = true;
-        return HangDetectionResult::ONGOING;;
-    }
-
-    DataDirection extensionDir = DataDirection::NONE;
-
-    if (data.getDataPointer() <= data.getMinBoundP()) {
-        // At left end of sequence
-        extensionDir = DataDirection::LEFT;
-    }
-    else if (data.getDataPointer() >= data.getMaxBoundP()) {
-        // At right end of sequence
-        extensionDir = DataDirection::RIGHT;
-    }
-    else if (_sweepMidTurningPoint == nullptr && _extensionCount == 1) {
-        // Possible mid-sequence turning point
-        _sweepMidTurningPoint = data.getDataPointer();
-        _sweepMidTurningDir = (_prevExtensionDir == DataDirection::LEFT)
-            ? DataDirection::RIGHT
-            : DataDirection::LEFT;
-
-        extensionDir = _sweepMidTurningDir;
-    }
-
-    if (
-        extensionDir != DataDirection::NONE &&
-        extensionDir != _prevExtensionDir &&
-        _midSequence
-    ) {
-        _prevExtensionDir = extensionDir;
-        _extensionCount++;
-        _midSequence = false; // We're at an end of the sequence
-
-//        std::cout << "Sweep endpoint detected #"
-//        << _extensionCount
-//        << std::endl;
-//        _program.dump(_pp.p);
-//        _data.dump();
-
-        ProgramPointer pp = _searcher.getProgramPointer();
-
-        if (_extensionCount == 1) {
-            _sweepStartPp = pp;
+    if (isReversing() && !wasReversing) {
+        if (sweepCount() == 2 && dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
+            _sweepMidTurningPoint = data.getDataPointer();
         }
-        else if (_extensionCount % 2 == 1) {
+
+        if (sweepCount() > 1 && sweepCount() % 2 == 1) {
             if (isSweepDiverging()) {
-                if (pp.p == _sweepStartPp.p && pp.dir == _sweepStartPp.dir) {
+                ProgramPointer pp = _searcher.getProgramPointer();
+                ProgramPointer startPp = sweepStartProgramPointer();
+
+                if (pp.p == startPp.p && pp.dir == startPp.dir) {
                     // PP is same as it was at during the first turn, so an actual repetition/hang
 //                    std::cout << "Sweep hang detected!" << std::endl;
 //                    _data.dump();
@@ -123,10 +84,7 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
 
                     return HangDetectionResult::HANGING;
                 } else {
-                    // This may be a sweep with Unbalanced Growth
-                    if (_extensionCount >= _maxSweepExtensionCount) {
-                        return HangDetectionResult::FAILED;
-                    }
+                    // This may be a sweep with Unbalanced Growth. Continue detection
                 }
             } else {
                 // Values do not diverge so we cannot conclude it is a hang.
