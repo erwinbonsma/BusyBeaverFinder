@@ -13,6 +13,7 @@
 
 #include "Types.h"
 #include "SweepHangDetector.h"
+#include "DeltaTracker.h"
 
 class ExhaustiveSearcher;
 
@@ -22,9 +23,7 @@ class RegularSweepHangDetector : public SweepHangDetector {
     // Hang detection state
     HangDetectionResult _status;
     DataPointer _sweepMidTurningPoint;
-
-    // The last value that impacted a turn
-    DataPointer _lastTurnDp;
+    DeltaTracker _deltaTracker;
 
     bool isSweepDiverging();
 

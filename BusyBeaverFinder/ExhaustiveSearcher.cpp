@@ -188,7 +188,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
     _activeHangCheck = nullptr;
 
     while (1) { // Run until branch, termination or error
-        Ins* insP;
+        InstructionPointer insP;
         bool done = false;
         do { // Execute single step
 
@@ -234,7 +234,6 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     done = true;
                     break;
                 case Ins::TURN:
-                    _lastTurnDp = _data.getDataPointer();
                     if (_data.val() == 0) {
                         switch (_pp.dir) {
                             case Dir::UP: _pp.dir = Dir::LEFT; break;

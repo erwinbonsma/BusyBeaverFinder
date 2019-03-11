@@ -11,7 +11,8 @@
 #include "ExhaustiveSearcher.h"
 
 RegularSweepHangDetector::RegularSweepHangDetector(ExhaustiveSearcher& searcher) :
-    SweepHangDetector(searcher)
+    SweepHangDetector(searcher),
+    _deltaTracker(searcher)
 {
 }
 
@@ -47,7 +48,7 @@ bool RegularSweepHangDetector::isSweepDiverging() {
 
 void RegularSweepHangDetector::sweepStarted() {
     _searcher.getDataTracker().captureSnapShot();
-    _lastTurnDp = _searcher.getLastTurnDataPointer();
+    _deltaTracker.reset();
 
 //    std::cout << "Sweep started" << std::endl;
 //    _searcher.dump();
@@ -65,6 +66,7 @@ void RegularSweepHangDetector::sweepReversed() {
     }
     else if (sweepCount() % 2 == 1) {
 //        std::cout << "Checking divergence" << std::endl;
+//        _deltaTracker.dump();
         if (isSweepDiverging()) {
             ProgramPointer pp = _searcher.getProgramPointer();
             ProgramPointer startPp = sweepStartProgramPointer();
@@ -84,7 +86,6 @@ void RegularSweepHangDetector::sweepReversed() {
     }
 
     _searcher.getDataTracker().captureSnapShot();
-    _lastTurnDp = _searcher.getLastTurnDataPointer();
 }
 
 void RegularSweepHangDetector::sweepBroken() {
@@ -102,6 +103,8 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
         return HangDetectionResult::ONGOING;
     }
 
+    _deltaTracker.update();
+
     // The mid-turning point should not be crossed
     if (_sweepMidTurningPoint != nullptr) {
         int* dp = _searcher.getData().getDataPointer();
@@ -116,15 +119,11 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
         }
     }
 
-    if (
-        (movingRightwards() && (_searcher.getLastTurnDataPointer() - _lastTurnDp) > 1) ||
-        (!movingRightwards() && (_lastTurnDp - _searcher.getLastTurnDataPointer()) > 1)
-    ) {
+    if (_deltaTracker.getMaxShr() > 1 || _deltaTracker.getMaxShl() > 1) {
         // Moved past a data value without evaluating it. This may not be a regular sweep hang, as
         // the skipped value might impact execution if it is encountered later.
         return HangDetectionResult::FAILED;
     }
-    _lastTurnDp = _searcher.getLastTurnDataPointer();
 
     return HangDetectionResult::ONGOING;
 }
