@@ -36,6 +36,8 @@ protected:
 public:
     RegularSweepHangDetector(ExhaustiveSearcher& searcher);
 
+    HangType hangType() { return HangType::REGULAR_SWEEP; }
+
     void start();
     HangDetectionResult detectHang();
 };

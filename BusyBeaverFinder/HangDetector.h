@@ -9,6 +9,8 @@
 #ifndef HangDetector_h
 #define HangDetector_h
 
+#include "Types.h"
+
 enum class HangDetectionResult : char {
     // Detection is still ongoing. It's too early to conclude
     ONGOING = 0,
@@ -23,6 +25,8 @@ enum class HangDetectionResult : char {
 class HangDetector {
 public:
     virtual ~HangDetector() {}
+
+    virtual HangType hangType() = 0;
 
     virtual void start() = 0;
     virtual void signalLeftTurn() {}

@@ -26,10 +26,8 @@ class ProgressTracker {
 
     long _total = 0;
     long _totalSuccess = 0;
-    long _totalError = 0;
-    long _totalHangs = 0;
-    long _totalEarlyErrors = 0;
-    long _totalEarlyHangs = 0;
+    long _totalHangsByType[numHangTypes];
+    long _totalErrorsByType[numHangTypes];
     long _totalFaultyHangs = 0;
     clock_t _startTime;
 
@@ -37,7 +35,7 @@ class ProgressTracker {
     ulonglong _equivalenceTotal = 0;
 #endif
 
-    bool _earlyHangSignalled = false;
+    HangType _detectedHang = HangType::UNDETECTED;
 
     int _maxStepsSofar = 0;
     Program _bestProgram;
@@ -51,17 +49,22 @@ public:
     void setDumpBestSofarLimit(int minSteps) { _dumpBestSofarLimit = minSteps; }
 
     long getTotalSuccess() { return _totalSuccess; }
-    long getTotalErrors() { return _totalError; }
-    long getTotalHangs() { return _totalHangs; }
-    long getTotalEarlyHangs() { return _totalEarlyHangs; }
+    long getTotalErrors();
+    long getTotalHangs();
+    long getTotalDetectedErrors();
+    long getTotalErrors(HangType hangType) { return _totalErrorsByType[(int)hangType]; }
+    long getTotalDetectedHangs();
+    long getTotalHangs(HangType hangType) { return _totalHangsByType[(int)hangType]; }
+
     int getMaxStepsFound() { return _maxStepsSofar; }
 
     void reportDone(int totalSteps);
     void reportError();
-    void reportHang();
-    void reportEarlyHang();
+    void reportDetectedHang(HangType hangType);
+    void reportAssumedHang();
 
     void dumpStats();
+    void dumpHangStats();
     void dumpFinalStats();
 };
 

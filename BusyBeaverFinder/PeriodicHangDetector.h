@@ -28,6 +28,8 @@ class PeriodicHangDetector : public HangDetector {
 public:
     PeriodicHangDetector(ExhaustiveSearcher& searcher);
 
+    HangType hangType() { return HangType::PERIODIC; }
+
     void start();
     HangDetectionResult detectHang();
 };

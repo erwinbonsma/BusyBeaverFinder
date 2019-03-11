@@ -44,4 +44,14 @@ enum class DataOp : char {
     NONE = 4
 };
 
+const int numHangTypes = 5;
+const int numDetectedHangTypes = 4;
+enum class HangType : char {
+    PERIODIC = 0,
+    REGULAR_SWEEP = 1,
+    IRREGULAR_SWEEP = 2,
+    APERIODIC_GLIDER = 3,
+    UNDETECTED = 4 // Should always be last
+};
+
 #endif /* Types_h */

@@ -47,7 +47,7 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
 
     REQUIRE(tracker.getMaxStepsFound() == 14);
     REQUIRE(tracker.getTotalSuccess() == 854);
-    REQUIRE(tracker.getTotalEarlyHangs() == tracker.getTotalHangs());
+    REQUIRE(tracker.getTotalDetectedHangs() == tracker.getTotalHangs());
 }
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
@@ -66,5 +66,5 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
 
     REQUIRE(tracker.getMaxStepsFound() == 43);
     REQUIRE(tracker.getTotalSuccess() == 51410);
-    REQUIRE(tracker.getTotalHangs() - tracker.getTotalEarlyHangs() == 0);
+    REQUIRE(tracker.getTotalHangs() == tracker.getTotalDetectedHangs());
 }

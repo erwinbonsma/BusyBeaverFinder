@@ -18,19 +18,26 @@ ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight())
 {
     _startTime = clock();
+
+    for (int i = 0; i < numHangTypes; i++) {
+        _totalHangsByType[i] = 0;
+        _totalErrorsByType[i] = 0;
+    }
 }
 
 void ProgressTracker::reportDone(int totalSteps) {
     _totalSuccess++;
 
-    if (_earlyHangSignalled) {
+    if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
-        _earlyHangSignalled = false;
         _totalFaultyHangs++;
 
-        std::cout << "Faulty hang, steps = " << totalSteps << std::endl;
+        std::cout << "Faulty hang, type = " << (int)_detectedHang
+        << ", steps = " << totalSteps << std::endl;
         _searcher.getProgram().dump();
         _searcher.dumpInstructionStack();
+
+        _detectedHang = HangType::UNDETECTED;
     }
 
     if (totalSteps > _maxStepsSofar) {
@@ -57,12 +64,13 @@ void ProgressTracker::reportDone(int totalSteps) {
 }
 
 void ProgressTracker::reportError() {
-    _totalError++;
-
-    if (_earlyHangSignalled) {
+    if (_detectedHang != HangType::UNDETECTED) {
         // Hang correctly signalled
-        _earlyHangSignalled = false;
-        _totalEarlyErrors++;
+        _totalErrorsByType[(int)_detectedHang]++;
+
+        _detectedHang = HangType::UNDETECTED;
+    } else {
+        _totalErrorsByType[(int)HangType::UNDETECTED]++;
     }
 
 #ifdef TRACK_EQUIVALENCE
@@ -73,19 +81,22 @@ void ProgressTracker::reportError() {
     }
 }
 
-void ProgressTracker::reportHang() {
-    _totalHangs++;
-
-    if (_earlyHangSignalled) {
+void ProgressTracker::reportAssumedHang() {
+    if (_detectedHang != HangType::UNDETECTED) {
         // Hang correctly signalled
-        _earlyHangSignalled = false;
-        _totalEarlyHangs++;
-    } else if (_dumpUndetectedHangs) {
-        std::cout << "Undetected hang" << std::endl;
-        _searcher.getProgram().dump();
-        _searcher.dumpInstructionStack();
-        _searcher.getData().dump();
-        std::cout << std::endl;
+        _totalHangsByType[(int)_detectedHang]++;
+
+        _detectedHang = HangType::UNDETECTED;
+    } else {
+        _totalHangsByType[(int)HangType::UNDETECTED]++;
+
+        if (_dumpUndetectedHangs) {
+            std::cout << "Undetected hang" << std::endl;
+            _searcher.getProgram().dump();
+            _searcher.dumpInstructionStack();
+            _searcher.getData().dump();
+            std::cout << std::endl;
+        }
     }
 
 #ifdef TRACK_EQUIVALENCE
@@ -96,10 +107,10 @@ void ProgressTracker::reportHang() {
     }
 }
 
-void ProgressTracker::reportEarlyHang() {
+void ProgressTracker::reportDetectedHang(HangType hangType) {
     if (_searcher.getHangDetectionTestMode()) {
         // Only signal it. The run continues so it can be verified if it was correctly signalled.
-        _earlyHangSignalled = true;
+        _detectedHang = hangType;
         return;
     }
 
@@ -108,8 +119,7 @@ void ProgressTracker::reportEarlyHang() {
 //    _searcher.dumpInstructionStack();
 //    _searcher.getData().dump();
 
-    _totalHangs++;
-    _totalEarlyHangs++;
+    _totalHangsByType[(int)hangType]++;
 
 #ifdef TRACK_EQUIVALENCE
     _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
@@ -118,6 +128,31 @@ void ProgressTracker::reportEarlyHang() {
         dumpStats();
     }
 }
+
+long ProgressTracker::getTotalDetectedErrors() {
+    long total = 0;
+    for (int i = 0; i < numDetectedHangTypes; i++) {
+        total += _totalErrorsByType[i];
+    }
+    return total;
+}
+
+long ProgressTracker::getTotalDetectedHangs() {
+    long total = 0;
+    for (int i = 0; i < numDetectedHangTypes; i++) {
+        total += _totalHangsByType[i];
+    }
+    return total;
+}
+
+long ProgressTracker::getTotalErrors() {
+    return getTotalDetectedErrors() + _totalErrorsByType[(int)HangType::UNDETECTED];
+}
+
+long ProgressTracker::getTotalHangs() {
+    return getTotalDetectedHangs() + _totalHangsByType[(int)HangType::UNDETECTED];
+}
+
 
 void ProgressTracker::dumpStats() {
     std::cout
@@ -133,16 +168,24 @@ void ProgressTracker::dumpStats() {
     std::cout << _totalSuccess
     << ", Errors=";
     if (_searcher.getHangDetectionTestMode()) {
-        std::cout << _totalEarlyErrors << "/";
+        std::cout << getTotalDetectedErrors() << "/";
     }
-    std::cout << _totalError
-    << ", Hangs=" << _totalEarlyHangs << "/" << _totalHangs
+    std::cout << getTotalErrors()
+    << ", Hangs=" << getTotalDetectedHangs() << "/" << getTotalHangs()
     << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
     << std::endl;
 }
 
+void ProgressTracker::dumpHangStats() {
+    std::cout
+    << "Hang details:" << std::endl
+    << "  #Periodic = " << _totalHangsByType[(int)HangType::PERIODIC] << std::endl
+    << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl
+    << "  #Undetected = " << _totalHangsByType[(int)HangType::UNDETECTED] << std::endl;
+}
+
 void ProgressTracker::dumpFinalStats() {
     dumpStats();
+    dumpHangStats();
     _bestProgram.dump();
-    std::cout << _bestProgram.getEquivalenceNumber() << std::endl;
 }

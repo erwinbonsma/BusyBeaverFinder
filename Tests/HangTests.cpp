@@ -37,7 +37,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "CountingLoop" ) {
         // Classification: Periodic, Changing, Uniform, Stationary
@@ -57,7 +57,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "NonUniformCountingLoop1" ) {
         // Classification: Periodic, Changing, Non-uniform, Sentry Go
@@ -82,7 +82,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "NonUniformCountingLoop2" ) {
         // Classification: Periodic, Changing, Non-uniform, Sentry Go
@@ -105,7 +105,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "InfSeq1" ) {
         // Classification: Periodic, Changing, Uniform, Travelling
@@ -128,7 +128,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "InfSeq2" ) {
         // Classification: Periodic, Changing, Uniform, Travelling
@@ -151,7 +151,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "InfSeqNonUniform1" ) {
         // Classification: Periodic, Changing, Non-Uniform, Travelling
@@ -176,7 +176,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "InfSeqNonUniform2" ) {
         // Classification: Periodic, Changing, Non-Uniform, Travelling
@@ -198,7 +198,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "InfSeqNonUniform3" ) {
         // Classification: Periodic, Changing, Non-Uniform, Travelling
@@ -225,7 +225,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
 }
 
@@ -256,7 +256,7 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "InfSeqExtendingBothWays2" ) {
         // Sequence that extends both ways, but to the right it extends only at half the speed.
@@ -278,7 +278,7 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
 }
 
@@ -319,7 +319,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
     SECTION( "6x6-DelayedHang") {
         // Classification: Periodic, Constant, Non-Uniform(?), Travelling
@@ -341,7 +341,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
 }
 
@@ -381,7 +381,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-InfSweepSeqExtendingOneWayWithZeroes") {
         // Here a sweep is occuring over a zero-delimited part of the sequence.
@@ -405,7 +405,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-HangGlider") {
         // Here a sweep is occuring over part of a sequence, where the midway point is a temporary
@@ -428,7 +428,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepReversalWithShifts" ) {
         // Here the sweep reversal at the right side of the sequence consists of a few left turns,
@@ -448,7 +448,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-MidSweepReversalWithShifts" ) {
         // Here the mid-sweep reversal consists of a few left turns, followed by two right turns,
@@ -468,7 +468,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepReveralWithOscillation" ) {
         // Here the sweep reversal at the right side will first increment the zero turning value,
@@ -488,7 +488,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
 }
 
@@ -523,7 +523,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-IrregularSweep") {
         // An irregular sweep. Its turning point at one end of the sequence varies. The reason is
@@ -543,7 +543,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-IrregularSweep2") {
         // Another irregular sweep.
@@ -561,7 +561,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-IrregularSweep3") {
         // Another irregular sweep.
@@ -580,7 +580,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-Glider1") {
         // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
@@ -602,7 +602,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
     SECTION( "6x6-Glider2" ) {
         // A glider that moves leftwards.
@@ -620,7 +620,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
     SECTION( "6x6-Glider3" ) {
         // Another leftward moving glider.
@@ -639,7 +639,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
     SECTION( "6x6-ComplexGlider" ) {
         // Another leftward moving glider, but with relatively complex logic
@@ -658,7 +658,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
     SECTION( "6x6-MidSweepLeftTurn" ) {
         // This program contains a mid-sweep left turn. It is caused by a mid-sequence one, which
@@ -680,6 +680,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalEarlyHangs() == 1);
+        // TODO: Classify this hang
+        REQUIRE(tracker.getTotalHangs() == 1);
     }
 }

@@ -274,7 +274,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     _activeHangCheck = nullptr;
                     break;
                 case HangDetectionResult::HANGING:
-                    _tracker->reportEarlyHang();
+                    _tracker->reportDetectedHang(_activeHangCheck->hangType());
                     if (!_settings.testHangDetection) {
                         _data.undo(numDataOps);
                         return;
@@ -290,7 +290,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
 //            << std::endl;
 
             if (steps + totalSteps >= _settings.maxSteps) {
-                _tracker->reportHang();
+                _tracker->reportAssumedHang();
                 _data.undo(numDataOps);
                 return;
             }
