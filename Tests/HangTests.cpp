@@ -582,6 +582,29 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-IrregularSweep4" ) {
+        // An irregular sweep that was wrongly found by an early version of the Regular Sweep Hang
+        // detector. Moving right, it shifts DP two positions each time. As a result, it skips over
+        // some values. Initially, the sequence seems to have balanced grow, but it is broken up by
+        // zeroes appearing mid-sequence, and the execution becomes quite chaotic.
+        //
+        //   *   * *
+        // * o o o _ *
+        //   * * o _
+        //   - o o *
+        // * _ _ o *
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 0);
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+    }
     SECTION( "6x6-Glider1") {
         // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
         // zeroes in their wake. The amount of steps required to move one position on the tape
@@ -641,6 +664,25 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
+    SECTION( "6x6-Glider4" ) {
+        // A glider that was wrongly found by an early version of the Regular Sweep Hang detector.
+        //
+        //     * *
+        // *   o o *
+        // o _ o _ *
+        // o * o o _ *
+        // o * o *
+        // o   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 0);
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
     SECTION( "6x6-ComplexGlider" ) {
         // Another leftward moving glider, but with relatively complex logic
         //
@@ -681,6 +723,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         searcher.findOne(resumeFrom);
 
         // TODO: Classify this hang
-        REQUIRE(tracker.getTotalHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
 }
