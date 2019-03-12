@@ -490,6 +490,123 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-RegularSweepWithDoubleShift" ) {
+        // Regular sweep with double-shift when moving rightwards.
+        //
+        //       *
+        //   * * o _ *
+        //   _ o o *
+        // * _ _ _
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-RegularSweepWithNegatedDoubleShift" ) {
+        // Regular sweep with negated double-shift when moving leftwards. I.e. DP moves two cells
+        // left, then one cell right, etc.
+        //
+        //     * *
+        //   * o o _ *
+        // * _ _ o *
+        // * o * *
+        // o o *
+        // o
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-RegularSweepWithNegatedDoubleShift2" ) {
+        // Similar to previous, but now the double-shift occurs when moving rightwards. Another
+        // noteworthy feature of this program is that it generates an ever-growing sequence of -2
+        // values, followed by a positive value that equals the number of -2 values.
+        //
+        // *     *
+        // o _ * o _ *
+        // _ o _ _ *
+        // _ * * o _
+        // _ * _ o o *
+        // _     * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-RegularSweepWithNegatedDoubleShifts" ) {
+        // This program features a negated double shift in both directions.
+        //
+        //     * * *
+        //   * o o _ *
+        // * _ o o *
+        //   o * * *
+        // * o _
+        // o o _ *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-RegularSweepWithEndSweepDoubleShift" ) {
+        // A regular sweep that features a double-shift at one of its sweep reveral points. The
+        // logic of this reveral is fairly complex. A noteworthy feature of this program is that it
+        // generates a sequence of descending values: -1 -2 -3 -4 -5 .... etc
+        //
+        //   *   * *
+        // * o o _ _ *
+        // o _ o _ _ *
+        // o * * o o *
+        // o * _ o *
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-RegularSweepWithEndSweepDoubleShift2" ) {
+        // Another end-sweep double shift. It generates a sequence that increases towards zero:
+        // .... -5 -4 -3 -2 -1 0
+        //
+        //         *
+        //   * _ _ _
+        //   _ _ * _
+        // * o o _ o *
+        // * * * _ _
+        // o _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::NOOP,Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
 }
 
 TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
@@ -503,7 +620,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
-    SECTION( "6x6-RegularSweepWithDoubleShift" ) {
+    SECTION( "6x6-RegularSweepWithDoubleShiftFailing" ) {
         // This program has two noteworthy features:
         // - Its mid-sequence turning point does not have a fixed value. It briefly becomes zero,
         //   then becomes non-zero again.

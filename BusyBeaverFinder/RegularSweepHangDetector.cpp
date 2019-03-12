@@ -67,7 +67,19 @@ void RegularSweepHangDetector::sweepReversed() {
     else if (sweepCount() % 2 == 1) {
 //        std::cout << "Checking divergence" << std::endl;
 //        _deltaTracker.dump();
+
         if (isSweepDiverging()) {
+            int max = _deltaTracker.getMaxShr() > _deltaTracker.getMaxShl()
+                ? _deltaTracker.getMaxShr()
+                : _deltaTracker.getMaxShl();
+            if (max * 2 + 1 > sweepCount()) {
+                // This sweep contains multiple shifts in immediate succession, which could mean
+                // that some values are not evaluated. Therefore, we cannot yet conclude that is a
+                // hang, we need to sweep the sequence a few more times (the amount depends on the
+                // maximum amount that is shifted).
+                return;
+            }
+
             ProgramPointer pp = _searcher.getProgramPointer();
             ProgramPointer startPp = sweepStartProgramPointer();
 
@@ -119,11 +131,11 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
         }
     }
 
-    if (_deltaTracker.getMaxShr() > 1 || _deltaTracker.getMaxShl() > 1) {
-        // Moved past a data value without evaluating it. This may not be a regular sweep hang, as
-        // the skipped value might impact execution if it is encountered later.
-        return HangDetectionResult::FAILED;
-    }
+//    if (_deltaTracker.getMaxShr() > 1 || _deltaTracker.getMaxShl() > 1) {
+//        // Moved past a data value without evaluating it. This may not be a regular sweep hang, as
+//        // the skipped value might impact execution if it is encountered later.
+//        return HangDetectionResult::FAILED;
+//    }
 
     return HangDetectionResult::ONGOING;
 }
