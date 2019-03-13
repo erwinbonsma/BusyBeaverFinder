@@ -343,6 +343,27 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
+    SECTION( "6x6-DelayedHang2" ) {
+        // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
+        // around step 410, and every period it extends the sequence with three cells.
+        // It generates the following sequence: -2 4 2 -2 4 2 -2 4 2 -2 4 2 -1 3 2 -2 3 1 -1 3 2 0
+        // The periodic loop goes over the last nine values, leaving -2 4 2 in its wake.
+        //
+        //       *
+        //   * _ o _ *
+        //   * * o _
+        //   _ o o *
+        // * _ _ o
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs() == 1);
+    }
 }
 
 TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
@@ -601,7 +622,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::NOOP,Ins::UNSET
+            Ins::NOOP, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

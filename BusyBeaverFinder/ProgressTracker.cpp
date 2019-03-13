@@ -13,6 +13,12 @@
 #include "ExhaustiveSearcher.h"
 #include "Program.h"
 
+Ins targetStack[] = {
+    Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+    Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+    Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+};
+
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     _searcher(searcher),
     _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight())
@@ -23,6 +29,21 @@ ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
         _totalHangsByType[i] = 0;
         _totalErrorsByType[i] = 0;
     }
+}
+
+void ProgressTracker::report() {
+    if (++_total % _dumpStatsPeriod == 0) {
+        dumpStats();
+    }
+    if (_total % _dumpStackPeriod == 0) {
+        _searcher.dumpInstructionStack();
+    }
+
+//    if (_searcher.instructionStackEquals(targetStack)) {
+//        std::cout << "Target program generated" << std::endl;
+//        _searcher.getProgram().dump();
+//        _searcher.dumpInstructionStack();
+//    }
 }
 
 void ProgressTracker::reportDone(int totalSteps) {
@@ -52,15 +73,7 @@ void ProgressTracker::reportDone(int totalSteps) {
         }
     }
 
-#ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
-#endif
-    if (++_total % _dumpStatsPeriod == 0) {
-        dumpStats();
-    }
-    if (_total % _dumpStackPeriod == 0) {
-        _searcher.dumpInstructionStack();
-    }
+    report();
 }
 
 void ProgressTracker::reportError() {
@@ -73,12 +86,7 @@ void ProgressTracker::reportError() {
         _totalErrorsByType[(int)HangType::UNDETECTED]++;
     }
 
-#ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
-#endif
-    if (++_total % _dumpStatsPeriod == 0) {
-        dumpStats();
-    }
+    report();
 }
 
 void ProgressTracker::reportAssumedHang() {
@@ -99,12 +107,7 @@ void ProgressTracker::reportAssumedHang() {
         }
     }
 
-#ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
-#endif
-    if (++_total % _dumpStatsPeriod == 0) {
-        dumpStats();
-    }
+    report();
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType) {
@@ -121,12 +124,7 @@ void ProgressTracker::reportDetectedHang(HangType hangType) {
 
     _totalHangsByType[(int)hangType]++;
 
-#ifdef TRACK_EQUIVALENCE
-    _equivalenceTotal += _searcher.getProgram().getEquivalenceNumber();
-#endif
-    if (++_total % _dumpStatsPeriod == 0) {
-        dumpStats();
-    }
+    report();
 }
 
 long ProgressTracker::getTotalDetectedErrors() {
@@ -179,6 +177,7 @@ void ProgressTracker::dumpStats() {
 void ProgressTracker::dumpHangStats() {
     std::cout
     << "Hang details:" << std::endl
+    << "  #No Exit = " << _totalHangsByType[(int)HangType::NO_EXIT] << std::endl
     << "  #Periodic = " << _totalHangsByType[(int)HangType::PERIODIC] << std::endl
     << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl
     << "  #Undetected = " << _totalHangsByType[(int)HangType::UNDETECTED] << std::endl;

@@ -18,6 +18,7 @@
 #include "DataTracker.h"
 #include "ProgressTracker.h"
 
+#include "NoExitHangDetector.h"
 #include "PeriodicHangDetector.h"
 #include "RegularSweepHangDetector.h"
 
@@ -55,14 +56,15 @@ class ExhaustiveSearcher {
     Ins* _resumeFrom;
 
     ProgramPointer _pp;
+    int _numSteps;
 
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
 
-    int _hangSampleMask;
     int _numHangDetectAttempts;
 
     HangDetector* _activeHangCheck;
+    NoExitHangDetector* _noExitHangDetector;
     PeriodicHangDetector* _periodicHangDetector;
     RegularSweepHangDetector* _regularSweepHangDetector;
 
@@ -78,12 +80,11 @@ class ExhaustiveSearcher {
 
     void reconfigure();
 
-    void run(int totalSteps, int depth);
-    void branch(int totalSteps, int depth);
+    void run(int depth);
+    void branch(int depth);
 public:
     ExhaustiveSearcher(int width, int height, int dataSize);
     ~ExhaustiveSearcher();
-
 
     SearchSettings getSettings() { return _settings; }
 
@@ -100,6 +101,8 @@ public:
     DataTracker& getDataTracker() { return _dataTracker; }
 
     ProgramPointer getProgramPointer() { return _pp; }
+    int getNumSteps() { return _numSteps; }
+
 
     void search();
     void search(Ins* resumeFrom);
@@ -110,6 +113,8 @@ public:
     void findOne(Ins* resumeFrom);
 
     void dumpInstructionStack();
+    bool instructionStackEquals(Ins* reference);
+
     void dumpSettings();
     void dumpHangDetection();
     void dump();

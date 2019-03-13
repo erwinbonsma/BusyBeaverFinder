@@ -14,6 +14,8 @@
 
 #include "Types.h"
 
+#define PROGRAM_POINTERS_MATCH(pp1, pp2) (pp1.p == pp2.p && pp1.dir == pp2.dir)
+
 bool isPowerOfTwo(int val);
 int makePowerOfTwo(int val);
 

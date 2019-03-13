@@ -15,20 +15,33 @@ PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
 }
 
 void PeriodicHangDetector::PeriodicHangDetector::start() {
-    _samplePp = _searcher.getProgramPointer();
+    _cyclePeriod = 0;
+    _periodicHangCheckAt = _minRecordedInstructions;
+}
 
+void PeriodicHangDetector::determineCyclePeriod() {
     _cyclePeriod = _searcher.getCycleDetector().getCyclePeriod();
     _searcher.getCycleDetector().clearInstructionHistory();
-    _periodicHangCheckAt = _cyclePeriod;
-//    std::cout << "period = " << _cyclePeriod << std::endl;
 
-    _searcher.getData().resetHangDetection();
+    // Established cycle period. Now wait to check repetition and monitor data changes
+    _periodicHangCheckAt = _cyclePeriod;
+//    std::cout << "cycle period = " << _cyclePeriod << std::endl;
+//    _searcher.getCycleDetector().dump();
+
+    _samplePp = _searcher.getProgramPointer();
+
     _searcher.getDataTracker().reset();
     _searcher.getDataTracker().captureSnapShot();
+    _searcher.getData().resetHangDetection();
 }
 
 HangDetectionResult PeriodicHangDetector::detectHang() {
     if (_searcher.getCycleDetector().getNumRecordedInstructions() < _periodicHangCheckAt) {
+        return HangDetectionResult::ONGOING;
+    }
+
+    if (_cyclePeriod == 0) {
+        determineCyclePeriod();
         return HangDetectionResult::ONGOING;
     }
 
@@ -40,6 +53,10 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
 
     Data& data = _searcher.getData();
     DataTracker& dataTracker = _searcher.getDataTracker();
+
+//    _searcher.getProgram().dump();
+//    data.dump();
+//    dataTracker.dump();
 
     if (
         data.getDataPointer() == dataTracker.getNewSnapShot()->dataP &&

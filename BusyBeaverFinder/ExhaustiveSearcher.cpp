@@ -23,6 +23,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 {
     initInstructionStack(width * height);
 
+    _noExitHangDetector = new NoExitHangDetector(*this);
     _periodicHangDetector = new PeriodicHangDetector(*this);
     _regularSweepHangDetector = new RegularSweepHangDetector(*this);
 
@@ -38,6 +39,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
+    delete _noExitHangDetector;
     delete _periodicHangDetector;
     delete _regularSweepHangDetector;
 }
@@ -76,6 +78,18 @@ void ExhaustiveSearcher::dumpInstructionStack(Ins* stack) {
         stack++;
     }
     std::cout << std::endl;
+}
+
+bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) {
+    Ins* p1 = _instructionStack;
+    Ins* p2 = reference;
+
+    while (*p1 != Ins::UNSET && *p2 != Ins::UNSET && *p1 == *p2) {
+        p1++;
+        p2++;
+    }
+
+    return (*p1 == *p2);
 }
 
 void ExhaustiveSearcher::dumpInstructionStack() {
@@ -118,31 +132,44 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 //    _cycleDetector.dump();
 
     int attempts = _numHangDetectAttempts;
-    if (attempts < _settings.maxPeriodicHangDetectAttempts) {
+
+    assert(_activeHangCheck == nullptr);
+
+//    if (attempts == 0) {
+//        _activeHangCheck = _noExitHangDetector;
+//    } else {
+//        attempts--;
+//    }
+
+    if (_activeHangCheck == nullptr && attempts < _settings.maxPeriodicHangDetectAttempts) {
         // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
         // previous sample period was too low to detect the period of the hang cycle)
         _activeHangCheck = _periodicHangDetector;
 
-        _hangSampleMask = (_hangSampleMask << 1) | 1;
+        // Double period after each failed attempt
+        _periodicHangDetector->setMinRecordedInstructions(
+            _settings.initialHangSamplePeriod << attempts
+        );
     } else {
         attempts -= _settings.maxPeriodicHangDetectAttempts;
         _cycleDetectorEnabled = false;
+    }
 
-        if (attempts < _settings.maxRegularSweepHangDetectAttempts) {
-            _activeHangCheck = _regularSweepHangDetector;
-        } else {
-            _activeHangCheck = nullptr;
-        }
+    if (_activeHangCheck == nullptr && attempts < _settings.maxRegularSweepHangDetectAttempts) {
+        _activeHangCheck = _regularSweepHangDetector;
     }
 
     if (_activeHangCheck != nullptr) {
         _numHangDetectAttempts++;
         _activeHangCheck->start();
+    } else {
+        // Signal end of all checks
+        _numHangDetectAttempts = -1;
     }
 }
 
 
-void ExhaustiveSearcher::branch(int totalSteps, int depth) {
+void ExhaustiveSearcher::branch(int depth) {
     ProgramPointer pp0 = _pp;
     Ins* insP = _pp.p + (int)_pp.dir;
     bool resuming = *_resumeFrom != Ins::UNSET;
@@ -160,7 +187,7 @@ void ExhaustiveSearcher::branch(int totalSteps, int depth) {
 
         _program.setInstruction(insP, ins);
         _instructionStack[depth] = ins;
-        run(totalSteps, depth + 1);
+        run(depth + 1);
         _pp = pp0;
 
         if (
@@ -174,16 +201,15 @@ void ExhaustiveSearcher::branch(int totalSteps, int depth) {
     _instructionStack[depth] = Ins::UNSET;
 }
 
-void ExhaustiveSearcher::run(int totalSteps, int depth) {
+void ExhaustiveSearcher::run(int depth) {
     int numDataOps = 0;
-    int steps = 0;
+    int initialSteps = _numSteps;
 
     _data.resetHangDetection();
     _dataTracker.reset();
     _cycleDetectorEnabled = true;
     _cycleDetector.clearInstructionHistory();
 
-    _hangSampleMask = _initialHangSampleMask;
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
 
@@ -197,12 +223,14 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
             Ins ins = _program.getInstruction(insP);
             switch (ins) {
                 case Ins::DONE:
-                    _tracker->reportDone(totalSteps + steps);
+                    _tracker->reportDone(_numSteps);
                     _data.undo(numDataOps);
+                    _numSteps = initialSteps;
                     return;
                 case Ins::UNSET:
-                    branch(totalSteps + steps, depth);
+                    branch(depth);
                     _data.undo(numDataOps);
+                    _numSteps = initialSteps;
                     return;
                 case Ins::NOOP:
                     done = true;
@@ -220,6 +248,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                             if (! _data.shr()) {
                                 _tracker->reportError();
                                 _data.undo(numDataOps);
+                                _numSteps = initialSteps;
                                 return;
                             }
                             break;
@@ -227,6 +256,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                             if (! _data.shl()) {
                                 _tracker->reportError();
                                 _data.undo(numDataOps);
+                                _numSteps = initialSteps;
                                 return;
                             }
                             break;
@@ -261,7 +291,7 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
             }
         } while (!done);
         _pp.p = insP;
-        steps++;
+        _numSteps++;
 
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
 
@@ -276,27 +306,22 @@ void ExhaustiveSearcher::run(int totalSteps, int depth) {
                     _tracker->reportDetectedHang(_activeHangCheck->hangType());
                     if (!_settings.testHangDetection) {
                         _data.undo(numDataOps);
+                        _numSteps = initialSteps;
                         return;
                     }
                     break;
                 case HangDetectionResult::ONGOING:
                     break;
             }
+        } else if (_numHangDetectAttempts >= 0) {
+            initiateNewHangCheck();
         }
-        if (! (steps & _hangSampleMask)) {
-//            std::cout << "Monitor Hang Detection: Steps = " << (steps + totalSteps)
-//            << ", active hang check = " << (int)_activeHangCheck
-//            << std::endl;
 
-            if (steps + totalSteps >= _settings.maxSteps) {
-                _tracker->reportAssumedHang();
-                _data.undo(numDataOps);
-                return;
-            }
-
-            if (_activeHangCheck == nullptr) {
-                initiateNewHangCheck();
-            }
+        if (_numSteps >= _settings.maxSteps) {
+            _tracker->reportAssumedHang();
+            _data.undo(numDataOps);
+            _numSteps = initialSteps;
+            return;
         }
     }
 }
@@ -307,7 +332,8 @@ void ExhaustiveSearcher::search() {
 
     _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
-    run(0, 0);
+    _numSteps = 0;
+    run(0);
 }
 
 void ExhaustiveSearcher::search(Ins* resumeFrom) {
@@ -318,7 +344,8 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
 
     _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
-    run(0, 0);
+    _numSteps = 0;
+    run(0);
 }
 
 void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom) {

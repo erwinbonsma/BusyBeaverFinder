@@ -40,6 +40,8 @@ class ProgressTracker {
     int _maxStepsSofar = 0;
     Program _bestProgram;
 
+    void report();
+
 public:
     ProgressTracker(ExhaustiveSearcher& searcher);
 

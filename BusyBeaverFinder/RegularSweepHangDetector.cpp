@@ -27,8 +27,8 @@ void RegularSweepHangDetector::start() {
 // changes are diverging and therefore, the program is considered hanging.
 bool RegularSweepHangDetector::isSweepDiverging() {
 //    std::cout << "Checking for sweep hang " << std::endl;
-//    _data.dump();
-//    _dataTracker.dump();
+//    _searcher.getData().dump();
+//    _searcher.getDataTracker().dump();
 
     Data& data = _searcher.getData();
     DataTracker& dataTracker = _searcher.getDataTracker();
@@ -77,18 +77,17 @@ void RegularSweepHangDetector::sweepReversed() {
                 // that some values are not evaluated. Therefore, we cannot yet conclude that is a
                 // hang, we need to sweep the sequence a few more times (the amount depends on the
                 // maximum amount that is shifted).
-                return;
-            }
-
-            ProgramPointer pp = _searcher.getProgramPointer();
-            ProgramPointer startPp = sweepStartProgramPointer();
-
-            if (pp.p == startPp.p && pp.dir == startPp.dir) {
-                // PP is same as it was at during the first turn, so an actual repetition/hang
-                _status = HangDetectionResult::HANGING;
-                return;
             } else {
-                // This may be a sweep with Unbalanced Growth. Continue detection
+                ProgramPointer pp = _searcher.getProgramPointer();
+                ProgramPointer startPp = sweepStartProgramPointer();
+
+                if (pp.p == startPp.p && pp.dir == startPp.dir) {
+                    // PP is same as it was at during the first turn, so an actual repetition/hang
+                    _status = HangDetectionResult::HANGING;
+                    return;
+                } else {
+                    // This may be a sweep with Unbalanced Growth. Continue detection
+                }
             }
         } else {
             // Values do not diverge so we cannot conclude it is a hang.
@@ -130,12 +129,6 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
             return HangDetectionResult::FAILED;
         }
     }
-
-//    if (_deltaTracker.getMaxShr() > 1 || _deltaTracker.getMaxShl() > 1) {
-//        // Moved past a data value without evaluating it. This may not be a regular sweep hang, as
-//        // the skipped value might impact execution if it is encountered later.
-//        return HangDetectionResult::FAILED;
-//    }
 
     return HangDetectionResult::ONGOING;
 }

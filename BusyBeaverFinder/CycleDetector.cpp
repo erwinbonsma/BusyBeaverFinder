@@ -38,10 +38,6 @@ void CycleDetector::setHangSamplePeriod(int period) {
     _opsHistoryMaxP = _opsHistoryP + size; // Exclusive
 }
 
-void CycleDetector::clearInstructionHistory() {
-    _opsHistoryP = _opsHistory;
-}
-
 int CycleDetector::getCyclePeriod() {
     return findPeriod(_opsHistory, _findPeriodBuf, (int)(_opsHistoryP - _opsHistory));
 }

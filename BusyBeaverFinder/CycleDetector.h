@@ -40,8 +40,8 @@ public:
         assert(_opsHistoryP < _opsHistoryMaxP);
     }
     int getNumRecordedInstructions() { return (int)(_opsHistoryP - _opsHistory); }
+    void clearInstructionHistory() { _opsHistoryP = _opsHistory; }
 
-    void clearInstructionHistory();
     int getCyclePeriod();
 
     void dump();
