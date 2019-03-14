@@ -132,19 +132,5 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
 
     _deltaTracker.update();
 
-    // The mid-turning point should not be crossed
-    if (_sweepMidTurningPoint != nullptr) {
-        int* dp = _searcher.getData().getDataPointer();
-
-        if (
-            (isStartAtRight() && dp < _sweepMidTurningPoint) ||
-            (!isStartAtRight() && dp > _sweepMidTurningPoint)
-        ) {
-            // Crossed the mid-sweep turning point which breaks the assumption that it is a fixed
-            // turning point.
-            return HangDetectionResult::FAILED;
-        }
-    }
-
     return HangDetectionResult::ONGOING;
 }
