@@ -24,9 +24,6 @@ class SweepHangDetector : public HangDetector {
     //----------------------
     // Hang detection state
 
-    // PP at start of the sweep. It is always at one end of the sequence (i.e. at a data bound).
-    ProgramPointer _sweepStartPp;
-
     // Indicates if the sweep starts at the right or left of the data sequence.
     bool _isStartAtRight;
 
@@ -46,7 +43,6 @@ class SweepHangDetector : public HangDetector {
 protected:
     ExhaustiveSearcher& _searcher;
 
-    ProgramPointer sweepStartProgramPointer() { return _sweepStartPp; }
     int sweepCount() { return _sweepCount; }
 
     bool isStartAtRight() { return _isStartAtRight; }

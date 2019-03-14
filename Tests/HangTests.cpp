@@ -362,7 +362,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
 }
 
@@ -373,8 +373,9 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxPeriodicHangDetectAttempts = 4;
+    settings.maxPeriodicHangDetectAttempts = 6;
     settings.initialHangSamplePeriod = 16;
+    settings.maxSteps = 16384;
     searcher.configure(settings);
 
     SECTION( "6x6-InfSweepSeqExtendingOneWay") {
@@ -628,6 +629,45 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-RegularSweepWithComplexReversal" ) {
+        // A sweep with a mid-sequence reversal that takes 21 steps to execute. It features the
+        // following operations: 3x SHL, 3x SHR, 3x INC, 2x DEC
+        //
+        //       *
+        //     * o _ *
+        //   * _ o *
+        // * o o _ _ *
+        // * * _ o _ *
+        // o o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-RegularSweepWithComplexReversal2" ) {
+        // Another sweep with a mid-sequence reversal that takes 21 steps to execute.
+        //
+        //       *
+        //   * * o _ *
+        // * _ _ o *
+        // * o o o _ *
+        // * * _ _ _ *
+        // o _ o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
 }
 
 TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
@@ -821,6 +861,26 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 0);
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
+    SECTION( "6x6-Glider5" ) {
+        // A glider that was wrongly found by an early version of the Regular Sweep Hang detector.
+        //
+        //   *   *
+        // * o o _ *
+        // * o _ o _ *
+        // * _ o * _
+        // * * * o o *
+        // o _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 0);
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
     SECTION( "6x6-ComplexGlider" ) {
         // Another leftward moving glider, but with relatively complex logic
         //
@@ -862,5 +922,25 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         // TODO: Classify this hang
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepExceedingBoundaries" ) {
+        // When reversing the sweep at the left side, DP performs another shift, visiting another
+        // zero value. This breaks the current assumption that the next turn cannot be further than
+        // the previous sweep end point.
+        //
+        //       *
+        // * o _ o _ *
+        //   _ * o _
+        //   _ o o *
+        // * * _ o
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs() == 1);
     }
 }

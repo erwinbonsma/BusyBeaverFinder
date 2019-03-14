@@ -32,7 +32,6 @@ void SweepHangDetector::signalLeftTurn() {
 //            std::cout << "Sweep start found" << std::endl;
 //            _searcher.dump();
 
-            _sweepStartPp = _searcher.getProgramPointer();
             _isStartAtRight = (dp >= data.getMaxBoundP());
             _prevSweepTurnDp = dp;
             if (_isStartAtRight) {

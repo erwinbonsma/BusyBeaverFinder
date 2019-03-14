@@ -9,6 +9,7 @@
 #include "RegularSweepHangDetector.h"
 
 #include "ExhaustiveSearcher.h"
+#include "Utils.h"
 
 RegularSweepHangDetector::RegularSweepHangDetector(ExhaustiveSearcher& searcher) :
     SweepHangDetector(searcher),
@@ -46,6 +47,37 @@ bool RegularSweepHangDetector::isSweepDiverging() {
     return dataTracker.sweepHangDetected(_sweepMidTurningPoint);
 }
 
+// Returns "true" if detection should continue
+bool RegularSweepHangDetector::checkForHang() {
+    if (!isSweepDiverging()) {
+        // Values do not diverge so we cannot conclude it is a hang.
+        _status = HangDetectionResult::FAILED;
+        return false;
+    }
+
+    int max = _deltaTracker.getMaxShr() > _deltaTracker.getMaxShl()
+        ? _deltaTracker.getMaxShr()
+        : _deltaTracker.getMaxShl();
+    if (max * 2 - 1 > sweepCount()) {
+        // This sweep contains multiple shifts in immediate succession, which could mean
+        // that some values are not evaluated. Therefore, we cannot yet conclude that is a
+        // hang, we need to sweep the sequence a few more times (the amount depends on the
+        // maximum amount that is shifted).
+        return true;
+    }
+
+    ProgramPointer pp = _searcher.getProgramPointer();
+
+    if (PROGRAM_POINTERS_MATCH(pp, _sweepStartPp)) {
+        // PP is same as it was at was at the "start", so this is an actual repetition/hang
+        _status = HangDetectionResult::HANGING;
+        return false;
+    }
+
+    // This may be a sweep with Unbalanced Growth. Continue detection
+    return true;
+}
+
 void RegularSweepHangDetector::sweepStarted() {
     _searcher.getDataTracker().captureSnapShot();
     _deltaTracker.reset();
@@ -60,38 +92,22 @@ void RegularSweepHangDetector::sweepReversed() {
 
 //    std::cout << "Sweep reversed" << std::endl;
 //    _searcher.dump();
+//    data.dump();
 
     if (sweepCount() == 2 && dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
         _sweepMidTurningPoint = data.getDataPointer();
     }
+    else if (sweepCount() == 3) {
+        // Set the start PP only after a full sweep. This ensures that it is the instruction where
+        // the first left turn occurs for this sweep. When the reveral comprises of multiple left
+        // turns, it may not take the actual start PP when it would determine it during the very
+        // first reversal
+        _sweepStartPp = _searcher.getProgramPointer();
+    }
     else if (sweepCount() % 2 == 1) {
 //        std::cout << "Checking divergence" << std::endl;
 //        _deltaTracker.dump();
-
-        if (isSweepDiverging()) {
-            int max = _deltaTracker.getMaxShr() > _deltaTracker.getMaxShl()
-                ? _deltaTracker.getMaxShr()
-                : _deltaTracker.getMaxShl();
-            if (max * 2 + 1 > sweepCount()) {
-                // This sweep contains multiple shifts in immediate succession, which could mean
-                // that some values are not evaluated. Therefore, we cannot yet conclude that is a
-                // hang, we need to sweep the sequence a few more times (the amount depends on the
-                // maximum amount that is shifted).
-            } else {
-                ProgramPointer pp = _searcher.getProgramPointer();
-                ProgramPointer startPp = sweepStartProgramPointer();
-
-                if (pp.p == startPp.p && pp.dir == startPp.dir) {
-                    // PP is same as it was at during the first turn, so an actual repetition/hang
-                    _status = HangDetectionResult::HANGING;
-                    return;
-                } else {
-                    // This may be a sweep with Unbalanced Growth. Continue detection
-                }
-            }
-        } else {
-            // Values do not diverge so we cannot conclude it is a hang.
-            _status = HangDetectionResult::FAILED;
+        if (!checkForHang()) {
             return;
         }
     }

@@ -24,8 +24,10 @@ class RegularSweepHangDetector : public SweepHangDetector {
     HangDetectionResult _status;
     DataPointer _sweepMidTurningPoint;
     DeltaTracker _deltaTracker;
+    ProgramPointer _sweepStartPp;
 
     bool isSweepDiverging();
+    bool checkForHang();
 
 protected:
     void sweepStarted();
