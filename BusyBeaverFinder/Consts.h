@@ -9,10 +9,8 @@
 #ifndef Consts_h
 #define Consts_h
 
-//#define TRACK_EQUIVALENCE
-
 // The maximum size of programs that can be searched for
-#define MAX_WIDTH  9
-#define MAX_HEIGHT  9
+const int maxWidth = 9;
+const int maxHeight = 9;
 
 #endif /* Consts_h */

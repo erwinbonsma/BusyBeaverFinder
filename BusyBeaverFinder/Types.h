@@ -24,9 +24,9 @@ typedef Ins* InstructionPointer;
 
 // Program pointer directions
 enum class Dir : int {
-    UP = (MAX_WIDTH + 1),
+    UP = (maxWidth + 1),
     RIGHT = 1,
-    DOWN = -(MAX_WIDTH + 1),
+    DOWN = -(maxWidth + 1),
     LEFT = -1
 };
 

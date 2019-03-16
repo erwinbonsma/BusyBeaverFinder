@@ -17,6 +17,7 @@ PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
 void PeriodicHangDetector::PeriodicHangDetector::start() {
     _cyclePeriod = 0;
     _periodicHangCheckAt = _minRecordedInstructions;
+    _searcher.getCycleDetector().clearInstructionHistory();
 }
 
 void PeriodicHangDetector::determineCyclePeriod() {

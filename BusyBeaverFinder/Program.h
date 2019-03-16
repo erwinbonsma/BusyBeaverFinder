@@ -16,7 +16,7 @@
 
 typedef unsigned long long ulonglong;
 
-const int programStorageSize = (MAX_WIDTH + 1) * (MAX_HEIGHT + 2);
+const int programStorageSize = (maxWidth + 1) * (maxHeight + 2);
 
 class Program {
     int _width;

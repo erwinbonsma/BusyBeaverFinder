@@ -134,25 +134,30 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
     int attempts = _numHangDetectAttempts;
 
     assert(_activeHangCheck == nullptr);
+//    std::cout << "Initiating Check: Step = " << _numSteps
+//    << ", numAttempts = " << attempts << std::endl;
 
-//    if (attempts == 0) {
-//        _activeHangCheck = _noExitHangDetector;
-//    } else {
-//        attempts--;
-//    }
-
-    if (_activeHangCheck == nullptr && attempts < _settings.maxPeriodicHangDetectAttempts) {
-        // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
-        // previous sample period was too low to detect the period of the hang cycle)
-        _activeHangCheck = _periodicHangDetector;
-
-        // Double period after each failed attempt
-        _periodicHangDetector->setMinRecordedInstructions(
-            _settings.initialHangSamplePeriod << attempts
-        );
+    if (attempts == 0) {
+        _activeHangCheck = _noExitHangDetector;
     } else {
-        attempts -= _settings.maxPeriodicHangDetectAttempts;
-        _cycleDetectorEnabled = false;
+        attempts--;
+    }
+
+    if (_activeHangCheck == nullptr) {
+        if (attempts < _settings.maxPeriodicHangDetectAttempts) {
+            // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
+            // previous sample period was too low to detect the period of the hang cycle)
+            _activeHangCheck = _periodicHangDetector;
+
+            // Double period after each failed attempt
+            _periodicHangDetector->setMinRecordedInstructions(
+                _settings.initialHangSamplePeriod << attempts
+            );
+            _cycleDetectorEnabled = true;
+        } else {
+            attempts -= _settings.maxPeriodicHangDetectAttempts;
+            _cycleDetectorEnabled = false;
+        }
     }
 
     if (_activeHangCheck == nullptr && attempts < _settings.maxRegularSweepHangDetectAttempts) {
@@ -167,7 +172,6 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
         _numHangDetectAttempts = -1;
     }
 }
-
 
 void ExhaustiveSearcher::branch(int depth) {
     ProgramPointer pp0 = _pp;
@@ -207,8 +211,7 @@ void ExhaustiveSearcher::run(int depth) {
 
     _data.resetHangDetection();
     _dataTracker.reset();
-    _cycleDetectorEnabled = true;
-    _cycleDetector.clearInstructionHistory();
+    _cycleDetectorEnabled = false;
 
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
@@ -313,7 +316,7 @@ void ExhaustiveSearcher::run(int depth) {
                 case HangDetectionResult::ONGOING:
                     break;
             }
-        } else if (_numHangDetectAttempts >= 0) {
+        } else if (_numHangDetectAttempts != -1) {
             initiateNewHangCheck();
         }
 

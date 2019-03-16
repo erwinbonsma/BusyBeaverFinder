@@ -25,8 +25,8 @@ Program::Program(int width, int height) {
     // Note, there's no extra rightmost column. This is not needed, the pointer will wrap and end
     // up in the leftmost "DONE" column.
     Ins* pp = _instructions;
-    for (int row = -1; row <= MAX_HEIGHT; row++) {
-        for (int col = -1; col < MAX_WIDTH; col++) {
+    for (int row = -1; row <= maxHeight; row++) {
+        for (int col = -1; col < maxWidth; col++) {
             *pp = (row >=0 && row < height && col >= 0 && col < width) ? Ins::UNSET : Ins::DONE;
             pp++;
         }
@@ -34,7 +34,7 @@ Program::Program(int width, int height) {
 }
 
 Ins* Program::getInstructionP(int col, int row) {
-    return &_instructions[(col + 1) + (row + 1) * (MAX_WIDTH + 1)];
+    return &_instructions[(col + 1) + (row + 1) * (maxWidth + 1)];
 }
 
 void Program::clone(Program& dest) {
