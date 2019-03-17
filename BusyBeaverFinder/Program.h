@@ -60,6 +60,7 @@ public:
     ulonglong getEquivalenceNumber();
 
     void dump();
+    void dumpWeb();
     void dump(Ins* pp);
 };
 

@@ -11,6 +11,7 @@
 #include "Program.h"
 
 const char ins_chars[5] = {'?', '_', 'o', '*', 'X' };
+const char web_chars[5] = {'_', '_', 'o', '*', 'X' };
 
 Program::Program(int width, int height) {
     _width = width;
@@ -83,6 +84,16 @@ void Program::dump() {
         std::cout << std::endl;
     }
 }
+
+void Program::dumpWeb() {
+    for (int y = _height; --y >= 0; ) {
+        for (int x = 0; x < _width; x++) {
+            std::cout << web_chars[(int)getInstruction(x, y)];
+        }
+    }
+    std::cout << std::endl;
+}
+
 
 void Program::dump(Ins* pp) {
     char sepChar = ' ';
