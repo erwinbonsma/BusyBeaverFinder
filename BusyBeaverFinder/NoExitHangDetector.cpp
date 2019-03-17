@@ -24,10 +24,6 @@ NoExitHangDetector::NoExitHangDetector(ExhaustiveSearcher& searcher) :
     _instructionBuf = searcher.getProgram().getInstructionBuffer();
 }
 
-void NoExitHangDetector::start() {
-    _startPp = _searcher.getProgramPointer();
-}
-
 void NoExitHangDetector::addToStack(InstructionPointer insP, Dir dir, bool dataIsZero) {
     char dirFlag = (int)dir < 0
         ? ((dir == Dir::DOWN) ? dirFlagDown : dirFlagLeft )
@@ -97,11 +93,8 @@ bool NoExitHangDetector::canEscapeFrom(ProgramPointer pp) {
     _nextP = _pendingStack;
     _topP = _pendingStack;
 
-    assert( *(pp.p) == Ins::DATA );
-    PathStart searchStart = { .pp = pp, .dataIsZero = true };
+    PathStart searchStart = { .pp = pp, .dataIsZero = (_searcher.getData().val() == 0) };
     bool escapedFromLoop = followPath(searchStart);
-    searchStart.dataIsZero = false;
-    escapedFromLoop = escapedFromLoop || followPath(searchStart);
 
     while (!escapedFromLoop && _nextP < _topP) {
         escapedFromLoop = followPath(*_nextP++);
@@ -118,21 +111,6 @@ bool NoExitHangDetector::canEscapeFrom(ProgramPointer pp) {
 HangDetectionResult NoExitHangDetector::detectHang() {
     ProgramPointer pp = _searcher.getProgramPointer();
 
-    if ( *(pp.p) == Ins::DATA ) {
-//        _searcher.dump();
-        if (canEscapeFrom(pp)) {
-            // Cannot conclude it's a hang
-            return HangDetectionResult::FAILED;
-        } else {
-            // Cannot reach new instructions (nor leave the program grid)
-            return HangDetectionResult::HANGING;
-        }
-    }
-
-    if (PROGRAM_POINTERS_MATCH(_startPp, pp)) {
-        // Back to starting point without encountering a DATA instruction, so this is a simple loop
-        return HangDetectionResult::HANGING;
-    } else {
-        return HangDetectionResult::ONGOING;
-    }
+    // Check if new program cells (on or off the program grid can be reached)
+    return canEscapeFrom(pp) ? HangDetectionResult::FAILED : HangDetectionResult::HANGING;
 }

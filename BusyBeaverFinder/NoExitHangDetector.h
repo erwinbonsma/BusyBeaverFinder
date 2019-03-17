@@ -36,8 +36,6 @@ class NoExitHangDetector : public HangDetector {
     ExhaustiveSearcher& _searcher;
     InstructionPointer _instructionBuf;
 
-    ProgramPointer _startPp;
-
     // Tracks which path have been followed. It will only be set at places where a path can branch
     // and bend (i.e. in front of TURN instructions)
     char _followed[programStorageSize];
@@ -55,7 +53,6 @@ public:
 
     HangType hangType() { return HangType::NO_EXIT; }
 
-    void start();
     HangDetectionResult detectHang();
 };
 
