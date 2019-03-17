@@ -34,6 +34,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _settings.maxRegularSweepHangDetectAttempts = 3;
     _settings.maxRegularSweepExtensionCount = 5;
     _settings.testHangDetection = false;
+    _settings.disableNoExitHangDetection = false;
     reconfigure();
 }
 
@@ -137,10 +138,12 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 //    std::cout << "Initiating Check: Step = " << _numSteps
 //    << ", numAttempts = " << attempts << std::endl;
 
-    if (attempts == 0) {
-        _activeHangCheck = _noExitHangDetector;
-    } else {
-        attempts--;
+    if (!_settings.disableNoExitHangDetection) {
+        if (attempts == 0) {
+            _activeHangCheck = _noExitHangDetector;
+        } else {
+            attempts--;
+        }
     }
 
     if (_activeHangCheck == nullptr) {

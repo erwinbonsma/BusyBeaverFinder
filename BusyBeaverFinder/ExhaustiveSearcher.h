@@ -35,6 +35,7 @@ struct SearchSettings {
     int maxRegularSweepHangDetectAttempts;
     int maxRegularSweepExtensionCount;
     bool testHangDetection;
+    bool disableNoExitHangDetection;
 };
 
 class ExhaustiveSearcher {
