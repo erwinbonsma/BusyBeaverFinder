@@ -48,6 +48,10 @@ void SweepHangDetector::signalLeftTurn() {
         return;
     }
 
+//    std::cout << "Left turn" << std::endl;
+//    _searcher.getData().dump();
+//    _searcher.getDataTracker().dump();
+
     if (dp == _prevSweepTurnDp) {
         // Although there were one or more right-turns since the previous reveral, we are still at
         // the same data location. This can happen when the reversal logic contains one or more
@@ -60,8 +64,8 @@ void SweepHangDetector::signalLeftTurn() {
     // Check adherence to sweep contract
     if (_movingRightwards) {
         if (
-            // Continued beyond expected sweep reversal point?
-            dp <= _prevSweepTurnDp ||
+            // Ensure we already reversed (this turn could still be part of the previous turn)
+            dp > _prevSweepTurnDp &&
             // Premature turn?
             (_sweepCount >= 2 && dp < _rightReversalDp)
         ) {
@@ -71,8 +75,8 @@ void SweepHangDetector::signalLeftTurn() {
 
     } else {
         if (
-            // Continued beyond expected sweep reversal point?
-            dp >= _prevSweepTurnDp ||
+            // Ensure we already reversed (this turn could still be part of the previous turn)
+            dp < _prevSweepTurnDp &&
             // Premature turn?
             (_sweepCount >= 2 && dp > _leftReversalDp)
         ) {

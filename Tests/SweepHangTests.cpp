@@ -407,5 +407,40 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-ExceedRightEndSweepPoint" ) {
+        // The sweep reversal at the right consists of two left-turns, at different data cells.
+        //
+        //     *   *
+        //   * o o _ *
+        // * _ o * *
+        //   o *
+        // * _
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-ExceedLeftEndSweepPoint" ) {
+        // The sweep reversal at the right consists of two left-turns, at different data cells.
+        //       *
+        //   * * o _ *
+        // * _ o o *
+        // * * _ *
+        // o _ o *
+        // _
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
 }
 

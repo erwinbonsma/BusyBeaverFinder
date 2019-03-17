@@ -81,28 +81,6 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
     }
-    // TODO: Find out why this was not yet detected by existing Regular Sweep Test
-    SECTION( "6x6-UndetectedRegularSweep" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
-    }
-    // TODO: Find out why this was not yet detected by existing Regular Sweep Test
-    SECTION( "6x6-UndetectedRegularSweep2" ) {
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
-    }
     SECTION( "6x6-InnerSquare" ) {
         // Hang that was not detected by an earlier version of the detector. The cause was that
         // detection started at an instruction that was never visited again, while no new
