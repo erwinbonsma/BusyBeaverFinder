@@ -94,7 +94,6 @@ bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) {
 }
 
 void ExhaustiveSearcher::dumpInstructionStack() {
-    std::cout << "Instruction stack: ";
     dumpInstructionStack(_instructionStack);
 }
 

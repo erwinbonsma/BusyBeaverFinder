@@ -39,6 +39,8 @@ void ProgressTracker::report() {
         _searcher.dumpInstructionStack();
     }
 
+//    _searcher.getProgram().dump();
+//    _searcher.getProgram().dumpWeb();
 //    if (_searcher.instructionStackEquals(targetStack)) {
 //        std::cout << "Target program generated" << std::endl;
 //        _searcher.getProgram().dump();
@@ -99,11 +101,8 @@ void ProgressTracker::reportAssumedHang() {
         _totalHangsByType[(int)HangType::UNDETECTED]++;
 
         if (_dumpUndetectedHangs) {
-            std::cout << "Undetected hang" << std::endl;
-            _searcher.getProgram().dump();
+            std::cout << "Undetected hang: ";
             _searcher.dumpInstructionStack();
-            _searcher.getData().dump();
-            std::cout << std::endl;
         }
     }
 
