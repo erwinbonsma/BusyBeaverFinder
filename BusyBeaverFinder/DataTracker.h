@@ -38,6 +38,7 @@ class Data;
 
 class DataTracker {
     Data& _data;
+    int* _dataBufP;
 
     // Two snapshots. These should not be used directly, instead use oldSnapShot and newSnapShot
     SnapShot _snapShotA;

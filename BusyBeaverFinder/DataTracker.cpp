@@ -8,6 +8,7 @@
 
 #include "DataTracker.h"
 
+#include <assert.h>
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -20,10 +21,12 @@ void DataTracker::initSnapShot(SnapShot& snapshot) {
     snapshot.minBoundP = _data.getMinBoundP();
     snapshot.maxBoundP = _data.getMaxBoundP();
 
-    memcpy(snapshot.buf, _data.getDataBuffer(), sizeof(int) * _data.getSize());
+    memcpy(snapshot.buf, _dataBufP, sizeof(int) * _data.getSize());
 }
 
 DataTracker::DataTracker(Data& data) : _data(data) {
+    _dataBufP = data.getDataBuffer();
+
     initSnapShot(_snapShotA);
     initSnapShot(_snapShotB);
 }
@@ -59,7 +62,7 @@ void DataTracker::captureSnapShot() {
 
     // Copy the range of values that were non-zero or are non-zero.
     if (minP <= maxP) {
-        int offset = (int)(minP - _data.getDataBuffer());
+        int offset = (int)(minP - _dataBufP);
         int len = (int)(maxP - minP + 1);
 
         memcpy(_newSnapShotP->buf + offset, minP, sizeof(int) * len);
@@ -83,7 +86,7 @@ SnapShotComparison  DataTracker::compareToSnapShot() {
     SnapShotComparison result = SnapShotComparison::UNCHANGED;
 
     int *p1 = _data.getMinVisitedP();
-    int *p2 = _newSnapShotP->buf + (p1 - _data.getDataBuffer());
+    int *p2 = _newSnapShotP->buf + (p1 - _dataBufP);
     do {
         if (*p1 != *p2) {
             if (IMPACTFUL_CHANGE(*p2, *p1)) {
@@ -115,13 +118,14 @@ bool DataTracker::periodicHangDetected() {
         return false;
     }
 
+    assert(_dataBufP == _data.getDataBuffer());
     long shift = _data.getDataPointer() - _newSnapShotP->dataP;
 
-    int *oldBeforeP = _oldSnapShotP->buf + (_newSnapShotP->minVisitedP - _data.getDataBuffer());
-    int *oldAfterP = _newSnapShotP->buf + (_newSnapShotP->minVisitedP - _data.getDataBuffer());
-    int *newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _data.getDataBuffer());
+    int *oldBeforeP = _oldSnapShotP->buf + (_newSnapShotP->minVisitedP - _dataBufP);
+    int *oldAfterP = _newSnapShotP->buf + (_newSnapShotP->minVisitedP - _dataBufP);
+    int *newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _dataBufP);
     // Expanded for clarity
-    int *newAfterP = _data.getDataBuffer() + (_data.getMinVisitedP() - _data.getDataBuffer());
+    int *newAfterP = _dataBufP + (_data.getMinVisitedP() - _dataBufP);
 
     do {
         if (
@@ -190,7 +194,7 @@ bool DataTracker::periodicHangDetected() {
     }
     else if (shift < 0) {
         // Check that the newly visited values were all zeros
-        newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _data.getDataBuffer());
+        newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _dataBufP);
         while (shift < 0) {
             if (*newBeforeP != 0) {
                 return false;
@@ -208,19 +212,32 @@ bool DataTracker::periodicHangDetected() {
     return true;
 }
 
-// Note: Changes away from zero are allowed (at the ends of the data sequence, which itself does
-// not contain zeroes).
-#define IMPACTFUL_SWEEP_CHANGE(x, y) ((x < 0 && y > x) || (x > 0 && y < x))
-
 bool DataTracker::sweepHangDetected(int* sweepMidTurningPoint) {
     // Check if there was an impactful change from the old to the new snapshot
-    int *p = _oldSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
-    int *q = _newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer());
-    int *pEnd = _oldSnapShotP->buf + (_newSnapShotP->maxBoundP - _data.getDataBuffer());
+    int *p = _oldSnapShotP->buf + (_newSnapShotP->minBoundP - _dataBufP);
+    int *q = _newSnapShotP->buf + (_newSnapShotP->minBoundP - _dataBufP);
+    int *pEnd = _oldSnapShotP->buf + (_newSnapShotP->maxBoundP - _dataBufP);
     do {
-        if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
-            // Check if it's a mid-sequence turning point. This one may (briefly) become zero
-            if ((p - _oldSnapShotP->buf) != (sweepMidTurningPoint - _data.getDataBuffer())) {
+        if (IMPACTFUL_CHANGE(*p, *q)) {
+            bool isAllowed = false;
+
+            if (
+                sweepMidTurningPoint != nullptr &&
+                (p - _oldSnapShotP->buf) == (sweepMidTurningPoint - _dataBufP)
+            ) {
+                // The mid-sequence turning point may (briefly) become zero
+                isAllowed = true;
+            }
+
+            if (
+                (p - _oldSnapShotP->buf) < (_oldSnapShotP->minBoundP - _dataBufP) ||
+                (p - _oldSnapShotP->buf) > (_oldSnapShotP->maxBoundP - _dataBufP)
+            ) {
+                // Zero cells outside the data bounds may be set (extending the sequence)
+                isAllowed = true;
+            }
+
+            if (!isAllowed) {
                 return false;
             }
         }
@@ -229,13 +246,27 @@ bool DataTracker::sweepHangDetected(int* sweepMidTurningPoint) {
     } while (p <= pEnd);
 
     // Check if there was an impactful change from the new snapshot to the current data state.
-    p = _newSnapShotP->buf + (_data.getMinBoundP() - _data.getDataBuffer());
+    p = _newSnapShotP->buf + (_data.getMinBoundP() - _dataBufP);
     q = _data.getMinBoundP();
-    pEnd = _newSnapShotP->buf + (_data.getMaxBoundP() - _data.getDataBuffer());
+    pEnd = _newSnapShotP->buf + (_data.getMaxBoundP() - _dataBufP);
     do {
-        if (IMPACTFUL_SWEEP_CHANGE(*p, *q)) {
+        if (IMPACTFUL_CHANGE(*p, *q)) {
+            bool isAllowed = false;
+
             // Check if it's a mid-sequence turning point. This one may (briefly) become zero
-            if (q != sweepMidTurningPoint) {
+            if (q == sweepMidTurningPoint) {
+                isAllowed = true;
+            }
+
+            if (
+                (p - _newSnapShotP->buf) < (_newSnapShotP->minBoundP - _dataBufP) ||
+                (p - _newSnapShotP->buf) > (_newSnapShotP->maxBoundP - _dataBufP)
+            ) {
+                // Zero cells outside the data bounds may be set (extending the sequence)
+                isAllowed = true;
+            }
+
+            if (!isAllowed) {
                 return false;
             }
         }
@@ -248,22 +279,22 @@ bool DataTracker::sweepHangDetected(int* sweepMidTurningPoint) {
 
 void DataTracker::dump() {
     if (_newSnapShotP != nullptr) {
-        std::cout << "SNAP1: min = " << (_newSnapShotP->minVisitedP - _data.getDataBuffer())
-        << ", p = " << (_newSnapShotP->dataP - _data.getDataBuffer())
-        << ", max = " << (_newSnapShotP->maxVisitedP - _data.getDataBuffer())
+        std::cout << "SNAP1: min = " << (_newSnapShotP->minVisitedP - _dataBufP)
+        << ", p = " << (_newSnapShotP->dataP - _dataBufP)
+        << ", max = " << (_newSnapShotP->maxVisitedP - _dataBufP)
         << std::endl;
-        dumpDataBuffer(_newSnapShotP->buf + (_newSnapShotP->minBoundP - _data.getDataBuffer()),
-                       _newSnapShotP->buf + (_newSnapShotP->dataP - _data.getDataBuffer()),
+        dumpDataBuffer(_newSnapShotP->buf + (_newSnapShotP->minBoundP - _dataBufP),
+                       _newSnapShotP->buf + (_newSnapShotP->dataP - _dataBufP),
                        (int)(_newSnapShotP->maxBoundP - _newSnapShotP->minBoundP + 1));
     }
 
     if (_oldSnapShotP != nullptr) {
-        std::cout << "SNAP2: min = " << (_oldSnapShotP->minVisitedP - _data.getDataBuffer())
-        << ", p = " << (_oldSnapShotP->dataP - _data.getDataBuffer())
-        << ", max = " << (_oldSnapShotP->maxVisitedP - _data.getDataBuffer())
+        std::cout << "SNAP2: min = " << (_oldSnapShotP->minVisitedP - _dataBufP)
+        << ", p = " << (_oldSnapShotP->dataP - _dataBufP)
+        << ", max = " << (_oldSnapShotP->maxVisitedP - _dataBufP)
         << std::endl;
-        dumpDataBuffer(_oldSnapShotP->buf + (_oldSnapShotP->minBoundP - _data.getDataBuffer()),
-                       _oldSnapShotP->buf + (_oldSnapShotP->dataP - _data.getDataBuffer()),
+        dumpDataBuffer(_oldSnapShotP->buf + (_oldSnapShotP->minBoundP - _dataBufP),
+                       _oldSnapShotP->buf + (_oldSnapShotP->dataP - _dataBufP),
                        (int)(_oldSnapShotP->maxBoundP - _oldSnapShotP->minBoundP + 1));
     }
 }
