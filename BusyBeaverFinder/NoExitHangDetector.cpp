@@ -32,6 +32,9 @@ void NoExitHangDetector::addToStack(InstructionPointer insP, Dir dir, bool dataI
     char dirFlag = (int)dir < 0
         ? ((dir == Dir::DOWN) ? dirFlagDown : dirFlagLeft )
         : ((dir == Dir::UP) ? dirFlagUp : dirFlagRight);
+    if (dataIsZero) {
+        dirFlag <<= 4;
+    }
 
 //    std::cout << "Add to stack: insP = " << (insP - _instructionBuf)
 //    << ", dir = " << (int)dir

@@ -37,7 +37,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
     }
     SECTION( "CountingLoop" ) {
         // Classification: Periodic, Changing, Uniform, Stationary
