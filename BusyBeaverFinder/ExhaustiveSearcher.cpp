@@ -177,7 +177,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 
 void ExhaustiveSearcher::branch(int depth) {
     ProgramPointer pp0 = _pp;
-    Ins* insP = _pp.p + (int)_pp.dir;
+    InstructionPointer insP = nextInstructionPointer(_pp);
     bool resuming = *_resumeFrom != Ins::UNSET;
 
     for (int i = 0; i < 3; i++) {
@@ -223,7 +223,7 @@ void ExhaustiveSearcher::run(int depth) {
         bool done = false;
         do { // Execute single step
 
-            insP = _pp.p + (int)_pp.dir;
+            insP = nextInstructionPointer(_pp);
 
             Ins ins = _program.getInstruction(insP);
             switch (ins) {
@@ -291,7 +291,7 @@ void ExhaustiveSearcher::run(int depth) {
             }
             if (_cycleDetectorEnabled) {
                 _cycleDetector.recordInstruction(
-                    (char)((insP - _program.getInstructionBuffer()) ^ (int)_pp.dir)
+                    (char)((insP.col + insP.row * maxWidth) ^ (int)_pp.dir)
                 );
             }
         } while (!done);

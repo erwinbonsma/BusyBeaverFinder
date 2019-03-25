@@ -11,6 +11,9 @@
 #include <assert.h>
 #include <iostream>
 
+const int dx[4] = { 0, 1, 0, -1 };
+const int dy[4] = { 1, 0, -1, 0 };
+
 bool isPowerOfTwo(int val) {
     return (val & (val - 1)) == 0;
 }
@@ -24,27 +27,11 @@ int makePowerOfTwo(int val) {
     return 1 << shifts;
 }
 
-int readNextChar(FILE* file) {
-    int ch;
-    bool skip = false;
-
-    do {
-        ch = getc(file);
-
-        while (ch == '#') {
-            // Swallow characters until EOL
-            do {
-                std::cout << (char)ch;
-                ch = getc(file);
-            } while (ch != 10 && ch != EOF);
-            std::cout << std::endl;
-        }
-
-        // Ignore whitespace
-        skip = (isspace(ch) || ch == 10);
-    } while (skip);
-
-    return ch;
+InstructionPointer nextInstructionPointer(ProgramPointer pp) {
+    return InstructionPointer {
+        .col = pp.p.col + dx[(int)pp.dir],
+        .row = pp.p.row + dy[(int)pp.dir]
+    };
 }
 
 // Not used anymore, but kept for reference. It helps understanding the findPeriod implementation
@@ -119,6 +106,29 @@ int findPeriod(const char* input, int* buf, int len) {
     }
 
     return len;
+}
+
+int readNextChar(FILE* file) {
+    int ch;
+    bool skip = false;
+
+    do {
+        ch = getc(file);
+
+        while (ch == '#') {
+            // Swallow characters until EOL
+            do {
+                std::cout << (char)ch;
+                ch = getc(file);
+            } while (ch != 10 && ch != EOF);
+            std::cout << std::endl;
+        }
+
+        // Ignore whitespace
+        skip = (isspace(ch) || ch == 10);
+    } while (skip);
+
+    return ch;
 }
 
 Ins* loadResumeStackFromFile(std::string inputFile, int maxSize) {

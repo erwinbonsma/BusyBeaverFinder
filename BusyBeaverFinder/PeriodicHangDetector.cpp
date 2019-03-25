@@ -8,6 +8,7 @@
 
 #include "PeriodicHangDetector.h"
 
+#include "Utils.h"
 #include "ExhaustiveSearcher.h"
 
 PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
@@ -47,7 +48,7 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
     }
 
     ProgramPointer pp = _searcher.getProgramPointer();
-    if (pp.p != _samplePp.p || pp.dir != _samplePp.dir) {
+    if (!PROGRAM_POINTERS_MATCH(pp, _samplePp)) {
         // Not back at the sample point, so not on a hang cycle with assumed period.
         return HangDetectionResult::FAILED;
     }

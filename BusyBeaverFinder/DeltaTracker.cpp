@@ -63,7 +63,7 @@ void DeltaTracker::update() {
         _initialDp = newDp;
         _curDir = pp.dir;
 
-        if (*(pp.p) == Ins::DATA) {
+        if (_searcher.getProgram().getInstruction(pp.p) == Ins::DATA) {
             // Compensate for TURN, if any.
             switch (_curDir) {
                 case Dir::RIGHT: _initialDp--; if (_maxShr == 0) { _maxShr = 1; } break;

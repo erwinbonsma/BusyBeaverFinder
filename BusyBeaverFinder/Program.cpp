@@ -34,15 +34,19 @@ Program::Program(int width, int height) {
     }
 }
 
-Ins* Program::getInstructionP(int col, int row) {
-    return &_instructions[(col + 1) + (row + 1) * (maxWidth + 1)];
+int Program::indexFor(InstructionPointer insP) {
+    return (insP.col + 1) + (insP.row + 1) * (maxWidth + 1);
+}
+
+Ins Program::getInstruction(int col, int row) {
+    return _instructions[(col + 1) + (row + 1) * (maxWidth + 1)];
 }
 
 void Program::clone(Program& dest) {
     Ins* ppSrc = getInstructionBuffer();
     Ins* ppDst = dest.getInstructionBuffer();
     for (int i = programStorageSize; --i >= 0; ) {
-        dest.setInstruction(ppDst++, getInstruction(ppSrc++));
+        *ppDst++ = *ppSrc++;
     }
 }
 
@@ -95,16 +99,16 @@ void Program::dumpWeb() {
 }
 
 
-void Program::dump(Ins* pp) {
+void Program::dump(InstructionPointer insP) {
     char sepChar = ' ';
-    for (int y = _height; --y >= 0; ) {
-        for (int x = 0; x < _width; x++) {
-            Ins* insP = getInstructionP(x, y);
-            if (insP == pp) {
+    for (int row = _height; --row >= 0; ) {
+        for (int col = 0; col < _width; col++) {
+            bool isActiveInstruction = (insP.col == col) && (insP.row == row);
+            if (isActiveInstruction) {
                 sepChar = '[';
             }
-            std::cout << sepChar << ins_chars[(int)*insP];
-            sepChar = (insP == pp) ? ']' : ' ';
+            std::cout << sepChar << ins_chars[(int)getInstruction(col, row)];
+            sepChar = (isActiveInstruction) ? ']' : ' ';
         }
         std::cout << sepChar << std::endl;
     }

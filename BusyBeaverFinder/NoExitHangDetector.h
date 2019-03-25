@@ -34,7 +34,7 @@ struct PathStart {
 class NoExitHangDetector : public HangDetector {
 
     ExhaustiveSearcher& _searcher;
-    InstructionPointer _instructionBuf;
+    Program& _program;
 
     // Tracks which path have been followed. It will only be set at places where a path can branch
     // and bend (i.e. in front of TURN instructions)

@@ -20,14 +20,17 @@ enum class Ins : char {
     DONE = 4 // Guard instruction, signalling program completion
 };
 
-typedef Ins* InstructionPointer;
+struct InstructionPointer {
+    int col;
+    int row;
+};
 
 // Program pointer directions
 enum class Dir : int {
-    UP = (maxWidth + 1),
+    UP = 0,
     RIGHT = 1,
-    DOWN = -(maxWidth + 1),
-    LEFT = -1
+    DOWN = 2,
+    LEFT = 3
 };
 
 struct ProgramPointer {

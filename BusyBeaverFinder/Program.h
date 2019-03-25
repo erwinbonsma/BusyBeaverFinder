@@ -25,8 +25,10 @@ class Program {
     // Instruction array
     Ins _instructions[programStorageSize];
 
-    Ins* getInstructionP(int col, int row);
-    Ins getInstruction(int col, int row) { return *getInstructionP(col, row); }
+    InstructionPointer getInstructionP(int col, int row) {
+        return InstructionPointer { .col = col, .row = row };
+    }
+    Ins getInstruction(int col, int row);
 
 public:
     Program(int width, int height);
@@ -37,11 +39,15 @@ public:
     int getHeight() { return _height; }
 
     Ins* getInstructionBuffer() { return _instructions; }
-    Ins* getStartProgramPointer() { return &(_instructions[1]); /* Start at row = -1, col = 0 */ }
+    InstructionPointer getStartProgramPointer() {
+        return InstructionPointer { .col = 0, .row = -1 };
+    }
 
-    void setInstruction(Ins *pp, Ins op) { (*pp) = op; }
-    void clearInstruction(Ins *pp) { (*pp) = Ins::UNSET; }
-    Ins getInstruction(Ins *pp) { return (*pp); }
+    int indexFor(InstructionPointer insP);
+
+    void setInstruction(InstructionPointer insP, Ins ins) { _instructions[indexFor(insP)] = ins; }
+    void clearInstruction(InstructionPointer insP) { _instructions[indexFor(insP)] = Ins::UNSET; }
+    Ins getInstruction(InstructionPointer insP) { return _instructions[indexFor(insP)]; }
 
     /* Returns the number of possible programs in the search space that this program represents.
      * The summed total over all programs visited can be used to get an indication of the search
@@ -61,7 +67,7 @@ public:
 
     void dump();
     void dumpWeb();
-    void dump(Ins* pp);
+    void dump(InstructionPointer insP);
 };
 
 #endif /* Program_h */

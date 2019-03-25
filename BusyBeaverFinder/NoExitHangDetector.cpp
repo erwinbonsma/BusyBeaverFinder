@@ -14,20 +14,19 @@
 #include "Utils.h"
 
 NoExitHangDetector::NoExitHangDetector(ExhaustiveSearcher& searcher) :
-    _searcher(searcher)
+    _searcher(searcher), _program(searcher.getProgram())
 {
     for (int i = 0; i < programStorageSize; i++) {
         _followed[i] = 0;
     }
 
     _lastP = _pendingStack + maxNumPathStarts;
-    _instructionBuf = searcher.getProgram().getInstructionBuffer();
 }
 
 void NoExitHangDetector::addToStack(InstructionPointer insP, Dir dir, bool dataIsZero) {
-    char dirFlag = (int)dir < 0
-        ? ((dir == Dir::DOWN) ? dirFlagDown : dirFlagLeft )
-        : ((dir == Dir::UP) ? dirFlagUp : dirFlagRight);
+    char dirFlag = ((int)dir) & 1
+        ? ((dir == Dir::RIGHT) ? dirFlagRight : dirFlagLeft )
+        : ((dir == Dir::UP) ? dirFlagUp : dirFlagDown);
     if (dataIsZero) {
         dirFlag <<= 4;
     }
@@ -36,7 +35,7 @@ void NoExitHangDetector::addToStack(InstructionPointer insP, Dir dir, bool dataI
 //    << ", dir = " << (int)dir
 //    << ", is_zero = " << dataIsZero << std::endl;
 
-    char* followedP = _followed + (insP - _instructionBuf);
+    char* followedP = _followed + _program.indexFor(insP);
     if ((*followedP & dirFlag) == 0) {
         // Path start is not yet on stack
 
@@ -53,9 +52,9 @@ bool NoExitHangDetector::followPath(PathStart pathStart) {
     ProgramPointer pp = pathStart.pp;
 
     while (1) {
-        InstructionPointer insP = pp.p + (int)pp.dir;
+        InstructionPointer insP = nextInstructionPointer(pp);
 
-        switch (*insP) {
+        switch (_program.getInstruction(insP)) {
             case Ins::DATA:
                 encounteredData = true;
                 break;
@@ -102,7 +101,7 @@ bool NoExitHangDetector::canEscapeFrom(ProgramPointer pp) {
 
     // Reset tracking state
     while (_topP > _pendingStack) {
-        _followed[ (--_topP)->pp.p - _instructionBuf ] = 0;
+        _followed[ _program.indexFor((--_topP)->pp.p) ] = 0;
     }
 
     return escapedFromLoop;

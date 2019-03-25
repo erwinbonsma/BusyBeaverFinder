@@ -14,10 +14,16 @@
 
 #include "Types.h"
 
-#define PROGRAM_POINTERS_MATCH(pp1, pp2) (pp1.p == pp2.p && pp1.dir == pp2.dir)
+#define PROGRAM_POINTERS_MATCH(pp1, pp2) ( \
+    pp1.p.col == pp2.p.col && \
+    pp1.p.row == pp2.p.row && \
+    pp1.dir == pp2.dir \
+)
 
 bool isPowerOfTwo(int val);
 int makePowerOfTwo(int val);
+
+InstructionPointer nextInstructionPointer(ProgramPointer insP);
 
 void calculateZArray(const char* input, int* output, int len);
 int findPeriod(const char *input, int* buf, int len);
