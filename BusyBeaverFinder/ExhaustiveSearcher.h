@@ -14,6 +14,8 @@
 #include "Data.h"
 #include "Program.h"
 
+#include "CompiledProgram.h"
+
 #include "CycleDetector.h"
 #include "DataTracker.h"
 #include "ProgressTracker.h"
@@ -61,6 +63,9 @@ class ExhaustiveSearcher {
 
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
+
+    // A "compiled" representation of the program
+    CompiledProgram _compiledProgram;
 
     int _numHangDetectAttempts;
 

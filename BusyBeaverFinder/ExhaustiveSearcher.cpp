@@ -211,6 +211,8 @@ void ExhaustiveSearcher::run(int depth) {
     int numDataOps = 0;
     int initialSteps = _numSteps;
 
+    _compiledProgram.push();
+
     _data.resetHangDetection();
     _dataTracker.reset();
     _cycleDetectorEnabled = false;
@@ -221,6 +223,7 @@ void ExhaustiveSearcher::run(int depth) {
     while (1) { // Run until branch, termination or error
         InstructionPointer insP;
         bool done = false;
+        TurnDirection turn = TurnDirection::NONE;
         do { // Execute single step
 
             insP = nextInstructionPointer(_pp);
@@ -229,14 +232,10 @@ void ExhaustiveSearcher::run(int depth) {
             switch (ins) {
                 case Ins::DONE:
                     _tracker->reportDone(_numSteps);
-                    _data.undo(numDataOps);
-                    _numSteps = initialSteps;
-                    return;
+                    goto backtrack;
                 case Ins::UNSET:
                     branch(depth);
-                    _data.undo(numDataOps);
-                    _numSteps = initialSteps;
-                    return;
+                    goto backtrack;
                 case Ins::NOOP:
                     done = true;
                     break;
@@ -245,24 +244,36 @@ void ExhaustiveSearcher::run(int depth) {
                     switch (_pp.dir) {
                         case Dir::UP:
                             _data.inc();
+                            if (_compiledProgram.isBlockMutable()) {
+                                _compiledProgram.setInstruction(true);
+                                _compiledProgram.incAmount();
+                            }
                             break;
                         case Dir::DOWN:
                             _data.dec();
+                            if (_compiledProgram.isBlockMutable()) {
+                                _compiledProgram.setInstruction(true);
+                                _compiledProgram.decAmount();
+                            }
                             break;
                         case Dir::RIGHT:
                             if (! _data.shr()) {
                                 _tracker->reportError();
-                                _data.undo(numDataOps);
-                                _numSteps = initialSteps;
-                                return;
+                                goto backtrack;
+                            }
+                            if (_compiledProgram.isBlockMutable()) {
+                                _compiledProgram.setInstruction(false);
+                                _compiledProgram.incAmount();
                             }
                             break;
                         case Dir::LEFT:
                             if (! _data.shl()) {
                                 _tracker->reportError();
-                                _data.undo(numDataOps);
-                                _numSteps = initialSteps;
-                                return;
+                                goto backtrack;
+                            }
+                            if (_compiledProgram.isBlockMutable()) {
+                                _compiledProgram.setInstruction(false);
+                                _compiledProgram.decAmount();
                             }
                             break;
                     }
@@ -274,8 +285,10 @@ void ExhaustiveSearcher::run(int depth) {
                         if (_activeHangCheck != nullptr) {
                             _activeHangCheck->signalLeftTurn();
                         }
+                        turn = TurnDirection::COUNTERCLOCKWISE;
                     } else {
                         _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
+                        turn = TurnDirection::CLOCKWISE;
                     }
                     break;
             }
@@ -285,6 +298,16 @@ void ExhaustiveSearcher::run(int depth) {
                 );
             }
         } while (!done);
+
+        if (_compiledProgram.isBlockMutable()) {
+            _compiledProgram.incSteps();
+            if (turn != TurnDirection::NONE && _compiledProgram.isInstructionSet()) {
+                _compiledProgram.finalizeBlock(_pp.p);
+                _compiledProgram.enterBlock(_pp.p, turn);
+                // TODO: When it exists already, use block to quickly execute program
+            }
+        }
+
         _pp.p = insP;
         _numSteps++;
 
@@ -300,9 +323,7 @@ void ExhaustiveSearcher::run(int depth) {
                 case HangDetectionResult::HANGING:
                     _tracker->reportDetectedHang(_activeHangCheck->hangType());
                     if (!_settings.testHangDetection) {
-                        _data.undo(numDataOps);
-                        _numSteps = initialSteps;
-                        return;
+                        goto backtrack;
                     }
                     break;
                 case HangDetectionResult::ONGOING:
@@ -314,11 +335,13 @@ void ExhaustiveSearcher::run(int depth) {
 
         if (_numSteps >= _settings.maxSteps) {
             _tracker->reportAssumedHang();
-            _data.undo(numDataOps);
-            _numSteps = initialSteps;
-            return;
+            goto backtrack;
         }
     }
+backtrack:
+    _data.undo(numDataOps);
+    _numSteps = initialSteps;
+    _compiledProgram.pop();
 }
 
 void ExhaustiveSearcher::search() {

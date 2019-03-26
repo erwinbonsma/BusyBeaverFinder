@@ -37,6 +37,10 @@
 		AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F44FE223E57A10069FF36 /* NoExitHangTests.cpp */; };
 		AA4F4501223E76BB0069FF36 /* FailingHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4500223E76BB0069FF36 /* FailingHangTests.cpp */; };
 		AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4502223E77350069FF36 /* PeriodicHangTests.cpp */; };
+		AA4F4507224967A00069FF36 /* ProgramBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4505224967A00069FF36 /* ProgramBlock.cpp */; };
+		AA4F4508224967A00069FF36 /* ProgramBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4505224967A00069FF36 /* ProgramBlock.cpp */; };
+		AA4F450B224ABF320069FF36 /* CompiledProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */; };
+		AA4F450C224ABF320069FF36 /* CompiledProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
@@ -101,6 +105,10 @@
 		AA4F44FE223E57A10069FF36 /* NoExitHangTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NoExitHangTests.cpp; sourceTree = "<group>"; };
 		AA4F4500223E76BB0069FF36 /* FailingHangTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FailingHangTests.cpp; sourceTree = "<group>"; };
 		AA4F4502223E77350069FF36 /* PeriodicHangTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PeriodicHangTests.cpp; sourceTree = "<group>"; };
+		AA4F4505224967A00069FF36 /* ProgramBlock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgramBlock.cpp; sourceTree = "<group>"; };
+		AA4F4506224967A00069FF36 /* ProgramBlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgramBlock.h; sourceTree = "<group>"; };
+		AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CompiledProgram.cpp; sourceTree = "<group>"; };
+		AA4F450A224ABF320069FF36 /* CompiledProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CompiledProgram.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
 		AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExhaustiveSearcher.h; sourceTree = "<group>"; };
 		AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgressTracker.cpp; sourceTree = "<group>"; };
@@ -168,6 +176,10 @@
 				AAD5C50C2211F7140057EDBC /* SearchOrchestrator.cpp */,
 				AAD5C50D2211F7140057EDBC /* SearchOrchestrator.h */,
 				AA1101FE21F32120005C67CF /* main.cpp */,
+				AA4F4505224967A00069FF36 /* ProgramBlock.cpp */,
+				AA4F4506224967A00069FF36 /* ProgramBlock.h */,
+				AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */,
+				AA4F450A224ABF320069FF36 /* CompiledProgram.h */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";
@@ -291,6 +303,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA28C0AB220CBC3700F7EC25 /* CycleDetector.cpp in Sources */,
+				AA4F4507224967A00069FF36 /* ProgramBlock.cpp in Sources */,
 				AAD5C50E2211F7140057EDBC /* SearchOrchestrator.cpp in Sources */,
 				AA4F44F02234262A0069FF36 /* RegularSweepHangDetector.cpp in Sources */,
 				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
@@ -298,6 +311,7 @@
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
 				AA4F44EC2234079E0069FF36 /* PeriodicHangDetector.cpp in Sources */,
+				AA4F450B224ABF320069FF36 /* CompiledProgram.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA4F44F82236FA090069FF36 /* DeltaTracker.cpp in Sources */,
 				AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
@@ -311,6 +325,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA4F4508224967A00069FF36 /* ProgramBlock.cpp in Sources */,
 				AA28C0A122073A1500F7EC25 /* Program.cpp in Sources */,
 				AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */,
 				AA28C0B0220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
@@ -319,6 +334,7 @@
 				AA4F44FD223988770069FF36 /* NoExitHangDetector.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
 				AA28C0AC220CC2A000F7EC25 /* CycleDetector.cpp in Sources */,
+				AA4F450C224ABF320069FF36 /* CompiledProgram.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,
 				AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */,
 				AA28C09F22073A0C00F7EC25 /* ExhaustiveSearcher.cpp in Sources */,

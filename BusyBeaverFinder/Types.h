@@ -49,6 +49,13 @@ enum class DataOp : char {
     NONE = 4
 };
 
+// Direction of turn
+enum class TurnDirection : char {
+    CLOCKWISE = 0,
+    COUNTERCLOCKWISE = 1,
+    NONE = -1
+};
+
 const int numHangTypes = 6;
 const int numDetectedHangTypes = 5;
 enum class HangType : char {
