@@ -270,22 +270,12 @@ void ExhaustiveSearcher::run(int depth) {
                     break;
                 case Ins::TURN:
                     if (_data.val() == 0) {
-                        switch (_pp.dir) {
-                            case Dir::UP: _pp.dir = Dir::LEFT; break;
-                            case Dir::RIGHT: _pp.dir = Dir::UP; break;
-                            case Dir::DOWN: _pp.dir = Dir::RIGHT; break;
-                            case Dir::LEFT: _pp.dir = Dir::DOWN; break;
-                        }
+                        _pp.dir = (Dir)(((int)_pp.dir + 3) % 4);
                         if (_activeHangCheck != nullptr) {
                             _activeHangCheck->signalLeftTurn();
                         }
                     } else {
-                        switch (_pp.dir) {
-                            case Dir::UP: _pp.dir = Dir::RIGHT; break;
-                            case Dir::RIGHT: _pp.dir = Dir::DOWN; break;
-                            case Dir::DOWN: _pp.dir = Dir::LEFT; break;
-                            case Dir::LEFT: _pp.dir = Dir::UP; break;
-                        }
+                        _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
                     }
                     break;
             }
