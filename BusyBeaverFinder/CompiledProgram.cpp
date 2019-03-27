@@ -69,18 +69,6 @@ ProgramBlock* CompiledProgram::getBlock(InstructionPointer insP, TurnDirection t
     return block;
 }
 
-void CompiledProgram::incSteps() {
-    _stateP->activeBlock.numSteps++;
-}
-
-void CompiledProgram::incAmount() {
-    _stateP->activeBlock.amount++;
-}
-
-void CompiledProgram::decAmount() {
-    _stateP->activeBlock.amount--;
-}
-
 void CompiledProgram::setInstruction(bool isDelta) {
     _stateP->activeBlock.flags |= INSTRUCTION_SET_BIT;
     if (isDelta) {
