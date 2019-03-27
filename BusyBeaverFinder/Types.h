@@ -51,8 +51,8 @@ enum class DataOp : char {
 
 // Direction of turn
 enum class TurnDirection : char {
-    CLOCKWISE = 0,
-    COUNTERCLOCKWISE = 1,
+    COUNTERCLOCKWISE = 0,
+    CLOCKWISE = 1,
     NONE = -1
 };
 

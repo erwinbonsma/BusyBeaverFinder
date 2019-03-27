@@ -40,6 +40,8 @@ void ProgressTracker::report() {
     }
 
 //    _searcher.getProgram().dump();
+//    _searcher.getCompiledProgram().dump();
+
 //    _searcher.getProgram().dumpWeb();
 //    if (_searcher.instructionStackEquals(targetStack)) {
 //        std::cout << "Target program generated" << std::endl;

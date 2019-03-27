@@ -44,8 +44,6 @@ public:
     void push();
     void pop();
 
-    bool isBlockMutable();
-
     // Change the active program block. Can only be invoked when it is still mutable.
     void incSteps();
     void incAmount();
@@ -60,6 +58,8 @@ public:
     void finalizeBlock(InstructionPointer endP);
 
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
+
+    void dump();
 };
 
 

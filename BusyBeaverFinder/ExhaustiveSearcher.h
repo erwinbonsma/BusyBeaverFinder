@@ -103,6 +103,8 @@ public:
 
     Program& getProgram() { return _program; }
     Data& getData() { return _data; }
+    CompiledProgram& getCompiledProgram() { return _compiledProgram; }
+
     CycleDetector& getCycleDetector() { return _cycleDetector; }
     DataTracker& getDataTracker() { return _dataTracker; }
 

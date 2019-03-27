@@ -220,10 +220,12 @@ void ExhaustiveSearcher::run(int depth) {
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
 
+//    _program.dump();
+//    std::cout << std::endl;
+
     while (1) { // Run until branch, termination or error
         InstructionPointer insP;
         bool done = false;
-        TurnDirection turn = TurnDirection::NONE;
         do { // Execute single step
 
             insP = nextInstructionPointer(_pp);
@@ -244,37 +246,29 @@ void ExhaustiveSearcher::run(int depth) {
                     switch (_pp.dir) {
                         case Dir::UP:
                             _data.inc();
-                            if (_compiledProgram.isBlockMutable()) {
-                                _compiledProgram.setInstruction(true);
-                                _compiledProgram.incAmount();
-                            }
+                            _compiledProgram.setInstruction(true);
+                            _compiledProgram.incAmount();
                             break;
                         case Dir::DOWN:
                             _data.dec();
-                            if (_compiledProgram.isBlockMutable()) {
-                                _compiledProgram.setInstruction(true);
-                                _compiledProgram.decAmount();
-                            }
+                            _compiledProgram.setInstruction(true);
+                            _compiledProgram.decAmount();
                             break;
                         case Dir::RIGHT:
                             if (! _data.shr()) {
                                 _tracker->reportError();
                                 goto backtrack;
                             }
-                            if (_compiledProgram.isBlockMutable()) {
-                                _compiledProgram.setInstruction(false);
-                                _compiledProgram.incAmount();
-                            }
+                            _compiledProgram.setInstruction(false);
+                            _compiledProgram.incAmount();
                             break;
                         case Dir::LEFT:
                             if (! _data.shl()) {
                                 _tracker->reportError();
                                 goto backtrack;
                             }
-                            if (_compiledProgram.isBlockMutable()) {
-                                _compiledProgram.setInstruction(false);
-                                _compiledProgram.decAmount();
-                            }
+                            _compiledProgram.setInstruction(false);
+                            _compiledProgram.decAmount();
                             break;
                     }
                     done = true;
@@ -285,11 +279,17 @@ void ExhaustiveSearcher::run(int depth) {
                         if (_activeHangCheck != nullptr) {
                             _activeHangCheck->signalLeftTurn();
                         }
-                        turn = TurnDirection::COUNTERCLOCKWISE;
                     } else {
                         _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
-                        turn = TurnDirection::CLOCKWISE;
                     }
+                    if (_compiledProgram.isInstructionSet()) {
+                        _compiledProgram.finalizeBlock(_pp.p);
+                        _compiledProgram.enterBlock(_pp.p,
+                                                    _data.val() == 0
+                                                    ? TurnDirection::COUNTERCLOCKWISE
+                                                    : TurnDirection::CLOCKWISE);
+                    }
+
                     break;
             }
             if (_cycleDetectorEnabled) {
@@ -299,14 +299,7 @@ void ExhaustiveSearcher::run(int depth) {
             }
         } while (!done);
 
-        if (_compiledProgram.isBlockMutable()) {
-            _compiledProgram.incSteps();
-            if (turn != TurnDirection::NONE && _compiledProgram.isInstructionSet()) {
-                _compiledProgram.finalizeBlock(_pp.p);
-                _compiledProgram.enterBlock(_pp.p, turn);
-                // TODO: When it exists already, use block to quickly execute program
-            }
-        }
+        _compiledProgram.incSteps();
 
         _pp.p = insP;
         _numSteps++;
