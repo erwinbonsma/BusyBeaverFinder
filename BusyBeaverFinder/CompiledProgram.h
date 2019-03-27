@@ -14,7 +14,8 @@
 #include "Types.h"
 #include "ProgramBlock.h"
 
-const int maxProgramBlocks = 1024;
+const int maxProgramBlocks = maxWidth * maxHeight * 2;
+const int maxProgramStackFrames = maxWidth * maxHeight;
 
 struct MutableProgramBlock {
     unsigned char flags;
@@ -22,15 +23,24 @@ struct MutableProgramBlock {
     char numSteps;
 };
 
+struct ProgramStack {
+    MutableProgramBlock activeBlock;
+    int activeBlockIndex;
+    int numBlocks;
+};
+
 class CompiledProgram {
     ProgramBlock _blocks[maxProgramBlocks];
+    int _blockIndexLookup[maxProgramBlocks];
 
-    int _activeBlock;
-    int _numBlocks;
+    ProgramStack _state[maxProgramStackFrames];
+    ProgramStack* _stateP;
 
-    MutableProgramBlock _mutableBlock;
+    ProgramBlock* getBlock(InstructionPointer insP, TurnDirection turn);
 
 public:
+    CompiledProgram();
+
     void push();
     void pop();
 
@@ -44,6 +54,8 @@ public:
 
     bool isDeltaInstruction();
     bool isInstructionSet();
+    int getAmount();
+    int getNumSteps();
 
     void finalizeBlock(InstructionPointer endP);
 
