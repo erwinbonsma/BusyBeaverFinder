@@ -8,6 +8,7 @@
 
 #include "CompiledProgram.h"
 
+#include <assert.h>
 #include <iostream>
 
 // Set when instruction has been set
@@ -24,8 +25,26 @@ CompiledProgram::CompiledProgram() {
     }
 
     _stateP->numBlocks = 0;
+    _stateP->numFinalizedBlocks = 0;
     enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
 }
+
+void CompiledProgram::checkState() {
+    for (int i = 0; i < _stateP->numBlocks; i++) {
+        ProgramBlock* block = _blocks + i;
+
+        if (block->isFinalized()) {
+            if (
+                (block->nonZeroBlock() - _blocks) >= _stateP->numBlocks ||
+                (block->zeroBlock() - _blocks) >= _stateP->numBlocks
+            ) {
+                dump();
+                assert(false);
+            }
+        }
+    }
+}
+
 
 void CompiledProgram::push() {
     ProgramStack* oldStateP = _stateP++;
@@ -34,20 +53,29 @@ void CompiledProgram::push() {
 
     // Copy state
     *_stateP = *oldStateP;
+
+    checkState();
 }
 
 void CompiledProgram::pop() {
     assert(_stateP > _state);
 
-    int oldNumBlocks = _stateP->numBlocks;
-
     // Pop state from stack
-    _stateP--;
+    ProgramStack* oldStateP = _stateP--;
 
     // Remove entries to blocks that do not exist anymore from look-up
-    for (int i = oldNumBlocks; --i >= _stateP->numBlocks; ) {
+    for (int i = oldStateP->numBlocks; --i >= _stateP->numBlocks; ) {
+//        std::cout << "Clearing " << _blocks[i].getStartIndex() << std::endl;
         _blockIndexLookup[ _blocks[i].getStartIndex() ] = -1;
     }
+
+    // Reset blocks that are not finalized anymore
+    for (int i = oldStateP->numFinalizedBlocks; --i >= _stateP->numFinalizedBlocks; ) {
+//        std::cout << "Resetting " << _blocks[i].getStartIndex() << std::endl;
+        _blocks[ _finalizedStack[i] ].reset();
+    }
+
+    checkState();
 }
 
 ProgramBlock* CompiledProgram::getBlock(InstructionPointer insP, TurnDirection turn) {
@@ -65,6 +93,8 @@ ProgramBlock* CompiledProgram::getBlock(InstructionPointer insP, TurnDirection t
 
     // Initialize it
     block->init(lookupIndex);
+
+    checkState();
 
     return block;
 }
@@ -95,12 +125,29 @@ int CompiledProgram::getNumSteps() {
     return _stateP->activeBlock.numSteps;
 }
 
-void CompiledProgram::finalizeBlock(InstructionPointer endP) {
+ProgramBlock* CompiledProgram::finalizeBlock(InstructionPointer endP) {
     ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
+
+    if (block->isFinalized()) {
+        // TODO: Change into assertion failure once finalized blocks are executed
+        return nullptr;
+    }
+
     ProgramBlock* zeroBlock = getBlock(endP, TurnDirection::COUNTERCLOCKWISE);
     ProgramBlock* nonZeroBlock = getBlock(endP, TurnDirection::CLOCKWISE);
 
     block->finalize(isDeltaInstruction(), getAmount(), getNumSteps(), zeroBlock, nonZeroBlock);
+
+//    std::cout << (_stateP - _state) << ". finalizeBlock #"
+//    << (block - _blocks)
+//    << ": " << (zeroBlock - _blocks)
+//    << "/" << (nonZeroBlock - _blocks) << std::endl;
+
+    _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
+
+    checkState();
+
+    return block;
 }
 
 ProgramBlock* CompiledProgram::enterBlock(InstructionPointer startP, TurnDirection turnDir) {
@@ -111,6 +158,8 @@ ProgramBlock* CompiledProgram::enterBlock(InstructionPointer startP, TurnDirecti
     _stateP->activeBlock.amount = 0;
     _stateP->activeBlock.numSteps = 0;
     _stateP->activeBlockIndex = (int)(block - _blocks);
+
+    checkState();
 
     return block;
 }

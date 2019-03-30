@@ -28,6 +28,7 @@ public:
     ProgramBlock();
 
     void init(int startIndex);
+    void reset();
     void finalize(bool isDelta, int amount, int numSteps,
                   ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock);
 

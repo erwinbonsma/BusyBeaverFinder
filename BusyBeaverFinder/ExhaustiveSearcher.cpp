@@ -283,7 +283,25 @@ void ExhaustiveSearcher::run(int depth) {
                         _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
                     }
                     if (_compiledProgram.isInstructionSet()) {
-                        _compiledProgram.finalizeBlock(_pp.p);
+                        ProgramBlock* block = _compiledProgram.finalizeBlock(_pp.p);
+
+                        // Check if it is possible to exit
+                        if (
+                            block != nullptr &&
+                            !_settings.disableNoExitHangDetection &&
+                            !_exitFinder.canExitFrom(block)
+                        ) {
+                            _tracker->reportDetectedHang(HangType::NO_EXIT);
+//                            std::cout << "No exit" << std::endl;
+//                            _program.dump();
+//                            _compiledProgram.dump();
+//                            std::cout << std::endl;
+
+                            if (!_settings.testHangDetection) {
+                                goto backtrack;
+                            }
+                        }
+
                         _compiledProgram.enterBlock(_pp.p,
                                                     _data.val() == 0
                                                     ? TurnDirection::COUNTERCLOCKWISE

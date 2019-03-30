@@ -16,6 +16,10 @@ void ProgramBlock::init(int startIndex) {
     _isFinalized = false;
 }
 
+void ProgramBlock::reset() {
+    _isFinalized = false;
+}
+
 void ProgramBlock::finalize(bool isDelta, int amount, int numSteps,
                             ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock) {
     _isFinalized = true;

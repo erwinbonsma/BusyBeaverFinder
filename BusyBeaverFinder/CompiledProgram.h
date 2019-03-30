@@ -27,16 +27,20 @@ struct ProgramStack {
     MutableProgramBlock activeBlock;
     int activeBlockIndex;
     int numBlocks;
+    int numFinalizedBlocks;
 };
 
 class CompiledProgram {
     ProgramBlock _blocks[maxProgramBlocks];
     int _blockIndexLookup[maxProgramBlocks];
+    int _finalizedStack[maxProgramBlocks];
 
     ProgramStack _state[maxProgramStackFrames];
     ProgramStack* _stateP;
 
     ProgramBlock* getBlock(InstructionPointer insP, TurnDirection turn);
+
+    void checkState();
 
 public:
     CompiledProgram();
@@ -55,7 +59,7 @@ public:
     int getAmount();
     int getNumSteps();
 
-    void finalizeBlock(InstructionPointer endP);
+    ProgramBlock* finalizeBlock(InstructionPointer endP);
 
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
 

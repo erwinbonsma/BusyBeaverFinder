@@ -21,6 +21,7 @@
 #include "ProgressTracker.h"
 
 #include "NoExitHangDetector.h"
+#include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
 #include "RegularSweepHangDetector.h"
 
@@ -73,6 +74,7 @@ class ExhaustiveSearcher {
     NoExitHangDetector* _noExitHangDetector;
     PeriodicHangDetector* _periodicHangDetector;
     RegularSweepHangDetector* _regularSweepHangDetector;
+    ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;
 

@@ -41,6 +41,8 @@
 		AA4F4508224967A00069FF36 /* ProgramBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4505224967A00069FF36 /* ProgramBlock.cpp */; };
 		AA4F450B224ABF320069FF36 /* CompiledProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */; };
 		AA4F450C224ABF320069FF36 /* CompiledProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */; };
+		AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F450D224EB8EE0069FF36 /* ExitFinder.cpp */; };
+		AA4F4510224EB8EE0069FF36 /* ExitFinder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F450D224EB8EE0069FF36 /* ExitFinder.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
@@ -109,6 +111,8 @@
 		AA4F4506224967A00069FF36 /* ProgramBlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgramBlock.h; sourceTree = "<group>"; };
 		AA4F4509224ABF320069FF36 /* CompiledProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CompiledProgram.cpp; sourceTree = "<group>"; };
 		AA4F450A224ABF320069FF36 /* CompiledProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CompiledProgram.h; sourceTree = "<group>"; };
+		AA4F450D224EB8EE0069FF36 /* ExitFinder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExitFinder.cpp; sourceTree = "<group>"; };
+		AA4F450E224EB8EE0069FF36 /* ExitFinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExitFinder.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
 		AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExhaustiveSearcher.h; sourceTree = "<group>"; };
 		AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgressTracker.cpp; sourceTree = "<group>"; };
@@ -207,6 +211,8 @@
 				AA4F44E9223406030069FF36 /* HangDetector.h */,
 				AA4F44FA223988770069FF36 /* NoExitHangDetector.cpp */,
 				AA4F44FB223988770069FF36 /* NoExitHangDetector.h */,
+				AA4F450D224EB8EE0069FF36 /* ExitFinder.cpp */,
+				AA4F450E224EB8EE0069FF36 /* ExitFinder.h */,
 				AA4F44EA2234079E0069FF36 /* PeriodicHangDetector.cpp */,
 				AA4F44EB2234079E0069FF36 /* PeriodicHangDetector.h */,
 				AA4F44F22235068E0069FF36 /* SweepHangDetector.cpp */,
@@ -312,6 +318,7 @@
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
 				AA4F44EC2234079E0069FF36 /* PeriodicHangDetector.cpp in Sources */,
 				AA4F450B224ABF320069FF36 /* CompiledProgram.cpp in Sources */,
+				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA4F44F82236FA090069FF36 /* DeltaTracker.cpp in Sources */,
 				AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
@@ -332,6 +339,7 @@
 				AA28C0A222073A1A00F7EC25 /* Utils.cpp in Sources */,
 				AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */,
 				AA4F44FD223988770069FF36 /* NoExitHangDetector.cpp in Sources */,
+				AA4F4510224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
 				AA28C0AC220CC2A000F7EC25 /* CycleDetector.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* CompiledProgram.cpp in Sources */,
