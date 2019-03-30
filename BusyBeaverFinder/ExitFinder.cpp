@@ -102,6 +102,7 @@ processInstruction:
             // ensures that the block is finalized at a TURN, as it should.
             _compiledProgram.setInstruction(true);
         }
+        _compiledProgram.incSteps();
         pp.p = insP;
     }
 }
