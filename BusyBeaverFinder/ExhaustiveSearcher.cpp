@@ -19,11 +19,11 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
     _cycleDetector(),
-    _dataTracker(_data)
+    _dataTracker(_data),
+    _exitFinder(_program, _compiledProgram)
 {
     initInstructionStack(width * height);
 
-    _noExitHangDetector = new NoExitHangDetector(*this);
     _periodicHangDetector = new PeriodicHangDetector(*this);
     _regularSweepHangDetector = new RegularSweepHangDetector(*this);
 
@@ -40,7 +40,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
-    delete _noExitHangDetector;
     delete _periodicHangDetector;
     delete _regularSweepHangDetector;
 }
@@ -136,14 +135,6 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
     assert(_activeHangCheck == nullptr);
 //    std::cout << "Initiating Check: Step = " << _numSteps
 //    << ", numAttempts = " << attempts << std::endl;
-
-    if (!_settings.disableNoExitHangDetection) {
-        if (attempts == 0) {
-            _activeHangCheck = _noExitHangDetector;
-        } else {
-            attempts--;
-        }
-    }
 
     if (_activeHangCheck == nullptr) {
         if (attempts < _settings.maxPeriodicHangDetectAttempts) {

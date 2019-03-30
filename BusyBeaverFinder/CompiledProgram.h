@@ -60,8 +60,11 @@ public:
     int getNumSteps();
 
     ProgramBlock* finalizeBlock(InstructionPointer endP);
-
+    ProgramBlock* enterBlock(ProgramBlock* block);
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
+
+    InstructionPointer startInstructionForBlock(ProgramBlock* block);
+    TurnDirection startTurnDirectionForBlock(ProgramBlock* block);
 
     void dump();
 };
