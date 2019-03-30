@@ -241,6 +241,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     SearchSettings settings = searcher.getSettings();
     settings.maxPeriodicHangDetectAttempts = 6;
     settings.initialHangSamplePeriod = 16;
+    settings.maxSteps = 2048;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Periodic Hang Detector
     settings.disableNoExitHangDetection = true;

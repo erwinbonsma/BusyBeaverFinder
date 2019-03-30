@@ -66,9 +66,22 @@ bool RegularSweepHangDetector::checkForHang() {
         return true;
     }
 
+    Data& data = _searcher.getData();
+    if (max >= (data.getMaxVisitedP() - data.getMinVisitedP())) {
+        // The sequence is too short. This may be a glider instead.
+        _status = HangDetectionResult::FAILED;
+        return false;
+    }
+
     ProgramPointer pp = _searcher.getProgramPointer();
 
     if (PROGRAM_POINTERS_MATCH(pp, _sweepStartPp)) {
+        if (_searcher.atTargetProgram()) {
+            _searcher.getProgram().dump();
+            _searcher.getData().dump();
+            _searcher.getDataTracker().dump();
+        }
+
         // PP is same as it was at was at the "start", so this is an actual repetition/hang
         _status = HangDetectionResult::HANGING;
         return false;

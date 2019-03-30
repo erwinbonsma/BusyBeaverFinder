@@ -407,36 +407,22 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
-    SECTION( "6x6-ExceedRightEndSweepPoint" ) {
-        // The sweep reversal at the right consists of two left-turns, at different data cells.
+    SECTION( "6x6-ComplexSweep" ) {
+        // Program with a complex sweep. The sequence consists of both positive and negative values.
+        // During the sweep, the sign of some values oscillate (1 => DEC 2 => -1 => INC 2 => 1).
+        // Finally, the turn at the left side is complex. It extends the sequence with three values
+        // each visit.
         //
-        //     *   *
-        //   * o o _ *
-        // * _ o * *
-        //   o *
-        // * _
-        // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-    }
-    SECTION( "6x6-ExceedLeftEndSweepPoint" ) {
-        // The sweep reversal at the right consists of two left-turns, at different data cells.
         //       *
         //   * * o _ *
-        // * _ o o *
-        // * * _ *
-        // o _ o *
-        // _
+        //   o o o *
+        //   o   o *
+        // * _ _ o _ *
+        // o o * *
         Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

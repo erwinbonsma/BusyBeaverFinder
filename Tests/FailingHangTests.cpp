@@ -18,8 +18,8 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxPeriodicHangDetectAttempts = 4;
-    settings.initialHangSamplePeriod = 16;
+    settings.maxSteps = 16384;
+    settings.maxPeriodicHangDetectAttempts = 6;
     searcher.configure(settings);
 
     SECTION( "6x6-RegularSweepWithDoubleShiftFailing" ) {
@@ -241,6 +241,18 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
+    SECTION( "6x6-Glider6" ) {
+        // A glider that was wrongly found by an early version of the Regular Sweep Hang detector.
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
     SECTION( "6x6-MidSweepLeftTurn" ) {
         // This program contains a mid-sweep left turn. It is caused by a mid-sequence one, which
         // is decreased to zero. It then is increased twice and decreased once and back at the
@@ -283,5 +295,88 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getTotalHangs() == 1);
+    }
+    SECTION( "6x6-ComplexSweepTurn1" ) {
+        // Program with a complex turn at its left side. All values in the sequence are positive,
+        // except the leftmost value, which is -1. When this is visisted, the following instructions
+        // are executed, which together comprise the turn:
+        //
+        //         0   0 [-1] ...
+        // INC 1   0   0 [ 0] ...
+        // SHL 2 [ 0]  0   0  ...
+        // SHR 2   0   0 [ 0] ...
+        // INC 2   0   0 [ 2] ...
+        // SHL 1   0 [ 0]  2  ...
+        // DEC 2   0 [-2]  2  ...
+        // INC 1   0 [-1]  2  ...
+        // SHR 1   0  -1 [ 2] ...
+        //
+        //       *
+        // * o o o _ *
+        // * _ * o _
+        // o _ o o *
+        // o * _ o
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-ComplexSweepTurn2" ) {
+        // Hang similar to 6x6-ComplexSweepTurn1, but slightly simpler.
+        //
+        //       *
+        // * o _ o _ *
+        // * _ * o o
+        // o _ _ o *
+        // _ * _ _
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs() == 1);
+    }
+    SECTION( "6x6-ExceedRightEndSweepPoint" ) {
+        // The sweep reversal at the right consists of two left-turns, at different data cells.
+        //
+        //     *   *
+        //   * o o _ *
+        // * _ o * *
+        //   o *
+        // * _
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-ExceedLeftEndSweepPoint" ) {
+        // The sweep reversal at the right consists of two left-turns, at different data cells.
+        //       *
+        //   * * o _ *
+        // * _ o o *
+        // * * _ *
+        // o _ o *
+        // _
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
 }

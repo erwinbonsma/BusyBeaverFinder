@@ -111,6 +111,7 @@ public:
     ProgramPointer getProgramPointer() { return _pp; }
     int getNumSteps() { return _numSteps; }
 
+    bool atTargetProgram();
 
     void search();
     void search(Ins* resumeFrom);

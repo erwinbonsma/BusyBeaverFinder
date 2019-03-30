@@ -15,6 +15,12 @@
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
+Ins targetStack[] = {
+    Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+    Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+    Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+};
+
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
@@ -90,6 +96,10 @@ bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) {
     }
 
     return (*p1 == *p2);
+}
+
+bool ExhaustiveSearcher::atTargetProgram() {
+    return instructionStackEquals(targetStack);
 }
 
 void ExhaustiveSearcher::dumpInstructionStack() {
@@ -184,6 +194,9 @@ void ExhaustiveSearcher::branch(int depth) {
 
         _program.setInstruction(insP, ins);
         _instructionStack[depth] = ins;
+        if (atTargetProgram()) {
+            std::cout << "At target!" << std::endl;
+        }
         run(depth + 1);
         _pp = pp0;
 
@@ -215,98 +228,86 @@ void ExhaustiveSearcher::run(int depth) {
 //    std::cout << std::endl;
 
     while (1) { // Run until branch, termination or error
-        InstructionPointer insP;
-        bool done = false;
-        do { // Execute single step
+processInstruction:
+        InstructionPointer insP = nextInstructionPointer(_pp);
 
-            insP = nextInstructionPointer(_pp);
-
-            Ins ins = _program.getInstruction(insP);
-            switch (ins) {
-                case Ins::DONE:
-                    _tracker->reportDone(_numSteps);
-                    goto backtrack;
-                case Ins::UNSET:
-                    branch(depth);
-                    goto backtrack;
-                case Ins::NOOP:
-                    done = true;
-                    break;
-                case Ins::DATA:
-                    numDataOps++;
-                    switch (_pp.dir) {
-                        case Dir::UP:
-                            _data.inc();
-                            _compiledProgram.setInstruction(true);
-                            _compiledProgram.incAmount();
-                            break;
-                        case Dir::DOWN:
-                            _data.dec();
-                            _compiledProgram.setInstruction(true);
-                            _compiledProgram.decAmount();
-                            break;
-                        case Dir::RIGHT:
-                            if (! _data.shr()) {
-                                _tracker->reportError();
-                                goto backtrack;
-                            }
-                            _compiledProgram.setInstruction(false);
-                            _compiledProgram.incAmount();
-                            break;
-                        case Dir::LEFT:
-                            if (! _data.shl()) {
-                                _tracker->reportError();
-                                goto backtrack;
-                            }
-                            _compiledProgram.setInstruction(false);
-                            _compiledProgram.decAmount();
-                            break;
-                    }
-                    done = true;
-                    break;
-                case Ins::TURN:
-                    if (_data.val() == 0) {
-                        _pp.dir = (Dir)(((int)_pp.dir + 3) % 4);
-                        if (_activeHangCheck != nullptr) {
-                            _activeHangCheck->signalLeftTurn();
+        switch (_program.getInstruction(insP)) {
+            case Ins::DONE:
+                _tracker->reportDone(_numSteps);
+                goto backtrack;
+            case Ins::UNSET:
+                branch(depth);
+                goto backtrack;
+            case Ins::NOOP:
+                break;
+            case Ins::DATA:
+                numDataOps++;
+                switch (_pp.dir) {
+                    case Dir::UP:
+                        _data.inc();
+                        _compiledProgram.setInstruction(true);
+                        _compiledProgram.incAmount();
+                        break;
+                    case Dir::DOWN:
+                        _data.dec();
+                        _compiledProgram.setInstruction(true);
+                        _compiledProgram.decAmount();
+                        break;
+                    case Dir::RIGHT:
+                        if (! _data.shr()) {
+                            _tracker->reportError();
+                            goto backtrack;
                         }
-                    } else {
-                        _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
-                    }
-                    if (_compiledProgram.isInstructionSet()) {
-                        ProgramBlock* block = _compiledProgram.finalizeBlock(_pp.p);
-
-                        // Check if it is possible to exit
-                        if (
-                            block != nullptr &&
-                            !_settings.disableNoExitHangDetection &&
-                            !_exitFinder.canExitFrom(block)
-                        ) {
-                            _tracker->reportDetectedHang(HangType::NO_EXIT);
-//                            std::cout << "No exit" << std::endl;
-//                            _program.dump();
-//                            _compiledProgram.dump();
-//                            std::cout << std::endl;
-
-                            if (!_settings.testHangDetection) {
-                                goto backtrack;
-                            }
+                        _compiledProgram.setInstruction(false);
+                        _compiledProgram.incAmount();
+                        break;
+                    case Dir::LEFT:
+                        if (! _data.shl()) {
+                            _tracker->reportError();
+                            goto backtrack;
                         }
+                        _compiledProgram.setInstruction(false);
+                        _compiledProgram.decAmount();
+                        break;
+                }
+                break;
+            case Ins::TURN:
+                if (_data.val() == 0) {
+                    _pp.dir = (Dir)(((int)_pp.dir + 3) % 4);
+                    if (_activeHangCheck != nullptr) {
+                        _activeHangCheck->signalLeftTurn();
+                    }
+                } else {
+                    _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
+                }
+                if (_compiledProgram.isInstructionSet()) {
+                    ProgramBlock* block = _compiledProgram.finalizeBlock(_pp.p);
 
-                        _compiledProgram.enterBlock(_pp.p,
-                                                    _data.val() == 0
-                                                    ? TurnDirection::COUNTERCLOCKWISE
-                                                    : TurnDirection::CLOCKWISE);
+                    // Check if it is possible to exit
+                    if (
+                        block != nullptr &&
+                        !_settings.disableNoExitHangDetection &&
+                        !_exitFinder.canExitFrom(block)
+                    ) {
+                        _tracker->reportDetectedHang(HangType::NO_EXIT);
+
+                        if (!_settings.testHangDetection) {
+                            goto backtrack;
+                        }
                     }
 
-                    break;
-            }
-            if (_cycleDetectorEnabled) {
-                _cycleDetector.recordInstruction(
-                    (char)((insP.col + insP.row * maxWidth) ^ (int)_pp.dir)
-                );
-            }
-        } while (!done);
+                    _compiledProgram.enterBlock(_pp.p,
+                                                _data.val() == 0
+                                                ? TurnDirection::COUNTERCLOCKWISE
+                                                : TurnDirection::CLOCKWISE);
+                }
+                goto processInstruction;
+        }
+        if (_cycleDetectorEnabled) {
+            _cycleDetector.recordInstruction(
+                (char)((insP.col + insP.row * maxWidth) ^ (int)_pp.dir)
+            );
+        }
 
         _compiledProgram.incSteps();
 

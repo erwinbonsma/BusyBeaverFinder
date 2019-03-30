@@ -13,12 +13,6 @@
 #include "ExhaustiveSearcher.h"
 #include "Program.h"
 
-Ins targetStack[] = {
-    Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-    Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-    Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-};
-
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     _searcher(searcher),
     _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight())
@@ -41,9 +35,9 @@ void ProgressTracker::report() {
 
 //    _searcher.getProgram().dump();
 //    _searcher.getCompiledProgram().dump();
-
 //    _searcher.getProgram().dumpWeb();
-//    if (_searcher.instructionStackEquals(targetStack)) {
+
+//    if (_searcher.atTargetProgram()) {
 //        std::cout << "Target program generated" << std::endl;
 //        _searcher.getProgram().dump();
 //        _searcher.dumpInstructionStack();
