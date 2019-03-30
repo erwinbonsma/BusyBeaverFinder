@@ -212,7 +212,7 @@ void ExhaustiveSearcher::branch(int depth) {
 }
 
 void ExhaustiveSearcher::run(int depth) {
-    int numDataOps = 0;
+    DataOp* initialDataUndoP = _data.getUndoStackPointer();
     int initialSteps = _numSteps;
 
     _compiledProgram.push();
@@ -241,7 +241,6 @@ processInstruction:
             case Ins::NOOP:
                 break;
             case Ins::DATA:
-                numDataOps++;
                 switch (_pp.dir) {
                     case Dir::UP:
                         _data.inc();
@@ -342,7 +341,7 @@ processInstruction:
         }
     }
 backtrack:
-    _data.undo(numDataOps);
+    _data.undo(initialDataUndoP);
     _numSteps = initialSteps;
     _compiledProgram.pop();
 }

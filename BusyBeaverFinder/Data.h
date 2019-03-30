@@ -69,7 +69,8 @@ public:
     bool shr();
     bool shl();
 
-    void undo(int num);
+    DataOp* getUndoStackPointer() { return _undoP; }
+    void undo(DataOp* _targetUndoP);
 
     void dump();
     void dumpStack();

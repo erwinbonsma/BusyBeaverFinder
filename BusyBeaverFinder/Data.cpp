@@ -121,8 +121,8 @@ bool Data::shl() {
     return _dataP > _minDataP;
 }
 
-void Data::undo(int num) {
-    while (--num >= 0) {
+void Data::undo(DataOp* _targetUndoP) {
+    while (_undoP != _targetUndoP) {
         switch (*(--_undoP)) {
             case DataOp::INC: (*_dataP)--; updateBounds(); break;
             case DataOp::DEC: (*_dataP)++; updateBounds(); break;
