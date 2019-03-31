@@ -27,24 +27,10 @@ ExitFinder::ExitFinder(Program& program, CompiledProgram& compiledProgram) :
     _maxSteps = (program.getWidth() - 1) * (program.getHeight() - 1);
 }
 
-ProgramPointer ExitFinder::getStartProgramPointer(ProgramBlock* block) {
-    ProgramPointer pp;
-
-    pp.p = _compiledProgram.startInstructionForBlock(block);
-    pp.dir = (Dir)0;
-
-    // Find a TURN
-    while (_program.getInstruction(nextInstructionPointer(pp)) != Ins::TURN) {
-        pp.dir = (Dir)((int)pp.dir + 1);
-    }
-
-    return pp;
-}
-
 bool ExitFinder::finalizeBlock(ProgramBlock* block) {
     _compiledProgram.enterBlock(block);
 
-    ProgramPointer pp = getStartProgramPointer(block);
+    ProgramPointer pp = _compiledProgram.getStartProgramPointer(block, _program);
     int steps = 0;
 
     // Rotation delta

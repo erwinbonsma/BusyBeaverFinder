@@ -25,6 +25,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     searcher.configure(settings);
 
     orchestrator.search();
+//    tracker.dumpFinalStats();
 
     REQUIRE(tracker.getMaxStepsFound() == 43);
     REQUIRE(tracker.getTotalSuccess() == 26319);
@@ -53,7 +54,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
 
     REQUIRE(tracker.getMaxStepsFound() == 572);
     REQUIRE(tracker.getTotalSuccess() == 6475715);
-    REQUIRE(tracker.getTotalDetectedHangs() == 1545375);
+    REQUIRE(tracker.getTotalDetectedHangs() == 1545095);
     REQUIRE(tracker.getTotalHangs() == 1546939);
     REQUIRE(tracker.getTotalErrors() == 0);
 }

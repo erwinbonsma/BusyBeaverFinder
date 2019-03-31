@@ -11,12 +11,9 @@
 #include <iostream>
 #include <assert.h>
 
-#include "ExhaustiveSearcher.h"
+#include "ProgramBlock.h"
 
-DeltaTracker::DeltaTracker(ExhaustiveSearcher& searcher) :
-    _searcher(searcher),
-    _data(searcher.getData())
-{
+DeltaTracker::DeltaTracker() {
     reset();
 }
 
@@ -25,53 +22,23 @@ void DeltaTracker::reset() {
     _maxDec = 0;
     _maxShr = 0;
     _maxShl = 0;
-
-    _initialDp = _data.getDataPointer();
-    _initialValue = *_initialDp;
 }
 
-void DeltaTracker::update() {
-    ProgramPointer pp = _searcher.getProgramPointer();
-    DataPointer newDp = _data.getDataPointer();
-    int newVal = _data.val();
-
-    if (pp.dir == _curDir) {
-        switch (pp.dir) {
-            case Dir::RIGHT:
-                if (newDp - _initialDp > _maxShr) {
-                    _maxShr = (int)(newDp - _initialDp);
-                }
-                break;
-            case Dir::LEFT:
-                if (_initialDp - newDp > _maxShl) {
-                    _maxShl = (int)(_initialDp - newDp);
-                }
-                break;
-            case Dir::UP:
-                if (newVal - _initialValue > _maxInc) {
-                    _maxInc = newVal - _initialValue;
-                }
-                break;
-            case Dir::DOWN:
-                if (_initialValue - newVal > _maxDec) {
-                    _maxDec = _initialValue - newVal;
-                }
-                break;
+void DeltaTracker::update(ProgramBlock* block) {
+    int amount = block->getInstructionAmount();
+    if (block->isDelta()) {
+        if (amount > _maxInc) {
+            _maxInc = amount;
+        } else if (-amount > _maxDec){
+            _maxDec = -amount;
         }
     } else {
-        _initialValue = newVal;
-        _initialDp = newDp;
-        _curDir = pp.dir;
-
-        if (_searcher.getProgram().getInstruction(pp.p) == Ins::DATA) {
-            // Compensate for TURN, if any.
-            switch (_curDir) {
-                case Dir::RIGHT: _initialDp--; if (_maxShr == 0) { _maxShr = 1; } break;
-                case Dir::LEFT: _initialDp++; if (_maxShl == 0) { _maxShl = 1; } break;
-                case Dir::UP: _initialValue--; if (_maxInc == 0) { _maxInc = 1; } break;
-                case Dir::DOWN: _initialValue++; if (_maxDec == 0) { _maxDec = 1; } break;
-            }
+        if (amount > _maxShr) {
+            _maxShr = amount;
+        } else if (-amount > _maxShl){
+            _maxShl = -amount;
         }
+
     }
 }
 

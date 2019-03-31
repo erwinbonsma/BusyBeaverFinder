@@ -59,6 +59,7 @@ class ExhaustiveSearcher {
     Ins* _resumeFrom;
 
     ProgramPointer _pp;
+    ProgramBlock* _block;
     int _numSteps;
 
     // Stack of instructions built up by the exhaustive search
@@ -86,6 +87,8 @@ class ExhaustiveSearcher {
 
     void reconfigure();
 
+    ProgramPointer executeCompiledBlocks();
+
     void run(int depth);
     void branch(int depth);
 public:
@@ -108,8 +111,9 @@ public:
     CycleDetector& getCycleDetector() { return _cycleDetector; }
     DataTracker& getDataTracker() { return _dataTracker; }
 
-    ProgramPointer getProgramPointer() { return _pp; }
     int getNumSteps() { return _numSteps; }
+
+    ProgramBlock* getProgramBlock() { return _block; }
 
     bool atTargetProgram();
 

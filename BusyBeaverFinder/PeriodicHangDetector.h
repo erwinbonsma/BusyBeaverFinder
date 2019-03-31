@@ -15,6 +15,7 @@
 #include "HangDetector.h"
 
 class ExhaustiveSearcher;
+class ProgramBlock;
 
 class PeriodicHangDetector : public HangDetector {
 
@@ -29,7 +30,7 @@ class PeriodicHangDetector : public HangDetector {
     //----------------------
     // Hang detection state
 
-    ProgramPointer _samplePp;
+    ProgramBlock* _sampleBlock;
     int _cyclePeriod;
     // When to perform the periodic hang check (in number of recorded instructions)
     int _periodicHangCheckAt;

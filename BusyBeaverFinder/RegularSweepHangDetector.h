@@ -16,6 +16,7 @@
 #include "DeltaTracker.h"
 
 class ExhaustiveSearcher;
+class ProgramBlock;
 
 class RegularSweepHangDetector : public SweepHangDetector {
 
@@ -24,7 +25,7 @@ class RegularSweepHangDetector : public SweepHangDetector {
     HangDetectionResult _status;
     DataPointer _sweepMidTurningPoint;
     DeltaTracker _deltaTracker;
-    ProgramPointer _sweepStartPp;
+    ProgramBlock* _sweepStartBlock;
 
     bool isSweepDiverging();
     bool checkForHang();

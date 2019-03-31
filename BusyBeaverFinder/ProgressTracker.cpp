@@ -33,6 +33,7 @@ void ProgressTracker::report() {
         _searcher.dumpInstructionStack();
     }
 
+//    _searcher.dumpInstructionStack();
 //    _searcher.getProgram().dump();
 //    _searcher.getCompiledProgram().dump();
 //    _searcher.getProgram().dumpWeb();
@@ -95,6 +96,11 @@ void ProgressTracker::reportAssumedHang() {
         _detectedHang = HangType::UNDETECTED;
     } else {
         _totalHangsByType[(int)HangType::UNDETECTED]++;
+
+//        _searcher.dumpInstructionStack();
+//        _searcher.getProgram().dump();
+//        _searcher.getCompiledProgram().dump();
+//        _searcher.getProgram().dumpWeb();
 
         if (_dumpUndetectedHangs) {
             std::cout << "Undetected hang: ";
@@ -172,6 +178,7 @@ void ProgressTracker::dumpStats() {
 void ProgressTracker::dumpHangStats() {
     std::cout
     << "Hang details:" << std::endl
+    << "  #No Data Loop = " << _totalHangsByType[(int)HangType::NO_DATA_LOOP] << std::endl
     << "  #No Exit = " << _totalHangsByType[(int)HangType::NO_EXIT] << std::endl
     << "  #Periodic = " << _totalHangsByType[(int)HangType::PERIODIC] << std::endl
     << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl

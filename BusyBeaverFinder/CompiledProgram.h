@@ -17,6 +17,8 @@
 const int maxProgramBlocks = maxWidth * maxHeight * 2;
 const int maxProgramStackFrames = maxWidth * maxHeight;
 
+class Program;
+
 struct MutableProgramBlock {
     unsigned char flags;
     char amount;
@@ -39,6 +41,7 @@ class CompiledProgram {
     ProgramStack* _stateP;
 
     ProgramBlock* getBlock(InstructionPointer insP, TurnDirection turn);
+    InstructionPointer startInstructionForBlock(ProgramBlock* block);
 
     void checkState();
 
@@ -49,7 +52,7 @@ public:
     void pop();
 
     // Update the active program block
-    void incSteps() { _stateP->activeBlock.numSteps++; }
+    int incSteps() { return _stateP->activeBlock.numSteps++; }
     void incAmount() { _stateP->activeBlock.amount++; }
     void decAmount() { _stateP->activeBlock.amount--; }
     void setInstruction(bool isDelta);
@@ -63,10 +66,11 @@ public:
     ProgramBlock* enterBlock(ProgramBlock* block);
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
 
-    InstructionPointer startInstructionForBlock(ProgramBlock* block);
     TurnDirection startTurnDirectionForBlock(ProgramBlock* block);
+    ProgramPointer getStartProgramPointer(ProgramBlock* block, Program& program);
 
     void dump();
+    void dumpBlock(ProgramBlock* block);
 };
 
 

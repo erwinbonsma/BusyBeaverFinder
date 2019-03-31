@@ -12,8 +12,7 @@
 #include "Utils.h"
 
 RegularSweepHangDetector::RegularSweepHangDetector(ExhaustiveSearcher& searcher) :
-    SweepHangDetector(searcher),
-    _deltaTracker(searcher)
+    SweepHangDetector(searcher)
 {
 }
 
@@ -73,9 +72,7 @@ bool RegularSweepHangDetector::checkForHang() {
         return false;
     }
 
-    ProgramPointer pp = _searcher.getProgramPointer();
-
-    if (PROGRAM_POINTERS_MATCH(pp, _sweepStartPp)) {
+    if (_searcher.getProgramBlock() == _sweepStartBlock) {
         if (_searcher.atTargetProgram()) {
             _searcher.getProgram().dump();
             _searcher.getData().dump();
@@ -115,7 +112,7 @@ void RegularSweepHangDetector::sweepReversed() {
         // the first left turn occurs for this sweep. When the reveral comprises of multiple left
         // turns, it may not take the actual start PP when it would determine it during the very
         // first reversal
-        _sweepStartPp = _searcher.getProgramPointer();
+        _sweepStartBlock = _searcher.getProgramBlock();
     }
     else if (sweepCount() % 2 == 1) {
 //        std::cout << "Checking divergence" << std::endl;
@@ -143,7 +140,7 @@ HangDetectionResult RegularSweepHangDetector::detectHang() {
         return HangDetectionResult::ONGOING;
     }
 
-    _deltaTracker.update();
+    _deltaTracker.update(_searcher.getProgramBlock());
 
     return HangDetectionResult::ONGOING;
 }

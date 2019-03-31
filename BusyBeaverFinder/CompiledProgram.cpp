@@ -11,6 +11,9 @@
 #include <assert.h>
 #include <iostream>
 
+#include "Utils.h"
+#include "Program.h"
+
 // Set when instruction has been set
 const unsigned char INSTRUCTION_SET_BIT = 0x01;
 
@@ -86,6 +89,20 @@ InstructionPointer CompiledProgram::startInstructionForBlock(ProgramBlock* block
 
 TurnDirection CompiledProgram::startTurnDirectionForBlock(ProgramBlock* block) {
     return (TurnDirection)(block->getStartIndex() & 0x01);
+}
+
+ProgramPointer CompiledProgram::getStartProgramPointer(ProgramBlock* block, Program& program) {
+    ProgramPointer pp;
+
+    pp.p = startInstructionForBlock(block);
+    pp.dir = (Dir)0;
+
+    // Find a TURN
+    while (program.getInstruction(nextInstructionPointer(pp)) != Ins::TURN) {
+        pp.dir = (Dir)((int)pp.dir + 1);
+    }
+
+    return pp;
 }
 
 ProgramBlock* CompiledProgram::getBlock(InstructionPointer insP, TurnDirection turn) {
@@ -166,11 +183,17 @@ ProgramBlock* CompiledProgram::finalizeBlock(InstructionPointer endP) {
 }
 
 ProgramBlock* CompiledProgram::enterBlock(ProgramBlock* block) {
-    // Reset state to enable construction (or stepping through) this block
-    _stateP->activeBlock.flags = 0;
-    _stateP->activeBlock.amount = 0;
-    _stateP->activeBlock.numSteps = 0;
     _stateP->activeBlockIndex = (int)(block - _blocks);
+
+    if (!block->isFinalized()) {
+        // Reset state to enable construction (or stepping through) this block
+        _stateP->activeBlock.flags = 0;
+        _stateP->activeBlock.amount = 0;
+        _stateP->activeBlock.numSteps = 0;
+
+        // Return null to indicate that block cannot yet be used
+        return nullptr;
+    }
 
 //    checkState();
 
@@ -181,34 +204,36 @@ ProgramBlock* CompiledProgram::enterBlock(InstructionPointer startP, TurnDirecti
     return enterBlock(getBlock(startP, turnDir));
 }
 
-void CompiledProgram::dump() {
-    for (int i = 0; i < _stateP->numBlocks; i++) {
-        ProgramBlock* block = _blocks + i;
+void CompiledProgram::dumpBlock(ProgramBlock* block) {
+    std::cout << (block - _blocks) << " (" << block->getStartIndex() << "): ";
 
-        std::cout << i << " (" << block->getStartIndex() << "): ";
-
-        if (!block->isFinalized()) {
-            std::cout << "-";
+    if (!block->isFinalized()) {
+        std::cout << "-";
+    } else {
+        int amount = block->getInstructionAmount();
+        if (amount >= 0) {
+            std::cout << (block->isDelta() ? "INC " : "SHR ") << amount;
         } else {
-            int amount = block->getInstructionAmount();
-            if (amount >= 0) {
-                std::cout << (block->isDelta() ? "INC " : "SHR ") << amount;
-            } else {
-                std::cout << (block->isDelta() ? "DEC " : "SHL ") << -amount;
-            }
-
-            std::cout << " => ";
-
-            if (block->zeroBlock() != nullptr) {
-                std::cout << (block->zeroBlock() - _blocks);
-            } else {
-                std::cout << "-";
-            }
-
-            std::cout << "/" << (block->nonZeroBlock() - _blocks)
-            << ", #Steps = " << block->getNumSteps();
+            std::cout << (block->isDelta() ? "DEC " : "SHL ") << -amount;
         }
 
-        std::cout << std::endl;
+        std::cout << " => ";
+
+        if (block->zeroBlock() != nullptr) {
+            std::cout << (block->zeroBlock() - _blocks);
+        } else {
+            std::cout << "-";
+        }
+
+        std::cout << "/" << (block->nonZeroBlock() - _blocks)
+        << ", #Steps = " << block->getNumSteps();
+    }
+
+    std::cout << std::endl;
+}
+
+void CompiledProgram::dump() {
+    for (int i = 0; i < _stateP->numBlocks; i++) {
+        dumpBlock(_blocks + i);
     }
 }

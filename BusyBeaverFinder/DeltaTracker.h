@@ -11,26 +11,16 @@
 
 #include <stdio.h>
 
-#include "Types.h"
-
-class Data;
-class ExhaustiveSearcher;
+class ProgramBlock;
 
 class DeltaTracker {
-    ExhaustiveSearcher& _searcher;
-    Data& _data;
-
-    Dir _curDir;
-    DataPointer _initialDp;
-    int _initialValue;
-
     int _maxInc;
     int _maxDec;
     int _maxShr;
     int _maxShl;
 
 public:
-    DeltaTracker(ExhaustiveSearcher& searcher);
+    DeltaTracker();
 
     int getMaxInc() { return _maxInc; }
     int getMaxDec() { return _maxDec; }
@@ -38,7 +28,7 @@ public:
     int getMaxShl() { return _maxShl; }
 
     void reset();
-    void update();
+    void update(ProgramBlock* block);
 
     void dump();
 };

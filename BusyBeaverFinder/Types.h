@@ -56,15 +56,17 @@ enum class TurnDirection : char {
     NONE = -1
 };
 
-const int numHangTypes = 6;
-const int numDetectedHangTypes = 5;
+const int numHangTypes = 7;
+const int numDetectedHangTypes = 6;
 enum class HangType : char {
-    NO_EXIT = 0,
-    PERIODIC = 1,
-    REGULAR_SWEEP = 2,
-    IRREGULAR_SWEEP = 3,
-    APERIODIC_GLIDER = 4,
-    UNDETECTED = 5 // Should always be last
+    // Simple loop, without any DATA
+    NO_DATA_LOOP = 0,
+    NO_EXIT = 1,
+    PERIODIC = 2,
+    REGULAR_SWEEP = 3,
+    IRREGULAR_SWEEP = 4,
+    APERIODIC_GLIDER = 5,
+    UNDETECTED = 6 // Should always be last
 };
 
 #endif /* Types_h */

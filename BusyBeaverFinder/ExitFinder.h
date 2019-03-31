@@ -30,8 +30,6 @@ class ExitFinder {
     ProgramBlockP *_nextP;
     ProgramBlockP *_topP;
 
-    ProgramPointer getStartProgramPointer(ProgramBlock* block);
-
     // Tries to finalize the current block.
     // Returns "true" if the block could be finalized (based on the currently set instructions)
     bool finalizeBlock(ProgramBlock* block);

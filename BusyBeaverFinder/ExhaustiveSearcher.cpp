@@ -21,6 +21,9 @@ Ins targetStack[] = {
     Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
 };
 
+const ProgramPointer backtrackProgramPointer =
+    ProgramPointer { .p = InstructionPointer { .col = -1, .row = -1 }, .dir = Dir::UP };
+
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
@@ -35,7 +38,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     // Init defaults
     _settings.maxSteps = 1024;
-    _settings.initialHangSamplePeriod = 16;
+    _settings.initialHangSamplePeriod = 4;
     _settings.maxPeriodicHangDetectAttempts = 5;
     _settings.maxRegularSweepHangDetectAttempts = 3;
     _settings.maxRegularSweepExtensionCount = 5;
@@ -211,11 +214,9 @@ void ExhaustiveSearcher::branch(int depth) {
     _instructionStack[depth] = Ins::UNSET;
 }
 
-void ExhaustiveSearcher::run(int depth) {
-    DataOp* initialDataUndoP = _data.getUndoStackPointer();
-    int initialSteps = _numSteps;
-
-    _compiledProgram.push();
+ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
+//    _program.dump();
+//    _compiledProgram.dump();
 
     _data.resetHangDetection();
     _dataTracker.reset();
@@ -223,6 +224,91 @@ void ExhaustiveSearcher::run(int depth) {
 
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
+
+    while (_block->isFinalized()) {
+//        std::cout << "Executing ";
+//        _compiledProgram.dumpBlock(_block);
+//        _data.dump();
+
+        int amount = _block->getInstructionAmount();
+        if (_block->isDelta()) {
+            if (amount > 0) {
+                while (amount-- > 0) {
+                    _data.inc();
+                }
+            } else {
+                while (amount++ < 0) {
+                    _data.dec();
+                }
+            }
+        } else {
+            if (amount > 0) {
+                while (amount-- > 0) {
+                    if (!_data.shr()) {
+                        _tracker->reportError();
+                        return backtrackProgramPointer;
+                    }
+                }
+            } else {
+                while (amount++ < 0) {
+                    if (!_data.shl()) {
+                        _tracker->reportError();
+                        return backtrackProgramPointer;
+                    }
+                }
+            }
+        }
+
+        _numSteps += _block->getNumSteps();
+
+        if (_cycleDetectorEnabled) {
+            _cycleDetector.recordInstruction((char)_block->getStartIndex());
+        }
+
+        if (_activeHangCheck != nullptr) {
+            HangDetectionResult result = _activeHangCheck->detectHang();
+
+            switch (result) {
+                case HangDetectionResult::FAILED:
+                    _activeHangCheck = nullptr;
+                    break;
+                case HangDetectionResult::HANGING:
+                    _tracker->reportDetectedHang(_activeHangCheck->hangType());
+                    if (!_settings.testHangDetection) {
+                        return backtrackProgramPointer;
+                    }
+                    break;
+                case HangDetectionResult::ONGOING:
+                    break;
+            }
+        } else if (_numHangDetectAttempts != -1) {
+            initiateNewHangCheck();
+        }
+
+        if (_numSteps >= _settings.maxSteps) {
+            _tracker->reportAssumedHang();
+            return backtrackProgramPointer;
+        }
+
+        if (_data.val() == 0) {
+            _block = _block->zeroBlock();
+
+            if (_activeHangCheck != nullptr) {
+                _activeHangCheck->signalLeftTurn();
+            }
+        } else {
+            _block = _block->nonZeroBlock();
+        }
+    }
+
+    return _compiledProgram.getStartProgramPointer(_block, _program);
+}
+
+void ExhaustiveSearcher::run(int depth) {
+    DataOp* initialDataUndoP = _data.getUndoStackPointer();
+    int initialSteps = _numSteps;
+
+    _compiledProgram.push();
 
 //    _program.dump();
 //    std::cout << std::endl;
@@ -273,72 +359,50 @@ processInstruction:
             case Ins::TURN:
                 if (_data.val() == 0) {
                     _pp.dir = (Dir)(((int)_pp.dir + 3) % 4);
-                    if (_activeHangCheck != nullptr) {
-                        _activeHangCheck->signalLeftTurn();
-                    }
                 } else {
                     _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
                 }
                 if (_compiledProgram.isInstructionSet()) {
-                    ProgramBlock* block = _compiledProgram.finalizeBlock(_pp.p);
+                    _block = _compiledProgram.finalizeBlock(_pp.p);
 
                     // Check if it is possible to exit
                     if (
-                        block != nullptr &&
+                        _block != nullptr &&
                         !_settings.disableNoExitHangDetection &&
-                        !_exitFinder.canExitFrom(block)
+                        !_exitFinder.canExitFrom(_block)
                     ) {
                         _tracker->reportDetectedHang(HangType::NO_EXIT);
-
                         if (!_settings.testHangDetection) {
                             goto backtrack;
                         }
                     }
 
-                    _compiledProgram.enterBlock(_pp.p,
-                                                _data.val() == 0
-                                                ? TurnDirection::COUNTERCLOCKWISE
-                                                : TurnDirection::CLOCKWISE);
+                    _block = _compiledProgram.enterBlock(
+                        _pp.p,
+                        _data.val()==0 ? TurnDirection::COUNTERCLOCKWISE : TurnDirection::CLOCKWISE
+                    );
+
+                    if (_block != nullptr) {
+                        _pp = executeCompiledBlocks();
+                        if (_pp.p.col == -1) {
+                            goto backtrack;
+                        }
+                    }
                 }
                 goto processInstruction;
         }
-        if (_cycleDetectorEnabled) {
-            _cycleDetector.recordInstruction(
-                (char)((insP.col + insP.row * maxWidth) ^ (int)_pp.dir)
-            );
-        }
 
-        _compiledProgram.incSteps();
+        if (_compiledProgram.incSteps() > 64) {
+            _tracker->reportDetectedHang(HangType::NO_DATA_LOOP);
+            if (!_settings.testHangDetection) {
+                goto backtrack;
+            }
+        }
 
         _pp.p = insP;
         _numSteps++;
 
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
-
-        if (_activeHangCheck != nullptr) {
-            HangDetectionResult result = _activeHangCheck->detectHang();
-
-            switch (result) {
-                case HangDetectionResult::FAILED:
-                    _activeHangCheck = nullptr;
-                    break;
-                case HangDetectionResult::HANGING:
-                    _tracker->reportDetectedHang(_activeHangCheck->hangType());
-                    if (!_settings.testHangDetection) {
-                        goto backtrack;
-                    }
-                    break;
-                case HangDetectionResult::ONGOING:
-                    break;
-            }
-        } else if (_numHangDetectAttempts != -1) {
-            initiateNewHangCheck();
-        }
-
-        if (_numSteps >= _settings.maxSteps) {
-            _tracker->reportAssumedHang();
-            goto backtrack;
-        }
     }
 backtrack:
     _data.undo(initialDataUndoP);
