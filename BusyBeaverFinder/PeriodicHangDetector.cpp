@@ -17,40 +17,45 @@ PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
 
 void PeriodicHangDetector::PeriodicHangDetector::start() {
     _cyclePeriod = 0;
-    _periodicHangCheckAt = _minRecordedInstructions;
-    _searcher.getCycleDetector().clearInstructionHistory();
+    _sampleStartIndex = _searcher.getCycleDetector().getNumRecordedInstructions();
+    _periodicHangCheckAt = _sampleStartIndex + _minRecordedInstructions;
 }
 
-void PeriodicHangDetector::determineCyclePeriod() {
-    _cyclePeriod = _searcher.getCycleDetector().getCyclePeriod();
+int PeriodicHangDetector::determineCyclePeriod() {
+    int period = _searcher.getCycleDetector().getCyclePeriod(_sampleStartIndex);
 
 //    std::cout << "cycle period = " << _cyclePeriod << std::endl;
 //    _searcher.getCycleDetector().dump();
-
-    _searcher.getCycleDetector().clearInstructionHistory();
-
-    // Established cycle period. Now wait to check repetition and monitor data changes
-    _periodicHangCheckAt = _cyclePeriod;
 
     _sampleBlock = _searcher.getProgramBlock();
 
     _searcher.getDataTracker().reset();
     _searcher.getDataTracker().captureSnapShot();
     _searcher.getData().resetHangDetection();
+
+    return period;
 }
 
 HangDetectionResult PeriodicHangDetector::detectHang() {
-    if (_searcher.getCycleDetector().getNumRecordedInstructions() < _periodicHangCheckAt) {
+    CycleDetector& cycleDetector = _searcher.getCycleDetector();
+
+    if (cycleDetector.getNumRecordedInstructions() < _periodicHangCheckAt) {
         return HangDetectionResult::ONGOING;
     }
 
     if (_cyclePeriod == 0) {
-        determineCyclePeriod();
+        _cyclePeriod = determineCyclePeriod();
+        _periodicHangCheckAt = cycleDetector.getNumRecordedInstructions() + _cyclePeriod;
         return HangDetectionResult::ONGOING;
     }
 
     if (_searcher.getProgramBlock() != _sampleBlock) {
         // Not back at the sample point, so not on a hang cycle with assumed period.
+        return HangDetectionResult::FAILED;
+    }
+
+    if (_searcher.getCycleDetector().getCyclePeriod(_sampleStartIndex) != _cyclePeriod) {
+        // Apparently not same periodic loop anymore
         return HangDetectionResult::FAILED;
     }
 
@@ -78,7 +83,7 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
                 return HangDetectionResult::FAILED;
             }
         } else {
-            _periodicHangCheckAt = _cyclePeriod * 2;
+            _periodicHangCheckAt = cycleDetector.getNumRecordedInstructions() + _cyclePeriod;
         }
 
         dataTracker.captureSnapShot();

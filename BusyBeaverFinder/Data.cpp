@@ -74,9 +74,6 @@ void Data::updateBounds() {
     assert((*_minBoundP && *_maxBoundP) || (_maxBoundP < _minBoundP));
 }
 
-void Data::setHangSamplePeriod(int period) {
-}
-
 void Data::inc() {
     (*_dataP)++;
     *(_undoP++) = DataOp::INC;

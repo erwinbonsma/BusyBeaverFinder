@@ -32,10 +32,12 @@ class PeriodicHangDetector : public HangDetector {
 
     ProgramBlock* _sampleBlock;
     int _cyclePeriod;
+
+    int _sampleStartIndex;
     // When to perform the periodic hang check (in number of recorded instructions)
     int _periodicHangCheckAt;
 
-    void determineCyclePeriod();
+    int determineCyclePeriod();
 
 public:
     PeriodicHangDetector(ExhaustiveSearcher& searcher);

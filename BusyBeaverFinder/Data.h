@@ -40,7 +40,6 @@ public:
     ~Data();
 
     void setStackSize(int size);
-    void setHangSamplePeriod(int period);
 
     int getSize() { return (int)(_maxDataP - _minDataP + 1); }
 

@@ -23,23 +23,24 @@ CycleDetector::~CycleDetector() {
     }
 }
 
-void CycleDetector::setHangSamplePeriod(int period) {
+void CycleDetector::setCapacity(int capacity) {
     if (_opsHistory != nullptr) {
         delete[] _opsHistory;
         delete[] _findPeriodBuf;
     }
-    // May access up to three instructions per execution step
-    int size = (period + 2) * 3;
-    // May sample up to three periods (as previous hang check may take that long)
-    size *= 3;
-    _opsHistory = new CycleInstruction[size];
-    _findPeriodBuf = new int[size];
+    _opsHistory = new CycleInstruction[capacity];
+    _findPeriodBuf = new int[capacity];
     _opsHistoryP = _opsHistory;
-    _opsHistoryMaxP = _opsHistoryP + size; // Exclusive
+    _opsHistoryMaxP = _opsHistoryP + capacity; // Exclusive
 }
 
 int CycleDetector::getCyclePeriod() {
     return findPeriod(_opsHistory, _findPeriodBuf, (int)(_opsHistoryP - _opsHistory));
+}
+
+int CycleDetector::getCyclePeriod(int fromSampleIndex) {
+    CycleInstruction* sampleStartP = _opsHistory + fromSampleIndex;
+    return findPeriod(sampleStartP, _findPeriodBuf, (int)(_opsHistoryP - sampleStartP));
 }
 
 void CycleDetector::dump() {

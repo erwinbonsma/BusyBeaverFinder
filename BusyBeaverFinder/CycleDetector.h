@@ -32,7 +32,7 @@ public:
     CycleDetector();
     ~CycleDetector();
 
-    void setHangSamplePeriod(int period);
+    void setCapacity(int capacity);
 
     void recordInstruction(CycleInstruction instruction) {
         *(_opsHistoryP++) = instruction;
@@ -40,9 +40,10 @@ public:
         assert(_opsHistoryP < _opsHistoryMaxP);
     }
     int getNumRecordedInstructions() { return (int)(_opsHistoryP - _opsHistory); }
-    void clearInstructionHistory() { _opsHistoryP = _opsHistory; }
+    void reset() { _opsHistoryP = _opsHistory; }
 
     int getCyclePeriod();
+    int getCyclePeriod(int fromSampleIndex);
 
     void dump();
 };

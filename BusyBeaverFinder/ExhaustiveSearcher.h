@@ -47,7 +47,6 @@ class ExhaustiveSearcher {
 
     Program _program;
     Data _data;
-    bool _cycleDetectorEnabled;
     CycleDetector _cycleDetector;
     DataTracker _dataTracker;
 

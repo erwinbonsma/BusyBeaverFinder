@@ -66,8 +66,7 @@ void ExhaustiveSearcher::reconfigure() {
     int maxHangSamplePeriod =
         _settings.initialHangSamplePeriod << _settings.maxPeriodicHangDetectAttempts;
 
-    _data.setHangSamplePeriod(maxHangSamplePeriod);
-    _cycleDetector.setHangSamplePeriod(maxHangSamplePeriod * 2);
+    _cycleDetector.setCapacity(_settings.maxSteps);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 
     _regularSweepHangDetector->setMaxSweepCount(_settings.maxRegularSweepExtensionCount);
@@ -125,9 +124,7 @@ void ExhaustiveSearcher::dumpSettings() {
 void ExhaustiveSearcher::dumpHangDetection() {
     _data.dumpHangInfo();
     _dataTracker.dump();
-    if (_cycleDetectorEnabled) {
-        _cycleDetector.dump();
-    }
+    _cycleDetector.dump();
 }
 
 void ExhaustiveSearcher::dump() {
@@ -159,10 +156,8 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
             _periodicHangDetector->setMinRecordedInstructions(
                 _settings.initialHangSamplePeriod << attempts
             );
-            _cycleDetectorEnabled = true;
         } else {
             attempts -= _settings.maxPeriodicHangDetectAttempts;
-            _cycleDetectorEnabled = false;
         }
     }
 
@@ -220,7 +215,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
     _data.resetHangDetection();
     _dataTracker.reset();
-    _cycleDetectorEnabled = false;
+    _cycleDetector.reset();
 
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
@@ -261,9 +256,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
         _numSteps += _block->getNumSteps();
 
-        if (_cycleDetectorEnabled) {
-            _cycleDetector.recordInstruction((char)_block->getStartIndex());
-        }
+        _cycleDetector.recordInstruction((char)_block->getStartIndex());
 
         if (_activeHangCheck != nullptr) {
             HangDetectionResult result = _activeHangCheck->detectHang();
