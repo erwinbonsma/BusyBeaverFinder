@@ -104,7 +104,7 @@ public:
     void setCapacity(int capacity);
 
     // Returns true if this resulted in the creation of one or more RunBlocks
-    bool recordProgramBlock(ProgramBlock* block);
+    bool recordProgramBlock(ProgramBlockIndex blockIndex);
 
     // The number of run blocks
     int getLength() { return (int)(_runBlockHistoryP - _runBlockHistory); }

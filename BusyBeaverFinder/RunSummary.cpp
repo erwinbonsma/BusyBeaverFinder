@@ -86,6 +86,8 @@ int RunSummary::getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* e
             sequenceP = &_sequenceBlock[*childIndex];
             assert(sequenceP->getProgramBlockIndex() == *blockP);
         }
+
+        blockP++;
     }
 
     return (int)(sequenceP - _sequenceBlock);
@@ -103,7 +105,7 @@ int RunSummary::detectLoop() {
     while (--blockP >= _programBlockPendingP) {
         if (*blockP == *_programBlockHistoryP) {
             // Current program block already encountered, so we're in a loop
-            return (int)(_programBlockHistoryP - blockP) - 1;
+            return (int)(_programBlockHistoryP - blockP);
         }
     }
 
@@ -111,13 +113,18 @@ int RunSummary::detectLoop() {
     return 0;
 }
 
-bool RunSummary::recordProgramBlock(ProgramBlock* block) {
-    *_programBlockHistoryP = (ProgramBlockIndex)block->getStartIndex();
+bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
+//    std::cout << "recordProgramBlock #" << (int)blockIndex << std::endl;
+
+    *_programBlockHistoryP = blockIndex;
     assert(_programBlockHistoryP != _programBlockHistoryMaxP);
+
+    bool newRunBlocks = false;
 
     if (_loopP == nullptr) {
         int loopLen = detectLoop();
         if (loopLen > 0) {
+//            std::cout << "Loop detected (len = " << loopLen << ")" << std::endl;
             ProgramBlockIndex* loopStartP = _programBlockHistoryP - loopLen;
 
             if (loopStartP != _programBlockPendingP) {
@@ -126,9 +133,12 @@ bool RunSummary::recordProgramBlock(ProgramBlock* block) {
             createRunBlock(loopStartP, _programBlockHistoryP, true);
 
             _loopP = _programBlockHistoryP - loopLen;
+            _programBlockPendingP = nullptr;
+            newRunBlocks = true;
         }
     } else {
-        if (*_loopP++ != *_programBlockHistoryP) {
+        if (*++_loopP != *_programBlockHistoryP) {
+//            std::cout << "Loop exited!" << std::endl;
             // Loop is broken
             _programBlockPendingP = _programBlockHistoryP;
             _loopP = nullptr;
@@ -137,7 +147,7 @@ bool RunSummary::recordProgramBlock(ProgramBlock* block) {
 
     _programBlockHistoryP++;
 
-    return false;
+    return newRunBlocks;
 }
 
 int RunSummary::getRunBlockLength(int index) {
@@ -146,7 +156,12 @@ int RunSummary::getRunBlockLength(int index) {
     int startIndex = runBlockP->getStartIndex();
 
     if (isLast) {
-        return (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+        if (_programBlockPendingP != nullptr) {
+            // Last run is completed. There are still some unallocated program blocks though
+            return (int)(_programBlockPendingP - _programBlockHistory) - startIndex;
+        } else {
+            return (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+        }
     } else {
         return (++runBlockP)->getStartIndex() - startIndex;
     }
@@ -155,19 +170,24 @@ int RunSummary::getRunBlockLength(int index) {
 void RunSummary::dump() {
     ProgramBlockIndex* programBlockP = _programBlockHistory;
     RunBlock* runBlockP = _runBlockHistory;
+    int numPendingBlocks = 0;
 
     while (programBlockP < _programBlockHistoryP) {
-        if (runBlockP->getStartIndex() == (programBlockP - _programBlockHistory)) {
-            if (programBlockP != _programBlockHistory) {
-                std::cout << ") ";
-            }
+        if (--numPendingBlocks == 0) {
+            std::cout << ") ";
+        }
+        if (
+            numPendingBlocks <= 0 &&
+            runBlockP->getStartIndex() == (programBlockP - _programBlockHistory)
+        ) {
             std::cout << "#" << runBlockP->getSequenceIndex() << "(";
+            numPendingBlocks = getRunBlockLength((int)(runBlockP - _runBlockHistory));
 
             runBlockP++;
         } else {
             std::cout << " ";
         }
-        std::cout << *programBlockP++;
+        std::cout << (int)*programBlockP++;
     }
     std::cout << std::endl;
 }
