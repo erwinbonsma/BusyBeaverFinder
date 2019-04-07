@@ -14,23 +14,29 @@
 class ProgramBlock;
 
 typedef char ProgramBlockIndex;
-const int maxBranchPoints = 2;
+
+// Should be set such that it never is the limiting factor for hang detection (instead, the logic
+// of the available/implemented hang detectors should be)
+const int maxRunBlockHistoryLength = 1024;
+
+// Should both be set such that is is never the limiting factor for hang detection
+const int maxSequenceStarts = 16;
+const int numSequenceBlocks = 512;
+
 
 class RunBlockSequence {
     friend class RunSummary;
 
     ProgramBlockIndex _programBlockIndex;
-    int _sequenceIndex;
 
-    int _leftChildIndex;
-    int _rightChildIndex;
+    int _children[2];
 
-    void reset();
+    // Creates child as needed
+    void getChild(ProgramBlockIndex programBlockIndex);
 
-    // Returns "true" if this resulted in a loop
-    bool addChild(ProgramBlockIndex programBlockIndex);
+    void init(ProgramBlockIndex programBlockIndex);
 
-    void init(int parentIndex, int programBlockIndex);
+    ProgramBlockIndex getProgramBlockIndex() { return _programBlockIndex; }
 };
 
 class RunBlock {
@@ -43,7 +49,7 @@ class RunBlock {
     // Returns the index into program block stack of the run summary where this run block started.
     int getStartIndex() { return _startIndex; }
 
-    RunBlock(int startIndex, int sequenceIndex, bool isLoop);
+    void init(int startIndex, int sequenceIndex, bool isLoop);
 
 public:
     bool isLoop() { return _isLoop; }
@@ -61,24 +67,49 @@ class RunSummary {
     // Pointer to current top of the stack
     ProgramBlockIndex* _programBlockHistoryP = nullptr;
 
+    // Pointer to first program block that is not yet part of a run block
+    ProgramBlockIndex* _programBlockPendingP = nullptr;
+
+    // Pointer to the previous iteration of the loop when in a loop. Otherwise equals nullptr
+    ProgramBlockIndex* _loopP = nullptr;
+
     // Stack of recently executed run blocks
-    RunBlock* _runBlockHistory = nullptr;
-    RunBlock* _runBlockHistoryMaxP = nullptr;
+    RunBlock _runBlockHistory[maxRunBlockHistoryLength];
+    RunBlock* _runBlockHistoryMaxP = _runBlockHistory + maxRunBlockHistoryLength;
 
     // Pointer to current top of the stack
     RunBlock* _runBlockHistoryP = nullptr;
 
+    RunBlockSequence _sequenceBlock[numSequenceBlocks];
+    int _numSequenceStarts;
+    int _nextSequenceIndex;
+
+    void freeDynamicArrays();
+
+    // Returns the length of the loop if one is detected. Returns zero otherwise.
+    int detectLoop();
+
+    RunBlockSequence* findSequenceStart(ProgramBlockIndex targetIndex);
+    int getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP);
+
+    // Creates a run block for the programs blocks from startP (inclusive) to endP (exclusive)
+    void createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, bool isLoop);
+
 public:
+    ~RunSummary();
+
+    void reset();
+
     // Set the capacity (in program blocks)
     void setCapacity(int capacity);
 
     // Returns true if this resulted in the creation of one or more RunBlocks
-    bool recordProgramBlock(ProgramBlock block);
+    bool recordProgramBlock(ProgramBlock* block);
 
     // The number of run blocks
-    int getLength();
+    int getLength() { return (int)(_runBlockHistoryP - _runBlockHistory); }
 
-    RunBlock runBlockAt(int index);
+    RunBlock* runBlockAt(int index) { return _runBlockHistory + index; }
 
     // Returns the length in program blocks of the given run block.
     //
