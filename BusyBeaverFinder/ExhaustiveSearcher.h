@@ -16,9 +16,9 @@
 
 #include "CompiledProgram.h"
 
-#include "CycleDetector.h"
 #include "DataTracker.h"
 #include "ProgressTracker.h"
+#include "RunSummary.h"
 
 #include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
@@ -47,7 +47,7 @@ class ExhaustiveSearcher {
 
     Program _program;
     Data _data;
-    CycleDetector _cycleDetector;
+    RunSummary _runSummary;
     DataTracker _dataTracker;
 
     // Determines when to abort the search
@@ -107,8 +107,8 @@ public:
     Data& getData() { return _data; }
     CompiledProgram& getCompiledProgram() { return _compiledProgram; }
 
-    CycleDetector& getCycleDetector() { return _cycleDetector; }
     DataTracker& getDataTracker() { return _dataTracker; }
+    RunSummary& getRunSummary() { return _runSummary; }
 
     int getNumSteps() { return _numSteps; }
 

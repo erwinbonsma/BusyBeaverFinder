@@ -22,7 +22,7 @@ bool checkRunSummary(RunSummary& runSummary, int* expected) {
     int sequenceIndex[maxNumSequences];
 
     while (*expectedP >= 0) {
-        if (runBlockIndex == runSummary.getLength()) {
+        if (runBlockIndex == runSummary.getNumRunBlocks()) {
             std::cout << "Run summary too short" << std::endl;
             return false;
         }

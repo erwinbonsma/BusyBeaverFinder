@@ -151,7 +151,7 @@ bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
 }
 
 int RunSummary::getRunBlockLength(int index) {
-    bool isLast = index == (getLength() - 1);
+    bool isLast = index == (getNumRunBlocks() - 1);
     RunBlock* runBlockP = _runBlockHistory + index;
     int startIndex = runBlockP->getStartIndex();
 

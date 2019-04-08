@@ -106,8 +106,11 @@ public:
     // Returns true if this resulted in the creation of one or more RunBlocks
     bool recordProgramBlock(ProgramBlockIndex blockIndex);
 
-    // The number of run blocks
-    int getLength() { return (int)(_runBlockHistoryP - _runBlockHistory); }
+    bool isInsideLoop() { return _loopP != nullptr; }
+    int getLoopPeriod() { return (int)(_programBlockHistoryP - _loopP) - 1; }
+
+    int getNumProgramBlocks() { return (int)(_programBlockHistoryP - _programBlockHistory); }
+    int getNumRunBlocks() { return (int)(_runBlockHistoryP - _runBlockHistory); }
 
     RunBlock* runBlockAt(int index) { return _runBlockHistory + index; }
 

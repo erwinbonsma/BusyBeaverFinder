@@ -27,7 +27,7 @@ const ProgramPointer backtrackProgramPointer =
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
-    _cycleDetector(),
+    _runSummary(),
     _dataTracker(_data),
     _exitFinder(_program, _compiledProgram)
 {
@@ -66,7 +66,7 @@ void ExhaustiveSearcher::reconfigure() {
     int maxHangSamplePeriod =
         _settings.initialHangSamplePeriod << _settings.maxPeriodicHangDetectAttempts;
 
-    _cycleDetector.setCapacity(_settings.maxSteps);
+    _runSummary.setCapacity(_settings.maxSteps);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 
     _regularSweepHangDetector->setMaxSweepCount(_settings.maxRegularSweepExtensionCount);
@@ -124,7 +124,7 @@ void ExhaustiveSearcher::dumpSettings() {
 void ExhaustiveSearcher::dumpHangDetection() {
     _data.dumpHangInfo();
     _dataTracker.dump();
-    _cycleDetector.dump();
+    _runSummary.dump();
 }
 
 void ExhaustiveSearcher::dump() {
@@ -153,7 +153,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
             _activeHangCheck = _periodicHangDetector;
 
             // Double period after each failed attempt
-            _periodicHangDetector->setMinRecordedInstructions(
+            _periodicHangDetector->setMinRecordedProgramBlocks(
                 _settings.initialHangSamplePeriod << attempts
             );
         } else {
@@ -215,7 +215,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
     _data.resetHangDetection();
     _dataTracker.reset();
-    _cycleDetector.reset();
+    _runSummary.reset();
 
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
@@ -256,7 +256,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
         _numSteps += _block->getNumSteps();
 
-        _cycleDetector.recordInstruction((char)_block->getStartIndex());
+        _runSummary.recordProgramBlock((ProgramBlockIndex)_block->getStartIndex());
 
         if (_activeHangCheck != nullptr) {
             HangDetectionResult result = _activeHangCheck->detectHang();

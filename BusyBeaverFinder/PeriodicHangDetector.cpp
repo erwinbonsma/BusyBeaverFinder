@@ -8,6 +8,8 @@
 
 #include "PeriodicHangDetector.h"
 
+#include <iostream>
+
 #include "Utils.h"
 #include "ExhaustiveSearcher.h"
 
@@ -16,45 +18,46 @@ PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
 }
 
 void PeriodicHangDetector::PeriodicHangDetector::start() {
-    _cyclePeriod = 0;
-    _sampleStartIndex = _searcher.getCycleDetector().getNumRecordedInstructions();
-    _periodicHangCheckAt = _sampleStartIndex + _minRecordedInstructions;
+    _loopPeriod = 0;
+    _periodicHangCheckAt =
+        _searcher.getRunSummary().getNumProgramBlocks() + _minRecordedProgramBlocks;
 }
 
-int PeriodicHangDetector::determineCyclePeriod() {
-    int period = _searcher.getCycleDetector().getCyclePeriod(_sampleStartIndex);
+bool PeriodicHangDetector::insideLoop() {
+    RunSummary& runSummary = _searcher.getRunSummary();
 
-//    std::cout << "cycle period = " << _cyclePeriod << std::endl;
-//    _searcher.getCycleDetector().dump();
+    runSummary.dump();
+    if (!runSummary.isInsideLoop()) {
+        // Not in a loop (yet)
+        return false;
+    }
 
-    _sampleBlock = _searcher.getProgramBlock();
+    _loopPeriod = runSummary.getLoopPeriod();
+    _loopRunBlockIndex = runSummary.getNumRunBlocks();
+    _periodicHangCheckAt = runSummary.getNumProgramBlocks() + _loopPeriod;
+
+    std::cout << "loop period = " << _loopPeriod << std::endl;
+    runSummary.dump();
 
     _searcher.getDataTracker().reset();
     _searcher.getDataTracker().captureSnapShot();
     _searcher.getData().resetHangDetection();
 
-    return period;
+    return true;
 }
 
 HangDetectionResult PeriodicHangDetector::detectHang() {
-    CycleDetector& cycleDetector = _searcher.getCycleDetector();
+    RunSummary& runSummary = _searcher.getRunSummary();
 
-    if (cycleDetector.getNumRecordedInstructions() < _periodicHangCheckAt) {
+    if (runSummary.getNumProgramBlocks() < _periodicHangCheckAt) {
         return HangDetectionResult::ONGOING;
     }
 
-    if (_cyclePeriod == 0) {
-        _cyclePeriod = determineCyclePeriod();
-        _periodicHangCheckAt = cycleDetector.getNumRecordedInstructions() + _cyclePeriod;
-        return HangDetectionResult::ONGOING;
+    if (_loopPeriod == 0) {
+        return insideLoop() ? HangDetectionResult::ONGOING : HangDetectionResult::FAILED;
     }
 
-    if (_searcher.getProgramBlock() != _sampleBlock) {
-        // Not back at the sample point, so not on a hang cycle with assumed period.
-        return HangDetectionResult::FAILED;
-    }
-
-    if (_searcher.getCycleDetector().getCyclePeriod(_sampleStartIndex) != _cyclePeriod) {
+    if (_loopRunBlockIndex != runSummary.getNumRunBlocks()) {
         // Apparently not same periodic loop anymore
         return HangDetectionResult::FAILED;
     }
@@ -83,7 +86,7 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
                 return HangDetectionResult::FAILED;
             }
         } else {
-            _periodicHangCheckAt = cycleDetector.getNumRecordedInstructions() + _cyclePeriod;
+            _periodicHangCheckAt = runSummary.getNumProgramBlocks() + _loopPeriod;
         }
 
         dataTracker.captureSnapShot();

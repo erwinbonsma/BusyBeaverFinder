@@ -24,26 +24,26 @@ class PeriodicHangDetector : public HangDetector {
     //----------------------
     // Configuration
 
-    // The minimum number of recorded instructions before trying to find the repetition period
-    int _minRecordedInstructions;
+    // The minimum number of recorded program blocks before trying to find the repetition period
+    int _minRecordedProgramBlocks;
 
     //----------------------
     // Hang detection state
 
-    ProgramBlock* _sampleBlock;
-    int _cyclePeriod;
+    int _loopPeriod;
+    int _loopRunBlockIndex;
 
     int _sampleStartIndex;
     // When to perform the periodic hang check (in number of recorded instructions)
     int _periodicHangCheckAt;
 
-    int determineCyclePeriod();
+    bool insideLoop();
 
 public:
     PeriodicHangDetector(ExhaustiveSearcher& searcher);
 
-    void setMinRecordedInstructions(int val) { _minRecordedInstructions = val; }
-    int getMinRecordedInstructions() { return _minRecordedInstructions; }
+    void setMinRecordedProgramBlocks(int val) { _minRecordedProgramBlocks = val; }
+    int getMinRecordedProgramBlocks() { return _minRecordedProgramBlocks; }
 
     HangType hangType() { return HangType::PERIODIC; }
 
