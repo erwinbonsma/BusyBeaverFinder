@@ -12,10 +12,10 @@
 
 #include "ProgramBlock.h"
 
-void RunBlockSequence::init(ProgramBlockIndex programBlockIndex) {
+void RunBlockSequenceNode::init(ProgramBlockIndex programBlockIndex) {
     _programBlockIndex = programBlockIndex;
-    _children[0] = -1;
-    _children[1] = -1;
+    _childIndex = 0;
+    _siblingIndex = 0;
 }
 
 void RunBlock::init(int startIndex, int sequenceIndex, bool isLoop) {
@@ -49,48 +49,42 @@ void RunSummary::reset() {
     _programBlockPendingP = _programBlockHistory;
     _loopP = nullptr;
 
-    _numSequenceStarts = 0;
-    _nextSequenceIndex = maxSequenceStarts;
+    _sequenceBlock[0].init(0);
+    _numSequenceBlocks = 1;
 }
 
-RunBlockSequence* RunSummary::findSequenceStart(ProgramBlockIndex targetIndex) {
-    RunBlockSequence* sequenceStartBlock = _sequenceBlock + _numSequenceStarts;
+RunBlockSequenceNode* RunSummary::getChildNode(
+    RunBlockSequenceNode* parent,
+    ProgramBlockIndex targetIndex
+) {
+    RunBlockSequenceNode* node = parent;
 
-    while (sequenceStartBlock-- > _sequenceBlock) {
-        if (sequenceStartBlock->getProgramBlockIndex() == targetIndex) {
-            return sequenceStartBlock;
+    while (node->_siblingIndex) {
+        node = _sequenceBlock + node->_siblingIndex;
+        if (node->getProgramBlockIndex() == targetIndex) {
+            return node;
         }
     }
 
     // There's no sequence start yet for this program block. Create it
-    assert(_numSequenceStarts < maxSequenceStarts);
+    assert(_numSequenceBlocks < maxNumSequenceBlocks);
 
-    sequenceStartBlock = _sequenceBlock + _numSequenceStarts++;
-    sequenceStartBlock->init(targetIndex);
+    node->_siblingIndex = _numSequenceBlocks;
+    node = _sequenceBlock + _numSequenceBlocks++;
+    node->init(targetIndex);
 
-    return sequenceStartBlock;
+    return node;
 }
 
 int RunSummary::getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP) {
     ProgramBlockIndex* blockP = startP;
-    RunBlockSequence* sequenceP = findSequenceStart(*blockP++);
+    RunBlockSequenceNode* sequenceNodeP = _sequenceBlock; // Start at root
 
     while (blockP != endP) {
-        int* childIndex = sequenceP->_children + *blockP % 2;
-
-        if (*childIndex == -1) {
-            *childIndex = _nextSequenceIndex;
-            sequenceP = &_sequenceBlock[_nextSequenceIndex++];
-            sequenceP->init(*blockP);
-        } else {
-            sequenceP = &_sequenceBlock[*childIndex];
-            assert(sequenceP->getProgramBlockIndex() == *blockP);
-        }
-
-        blockP++;
+        sequenceNodeP = getChildNode(sequenceNodeP, *blockP++);
     }
 
-    return (int)(sequenceP - _sequenceBlock);
+    return (int)(sequenceNodeP - _sequenceBlock);
 }
 
 void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, bool isLoop) {

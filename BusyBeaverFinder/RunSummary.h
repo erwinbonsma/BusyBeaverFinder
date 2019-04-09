@@ -20,19 +20,16 @@ typedef char ProgramBlockIndex;
 const int maxRunBlockHistoryLength = 1024;
 
 // Should both be set such that is is never the limiting factor for hang detection
-const int maxSequenceStarts = 16;
-const int numSequenceBlocks = 512;
+const int maxNumSequenceBlocks = 512;
 
 
-class RunBlockSequence {
+class RunBlockSequenceNode {
     friend class RunSummary;
 
     ProgramBlockIndex _programBlockIndex;
 
-    int _children[2];
-
-    // Creates child as needed
-    void getChild(ProgramBlockIndex programBlockIndex);
+    int _childIndex;
+    int _siblingIndex;
 
     void init(ProgramBlockIndex programBlockIndex);
 
@@ -80,16 +77,15 @@ class RunSummary {
     // Pointer to current top of the stack
     RunBlock* _runBlockHistoryP = nullptr;
 
-    RunBlockSequence _sequenceBlock[numSequenceBlocks];
-    int _numSequenceStarts;
-    int _nextSequenceIndex;
+    RunBlockSequenceNode _sequenceBlock[maxNumSequenceBlocks];
+    int _numSequenceBlocks;
 
     void freeDynamicArrays();
 
     // Returns the length of the loop if one is detected. Returns zero otherwise.
     int detectLoop();
 
-    RunBlockSequence* findSequenceStart(ProgramBlockIndex targetIndex);
+    RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, ProgramBlockIndex targetIndex);
     int getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP);
 
     // Creates a run block for the programs blocks from startP (inclusive) to endP (exclusive)

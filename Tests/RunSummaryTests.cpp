@@ -94,8 +94,8 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
     }
     SECTION( "MultiBlockLoopWithPrematureExit" ) {
         // Same as previous, but loop is aborted prematurely
-        ProgramBlockIndex blocks[] = {1, 3, 5, 7, 5, 6, 5, 7, 5, 7, 5, 6, -1};
-        int expected[] {0,2, 1,3, 2,1, 1,5, -1};
+        ProgramBlockIndex blocks[] = {1, 3, 5, 7, 5, 7, 5, 6, 5, 7, 5, 7, 5, 6, -1};
+        int expected[] {0,2, 1,5, 2,1, 1,5, -1};
 
         REQUIRE(executeRunSummaryTest(blocks, expected));
     }
@@ -110,6 +110,23 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
         // Execution contains multiple multi-block switches
         ProgramBlockIndex blocks[] = {1, 3, 5, 5, 4, 7, 5, 5, 4, 6, 9, 5, 5, -1};
         int expected[] {0,2, 1,2, 2,2, 1,2, 3,3, 1,2, -1};
+
+        REQUIRE(executeRunSummaryTest(blocks, expected));
+    }
+    SECTION( "ManyLoopExits" ) {
+        // Loop that has three different exits
+        ProgramBlockIndex blocks[] = {1,1, 2, 1,1, 3, 1,1, 4, 1,1, 2, 1,1, 4, 1,1, 3, 1,1, -1};
+        int expected[] {0,2, 1,1, 0,2, 2,1, 0,2, 3,1, 0,2, 1,1, 0,2, 3,1, 0,2, 2,1, 0,2, -1};
+
+        REQUIRE(executeRunSummaryTest(blocks, expected));
+    }
+}
+
+TEST_CASE( "RunSummaryFailing", "[util][runsummary][.fail]" ) {
+    SECTION( "LoopWithRepeatedProgramBlocks" ) {
+        // Loop that contains some repeated run blocks
+        ProgramBlockIndex blocks[] = {1, 2,3,2,4,2,3,2,4, 5, 2,3,2,4,2,3,2,4, 5, -1};
+        int expected[] {0,1, 1,8, 2,1, 1,8, -1};
 
         REQUIRE(executeRunSummaryTest(blocks, expected));
     }
