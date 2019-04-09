@@ -13,8 +13,6 @@
 
 #include "Utils.h"
 
-#include "ExhaustiveSearcher.h"
-
 bool compareArrays(int* array1, int* array2, int len) {
     for (int i = 0; i < len; i++) {
         if (array1[i] != array2[i]) {
