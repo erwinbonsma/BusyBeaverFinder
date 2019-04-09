@@ -26,7 +26,16 @@ int makePowerOfTwo(int val);
 InstructionPointer nextInstructionPointer(ProgramPointer insP);
 
 void calculateZArray(const char* input, int* output, int len);
-int findPeriod(const char *input, int* buf, int len);
+int findPeriod(const char* input, int* buf, int len);
+
+// Checks if the "input" array, containing "len" elements, ends with a repeated sequence.
+// It will return the length of this sequence if one is found, and zero otherwise.
+//
+// Examples:
+// aaaaabcabc => 3
+// abcdabc => 0
+// abcdee => 1
+int findRepeatedSequence(const int* input, int* buf, int len);
 
 Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
 

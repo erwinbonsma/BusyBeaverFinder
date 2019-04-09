@@ -108,6 +108,11 @@ int findPeriod(const char* input, int* buf, int len) {
     return len;
 }
 
+int findRepeatedSequence(const int* input, int* buf, int len) {
+    // TODO: implement
+    return 0;
+}
+
 int readNextChar(FILE* file) {
     int ch;
     bool skip = false;
