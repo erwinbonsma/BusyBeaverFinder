@@ -13,7 +13,7 @@
 
 class ProgramBlock;
 
-typedef char ProgramBlockIndex;
+typedef int ProgramBlockIndex;
 
 // Should be set such that it never is the limiting factor for hang detection (instead, the logic
 // of the available/implemented hang detectors should be)
@@ -80,10 +80,11 @@ class RunSummary {
     RunBlockSequenceNode _sequenceBlock[maxNumSequenceBlocks];
     int _numSequenceBlocks;
 
-    void freeDynamicArrays();
+    // Helper array required by findRepeatedSequence utility function
+    // Note: It is not owned by this class (and should therefore not be freed by it)
+    int* _helperBuf;
 
-    // Returns the length of the loop if one is detected. Returns zero otherwise.
-    int detectLoop();
+    void freeDynamicArrays();
 
     RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, ProgramBlockIndex targetIndex);
     int getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP);
@@ -97,7 +98,7 @@ public:
     void reset();
 
     // Set the capacity (in program blocks)
-    void setCapacity(int capacity);
+    void setCapacity(int capacity, int* helperBuf);
 
     // Returns true if this resulted in the creation of one or more RunBlocks
     bool recordProgramBlock(ProgramBlockIndex blockIndex);

@@ -56,8 +56,9 @@ bool checkRunSummary(RunSummary& runSummary, int* expected) {
 
 bool executeRunSummaryTest(ProgramBlockIndex* programBlocks, int* expectedRuns) {
     RunSummary runSummary;
+    int zArrayHelperBuf[32];
 
-    runSummary.setCapacity(64);
+    runSummary.setCapacity(64, zArrayHelperBuf);
 
     runSummary.reset();
 
@@ -120,9 +121,6 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
 
         REQUIRE(executeRunSummaryTest(blocks, expected));
     }
-}
-
-TEST_CASE( "RunSummaryFailing", "[util][runsummary][.fail]" ) {
     SECTION( "LoopWithRepeatedProgramBlocks" ) {
         // Loop that contains some repeated run blocks
         ProgramBlockIndex blocks[] = {1, 2,3,2,4,2,3,2,4, 5, 2,3,2,4,2,3,2,4, 5, -1};

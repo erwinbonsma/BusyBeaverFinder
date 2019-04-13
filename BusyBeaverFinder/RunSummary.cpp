@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "ProgramBlock.h"
+#include "Utils.h"
 
 void RunBlockSequenceNode::init(ProgramBlockIndex programBlockIndex) {
     _programBlockIndex = programBlockIndex;
@@ -35,11 +36,13 @@ RunSummary::~RunSummary() {
     freeDynamicArrays();
 }
 
-void RunSummary::setCapacity(int capacity) {
+void RunSummary::setCapacity(int capacity, int* helperBuf) {
     freeDynamicArrays();
 
     _programBlockHistory = new ProgramBlockIndex[capacity];
     _programBlockHistoryMaxP = _programBlockHistory + capacity;
+
+    _helperBuf = helperBuf;
 }
 
 void RunSummary::reset() {
@@ -93,20 +96,6 @@ void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* en
     (_runBlockHistoryP++)->init((int)(startP - _programBlockHistory), sequenceIndex, isLoop);
 }
 
-int RunSummary::detectLoop() {
-    ProgramBlockIndex* blockP = _programBlockHistoryP;
-
-    while (--blockP >= _programBlockPendingP) {
-        if (*blockP == *_programBlockHistoryP) {
-            // Current program block already encountered, so we're in a loop
-            return (int)(_programBlockHistoryP - blockP);
-        }
-    }
-
-    // Not in loop yet
-    return 0;
-}
-
 bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
 //    std::cout << "recordProgramBlock #" << (int)blockIndex << std::endl;
 
@@ -116,10 +105,14 @@ bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
     bool newRunBlocks = false;
 
     if (_loopP == nullptr) {
-        int loopLen = detectLoop();
+        int loopLen = findRepeatedSequence(
+            _programBlockPendingP,
+            _helperBuf,
+            (int)(_programBlockHistoryP - _programBlockPendingP + 1)
+        );
         if (loopLen > 0) {
 //            std::cout << "Loop detected (len = " << loopLen << ")" << std::endl;
-            ProgramBlockIndex* loopStartP = _programBlockHistoryP - loopLen;
+            ProgramBlockIndex* loopStartP = _programBlockHistoryP - loopLen * 2 + 1;
 
             if (loopStartP != _programBlockPendingP) {
                 createRunBlock(_programBlockPendingP, loopStartP, false);
