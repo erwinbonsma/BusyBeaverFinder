@@ -108,17 +108,19 @@ int findPeriod(const char* input, int* buf, int len) {
     return len;
 }
 
-// This implementation is very similar to that of findPeriod. The only two changes are:
+// This implementation is very similar to that of findPeriod. The only three changes are:
 // - Reversed iteration direction over the input sequence (moving from end towards start)
 // - Changed termination criterion and return value
+// - Only iterate over half the sequence (as it will not find a match anymore beyond that)
 int findRepeatedSequence(const int* input, int* buf, int len) {
     int lastpos = len - 1;
+    int halflen = len / 2;
     int l, r;
     l = r = 0;
 
     buf[0] = 0; // Should not be used
     int z;
-    for (int i = 1; i < len; i++) {
+    for (int i = 1; i <= halflen; i++) {
         if (i > r) {
             l = r = i;
             while (r < len && input[lastpos - (r - l)] == input[lastpos - r]) {
