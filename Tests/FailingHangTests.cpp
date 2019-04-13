@@ -22,6 +22,68 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     settings.maxPeriodicHangDetectAttempts = 6;
     searcher.configure(settings);
 
+    SECTION( "6x6-NonUniformCountingLoop1" ) {
+        // Classification: Periodic, Changing, Non-Uniform, Sentry Go
+        //
+        // Two values oscillate between zero and non-zero values. A third value is changing by one
+        // each cycle.
+        //
+        //       * *
+        //   * * _ o *
+        //   o _ o o *
+        //   _ * o _ *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-DelayedHang2" ) {
+        // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
+        // around step 410, and every period it extends the sequence with three cells.
+        // It generates the following sequence: -2 4 2 -2 4 2 -2 4 2 -2 4 2 -1 3 2 -2 3 1 -1 3 2 0
+        // The periodic loop goes over the last nine values, leaving -2 4 2 in its wake.
+        //
+        // Note: The Period Hang Detection based on the CycleDetector used to detect this. The new
+        // implementation based on RunSummary not anymore, as it is a multi-level loop.
+        //
+        // #14(78 81 60)
+        // #4(25 43 25 43 25 43 25 43 25)
+        // #11(42 79 60 25 42)
+        // #8(79 61 79 61 79 61 79 61 79 61 79 61 79 61 79 61)
+        // #14(78 81 60)
+        // ... etc
+        //
+        // This should be detected again by the Sweep Hang Detection once it uses RunSummariey as
+        // well.
+        //
+        //       *
+        //   * _ o _ *
+        //   * * o _
+        //   _ o o *
+        // * _ _ o
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
     SECTION( "6x6-RegularSweepWithDoubleShiftFailing" ) {
         // This program has two noteworthy features:
         // - Its mid-sequence turning point does not have a fixed value. It briefly becomes zero,
@@ -294,7 +356,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
     SECTION( "6x6-ComplexSweepTurn1" ) {
         // Program with a complex turn at its left side. All values in the sequence are positive,
@@ -342,7 +404,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
     SECTION( "6x6-ExceedRightEndSweepPoint" ) {
         // The sweep reversal at the right consists of two left-turns, at different data cells.

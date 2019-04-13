@@ -26,7 +26,6 @@ void PeriodicHangDetector::PeriodicHangDetector::start() {
 bool PeriodicHangDetector::insideLoop() {
     RunSummary& runSummary = _searcher.getRunSummary();
 
-    runSummary.dump();
     if (!runSummary.isInsideLoop()) {
         // Not in a loop (yet)
         return false;
@@ -36,8 +35,9 @@ bool PeriodicHangDetector::insideLoop() {
     _loopRunBlockIndex = runSummary.getNumRunBlocks();
     _periodicHangCheckAt = runSummary.getNumProgramBlocks() + _loopPeriod;
 
-    std::cout << "loop period = " << _loopPeriod << std::endl;
-    runSummary.dump();
+//    std::cout << "loop period = " << _loopPeriod << std::endl;
+//    _searcher.dump();
+//    runSummary.dump();
 
     _searcher.getDataTracker().reset();
     _searcher.getDataTracker().captureSnapShot();
@@ -57,7 +57,7 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
         return insideLoop() ? HangDetectionResult::ONGOING : HangDetectionResult::FAILED;
     }
 
-    if (_loopRunBlockIndex != runSummary.getNumRunBlocks()) {
+    if (!runSummary.isInsideLoop() || _loopRunBlockIndex != runSummary.getNumRunBlocks()) {
         // Apparently not same periodic loop anymore
         return HangDetectionResult::FAILED;
     }
@@ -65,8 +65,7 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
     Data& data = _searcher.getData();
     DataTracker& dataTracker = _searcher.getDataTracker();
 
-//    _searcher.getProgram().dump();
-//    data.dump();
+//    _searcher.dump();
 //    dataTracker.dump();
 
     if (

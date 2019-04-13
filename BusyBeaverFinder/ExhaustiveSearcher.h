@@ -50,6 +50,9 @@ class ExhaustiveSearcher {
     RunSummary _runSummary;
     DataTracker _dataTracker;
 
+    // Helper buffer to store temporary Z-Array that is needed by some utility functions
+    int* _zArrayHelperBuf;
+
     // Determines when to abort the search
     SearchMode _searchMode;
 

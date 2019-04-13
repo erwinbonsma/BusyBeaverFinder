@@ -35,6 +35,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     _periodicHangDetector = new PeriodicHangDetector(*this);
     _regularSweepHangDetector = new RegularSweepHangDetector(*this);
+    _zArrayHelperBuf = nullptr;
 
     // Init defaults
     _settings.maxSteps = 1024;
@@ -51,6 +52,7 @@ ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
     delete _periodicHangDetector;
     delete _regularSweepHangDetector;
+    delete[] _zArrayHelperBuf;
 }
 
 void ExhaustiveSearcher::configure(SearchSettings settings) {
@@ -66,7 +68,12 @@ void ExhaustiveSearcher::reconfigure() {
     int maxHangSamplePeriod =
         _settings.initialHangSamplePeriod << _settings.maxPeriodicHangDetectAttempts;
 
-    _runSummary.setCapacity(_settings.maxSteps);
+    if (_zArrayHelperBuf != nullptr) {
+        delete[] _zArrayHelperBuf;
+    }
+    _zArrayHelperBuf = new int[_settings.maxSteps / 2];
+
+    _runSummary.setCapacity(_settings.maxSteps, _zArrayHelperBuf);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 
     _regularSweepHangDetector->setMaxSweepCount(_settings.maxRegularSweepExtensionCount);
