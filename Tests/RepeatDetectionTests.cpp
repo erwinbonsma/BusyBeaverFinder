@@ -52,4 +52,24 @@ TEST_CASE( "RepeatDetection", "[util][repeat]" ) {
 
         REQUIRE(len == 0);
     }
+    SECTION( "2341234" ) {
+        int input[] = {2, 3, 4, 1, 2, 3, 4};
+        int len = findRepeatedSequence(input, buf, 7);
+
+        REQUIRE(len == 0);
+    }
+    SECTION( "12341234" ) {
+        int input[] = {1, 2, 3, 4, 1, 2, 3, 4};
+        int len = findRepeatedSequence(input, buf, 8);
+
+        REQUIRE(len == 4);
+    }
+    SECTION( "12344444" ) {
+        int input[] = {1, 2, 3, 4, 4, 4, 4, 4};
+        int len = findRepeatedSequence(input, buf, 8);
+
+        // The algorithm is not expected to find the longest repeat sequence. It is only used to
+        // signal the first repeat.
+        REQUIRE(len == 1);
+    }
 }
