@@ -50,6 +50,29 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
+    SECTION( "6x6-NonUniformCountingLoop2" ) {
+        // Periodic hang which changes two values. One value is decreased by one each iteration,
+        // another is increased by three each iteration. A third value oscillates between -3 and 0.
+        //
+        // Note: This program only differs in one instruction from the previous one, but its
+        // execution differs significantly.
+        //
+        //       * *
+        //   * * _ o *
+        //   o _ o o *
+        //   _ * o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN,Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
     SECTION( "6x6-DelayedHang2" ) {
         // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
         // around step 410, and every period it extends the sequence with three cells.

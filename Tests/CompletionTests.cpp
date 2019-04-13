@@ -53,6 +53,19 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
 
         REQUIRE(tracker.getTotalSuccess() == 1);
     }
+    SECTION( "ComplexCountToNine" ) {
+        // Program that was wrongly reported as hanging by an early version of the Periodic Hang
+        // Detector refactored to use RunSummary.
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalSuccess() == 1);
+    }
 }
 
 TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {

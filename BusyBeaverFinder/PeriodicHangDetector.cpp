@@ -66,6 +66,7 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
     DataTracker& dataTracker = _searcher.getDataTracker();
 
 //    _searcher.dump();
+//    runSummary.dump();
 //    dataTracker.dump();
 
     if (
@@ -75,6 +76,8 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
         SnapShotComparison result = dataTracker.compareToSnapShot();
         if (result != SnapShotComparison::IMPACTFUL) {
             return HangDetectionResult::HANGING;
+        } else {
+            return HangDetectionResult::FAILED;
         }
     }
     else {

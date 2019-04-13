@@ -263,7 +263,10 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
         _numSteps += _block->getNumSteps();
 
-        _runSummary.recordProgramBlock((ProgramBlockIndex)_block->getStartIndex());
+        if (_numHangDetectAttempts >= 0) {
+            // Only track execution while hang detection is still active
+            _runSummary.recordProgramBlock((ProgramBlockIndex)_block->getStartIndex());
+        }
 
         if (_activeHangCheck != nullptr) {
             HangDetectionResult result = _activeHangCheck->detectHang();
@@ -401,6 +404,12 @@ processInstruction:
 
         _pp.p = insP;
         _numSteps++;
+
+        // Needed when hang detection is tested. TODO: Find out why.
+        if (_numSteps >= _settings.maxSteps) {
+            _tracker->reportAssumedHang();
+            goto backtrack;
+        }
 
 //        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
     }

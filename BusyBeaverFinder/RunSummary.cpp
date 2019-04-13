@@ -93,14 +93,15 @@ int RunSummary::getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* e
 void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, bool isLoop) {
     int sequenceIndex = getSequenceIndex(startP, endP);
 
+    assert((_runBlockHistoryP - _runBlockHistory) < maxRunBlockHistoryLength);
     (_runBlockHistoryP++)->init((int)(startP - _programBlockHistory), sequenceIndex, isLoop);
 }
 
 bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
 //    std::cout << "recordProgramBlock #" << (int)blockIndex << std::endl;
 
-    *_programBlockHistoryP = blockIndex;
     assert(_programBlockHistoryP != _programBlockHistoryMaxP);
+    *_programBlockHistoryP = blockIndex;
 
     bool newRunBlocks = false;
 
