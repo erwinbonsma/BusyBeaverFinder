@@ -29,7 +29,6 @@ public:
     virtual HangType hangType() = 0;
 
     virtual void start() {};
-    virtual void signalLeftTurn() {}
     virtual void signalLoopExit() {}
     virtual HangDetectionResult detectHang() = 0;
 };

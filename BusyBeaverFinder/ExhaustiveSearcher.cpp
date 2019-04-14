@@ -320,10 +320,6 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
         if (_data.val() == 0) {
             _block = _block->zeroBlock();
-
-            if (_activeHangCheck != nullptr) {
-                _activeHangCheck->signalLeftTurn();
-            }
         } else {
             _block = _block->nonZeroBlock();
         }
