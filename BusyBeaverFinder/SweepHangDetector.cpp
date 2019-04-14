@@ -109,12 +109,11 @@ bool SweepHangDetector::isSweepDiverging() {
     return dataTracker.sweepHangDetected(_midSequenceReveralDp);
 }
 
-// Returns "true" if detection should continue
-bool SweepHangDetector::verifySweepContract() {
+void SweepHangDetector::checkSweepContract() {
     if (!isSweepDiverging()) {
         // Values do not diverge so we cannot conclude it is a hang.
         _status = HangDetectionResult::FAILED;
-        return false;
+        return;
     }
 
     // We should at least sample each different sweep-loop
@@ -133,18 +132,18 @@ bool SweepHangDetector::verifySweepContract() {
     int numSweepsSampled = _sweepCount - 1;
     if (numSweepsSampled < numSweepsToSample) {
         // Not yet sufficient sweeps to conclude that values always diverge (so that it is a hang)
-        return true;
+        return;
     }
 
     Data& data = _searcher.getData();
     if (_maxSweepShift >= (data.getMaxVisitedP() - data.getMinVisitedP())) {
         // The sequence is too short. This may be a glider instead.
         _status = HangDetectionResult::FAILED;
-        return false;
+        return;
     }
 
     _status = HangDetectionResult::HANGING;
-    return false;
+    return;
 }
 
 void SweepHangDetector::signalLoopExit() {
@@ -170,13 +169,13 @@ void SweepHangDetector::signalLoopExit() {
             _midSequenceReveralDp = dp;
         }
     } else {
-        if (!verifySweepContract()) {
-            return;
-        }
+        checkSweepContract();
     }
 
-    _sweepCount++;
-    _searcher.getDataTracker().captureSnapShot();
+    if (_status == HangDetectionResult::ONGOING) {
+        _sweepCount++;
+        _searcher.getDataTracker().captureSnapShot();
+    }
 }
 
 HangDetectionResult SweepHangDetector::detectHang() {

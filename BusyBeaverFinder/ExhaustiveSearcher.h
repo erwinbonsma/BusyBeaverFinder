@@ -23,6 +23,7 @@
 #include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
 #include "SweepHangDetector.h"
+#include "GliderHangDetector.h"
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -78,6 +79,7 @@ class ExhaustiveSearcher {
     HangDetector* _activeHangCheck;
     PeriodicHangDetector* _periodicHangDetector;
     SweepHangDetector* _sweepHangDetector;
+    GliderHangDetector* _gliderHangDetector;
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;

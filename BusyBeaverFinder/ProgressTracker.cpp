@@ -183,6 +183,7 @@ void ProgressTracker::dumpHangStats() {
     << "  #No Exit = " << _totalHangsByType[(int)HangType::NO_EXIT] << std::endl
     << "  #Periodic = " << _totalHangsByType[(int)HangType::PERIODIC] << std::endl
     << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl
+    << "  #Glider = " << _totalHangsByType[(int)HangType::APERIODIC_GLIDER] << std::endl
     << "  #Undetected = " << _totalHangsByType[(int)HangType::UNDETECTED] << std::endl;
 }
 

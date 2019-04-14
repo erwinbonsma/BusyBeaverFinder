@@ -35,6 +35,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     _periodicHangDetector = new PeriodicHangDetector(*this);
     _sweepHangDetector = new SweepHangDetector(*this);
+    _gliderHangDetector = new GliderHangDetector(*this);
     _zArrayHelperBuf = nullptr;
 
     // Init defaults
@@ -178,7 +179,11 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
     }
 
     if (_activeHangCheck == nullptr && attempts < _settings.maxRegularSweepHangDetectAttempts) {
-        _activeHangCheck = _sweepHangDetector;
+        if (attempts % 2 == 0) {
+            _activeHangCheck = _sweepHangDetector;
+        } else {
+            _activeHangCheck = _gliderHangDetector;
+        }
     }
 
     if (_activeHangCheck != nullptr) {

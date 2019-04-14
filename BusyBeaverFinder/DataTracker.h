@@ -66,6 +66,9 @@ public:
     // Returns "true" if a sweep hang is detected
     bool sweepHangDetected(int* sweepMidTurningPoint);
 
+    // Returns "true" if a glider hang is detected
+    bool gliderHangDetected();
+
     void dump();
 };
 

@@ -46,7 +46,7 @@ class SweepHangDetector : public HangDetector {
     int determineMaxSweepShift();
 
     bool isSweepDiverging();
-    bool verifySweepContract();
+    void checkSweepContract();
 
 public:
     SweepHangDetector(ExhaustiveSearcher& searcher);

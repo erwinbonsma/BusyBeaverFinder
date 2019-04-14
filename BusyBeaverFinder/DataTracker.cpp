@@ -277,6 +277,112 @@ bool DataTracker::sweepHangDetected(int* sweepMidTurningPoint) {
     return true;
 }
 
+/* Checks for glider hangs.
+ *
+ * This check should be invoked with two snapshots.
+ */
+bool DataTracker::gliderHangDetected() {
+    long _deltaNew = _data.getMaxVisitedP() - _data.getMinVisitedP();
+    long _deltaOld = _newSnapShotP->maxVisitedP - _newSnapShotP->minVisitedP;
+
+    if (_deltaNew != _deltaOld) {
+        // The number of cells visited differ
+        return false;
+    }
+
+    assert(_dataBufP == _data.getDataBuffer());
+    long shift = _data.getDataPointer() - _newSnapShotP->dataP;
+
+    if (shift == 0) {
+        // A glider is expected to move
+        return false;
+    }
+
+    int *oldBeforeP = _oldSnapShotP->buf + (_oldSnapShotP->minVisitedP - _dataBufP);
+    int *oldAfterP = _newSnapShotP->buf + (_newSnapShotP->minVisitedP - _dataBufP);
+    int *newBeforeP = oldAfterP;
+    // Expanded for clarity
+    int *newAfterP = _dataBufP + (_data.getMinVisitedP() - _dataBufP);
+
+    int numDeltas = 0;
+
+    do {
+        if (
+            *oldBeforeP != *newBeforeP ||
+            *oldAfterP != *newAfterP
+        ) {
+            // The delta of the latest change must be at least as large as the previous delta
+            if (abs(*newAfterP - *newBeforeP) < abs(*oldAfterP - *oldBeforeP)) {
+                return false;
+            }
+
+            // Neither of the deltas should not have gone through zero (as this may result in
+            // different execution flows, possibly breaking the loop).
+            if (
+                (*newAfterP == 0) ||
+                (*newAfterP > 0 && (*oldAfterP <= 0 || *newBeforeP <= 0 || *oldBeforeP <= 0)) ||
+                (*newAfterP < 0 && (*oldAfterP >= 0 || *newBeforeP >= 0 || *oldBeforeP >= 0))
+            ) {
+                return false;
+            }
+
+            // The change should be moving away from zero. Otherwise the loop may be broken once
+            // the value becomes zero.
+            if (
+                (*newAfterP > 0 && (*newAfterP - *newBeforeP) < 0) ||
+                (*newAfterP < 0 && (*newAfterP - *newBeforeP) > 0)
+            ) {
+                return false;
+            }
+
+            if (++numDeltas > 1) {
+                // Only one loop-counter is expected (for simple gliders)
+                return false;
+            }
+        }
+
+        oldBeforeP++;
+        newBeforeP++;
+        oldAfterP++;
+        newAfterP++;
+    } while (newAfterP <= _data.getMaxVisitedP());
+
+    if (shift > 0) {
+        // Check that the newly visited values were all zeros
+        newBeforeP = _newSnapShotP->buf + (_data.getMaxVisitedP() - _dataBufP);
+        while (shift > 0) {
+            if (*newBeforeP != 0) {
+                return false;
+            }
+            newBeforeP++;
+            shift--;
+        }
+
+        // Check that there are only zeros ahead. Other values may break the repetitive behavior
+        if (_data.getMaxVisitedP() < _data.getMaxBoundP()) {
+            return false;
+        }
+    }
+    else if (shift < 0) {
+        // Check that the newly visited values were all zeros
+        newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _dataBufP);
+        while (shift < 0) {
+            if (*newBeforeP != 0) {
+                return false;
+            }
+            newBeforeP++; // Note: The increase is intentional
+            shift++;
+        }
+
+        // Check that there are only zeros ahead. Other values may break the repetitive behavior
+        if (_data.getMinVisitedP() > _data.getMinBoundP()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void DataTracker::dump() {
     if (_newSnapShotP != nullptr) {
         std::cout << "SNAP1: min = " << (_newSnapShotP->minVisitedP - _dataBufP)
