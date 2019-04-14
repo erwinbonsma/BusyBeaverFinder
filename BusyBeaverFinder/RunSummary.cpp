@@ -19,10 +19,10 @@ void RunBlockSequenceNode::init(ProgramBlockIndex programBlockIndex) {
     _siblingIndex = 0;
 }
 
-void RunBlock::init(int startIndex, int sequenceIndex, bool isLoop) {
+void RunBlock::init(int startIndex, int sequenceIndex, int loopPeriod) {
     _startIndex = startIndex;
     _sequenceIndex = sequenceIndex;
-    _isLoop = isLoop;
+    _loopPeriod = loopPeriod;
 }
 
 void RunSummary::freeDynamicArrays() {
@@ -106,21 +106,21 @@ bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
     bool newRunBlocks = false;
 
     if (_loopP == nullptr) {
-        int loopLen = findRepeatedSequence(
+        int loopPeriod = findRepeatedSequence(
             _programBlockPendingP,
             _helperBuf,
             (int)(_programBlockHistoryP - _programBlockPendingP + 1)
         );
-        if (loopLen > 0) {
-//            std::cout << "Loop detected (len = " << loopLen << ")" << std::endl;
-            ProgramBlockIndex* loopStartP = _programBlockHistoryP - loopLen * 2 + 1;
+        if (loopPeriod > 0) {
+//            std::cout << "Loop detected (period = " << loopPeriod << ")" << std::endl;
+            ProgramBlockIndex* loopStartP = _programBlockHistoryP - loopPeriod * 2 + 1;
 
             if (loopStartP != _programBlockPendingP) {
-                createRunBlock(_programBlockPendingP, loopStartP, false);
+                createRunBlock(_programBlockPendingP, loopStartP, 0);
             }
-            createRunBlock(loopStartP, _programBlockHistoryP, true);
+            createRunBlock(loopStartP, _programBlockHistoryP, loopPeriod);
 
-            _loopP = _programBlockHistoryP - loopLen;
+            _loopP = _programBlockHistoryP - loopPeriod;
             _programBlockPendingP = nullptr;
             newRunBlocks = true;
         }

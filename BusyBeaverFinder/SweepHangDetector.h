@@ -15,55 +15,47 @@
 #include "HangDetector.h"
 
 class ExhaustiveSearcher;
+class RunBlock;
 
 class SweepHangDetector : public HangDetector {
 
-    // Configuration
-    int _maxSweepCount;
+    ExhaustiveSearcher& _searcher;
 
     //----------------------
     // Hang detection state
 
-    // Indicates if the sweep starts at the right or left of the data sequence.
-    bool _isStartAtRight;
+    HangDetectionResult _status;
 
-    // DP at moment of last sweep reversal (which was then zero, triggering a left turn). It is
-    // used to check if the program actually carries out a sweep.
-    DataPointer _prevSweepTurnDp;
+    // The last bounds of sweep.
+    DataPointer _reversalDp[2];
 
-    // The current bounds of sweep. They are used to check that the sweep area does not shrink
-    DataPointer _leftReversalDp, _rightReversalDp;
-
-    // The direction of the current sweep (or upcoming sweep, in case a turn is in progress)
-    bool _movingRightwards;
+    // The mid-sequence reveral point, if any. If there is one, it should be fixed to zero during
+    // the sweep loops
+    DataPointer _midSequenceReveralDp;
 
     // The number of sweeps so far.
     int _sweepCount;
 
-protected:
-    ExhaustiveSearcher& _searcher;
+    // The loop in the meta-run summary (it is used to verify that we remain inside this loop)
+    int _metaLoopIndex;
 
-    int sweepCount() { return _sweepCount; }
+    // The maximum amount DP shifts within a program block during a sweep run block.
+    int _maxSweepShift;
 
-    bool isStartAtRight() { return _isStartAtRight; }
-    bool movingRightwards() { return _movingRightwards; }
+    int getMaxShiftForLoop(RunBlock* runBlock);
+    int determineMaxSweepShift();
 
-    // Invoked when the sweep started (this is always at one end of the data sequence)
-    virtual void sweepStarted() = 0;
-
-    // Invoked when the sweep reversed
-    virtual void sweepReversed() = 0;
-
-    // Invoked when the assumed sweep was not a sweep. The hang detection should be aborted.
-    virtual void sweepBroken() = 0;
+    bool isSweepDiverging();
+    bool verifySweepContract();
 
 public:
     SweepHangDetector(ExhaustiveSearcher& searcher);
 
-    void setMaxSweepCount(int val) { _maxSweepCount = val; }
+    HangType hangType() { return HangType::REGULAR_SWEEP; }
 
-    virtual void start();
-    void signalLeftTurn();
+    void start();
+    void signalLoopExit();
+    HangDetectionResult detectHang();
 };
 
 #endif /* SweepHangDetector_h */

@@ -37,6 +37,7 @@ void ProgressTracker::report() {
 //    _searcher.getProgram().dump();
 //    _searcher.getCompiledProgram().dump();
 //    _searcher.getProgram().dumpWeb();
+//    _searcher.dumpHangDetection();
 
 //    if (_searcher.atTargetProgram()) {
 //        std::cout << "Target program generated" << std::endl;

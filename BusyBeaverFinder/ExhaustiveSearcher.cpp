@@ -34,15 +34,21 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     initInstructionStack(width * height);
 
     _periodicHangDetector = new PeriodicHangDetector(*this);
-    _regularSweepHangDetector = new RegularSweepHangDetector(*this);
+    _sweepHangDetector = new SweepHangDetector(*this);
     _zArrayHelperBuf = nullptr;
 
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.initialHangSamplePeriod = 4;
     _settings.maxPeriodicHangDetectAttempts = 5;
-    _settings.maxRegularSweepHangDetectAttempts = 3;
-    _settings.maxRegularSweepExtensionCount = 5;
+
+    // Temporarily setting this number high so that the hang detector will detect all the hangs it
+    // is able to. The issue is that detection can sometimes kick-in before the actual hang has
+    // started.
+    //
+    // TODO: Find a better way to switch Hang Detectors.
+    _settings.maxRegularSweepHangDetectAttempts = 128;
+
     _settings.testHangDetection = false;
     _settings.disableNoExitHangDetection = false;
     reconfigure();
@@ -51,7 +57,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
     delete _periodicHangDetector;
-    delete _regularSweepHangDetector;
+    delete _sweepHangDetector;
     delete[] _zArrayHelperBuf;
 }
 
@@ -76,8 +82,6 @@ void ExhaustiveSearcher::reconfigure() {
     _runSummary[0].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
     _runSummary[1].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
-
-    _regularSweepHangDetector->setMaxSweepCount(_settings.maxRegularSweepExtensionCount);
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -124,7 +128,6 @@ void ExhaustiveSearcher::dumpSettings() {
     << ", IniHangSamplePeriod = " << _settings.initialHangSamplePeriod
     << ", MaxPeriodicHangDetectAttempts = " << _settings.maxPeriodicHangDetectAttempts
     << ", MaxRegularSweepDetectAttempts = " << _settings.maxRegularSweepHangDetectAttempts
-    << ", MaxRegularSweepExtensionCount = " << _settings.maxRegularSweepExtensionCount
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }
@@ -175,7 +178,7 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
     }
 
     if (_activeHangCheck == nullptr && attempts < _settings.maxRegularSweepHangDetectAttempts) {
-        _activeHangCheck = _regularSweepHangDetector;
+        _activeHangCheck = _sweepHangDetector;
     }
 
     if (_activeHangCheck != nullptr) {
@@ -239,6 +242,26 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 //        _compiledProgram.dumpBlock(_block);
 //        _data.dump();
 
+        // Record block before executing it. This way, when signalling a loop exit, the value
+        // that triggered this, which typically is zero, is still present in the data values.
+        if (_numHangDetectAttempts >= 0) {
+            // Only track execution while hang detection is still active
+
+            bool wasInLoop = _runSummary[0].isInsideLoop();
+            int numRunBlocks = _runSummary[0].getNumRunBlocks();
+
+            if (_runSummary[0].recordProgramBlock((ProgramBlockIndex)_block->getStartIndex())) {
+                for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
+                    RunBlock* runBlock = _runSummary[0].runBlockAt(i);
+                    _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
+                }
+            }
+
+            if (wasInLoop && !_runSummary[0].isInsideLoop() && _activeHangCheck != nullptr) {
+                _activeHangCheck->signalLoopExit();
+            }
+        }
+
         int amount = _block->getInstructionAmount();
         if (_block->isDelta()) {
             if (amount > 0) {
@@ -269,24 +292,6 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
         }
 
         _numSteps += _block->getNumSteps();
-
-        if (_numHangDetectAttempts >= 0) {
-            // Only track execution while hang detection is still active
-
-            bool wasInLoop = _runSummary[0].isInsideLoop();
-            int numRunBlocks = _runSummary[0].getNumRunBlocks();
-
-            if (_runSummary[0].recordProgramBlock((ProgramBlockIndex)_block->getStartIndex())) {
-                for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
-                    RunBlock* runBlock = _runSummary[0].runBlockAt(i);
-                    _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
-                }
-            }
-
-            if (wasInLoop && !_runSummary[0].isInsideLoop() && _activeHangCheck != nullptr) {
-                _activeHangCheck->signalLoopExit();
-            }
-        }
 
         if (_activeHangCheck != nullptr) {
             HangDetectionResult result = _activeHangCheck->detectHang();

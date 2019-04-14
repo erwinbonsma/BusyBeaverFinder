@@ -41,16 +41,21 @@ class RunBlock {
 
     int _startIndex;
     int _sequenceIndex;
-    bool _isLoop;
+    int _loopPeriod;
+
+    void init(int startIndex, int sequenceIndex, int loopPeriod);
+
+public:
+    bool isLoop() { return _loopPeriod != 0; }
+    int getLoopPeriod() { return _loopPeriod; }
 
     // Returns the index into program block stack of the run summary where this run block started.
     int getStartIndex() { return _startIndex; }
 
-    void init(int startIndex, int sequenceIndex, bool isLoop);
-
-public:
-    bool isLoop() { return _isLoop; }
-
+    // Returns a unique identifier for this (type of) run block. Different run blocks have the same
+    // index when:
+    // - their execution sequences match exactly, or
+    // - they represent the same loop. In this case, the number of loop iterations may differ
     int getSequenceIndex() { return _sequenceIndex; }
 };
 
@@ -109,6 +114,7 @@ public:
     int getNumProgramBlocks() { return (int)(_programBlockHistoryP - _programBlockHistory); }
     int getNumRunBlocks() { return (int)(_runBlockHistoryP - _runBlockHistory); }
 
+    ProgramBlockIndex programBlockIndexAt(int index) { return _programBlockHistory[index]; }
     RunBlock* runBlockAt(int index) { return _runBlockHistory + index; }
 
     // Returns the length in program blocks of the given run block.

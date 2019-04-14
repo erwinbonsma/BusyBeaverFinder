@@ -22,7 +22,7 @@
 
 #include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
-#include "RegularSweepHangDetector.h"
+#include "SweepHangDetector.h"
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -35,7 +35,6 @@ struct SearchSettings {
     int maxSteps;
     int maxPeriodicHangDetectAttempts;
     int maxRegularSweepHangDetectAttempts;
-    int maxRegularSweepExtensionCount;
     bool testHangDetection;
     bool disableNoExitHangDetection;
 };
@@ -78,7 +77,7 @@ class ExhaustiveSearcher {
 
     HangDetector* _activeHangCheck;
     PeriodicHangDetector* _periodicHangDetector;
-    RegularSweepHangDetector* _regularSweepHangDetector;
+    SweepHangDetector* _sweepHangDetector;
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;
@@ -116,6 +115,7 @@ public:
 
     DataTracker& getDataTracker() { return _dataTracker; }
     RunSummary& getRunSummary() { return _runSummary[0]; }
+    RunSummary& getMetaRunSummary() { return _runSummary[1]; }
 
     int getNumSteps() { return _numSteps; }
 

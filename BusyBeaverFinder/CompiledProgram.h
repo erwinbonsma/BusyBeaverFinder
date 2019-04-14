@@ -65,6 +65,7 @@ public:
     ProgramBlock* finalizeBlock(InstructionPointer endP);
     ProgramBlock* enterBlock(ProgramBlock* block);
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
+    ProgramBlock* getBlock(int startIndex) { return _blocks + _blockIndexLookup[startIndex]; }
 
     TurnDirection startTurnDirectionForBlock(ProgramBlock* block);
     ProgramPointer getStartProgramPointer(ProgramBlock* block, Program& program);

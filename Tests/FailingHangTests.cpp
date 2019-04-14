@@ -107,28 +107,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
-    SECTION( "6x6-RegularSweepWithDoubleShiftFailing" ) {
-        // This program has two noteworthy features:
-        // - Its mid-sequence turning point does not have a fixed value. It briefly becomes zero,
-        //   then becomes non-zero again.
-        // - When sweeping leftwards, it shifts left twice, which causes the strict regular hang
-        //   detection to fail (as skipped values could possibly have an impact)
-        //
-        //     * *
-        //   * o o _ *
-        //   o o _ *
-        // * _ _ o *
-        // * _ o *
-        // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-    }
     SECTION( "6x6-IrregularSweep") {
         // An irregular sweep. Its turning point at one end of the sequence varies. The reason is
         // that it shifts DP two positions, which means it can ignore a mid-sequence zero.
@@ -338,97 +316,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
-    SECTION( "6x6-MidSweepLeftTurn" ) {
-        // This program contains a mid-sweep left turn. It is caused by a mid-sequence one, which
-        // is decreased to zero. It then is increased twice and decreased once and back at the
-        // location where it carried out the left turn. Now, as the value is one again, it
-        // continues the sweep loop with a right turn.
-        //
-        //       * *
-        // *   * _ o *
-        // o _ _ o o *
-        // o _ * _ _ *
-        // o * o _ *
-        // _   * *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TODO: Classify this hang
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-    }
-    SECTION( "6x6-SweepExceedingBoundaries" ) {
-        // When reversing the sweep at the left side, DP performs another shift, visiting another
-        // zero value. This breaks the current assumption that the next turn cannot be further than
-        // the previous sweep end point.
-        //
-        //       *
-        // * o _ o _ *
-        //   _ * o _
-        //   _ o o *
-        // * * _ o
-        // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-    }
-    SECTION( "6x6-ComplexSweepTurn1" ) {
-        // Program with a complex turn at its left side. All values in the sequence are positive,
-        // except the leftmost value, which is -1. When this is visisted, the following instructions
-        // are executed, which together comprise the turn:
-        //
-        //         0   0 [-1] ...
-        // INC 1   0   0 [ 0] ...
-        // SHL 2 [ 0]  0   0  ...
-        // SHR 2   0   0 [ 0] ...
-        // INC 2   0   0 [ 2] ...
-        // SHL 1   0 [ 0]  2  ...
-        // DEC 2   0 [-2]  2  ...
-        // INC 1   0 [-1]  2  ...
-        // SHR 1   0  -1 [ 2] ...
-        //
-        //       *
-        // * o o o _ *
-        // * _ * o _
-        // o _ o o *
-        // o * _ o
-        // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-    }
-    SECTION( "6x6-ComplexSweepTurn2" ) {
-        // Hang similar to 6x6-ComplexSweepTurn1, but slightly simpler.
-        //
-        //       *
-        // * o _ o _ *
-        // * _ * o o
-        // o _ _ o *
-        // _ * _ _
-        // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-    }
     SECTION( "6x6-ExceedRightEndSweepPoint" ) {
         // The sweep reversal at the right consists of two left-turns, at different data cells.
         //
@@ -464,22 +351,26 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
-    SECTION( "6x6-ComplexSweep" ) {
-        // Program with a complex sweep. The sequence consists of both positive and negative values.
-        // During the sweep, the sign of some values oscillate (1 => DEC 2 => -1 => INC 2 => 1).
-        // Finally, the turn at the left side is complex. It extends the sequence with three values
-        // each visit.
+    SECTION( "6x6-RegularSweepWithComplexReversal2" ) {
+        // Another sweep with a mid-sequence reversal that takes 21 steps to execute.
+        //
+        // The refactored RunSummary-based Sweep Hang Detector currently fails to detect it as the
+        // mid-sequence reversal itself consists of its loop (violating the assumption that the
+        // number of loops in the meta-run is a multiple of two). Fixing this requires extending
+        // the detection to ignore this loop (by recognizing that it has a fixed number of
+        // iterations, unlike the actual sweep loops)
         //
         //       *
         //   * * o _ *
-        //   o o o *
-        //   o   o *
-        // * _ _ o _ *
-        // o o * *
+        // * _ _ o *
+        // * o o o _ *
+        // * * _ _ _ *
+        // o _ o * *
         Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
