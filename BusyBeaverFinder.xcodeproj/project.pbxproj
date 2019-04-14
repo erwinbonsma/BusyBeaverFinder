@@ -21,8 +21,6 @@
 		AA28C0A422073D2A00F7EC25 /* SweepHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */; };
 		AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A52207428A00F7EC25 /* CompletionTests.cpp */; };
 		AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */; };
-		AA28C0AB220CBC3700F7EC25 /* CycleDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */; };
-		AA28C0AC220CC2A000F7EC25 /* CycleDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */; };
 		AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */; };
 		AA28C0B0220CCE2A00F7EC25 /* DataTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */; };
 		AA4F44EC2234079E0069FF36 /* PeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F44EA2234079E0069FF36 /* PeriodicHangDetector.cpp */; };
@@ -92,8 +90,6 @@
 		AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SweepHangTests.cpp; sourceTree = "<group>"; };
 		AA28C0A52207428A00F7EC25 /* CompletionTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CompletionTests.cpp; sourceTree = "<group>"; };
 		AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PeriodDetectionTests.cpp; sourceTree = "<group>"; };
-		AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CycleDetector.cpp; sourceTree = "<group>"; };
-		AA28C0AA220CBC3700F7EC25 /* CycleDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CycleDetector.h; sourceTree = "<group>"; };
 		AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DataTracker.cpp; sourceTree = "<group>"; };
 		AA28C0AE220CCE2A00F7EC25 /* DataTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataTracker.h; sourceTree = "<group>"; };
 		AA4F44E9223406030069FF36 /* HangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HangDetector.h; sourceTree = "<group>"; };
@@ -223,8 +219,6 @@
 				AA4F44F32235068E0069FF36 /* SweepHangDetector.h */,
 				AA4F44EE2234262A0069FF36 /* RegularSweepHangDetector.cpp */,
 				AA4F44EF2234262A0069FF36 /* RegularSweepHangDetector.h */,
-				AA28C0A9220CBC3700F7EC25 /* CycleDetector.cpp */,
-				AA28C0AA220CBC3700F7EC25 /* CycleDetector.h */,
 				AA4F44F62236FA090069FF36 /* DeltaTracker.cpp */,
 				AA4F44F72236FA090069FF36 /* DeltaTracker.h */,
 				AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */,
@@ -314,7 +308,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA28C0AB220CBC3700F7EC25 /* CycleDetector.cpp in Sources */,
 				AA4F4507224967A00069FF36 /* ProgramBlock.cpp in Sources */,
 				AAD5C50E2211F7140057EDBC /* SearchOrchestrator.cpp in Sources */,
 				AA4F44F02234262A0069FF36 /* RegularSweepHangDetector.cpp in Sources */,
@@ -347,7 +340,6 @@
 				AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */,
 				AA4F4510224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
-				AA28C0AC220CC2A000F7EC25 /* CycleDetector.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* CompiledProgram.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,
 				AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */,
