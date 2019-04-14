@@ -73,7 +73,8 @@ void ExhaustiveSearcher::reconfigure() {
     }
     _zArrayHelperBuf = new int[_settings.maxSteps / 2];
 
-    _runSummary.setCapacity(_settings.maxSteps, _zArrayHelperBuf);
+    _runSummary[0].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
+    _runSummary[1].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
     _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
 
     _regularSweepHangDetector->setMaxSweepCount(_settings.maxRegularSweepExtensionCount);
@@ -131,7 +132,12 @@ void ExhaustiveSearcher::dumpSettings() {
 void ExhaustiveSearcher::dumpHangDetection() {
     _data.dumpHangInfo();
     _dataTracker.dump();
-    _runSummary.dump();
+
+    std::cout << "Run summary: ";
+    _runSummary[0].dump();
+
+    std::cout << "Meta-run summary: ";
+    _runSummary[1].dump();
 }
 
 void ExhaustiveSearcher::dump() {
@@ -222,7 +228,8 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
     _data.resetHangDetection();
     _dataTracker.reset();
-    _runSummary.reset();
+    _runSummary[0].reset();
+    _runSummary[1].reset();
 
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
@@ -265,7 +272,20 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
         if (_numHangDetectAttempts >= 0) {
             // Only track execution while hang detection is still active
-            _runSummary.recordProgramBlock((ProgramBlockIndex)_block->getStartIndex());
+
+            bool wasInLoop = _runSummary[0].isInsideLoop();
+            int numRunBlocks = _runSummary[0].getNumRunBlocks();
+
+            if (_runSummary[0].recordProgramBlock((ProgramBlockIndex)_block->getStartIndex())) {
+                for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
+                    RunBlock* runBlock = _runSummary[0].runBlockAt(i);
+                    _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
+                }
+            }
+
+            if (wasInLoop && !_runSummary[0].isInsideLoop() && _activeHangCheck != nullptr) {
+                _activeHangCheck->signalLoopExit();
+            }
         }
 
         if (_activeHangCheck != nullptr) {

@@ -47,8 +47,12 @@ class ExhaustiveSearcher {
 
     Program _program;
     Data _data;
-    RunSummary _runSummary;
     DataTracker _dataTracker;
+
+    // Nested run summaries. The first summarizes the program execution, identifying loops along the
+    // way. The second summarizes the first run summary. In particular, it signals repeated patterns
+    // in the first summary.
+    RunSummary _runSummary[2];
 
     // Helper buffer to store temporary Z-Array that is needed by some utility functions
     int* _zArrayHelperBuf;
@@ -111,7 +115,7 @@ public:
     CompiledProgram& getCompiledProgram() { return _compiledProgram; }
 
     DataTracker& getDataTracker() { return _dataTracker; }
-    RunSummary& getRunSummary() { return _runSummary; }
+    RunSummary& getRunSummary() { return _runSummary[0]; }
 
     int getNumSteps() { return _numSteps; }
 
