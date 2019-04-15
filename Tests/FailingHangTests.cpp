@@ -278,4 +278,65 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-PeriodicHangWithInnerLoop" ) {
+        // Periodic hang which generates a sequence that extends to the right. It is not detected
+        // by current Periodic Hang Detector as the Periodic Hang itself contains a cycle.
+        //
+        // The Run Summary is as follows:
+        // #14(74 60 79 80 74 61 40 79 81)  - switch
+        // #5(75 80 75 80 75 80)            - inner-loop, always executed three times
+        // ... etc
+        //
+        //   *   * *
+        // * _ o o o *
+        // o _ o _ *
+        // o * o _ *
+        // o   * *
+        // o
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-PeriodicHangWithInnerLoop2" ) {
+        // Another periodic hang with an inner loop.
+        //
+        //   * * *
+        // * _ o o *
+        // o _ o * _
+        // o _ _ _ _ *
+        // o * _ o o
+        // _       *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-PeriodicHangWithInnerLoop3" ) {
+        // Another periodic hang with an inner loop.
+        //
+        //   *   * *
+        // * _ o o o *
+        // o _ _ o o *
+        // o * * _ o
+        // o       *
+        // _
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
 }
