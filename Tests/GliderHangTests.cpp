@@ -20,7 +20,6 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 16384;
-    settings.maxPeriodicHangDetectAttempts = 6;
     searcher.configure(settings);
 
     SECTION( "6x6-Glider1") {

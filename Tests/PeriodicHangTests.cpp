@@ -239,8 +239,6 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxPeriodicHangDetectAttempts = 6;
-    settings.initialHangSamplePeriod = 16;
     settings.maxSteps = 2048;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Periodic Hang Detector
@@ -264,6 +262,150 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
             Ins::TURN,Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
+    SECTION( "6x6-PeriodicHangWithInnerLoop" ) {
+        // Periodic hang which generates a sequence that extends to the right. It was not detected
+        // by an earlier version of the Run Summary-based Periodic Hang Detector as the hang loop
+        // contains itself a loop.
+        //
+        // The Run Summary is as follows:
+        // #14(74 60 79 80 74 61 40 79 81)  - switch
+        // #5(75 80 75 80 75 80)            - inner-loop, always executed three times
+        // ... etc
+        //
+        //   *   * *
+        // * _ o o o *
+        // o _ o _ *
+        // o * o _ *
+        // o   * *
+        // o
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
+    SECTION( "6x6-PeriodicHangWithInnerLoop2" ) {
+        // Another periodic hang with an inner loop.
+        //
+        //   * * *
+        // * _ o o *
+        // o _ o * _
+        // o _ _ _ _ *
+        // o * _ o o
+        // _       *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
+    SECTION( "6x6-PeriodicHangWithInnerLoop3" ) {
+        // Another periodic hang with an inner loop.
+        //
+        //   *   * *
+        // * _ o o o *
+        // o _ _ o o *
+        // o * * _ o
+        // o       *
+        // _
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
+    SECTION( "6x6-NonUniformCountingLoop1" ) {
+        // Classification: Periodic, Changing, Non-Uniform, Sentry Go
+        //
+        // Two values oscillate between zero and non-zero values. A third value is changing by one
+        // each cycle.
+        //
+        //       * *
+        //   * * _ o *
+        //   o _ o o *
+        //   _ * o _ *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
+    SECTION( "6x6-NonUniformCountingLoop2" ) {
+        // Periodic hang which changes two values. One value is decreased by one each iteration,
+        // another is increased by three each iteration. A third value oscillates between -3 and 0.
+        //
+        // Note: This program only differs in one instruction from the previous one, but its
+        // execution differs significantly.
+        //
+        //       * *
+        //   * * _ o *
+        //   o _ o o *
+        //   _ * o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN,Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
+    SECTION( "6x6-DelayedHang2" ) {
+        // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
+        // around step 410, and every period it extends the sequence with three cells.
+        // It generates the following sequence: -2 4 2 -2 4 2 -2 4 2 -2 4 2 -1 3 2 -2 3 1 -1 3 2 0
+        // The periodic loop goes over the last nine values, leaving -2 4 2 in its wake.
+        //
+        // It was not detected by an earlier version of the Run Summary-based Periodic Hang Detector
+        // as the hang loop contains itself a loop.
+        //
+        // #14(78 81 60)
+        // #4(25 43 25 43 25 43 25 43 25)
+        // #11(42 79 60 25 42)
+        // #8(79 61 79 61 79 61 79 61 79 61 79 61 79 61 79 61)
+        // #14(78 81 60)
+        // ... etc
+        //
+        //       *
+        //   * _ o _ *
+        //   * * o _
+        //   _ o o *
+        // * _ _ o
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

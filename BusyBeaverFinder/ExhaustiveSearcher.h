@@ -32,10 +32,8 @@ enum class SearchMode : char {
 };
 
 struct SearchSettings {
-    int initialHangSamplePeriod;
     int maxSteps;
-    int maxPeriodicHangDetectAttempts;
-    int maxRegularSweepHangDetectAttempts;
+    int maxHangDetectAttempts;
     bool testHangDetection;
     bool disableNoExitHangDetection;
 };

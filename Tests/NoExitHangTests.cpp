@@ -18,8 +18,6 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxPeriodicHangDetectAttempts = 4;
-    settings.initialHangSamplePeriod = 16;
     searcher.configure(settings);
 
     SECTION( "6x6-SweepWithBinaryCounter" ) {

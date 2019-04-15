@@ -46,7 +46,6 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 16384;
-    settings.maxPeriodicHangDetectAttempts = 6;
 //    settings.testHangDetection = true;
     searcher.configure(settings);
 
@@ -55,7 +54,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
 
     REQUIRE(tracker.getMaxStepsFound() == 572);
     REQUIRE(tracker.getTotalSuccess() == 6475715);
-    REQUIRE(tracker.getTotalDetectedHangs() == 1542528);
+    REQUIRE(tracker.getTotalDetectedHangs() == 1545544);
 //    REQUIRE(tracker.getTotalHangs() == 1546939);
 //    REQUIRE(tracker.getTotalErrors() == 0);
     // TEMP

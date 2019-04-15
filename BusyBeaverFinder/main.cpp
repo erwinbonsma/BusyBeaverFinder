@@ -61,28 +61,13 @@ void init(int argc, char * argv[]) {
 
     SearchSettings settings = searcher->getSettings();
 
-    // Set hang sample period
-    if (result.count("p")) {
-        settings.initialHangSamplePeriod = result["p"].as<int>();
-    }
-    if (! isPowerOfTwo(settings.initialHangSamplePeriod) ) {
-        settings.initialHangSamplePeriod = makePowerOfTwo(settings.initialHangSamplePeriod);
-        std::cout << "Adjusted initialHangSamplePeriod to be a power of two" << std::endl;
-    }
-
     // Set max total steps
     if (result.count("max-steps")) {
         settings.maxSteps = result["max-steps"].as<int>();
     }
 
-    if (result.count("periodic-attempts")) {
-        settings.maxPeriodicHangDetectAttempts = result["periodic-attempts"].as<int>();
-    }
-    if (result.count("regsweep-attempts")) {
-        settings.maxRegularSweepHangDetectAttempts = result["regsweep-attempts"].as<int>();
-    }
-    if (result.count("max-regular-sweeps")) {
-        settings.maxRegularSweepExtensionCount = result["max-regular-sweeps"].as<int>();
+    if (result.count("max-hang-attempts")) {
+        settings.maxHangDetectAttempts = result["max-hang-attempts"].as<int>();
     }
 
     // Enable testing of hang detection?

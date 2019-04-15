@@ -16,20 +16,16 @@
 
 class ExhaustiveSearcher;
 class ProgramBlock;
+class RunSummary;
 
 class PeriodicHangDetector : public HangDetector {
 
     ExhaustiveSearcher& _searcher;
 
     //----------------------
-    // Configuration
-
-    // The minimum number of recorded program blocks before trying to find the repetition period
-    int _minRecordedProgramBlocks;
-
-    //----------------------
     // Hang detection state
 
+    RunSummary* _trackedRunSummary;
     int _loopPeriod;
     int _loopRunBlockIndex;
 
@@ -41,9 +37,6 @@ class PeriodicHangDetector : public HangDetector {
 
 public:
     PeriodicHangDetector(ExhaustiveSearcher& searcher);
-
-    void setMinRecordedProgramBlocks(int val) { _minRecordedProgramBlocks = val; }
-    int getMinRecordedProgramBlocks() { return _minRecordedProgramBlocks; }
 
     HangType hangType() { return HangType::PERIODIC; }
 

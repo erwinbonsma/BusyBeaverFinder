@@ -40,15 +40,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     // Init defaults
     _settings.maxSteps = 1024;
-    _settings.initialHangSamplePeriod = 4;
-    _settings.maxPeriodicHangDetectAttempts = 5;
-
-    // Temporarily setting this number high so that the hang detector will detect all the hangs it
-    // is able to. The issue is that detection can sometimes kick-in before the actual hang has
-    // started.
-    //
-    // TODO: Find a better way to switch Hang Detectors.
-    _settings.maxRegularSweepHangDetectAttempts = 128;
+    _settings.maxHangDetectAttempts = 128;
 
     _settings.testHangDetection = false;
     _settings.disableNoExitHangDetection = false;
@@ -68,13 +60,6 @@ void ExhaustiveSearcher::configure(SearchSettings settings) {
 }
 
 void ExhaustiveSearcher::reconfigure() {
-    assert(isPowerOfTwo(_settings.initialHangSamplePeriod));
-    _initialHangSampleMask = _settings.initialHangSamplePeriod - 1;
-
-    // Determine the maximum sample period (it doubles after each failed attempt)
-    int maxHangSamplePeriod =
-        _settings.initialHangSamplePeriod << _settings.maxPeriodicHangDetectAttempts;
-
     if (_zArrayHelperBuf != nullptr) {
         delete[] _zArrayHelperBuf;
     }
@@ -82,7 +67,7 @@ void ExhaustiveSearcher::reconfigure() {
 
     _runSummary[0].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
     _runSummary[1].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
-    _data.setStackSize(_settings.maxSteps + maxHangSamplePeriod);
+    _data.setStackSize(_settings.maxSteps);
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -126,9 +111,7 @@ void ExhaustiveSearcher::dumpSettings() {
     << "Size = " << _program.getWidth() << "x" << _program.getHeight()
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _settings.maxSteps
-    << ", IniHangSamplePeriod = " << _settings.initialHangSamplePeriod
-    << ", MaxPeriodicHangDetectAttempts = " << _settings.maxPeriodicHangDetectAttempts
-    << ", MaxRegularSweepDetectAttempts = " << _settings.maxRegularSweepHangDetectAttempts
+    << ", MaxHangDetectAttempts = " << _settings.maxHangDetectAttempts
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }
@@ -157,32 +140,13 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 //    _dataTracker.dump();
 //    _cycleDetector.dump();
 
-    int attempts = _numHangDetectAttempts;
-
     assert(_activeHangCheck == nullptr);
-//    std::cout << "Initiating Check: Step = " << _numSteps
-//    << ", numAttempts = " << attempts << std::endl;
 
-    if (_activeHangCheck == nullptr) {
-        if (attempts < _settings.maxPeriodicHangDetectAttempts) {
-            // Initiate new periodic hang check (maybe it was not stuck yet, or maybe the
-            // previous sample period was too low to detect the period of the hang cycle)
-            _activeHangCheck = _periodicHangDetector;
-
-            // Double period after each failed attempt
-            _periodicHangDetector->setMinRecordedProgramBlocks(
-                _settings.initialHangSamplePeriod << attempts
-            );
-        } else {
-            attempts -= _settings.maxPeriodicHangDetectAttempts;
-        }
-    }
-
-    if (_activeHangCheck == nullptr && attempts < _settings.maxRegularSweepHangDetectAttempts) {
-        if (attempts % 2 == 0) {
-            _activeHangCheck = _sweepHangDetector;
-        } else {
-            _activeHangCheck = _gliderHangDetector;
+    if (_activeHangCheck == nullptr && _numHangDetectAttempts < _settings.maxHangDetectAttempts) {
+        switch (_numHangDetectAttempts % 3) {
+            case 0: _activeHangCheck = _periodicHangDetector; break;
+            case 1: _activeHangCheck = _sweepHangDetector; break;
+            case 2: _activeHangCheck = _gliderHangDetector; break;
         }
     }
 
@@ -213,9 +177,9 @@ void ExhaustiveSearcher::branch(int depth) {
 
         _program.setInstruction(insP, ins);
         _instructionStack[depth] = ins;
-        if (atTargetProgram()) {
-            std::cout << "At target!" << std::endl;
-        }
+//        if (atTargetProgram()) {
+//            std::cout << "At target!" << std::endl;
+//        }
         run(depth + 1);
         _pp = pp0;
 
