@@ -38,10 +38,11 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _gliderHangDetector = new GliderHangDetector(*this);
     _zArrayHelperBuf = nullptr;
 
+    _searchMode = SearchMode::FULL_TREE;
+
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.maxHangDetectAttempts = 128;
-
     _settings.testHangDetection = false;
     _settings.disableNoExitHangDetection = false;
     reconfigure();
