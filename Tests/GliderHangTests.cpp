@@ -19,7 +19,7 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 16384;
+    settings.maxSteps = 1000000;
     searcher.configure(settings);
 
     SECTION( "6x6-Glider1") {
@@ -118,4 +118,26 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
+    SECTION( "6x6-Glider6" ) {
+        // Glider Hang that is challenging to detect as the meta-run loop starts relatively late and
+        // the iterations of glider loop increases exponentially. The program therefore runs for
+        // many steps (~100000) before the hang is detected.
+        //
+        //     *   *
+        // * o o o _ *
+        // o _ _ o o *
+        // o * _   o
+        // _ * _ o o *
+        // _   *   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
+
 }

@@ -34,6 +34,7 @@ enum class SearchMode : char {
 struct SearchSettings {
     int maxSteps;
     int maxHangDetectAttempts;
+    int minWaitBeforeRetryingHangChecks;
     bool testHangDetection;
     bool disableNoExitHangDetection;
 };
@@ -77,6 +78,7 @@ class ExhaustiveSearcher {
     SweepHangDetector* _sweepHangDetector;
     GliderHangDetector* _gliderHangDetector;
     ExitFinder _exitFinder;
+    int _waitBeforeRetryingHangChecks;
 
     ProgressTracker* _tracker;
 

@@ -43,6 +43,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.maxHangDetectAttempts = 128;
+    _settings.minWaitBeforeRetryingHangChecks = 16;
     _settings.testHangDetection = false;
     _settings.disableNoExitHangDetection = false;
     reconfigure();
@@ -113,6 +114,7 @@ void ExhaustiveSearcher::dumpSettings() {
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _settings.maxSteps
     << ", MaxHangDetectAttempts = " << _settings.maxHangDetectAttempts
+    << ", MinWaitBeforeRetryingHangChecks = " << _settings.minWaitBeforeRetryingHangChecks
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }
@@ -143,9 +145,22 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
 
     assert(_activeHangCheck == nullptr);
 
-    if (_activeHangCheck == nullptr && _numHangDetectAttempts < _settings.maxHangDetectAttempts) {
+    if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
+        // Wait before initiating a new hang check. Too quickly trying the same hang checks in
+        // succession could just be a waste of CPU cycles.
+        return;
+    }
+
+    if (_numHangDetectAttempts < _settings.maxHangDetectAttempts) {
         switch (_numHangDetectAttempts % 3) {
-            case 0: _activeHangCheck = _periodicHangDetector; break;
+            case 0: {
+                _activeHangCheck = _periodicHangDetector;
+                _waitBeforeRetryingHangChecks = (
+                    _runSummary[0].getNumProgramBlocks() +
+                    _settings.minWaitBeforeRetryingHangChecks
+                );
+                break;
+            }
             case 1: _activeHangCheck = _sweepHangDetector; break;
             case 2: _activeHangCheck = _gliderHangDetector; break;
         }
@@ -204,11 +219,13 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     _runSummary[0].reset();
     _runSummary[1].reset();
 
+    _waitBeforeRetryingHangChecks = 0;
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
 
     while (_block->isFinalized()) {
-//        std::cout << "Executing ";
+//        std::cout << "Executing " << _runSummary[0].getNumProgramBlocks()
+//        << " @ " << _numSteps << ": ";
 //        _compiledProgram.dumpBlock(_block);
 //        _data.dump();
 

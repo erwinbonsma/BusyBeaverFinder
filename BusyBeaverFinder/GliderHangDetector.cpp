@@ -8,6 +8,8 @@
 
 #include "GliderHangDetector.h"
 
+#include <iostream>
+
 #include "ExhaustiveSearcher.h"
 
 GliderHangDetector::GliderHangDetector(ExhaustiveSearcher& searcher) :
@@ -19,7 +21,6 @@ void GliderHangDetector::start() {
     // Check basic assumption. The meta-run summary should be in a loop with period two:
     // one ever-increasing loop, one fixed switch
     RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
-    //    _searcher.dumpHangDetection();
 
     if ( !metaRunSummary.isInsideLoop() || metaRunSummary.getLoopPeriod() != 2 ) {
         _status = HangDetectionResult::FAILED;

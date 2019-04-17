@@ -18,7 +18,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 16384;
+    settings.maxSteps = 1000000;
     searcher.configure(settings);
 
     SECTION( "6x6-IrregularSweep") {
@@ -115,18 +115,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
             Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
             Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
             Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
-    }
-    SECTION( "6x6-Glider6" ) {
-        // A glider that was wrongly found by an early version of the Regular Sweep Hang detector.
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
