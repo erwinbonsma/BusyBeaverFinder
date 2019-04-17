@@ -40,8 +40,6 @@ struct SearchSettings {
 
 class ExhaustiveSearcher {
     SearchSettings _settings;
-    // Derived settings
-    int _initialHangSampleMask;
 
     Program _program;
     Data _data;
