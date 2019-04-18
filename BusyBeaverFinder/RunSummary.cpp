@@ -62,9 +62,28 @@ RunBlockSequenceNode* RunSummary::getChildNode(
 ) {
     RunBlockSequenceNode* node = parent;
 
+    if (!node->_childIndex) {
+        // This node does not yet have any children. Add the first.
+        assert(_numSequenceBlocks < maxNumSequenceBlocks);
+
+        node->_childIndex = _numSequenceBlocks;
+        node = _sequenceBlock + _numSequenceBlocks++;
+        node->init(targetIndex);
+
+        return node;
+    }
+
+    node = _sequenceBlock + node->_childIndex;
+    if (node->getProgramBlockIndex() == targetIndex) {
+        // Found it!
+        return node;
+    }
+
+    // Check the siblings of the first child
     while (node->_siblingIndex) {
         node = _sequenceBlock + node->_siblingIndex;
         if (node->getProgramBlockIndex() == targetIndex) {
+            // Found it!
             return node;
         }
     }
@@ -155,20 +174,45 @@ int RunSummary::getRunBlockLength(int index) {
     }
 }
 
+void RunSummary::dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level) {
+    for (int i = 0; i < level; i++) {
+        std::cout << "  ";
+    }
+    std::cout << (node - _sequenceBlock)
+    << " (" << node->getProgramBlockIndex() << ")" << std::endl;
+
+    // Dump children
+    if (node->_childIndex) {
+        dumpRunBlockSequenceNode(_sequenceBlock + node->_childIndex, level + 1);
+    }
+
+    // Dump siblings
+    if (node->_siblingIndex) {
+        dumpRunBlockSequenceNode(_sequenceBlock + node->_siblingIndex, level);
+    }
+}
+
+void RunSummary::dumpSequenceTree() {
+    dumpRunBlockSequenceNode(_sequenceBlock, 0);
+}
+
 void RunSummary::dump() {
     ProgramBlockIndex* programBlockP = _programBlockHistory;
     RunBlock* runBlockP = _runBlockHistory;
     int numPendingBlocks = 0;
+    bool isLoop = false;
 
     while (programBlockP < _programBlockHistoryP) {
         if (--numPendingBlocks == 0) {
-            std::cout << ") ";
+            std::cout << (isLoop ? "] " : ") ");
         }
         if (
             numPendingBlocks <= 0 &&
             runBlockP->getStartIndex() == (programBlockP - _programBlockHistory)
         ) {
-            std::cout << "#" << runBlockP->getSequenceIndex() << "(";
+            isLoop = runBlockP->isLoop();
+            std::cout << "#" << runBlockP->getSequenceIndex()
+            << (isLoop ? "[" : "(");
             numPendingBlocks = getRunBlockLength((int)(runBlockP - _runBlockHistory));
 
             runBlockP++;

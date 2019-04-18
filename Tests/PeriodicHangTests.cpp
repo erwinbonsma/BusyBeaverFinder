@@ -411,5 +411,34 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
+    SECTION( "6x6-PeriodicHangWithThreeInnerLoops" ) {
+        // Periodic hang with a period of 136 steps. Each iteration it extends the sequence to the
+        // left with four values "1 4 4 1".
+        //
+        // Each iteration consists of the following run blocks:
+        // #22[77 81 77 81 77 81]
+        // #34(76 23 57 61 25 57 61 24 39 57 60 79)
+        // #22[77 81 77 81 77 81]
+        // #51[76 23 57 61 24 39 57 60 79 77 81
+        //     76 23 57 61 24 39 57 60 79 77 81
+        //     76 23 57 61]
+        // #59(25 57 61 24 39 57 60 79)
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        // * o _ o _
+        // * _ _ _ _ *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
 }
 
