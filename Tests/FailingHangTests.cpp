@@ -120,41 +120,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
-    SECTION( "6x6-ExceedRightEndSweepPoint" ) {
-        // The sweep reversal at the right consists of two left-turns, at different data cells.
-        //
-        //     *   *
-        //   * o o _ *
-        // * _ o * *
-        //   o *
-        // * _
-        // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-    }
-    SECTION( "6x6-ExceedLeftEndSweepPoint" ) {
-        // The sweep reversal at the right consists of two left-turns, at different data cells.
-        //       *
-        //   * * o _ *
-        // * _ o o *
-        // * * _ *
-        // o _ o *
-        // _
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-    }
     SECTION( "6x6-RegularSweepWithComplexReversal2" ) {
         // Another sweep with a mid-sequence reversal that takes 21 steps to execute.
         //
@@ -163,6 +128,8 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         // number of loops in the meta-run is a multiple of two). Fixing this requires extending
         // the detection to ignore this loop (by recognizing that it has a fixed number of
         // iterations, unlike the actual sweep loops)
+        //
+        // Note: It is being detected as a hang by the No Exit hang check.
         //
         //       *
         //   * * o _ *
