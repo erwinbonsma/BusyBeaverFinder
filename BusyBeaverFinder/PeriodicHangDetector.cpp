@@ -23,19 +23,14 @@ void PeriodicHangDetector::PeriodicHangDetector::start() {
     _periodicHangCheckAt = 0;
 }
 
-bool PeriodicHangDetector::insideLoop() {
-    RunSummary* runSummary = &_searcher.getRunSummary();
-    RunSummary* metaRunSummary = &_searcher.getMetaRunSummary();
+RunSummary* PeriodicHangDetector::getTargetRunSummary() {
+    return &_searcher.getRunSummary();
+}
 
-    if (metaRunSummary->isInsideLoop()) {
-        // There's a loop at the meta-run level. This means that the hang-loop itself contains a
-        // loop.
-        _trackedRunSummary = metaRunSummary;
-    }
-    else if (runSummary->isInsideLoop()) {
-        _trackedRunSummary = runSummary;
-    }
-    else {
+bool PeriodicHangDetector::insideLoop() {
+    if (getTargetRunSummary()->isInsideLoop()) {
+        _trackedRunSummary = getTargetRunSummary();
+    } else {
         // Not in a loop (yet)
         return false;
     }
@@ -56,10 +51,6 @@ bool PeriodicHangDetector::insideLoop() {
 }
 
 HangDetectionResult PeriodicHangDetector::detectHang() {
-    // TODO: In case of an assumed eternal loop at the meta-run level, when this loop is broken and
-    // a lower-level loop is entered instead, this detector itself may hang as the next check always
-    // evaluates to true. This may require a complex 2L-program but should in principle be handled
-    // correctly.
     if (_trackedRunSummary->getNumProgramBlocks() < _periodicHangCheckAt) {
         return HangDetectionResult::ONGOING;
     }

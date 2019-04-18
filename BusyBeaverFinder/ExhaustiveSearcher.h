@@ -22,6 +22,7 @@
 
 #include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
+#include "MetaPeriodicHangDetector.h"
 #include "SweepHangDetector.h"
 #include "GliderHangDetector.h"
 
@@ -75,6 +76,7 @@ class ExhaustiveSearcher {
 
     HangDetector* _activeHangCheck;
     PeriodicHangDetector* _periodicHangDetector;
+    MetaPeriodicHangDetector* _metaPeriodicHangDetector;
     SweepHangDetector* _sweepHangDetector;
     GliderHangDetector* _gliderHangDetector;
     ExitFinder _exitFinder;

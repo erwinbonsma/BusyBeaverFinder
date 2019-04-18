@@ -14,6 +14,8 @@
 		AA1101FF21F32120005C67CF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA1101FE21F32120005C67CF /* main.cpp */; };
 		AA11020821F3261F005C67CF /* Program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA11020721F3261F005C67CF /* Program.cpp */; };
 		AA11020C21F327F4005C67CF /* Data.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA11020A21F327F4005C67CF /* Data.cpp */; };
+		AA153A8C226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA153A8A226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp */; };
+		AA153A8D226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA153A8A226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp */; };
 		AA28C097220738F900F7EC25 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C096220738F900F7EC25 /* main.cpp */; };
 		AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C09C2207398C00F7EC25 /* ExhaustiveSearchTests.cpp */; };
 		AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
@@ -85,6 +87,8 @@
 		AA11020A21F327F4005C67CF /* Data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Data.cpp; sourceTree = "<group>"; };
 		AA11020B21F327F4005C67CF /* Data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Data.h; sourceTree = "<group>"; };
 		AA11020D21F4D35C005C67CF /* cxxopts.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cxxopts.hpp; sourceTree = "<group>"; };
+		AA153A8A226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MetaPeriodicHangDetector.cpp; sourceTree = "<group>"; };
+		AA153A8B226916BD00F7B1DF /* MetaPeriodicHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetaPeriodicHangDetector.h; sourceTree = "<group>"; };
 		AA28C094220738F800F7EC25 /* Tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Tests; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA28C096220738F900F7EC25 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		AA28C09B2207393400F7EC25 /* catch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = catch.hpp; sourceTree = "<group>"; };
@@ -214,6 +218,8 @@
 				AA4F450E224EB8EE0069FF36 /* ExitFinder.h */,
 				AA4F44EA2234079E0069FF36 /* PeriodicHangDetector.cpp */,
 				AA4F44EB2234079E0069FF36 /* PeriodicHangDetector.h */,
+				AA153A8A226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp */,
+				AA153A8B226916BD00F7B1DF /* MetaPeriodicHangDetector.h */,
 				AA4F44F22235068E0069FF36 /* SweepHangDetector.cpp */,
 				AA4F44F32235068E0069FF36 /* SweepHangDetector.h */,
 				AA0D5AE02263B5B6001909AF /* GliderHangDetector.cpp */,
@@ -316,6 +322,7 @@
 				AA4F450B224ABF320069FF36 /* CompiledProgram.cpp in Sources */,
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AA0D5AE22263B5B6001909AF /* GliderHangDetector.cpp in Sources */,
+				AA153A8C226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
 				AA4F44F42235068E0069FF36 /* SweepHangDetector.cpp in Sources */,
@@ -327,6 +334,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA153A8D226916BD00F7B1DF /* MetaPeriodicHangDetector.cpp in Sources */,
 				AA0D5AE32263B5B6001909AF /* GliderHangDetector.cpp in Sources */,
 				AA4F4508224967A00069FF36 /* ProgramBlock.cpp in Sources */,
 				AA28C0A122073A1500F7EC25 /* Program.cpp in Sources */,

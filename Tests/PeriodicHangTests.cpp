@@ -440,5 +440,26 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
+    SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop" ) {
+        // A periodic hang at the low-level run summary which initially looks like a hang at the
+        // meta-run level, but this assumed endless meta-loop is exited. This caused an earlier
+        // periodic hang detection implementation to hang.
+        //
+        //   *     *
+        // * o _ _ _ *
+        //   o *   o
+        // * _ _ o o *
+        // * * _ * o
+        // o o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
 }
 

@@ -20,6 +20,7 @@ class RunSummary;
 
 class PeriodicHangDetector : public HangDetector {
 
+protected:
     ExhaustiveSearcher& _searcher;
 
     //----------------------
@@ -30,10 +31,15 @@ class PeriodicHangDetector : public HangDetector {
     int _loopRunBlockIndex;
 
     int _sampleStartIndex;
-    // When to perform the periodic hang check (in number of recorded instructions)
+
+    // When to perform the periodic hang check (in number of recorded instructions for the
+    // tracked run summary)
     int _periodicHangCheckAt;
 
     bool insideLoop();
+
+    // The run summary to monitor for periodic loops
+    virtual RunSummary* getTargetRunSummary();
 
 public:
     PeriodicHangDetector(ExhaustiveSearcher& searcher);

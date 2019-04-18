@@ -34,6 +34,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     initInstructionStack(width * height);
 
     _periodicHangDetector = new PeriodicHangDetector(*this);
+    _metaPeriodicHangDetector = new MetaPeriodicHangDetector(*this);
     _sweepHangDetector = new SweepHangDetector(*this);
     _gliderHangDetector = new GliderHangDetector(*this);
     _zArrayHelperBuf = nullptr;
@@ -154,7 +155,12 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
     if (_numHangDetectAttempts < _settings.maxHangDetectAttempts) {
         switch (_numHangDetectAttempts % 3) {
             case 0: {
-                _activeHangCheck = _periodicHangDetector;
+                // Alternate between both types of periodic hang detectors
+                if (_numHangDetectAttempts % 6 == 0) {
+                    _activeHangCheck = _periodicHangDetector;
+                } else {
+                    _activeHangCheck = _metaPeriodicHangDetector;
+                }
                 _waitBeforeRetryingHangChecks = (
                     _runSummary[0].getNumProgramBlocks() +
                     _settings.minWaitBeforeRetryingHangChecks
