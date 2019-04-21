@@ -170,8 +170,18 @@ int RunSummary::getRunBlockLength(int index) {
             return (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
         }
     } else {
-        return (++runBlockP)->getStartIndex() - startIndex;
+        return (runBlockP + 1)->getStartIndex() - startIndex;
     }
+}
+
+bool RunSummary::isAtStartOfLoop() {
+    assert(_loopP != nullptr);
+    assert(_programBlockPendingP == nullptr);
+
+    int startIndex = (_runBlockHistoryP - 1)->getStartIndex();
+    int loopLength = (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+
+    return (loopLength % getLoopPeriod() == 0);
 }
 
 void RunSummary::dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level) {

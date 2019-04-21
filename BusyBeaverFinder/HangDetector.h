@@ -30,6 +30,7 @@ public:
 
     virtual void start() {};
     virtual void signalLoopExit() {}
+    virtual void signalLoopIterationCompleted() {}
     virtual HangDetectionResult detectHang() = 0;
 };
 

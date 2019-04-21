@@ -15,7 +15,6 @@
 MetaPeriodicHangDetector::MetaPeriodicHangDetector(ExhaustiveSearcher& searcher) :
     PeriodicHangDetector(searcher)
 {
-    _abortHangCheckAt = std::numeric_limits<int>::max();
 }
 
 RunSummary* MetaPeriodicHangDetector::getTargetRunSummary() {
@@ -32,6 +31,12 @@ bool MetaPeriodicHangDetector::insideLoop() {
     } else {
         return false;
     }
+}
+
+void MetaPeriodicHangDetector::start() {
+    PeriodicHangDetector::start();
+
+    _abortHangCheckAt = std::numeric_limits<int>::max();
 }
 
 HangDetectionResult MetaPeriodicHangDetector::detectHang() {

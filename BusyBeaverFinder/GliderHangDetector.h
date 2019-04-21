@@ -29,6 +29,10 @@ class GliderHangDetector : public HangDetector {
     // The loop in the meta-run summary (it is used to verify that we remain inside this loop)
     int _metaLoopIndex;
 
+    DataPointer _dataPointerAtLoopStart;
+    int _numStepsAtLastLoopExit;
+    int _previousLoopLength;
+
     int _numLoopExits;
 
     void checkGliderContract();
@@ -40,6 +44,7 @@ public:
 
     void start();
     void signalLoopExit();
+    void signalLoopIterationCompleted();
     HangDetectionResult detectHang();
 };
 

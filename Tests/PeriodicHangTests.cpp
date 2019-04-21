@@ -461,5 +461,32 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
+    SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop2" ) {
+        // Another program that enters a loop at meta-level but switches enters an endless
+        // (periodic) loop at the lower-level without breaking out of the meta-level loop. It
+        // caused earlier versions of the Glider and Meta Periodic hang detectors to hang.
+        //
+        // Run summary:
+        // #2(39 75)
+        // #9[38 44 81 45] - twice
+        // #2(39 75)
+        // #9[38 44 81 45] - endless
+        //
+        //   *     *
+        //   _ *   o *
+        //   o o o o *
+        // * o o _ _ *
+        // * * _   *
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
 }
 

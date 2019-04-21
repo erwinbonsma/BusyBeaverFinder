@@ -112,6 +112,7 @@ public:
 
     bool isInsideLoop() { return _loopP != nullptr; }
     int getLoopPeriod() { return (int)(_programBlockHistoryP - _loopP) - 1; }
+    bool isAtStartOfLoop();
 
     int getNumProgramBlocks() { return (int)(_programBlockHistoryP - _programBlockHistory); }
     int getNumRunBlocks() { return (int)(_runBlockHistoryP - _runBlockHistory); }

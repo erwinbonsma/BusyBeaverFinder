@@ -30,6 +30,9 @@ void GliderHangDetector::start() {
     }
 
     _numLoopExits = 0;
+    _dataPointerAtLoopStart = nullptr;
+    _numStepsAtLastLoopExit = 0;
+    _previousLoopLength = 0;
 }
 
 void GliderHangDetector::checkGliderContract() {
@@ -49,6 +52,18 @@ void GliderHangDetector::signalLoopExit() {
         return;
     }
 
+    // Check that the glider loop is increasing in length. This, amongst others, prevents that
+    // some periodic hangs are falsely reported as aperiodic glider hangs.
+    if (_numStepsAtLastLoopExit > 0) {
+        int loopLength = _searcher.getNumSteps() - _numStepsAtLastLoopExit;
+        if (loopLength <= _previousLoopLength) {
+            _status = HangDetectionResult::FAILED;
+            return;
+        }
+        _previousLoopLength = loopLength;
+    }
+    _numStepsAtLastLoopExit = _searcher.getNumSteps();
+
     if (++_numLoopExits > 2) {
         checkGliderContract();
         if (_numLoopExits > 3 && _status == HangDetectionResult::ONGOING) {
@@ -59,6 +74,19 @@ void GliderHangDetector::signalLoopExit() {
 
     if (_status == HangDetectionResult::ONGOING) {
         _searcher.getDataTracker().captureSnapShot();
+        _dataPointerAtLoopStart = nullptr;
+    }
+}
+
+void GliderHangDetector::signalLoopIterationCompleted() {
+    if (_dataPointerAtLoopStart == nullptr) {
+        _dataPointerAtLoopStart = _searcher.getData().getDataPointer();
+    }
+    else if (_dataPointerAtLoopStart != _searcher.getData().getDataPointer()) {
+        // Execution of the inner-loop of the glider should not result in effective DP-movements
+        // (inside the loop, DP is allowed to temporarily move). Effective DP-movement should only
+        // be done by the meta-loop, which causes the glider to move.
+        _status = HangDetectionResult::FAILED;
     }
 }
 

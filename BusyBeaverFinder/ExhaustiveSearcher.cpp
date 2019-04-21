@@ -137,12 +137,8 @@ void ExhaustiveSearcher::dump() {
 }
 
 void ExhaustiveSearcher::initiateNewHangCheck() {
-//    _program.dump();
-//    _tracker->dumpStats();
-//    _data.dumpHangInfo();
-//    _data.dump();
-//    _dataTracker.dump();
-//    _cycleDetector.dump();
+//    std::cout << "Initiate new hang check" << std::endl;
+//    dumpHangDetection();
 
     assert(_activeHangCheck == nullptr);
 
@@ -250,8 +246,13 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                 }
             }
 
-            if (wasInLoop && !_runSummary[0].isInsideLoop() && _activeHangCheck != nullptr) {
-                _activeHangCheck->signalLoopExit();
+            if (_activeHangCheck != nullptr && wasInLoop) {
+                if (!_runSummary[0].isInsideLoop()) {
+                    _activeHangCheck->signalLoopExit();
+                }
+                else if (_runSummary[0].isAtStartOfLoop()) {
+                    _activeHangCheck->signalLoopIterationCompleted();
+                }
             }
         }
 

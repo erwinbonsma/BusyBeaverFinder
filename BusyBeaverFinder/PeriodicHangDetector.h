@@ -36,7 +36,7 @@ protected:
     // tracked run summary)
     int _periodicHangCheckAt;
 
-    bool insideLoop();
+    virtual bool insideLoop();
 
     // The run summary to monitor for periodic loops
     virtual RunSummary* getTargetRunSummary();

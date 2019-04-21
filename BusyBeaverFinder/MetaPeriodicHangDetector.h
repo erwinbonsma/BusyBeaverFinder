@@ -27,6 +27,7 @@ class MetaPeriodicHangDetector : public PeriodicHangDetector {
 public:
     MetaPeriodicHangDetector(ExhaustiveSearcher& searcher);
 
+    void start();
     HangDetectionResult detectHang();
 };
 
