@@ -246,12 +246,16 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                 }
             }
 
-            if (_activeHangCheck != nullptr && wasInLoop) {
-                if (!_runSummary[0].isInsideLoop()) {
-                    _activeHangCheck->signalLoopExit();
-                }
-                else if (_runSummary[0].isAtStartOfLoop()) {
-                    _activeHangCheck->signalLoopIterationCompleted();
+            if (_activeHangCheck != nullptr) {
+                if (wasInLoop) {
+                    if (!_runSummary[0].isInsideLoop()) {
+                        _activeHangCheck->signalLoopExit();
+                    }
+                    else if (_runSummary[0].isAtStartOfLoop()) {
+                        _activeHangCheck->signalLoopIterationCompleted();
+                    }
+                } else {
+                    _activeHangCheck->signalLoopStartDetected();
                 }
             }
         }

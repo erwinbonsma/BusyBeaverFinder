@@ -20,6 +20,7 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1000000;
+    settings.disableNoExitHangDetection = true;
     searcher.configure(settings);
 
     SECTION( "6x6-Glider1") {
@@ -139,5 +140,23 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
+    SECTION( "6x6-Glider7" ) {
+        // Another leftward moving glider, but with relatively complex logic
+        //
+        //   * *   *
+        // * o o o _ *
+        // o _ _ * o
+        // o _ o * o
+        // o * _ _ o *
+        // o   *   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
 
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
 }

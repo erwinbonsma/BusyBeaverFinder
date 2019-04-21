@@ -19,6 +19,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1000000;
+    settings.disableNoExitHangDetection = true;
     searcher.configure(settings);
 
     SECTION( "6x6-IrregularSweep") {
@@ -100,25 +101,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 0);
         REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
-    }
-    SECTION( "6x6-ComplexGlider" ) {
-        // Another leftward moving glider, but with relatively complex logic
-        //
-        //   * *   *
-        // * o o o _ *
-        // o _ _ * o
-        // o _ o * o
-        // o * _ _ o *
-        // o   *   *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
     SECTION( "6x6-RegularSweepWithComplexReversal2" ) {
         // Another sweep with a mid-sequence reversal that takes 21 steps to execute.

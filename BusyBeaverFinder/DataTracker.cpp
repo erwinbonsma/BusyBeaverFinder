@@ -39,6 +39,7 @@ DataTracker::~DataTracker() {
 void DataTracker::reset() {
     _oldSnapShotP = nullptr;
     _newSnapShotP = nullptr;
+    _data.resetVisitedBounds();
 }
 
 void DataTracker::captureSnapShot() {

@@ -30,9 +30,16 @@ void GliderHangDetector::start() {
     }
 
     _numLoopExits = 0;
-    _dataPointerAtLoopStart = nullptr;
     _numStepsAtLastLoopExit = 0;
+    _dataPointerAtLoopStart = nullptr;
     _previousLoopLength = 0;
+    _searcher.getDataTracker().reset();
+}
+
+void GliderHangDetector::signalLoopStartDetected() {
+    // Reset visited bounds so that the bounds of the various snapshots are comparable, irrespective
+    // of the exact momemt when the hang check was started.
+    _searcher.getData().resetVisitedBounds();
 }
 
 void GliderHangDetector::checkGliderContract() {

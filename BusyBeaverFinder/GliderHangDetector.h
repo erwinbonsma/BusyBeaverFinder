@@ -43,8 +43,11 @@ public:
     HangType hangType() { return HangType::APERIODIC_GLIDER; }
 
     void start();
-    void signalLoopExit();
+
+    void signalLoopStartDetected();
     void signalLoopIterationCompleted();
+    void signalLoopExit();
+
     HangDetectionResult detectHang();
 };
 
