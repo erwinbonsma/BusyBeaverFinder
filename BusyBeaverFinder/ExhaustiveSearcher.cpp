@@ -137,7 +137,7 @@ void ExhaustiveSearcher::dump() {
 }
 
 void ExhaustiveSearcher::initiateNewHangCheck() {
-//    std::cout << "Initiate new hang check" << std::endl;
+//    std::cout << "Initiate new hang check @ " << _numSteps << std::endl;
 //    dumpHangDetection();
 
     assert(_activeHangCheck == nullptr);

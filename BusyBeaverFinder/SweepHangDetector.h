@@ -17,6 +17,8 @@
 class ExhaustiveSearcher;
 class RunBlock;
 
+const int maxNonSweepLoopsToIgnore = 2;
+
 class SweepHangDetector : public HangDetector {
 
     ExhaustiveSearcher& _searcher;
@@ -42,11 +44,25 @@ class SweepHangDetector : public HangDetector {
     // The loop in the meta-run summary (it is used to verify that we remain inside this loop)
     int _metaLoopIndex;
 
+    // The period of the meta-loop. It's typically four but can be larger when a reversal sequence
+    // contains a fixed loop.
+    int _metaLoopPeriod;
+
     // The maximum amount DP shifts within a program block during a sweep run block.
     int _maxSweepShift;
 
+    int _numNonSweepLoopsToIgnore;
+    int _nonSweepLoopIndexToIgnore[maxNonSweepLoopsToIgnore];
+    bool _ignoreCurrentLoop;
+
+    void setHangDetectionResult(HangDetectionResult result);
+
+    bool shouldIgnoreCurrentLoop();
+
     int getMaxShiftForLoop(RunBlock* runBlock);
     int determineMaxSweepShift();
+
+    bool isSweepLoopPattern();
 
     bool isSweepDiverging();
     void checkSweepContract();
@@ -57,8 +73,11 @@ public:
     HangType hangType() { return HangType::REGULAR_SWEEP; }
 
     void start();
-    void signalLoopExit();
+
+    void signalLoopStartDetected();
     void signalLoopIterationCompleted();
+    void signalLoopExit();
+
     HangDetectionResult detectHang();
 };
 

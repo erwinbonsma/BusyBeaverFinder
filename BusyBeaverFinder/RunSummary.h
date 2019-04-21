@@ -119,6 +119,7 @@ public:
 
     ProgramBlockIndex programBlockIndexAt(int index) { return _programBlockHistory[index]; }
     RunBlock* runBlockAt(int index) { return _runBlockHistory + index; }
+    RunBlock* getLastRunBlock() { return (_runBlockHistoryP - 1); }
 
     // Returns the length in program blocks of the given run block.
     //

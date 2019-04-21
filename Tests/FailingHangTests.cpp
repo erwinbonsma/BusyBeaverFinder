@@ -102,31 +102,4 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 0);
         REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
     }
-    SECTION( "6x6-RegularSweepWithComplexReversal2" ) {
-        // Another sweep with a mid-sequence reversal that takes 21 steps to execute.
-        //
-        // The refactored RunSummary-based Sweep Hang Detector currently fails to detect it as the
-        // mid-sequence reversal itself consists of its loop (violating the assumption that the
-        // number of loops in the meta-run is a multiple of two). Fixing this requires extending
-        // the detection to ignore this loop (by recognizing that it has a fixed number of
-        // iterations, unlike the actual sweep loops)
-        //
-        // Note: It is being detected as a hang by the No Exit hang check.
-        //
-        //       *
-        //   * * o _ *
-        // * _ _ o *
-        // * o o o _ *
-        // * * _ _ _ *
-        // o _ o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-    }
 }

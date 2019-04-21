@@ -554,5 +554,26 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-RegularSweepWithReversalContainingFixedLoop" ) {
+        // Another sweep with a mid-sequence reversal that takes 21 steps to execute. As this
+        // reversal sequence contains a small loop (with fixed number of iteration) it requires the
+        // Sweep Hang detector to distinguish these fixed loops from the actual sweep loops.
+        //
+        //       *
+        //   * * o _ *
+        // * _ _ o *
+        // * o o o _ *
+        // * * _ _ _ *
+        // o _ o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
 }
 
