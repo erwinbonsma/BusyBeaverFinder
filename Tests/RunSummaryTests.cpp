@@ -33,6 +33,14 @@ bool checkRunSummary(RunSummary& runSummary, int* expected) {
         RunBlock* runBlock = runSummary.runBlockAt(runBlockIndex);
 
         if (expectedSequenceIndex == numSequences) {
+            // Expect a new sequence. Check that the sequence was indeed not yet encountered.
+            for (int i = 0; i < numSequences; i++) {
+                if (sequenceIndex[i] == runBlock->getSequenceIndex()) {
+                    std::cout << "Expected a new sequence but found an existing one" << std::endl;
+                    return false;
+                }
+            }
+            // Map the actual ID of the encountered sequence to the normalized expected ID
             sequenceIndex[numSequences++] = runBlock->getSequenceIndex();
         } else {
             if (sequenceIndex[expectedSequenceIndex] != runBlock->getSequenceIndex()) {
@@ -125,6 +133,15 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
         // Loop that contains some repeated run blocks
         ProgramBlockIndex blocks[] = {1, 2,3,2,4,2,3,2,4, 5, 2,3,2,4,2,3,2,4, 5, -1};
         int expected[] {0,1, 1,8, 2,1, 1,8, -1};
+
+        REQUIRE(executeRunSummaryTest(blocks, expected));
+    }
+    SECTION( "DifferentSequencesWithEqualEndings" ) {
+        // This program contains different sequences that end with the same program block. These
+        // should result in different run blocks, but they were not distinguished by an earlier
+        // implementation of RunSummary (before 4fdc8fb commit)
+        ProgramBlockIndex blocks[] = {1,2,3, 4,4, 1,5,3, 4,4, 1,2,3, 4,4, 1,5,3, 4,4, -1};
+        int expected[] {0,3, 1,2, 2,3, 1,2, 0,3, 1,2, 2,3, 1,2, -1};
 
         REQUIRE(executeRunSummaryTest(blocks, expected));
     }
