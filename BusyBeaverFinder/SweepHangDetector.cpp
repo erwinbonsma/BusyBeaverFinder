@@ -80,6 +80,8 @@ void SweepHangDetector::start() {
 
     _sweepCount = 0;
     _midSequenceReveralDp = nullptr;
+    _dataPointerAtLoopStart = nullptr;
+    _dataBoundary = nullptr;
 
     _maxSweepShift = 0; // Lazily set it
 }
@@ -175,7 +177,37 @@ void SweepHangDetector::signalLoopExit() {
     if (_status == HangDetectionResult::ONGOING) {
         _sweepCount++;
         _searcher.getDataTracker().captureSnapShot();
+        _dataPointerAtLoopStart = nullptr;
+        _dataBoundary = nullptr;
     }
+}
+
+void SweepHangDetector::signalLoopIterationCompleted() {
+    Data& data = _searcher.getData();
+    DataPointer newDp = data.getDataPointer();
+
+    if (_dataPointerAtLoopStart != nullptr) {
+        int dpShift = (int)(newDp - _dataPointerAtLoopStart);
+
+        if (dpShift == 0) {
+            // DP should shift each iteration
+            _status = HangDetectionResult::FAILED;
+            return;
+        }
+
+        DataPointer dataBoundary = (dpShift < 0) ? data.getMinBoundP() : data.getMaxBoundP();
+
+        if (_dataBoundary != nullptr) {
+            if (_dataBoundary != dataBoundary) {
+                // The sweep loop should not extend the data boundary
+                _status = HangDetectionResult::FAILED;
+                return;
+            }
+        } else {
+            _dataBoundary = dataBoundary;
+        }
+    }
+    _dataPointerAtLoopStart = newDp;
 }
 
 HangDetectionResult SweepHangDetector::detectHang() {

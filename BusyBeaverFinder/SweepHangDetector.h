@@ -33,6 +33,9 @@ class SweepHangDetector : public HangDetector {
     // the sweep loops
     DataPointer _midSequenceReveralDp;
 
+    DataPointer _dataPointerAtLoopStart;
+    DataPointer _dataBoundary;
+
     // The number of sweeps so far.
     int _sweepCount;
 
@@ -55,6 +58,7 @@ public:
 
     void start();
     void signalLoopExit();
+    void signalLoopIterationCompleted();
     HangDetectionResult detectHang();
 };
 

@@ -488,5 +488,25 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
+    SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop3" ) {
+        // Initially this program appears to carry out an irregular sweep. However, after about 280
+        // steps, it gets locked into a simple periodic loop.
+        //
+        //   *   *
+        // * o o o _ *
+        // o _ o o *
+        // o * * _
+        // o * _ o *
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
 }
 
