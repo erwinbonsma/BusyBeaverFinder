@@ -17,10 +17,6 @@ SweepHangDetector::SweepHangDetector(ExhaustiveSearcher& searcher) :
 {
 }
 
-void SweepHangDetector::setHangDetectionResult(HangDetectionResult result) {
-    _status = result;
-}
-
 int SweepHangDetector::getMaxShiftForLoop(RunBlock* runBlock) {
     RunSummary& runSummary = _searcher.getRunSummary();
     CompiledProgram& compiledProgram = _searcher.getCompiledProgram();
@@ -140,13 +136,10 @@ bool SweepHangDetector::isSweepLoopPattern() {
     return true;
 }
 
-void SweepHangDetector::start() {
+HangDetectionResult SweepHangDetector::start() {
     if ( !isSweepLoopPattern() ) {
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
-
-    _status = HangDetectionResult::ONGOING;
 
     _sweepCount = 0;
     _midSequenceReveralDp = nullptr;
@@ -154,6 +147,8 @@ void SweepHangDetector::start() {
     _dataBoundary = nullptr;
 
     _maxSweepShift = 0; // Lazily set it
+
+    return HangDetectionResult::ONGOING;
 }
 
 // Should be invoked after a full sweep has been completed. It returns "true" if the data value
@@ -181,11 +176,10 @@ bool SweepHangDetector::isSweepDiverging() {
     return dataTracker.sweepHangDetected(_midSequenceReveralDp);
 }
 
-void SweepHangDetector::checkSweepContract() {
+HangDetectionResult SweepHangDetector::checkSweepContract() {
     if (!isSweepDiverging()) {
         // Values do not diverge so we cannot conclude it is a hang.
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
 
     // We should at least sample each different sweep-loop
@@ -204,17 +198,16 @@ void SweepHangDetector::checkSweepContract() {
     int numSweepsSampled = _sweepCount - 1;
     if (numSweepsSampled < numSweepsToSample) {
         // Not yet sufficient sweeps to conclude that values always diverge (so that it is a hang)
-        return;
+        return HangDetectionResult::ONGOING;
     }
 
     Data& data = _searcher.getData();
     if (_maxSweepShift >= (data.getMaxVisitedP() - data.getMinVisitedP())) {
         // The sequence is too short. This may be a glider instead.
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
 
-    setHangDetectionResult(HangDetectionResult::HANGING);
+    return HangDetectionResult::HANGING;
 }
 
 bool SweepHangDetector::shouldIgnoreCurrentLoop() {
@@ -229,23 +222,19 @@ bool SweepHangDetector::shouldIgnoreCurrentLoop() {
     return false;
 }
 
-void SweepHangDetector::signalLoopStartDetected() {
-    if (_status != HangDetectionResult::ONGOING) {
-        return;
-    }
-
+HangDetectionResult SweepHangDetector::signalLoopStartDetected() {
     _ignoreCurrentLoop = shouldIgnoreCurrentLoop();
+    return HangDetectionResult::ONGOING;
 }
 
-void SweepHangDetector::signalLoopExit() {
-    if (_status != HangDetectionResult::ONGOING || _ignoreCurrentLoop) {
-        return;
+HangDetectionResult SweepHangDetector::signalLoopExit() {
+    if (_ignoreCurrentLoop) {
+        return HangDetectionResult::ONGOING;
     }
 
     if (_searcher.getMetaRunSummary().getNumRunBlocks() != _metaLoopIndex) {
         // We exited the assumed endless sweep meta-loop
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
 
     if (_sweepCount < 2) {
@@ -257,27 +246,29 @@ void SweepHangDetector::signalLoopExit() {
         if (dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
             if (_midSequenceReveralDp != nullptr) {
                 // There can be at most one mid-sequence reversal point.
-                setHangDetectionResult(HangDetectionResult::FAILED);
-                return;
+                return HangDetectionResult::FAILED;
             }
 
             _midSequenceReveralDp = dp;
         }
     } else {
-        checkSweepContract();
+        HangDetectionResult result = checkSweepContract();
+        if (result != HangDetectionResult::ONGOING) {
+            return result;
+        }
     }
 
-    if (_status == HangDetectionResult::ONGOING) {
-        _sweepCount++;
-        _searcher.getDataTracker().captureSnapShot();
-        _dataPointerAtLoopStart = nullptr;
-        _dataBoundary = nullptr;
-    }
+    _sweepCount++;
+    _searcher.getDataTracker().captureSnapShot();
+    _dataPointerAtLoopStart = nullptr;
+    _dataBoundary = nullptr;
+
+    return HangDetectionResult::ONGOING;
 }
 
-void SweepHangDetector::signalLoopIterationCompleted() {
-    if (_status != HangDetectionResult::ONGOING || _ignoreCurrentLoop) {
-        return;
+HangDetectionResult SweepHangDetector::signalLoopIteration() {
+    if (_ignoreCurrentLoop) {
+        return HangDetectionResult::ONGOING;
     }
 
     Data& data = _searcher.getData();
@@ -288,8 +279,7 @@ void SweepHangDetector::signalLoopIterationCompleted() {
 
         if (dpShift == 0) {
             // DP should shift each iteration
-            setHangDetectionResult(HangDetectionResult::FAILED);
-            return;
+            return HangDetectionResult::FAILED;
         }
 
         DataPointer dataBoundary = (dpShift < 0) ? data.getMinBoundP() : data.getMaxBoundP();
@@ -297,17 +287,13 @@ void SweepHangDetector::signalLoopIterationCompleted() {
         if (_dataBoundary != nullptr) {
             if (_dataBoundary != dataBoundary) {
                 // The sweep loop should not extend the data boundary
-                setHangDetectionResult(HangDetectionResult::FAILED);
-                return;
+                return HangDetectionResult::FAILED;
             }
         } else {
             _dataBoundary = dataBoundary;
         }
     }
     _dataPointerAtLoopStart = newDp;
-}
 
-HangDetectionResult SweepHangDetector::detectHang() {
-    // Actual check is done whenever a loop is exited
-    return _status;
+    return HangDetectionResult::ONGOING;
 }

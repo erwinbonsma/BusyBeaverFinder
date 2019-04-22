@@ -61,39 +61,40 @@ bool MetaPeriodicHangDetector::isPeriodicLoopPattern() {
     return true;
 }
 
-void MetaPeriodicHangDetector::start() {
-    PeriodicHangDetector::start();
+HangDetectionResult MetaPeriodicHangDetector::start() {
+    HangDetectionResult result = PeriodicHangDetector::start();
 
     _abortTime = _searcher.getRunSummary().getNumProgramBlocks() + _loopLength;
+
+    return result;
 }
 
-void MetaPeriodicHangDetector::signalLoopIterationCompleted() {
+HangDetectionResult MetaPeriodicHangDetector::signalLoopIteration() {
     if (_searcher.getRunSummary().getNumProgramBlocks() > _abortTime) {
         // We may be stuck in an inner-loop instead of the assumed meta-loop.
-        setHangDetectionResult(HangDetectionResult::FAILED);
+        return HangDetectionResult::FAILED;
     }
+
+    return HangDetectionResult::ONGOING;
 }
 
-void MetaPeriodicHangDetector::signalLoopExit() {
-    if (_status != HangDetectionResult::ONGOING) {
-        return;
-    }
-
+HangDetectionResult MetaPeriodicHangDetector::signalLoopExit() {
     if (
         !_trackedRunSummary->isInsideLoop() ||
         _loopRunBlockIndex != _trackedRunSummary->getNumRunBlocks()
     ) {
         // Apparently not same periodic loop anymore
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
 
     if (
         _searcher.getDataTracker().getNewSnapShot() == nullptr ||
         _searcher.getRunSummary().getNumProgramBlocks() == _timeOfNextSnapshot
     ) {
-        captureAndCheckSnapshot();
         _timeOfNextSnapshot = _searcher.getRunSummary().getNumProgramBlocks() + _loopLength;
         _abortTime = _timeOfNextSnapshot;
+        return captureAndCheckSnapshot();
     }
+
+    return HangDetectionResult::ONGOING;
 }

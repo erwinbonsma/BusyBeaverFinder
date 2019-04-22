@@ -29,10 +29,10 @@ class MetaPeriodicHangDetector : public PeriodicHangDetector {
 public:
     MetaPeriodicHangDetector(ExhaustiveSearcher& searcher);
 
-    void start();
+    HangDetectionResult start();
 
-    void signalLoopIterationCompleted();
-    void signalLoopExit();
+    HangDetectionResult signalLoopIteration();
+    HangDetectionResult signalLoopExit();
 };
 
 #endif /* MetaPeriodicHangDetector_h */

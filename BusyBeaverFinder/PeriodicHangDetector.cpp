@@ -17,10 +17,6 @@ PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
     _searcher(searcher) {
 }
 
-void PeriodicHangDetector::setHangDetectionResult(HangDetectionResult result) {
-    _status = result;
-}
-
 bool PeriodicHangDetector::isPeriodicLoopPattern() {
     return _trackedRunSummary->isInsideLoop();
 }
@@ -29,21 +25,21 @@ RunSummary* PeriodicHangDetector::getTargetRunSummary() {
     return &_searcher.getRunSummary();
 }
 
-void PeriodicHangDetector::PeriodicHangDetector::start() {
+HangDetectionResult PeriodicHangDetector::PeriodicHangDetector::start() {
     _trackedRunSummary = getTargetRunSummary();
-    _status = HangDetectionResult::ONGOING;
 
     if ( !isPeriodicLoopPattern() ) {
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
 
     _loopPeriod = _trackedRunSummary->getLoopPeriod();
     _loopRunBlockIndex = _trackedRunSummary->getNumRunBlocks();
     _searcher.getDataTracker().reset();
+
+    return HangDetectionResult::ONGOING;
 }
 
-void PeriodicHangDetector::captureAndCheckSnapshot() {
+HangDetectionResult PeriodicHangDetector::captureAndCheckSnapshot() {
     Data& data = _searcher.getData();
     DataTracker& dataTracker = _searcher.getDataTracker();
 
@@ -59,7 +55,7 @@ void PeriodicHangDetector::captureAndCheckSnapshot() {
          !data.significantValueChange()
     ) {
         // DP remains stationary. Check for hang against single snapshot
-        setHangDetectionResult(
+        return (
             dataTracker.compareToSnapShot() != SnapShotComparison::IMPACTFUL
             ? HangDetectionResult::HANGING
             : HangDetectionResult::FAILED
@@ -71,36 +67,29 @@ void PeriodicHangDetector::captureAndCheckSnapshot() {
     }
     else {
         // Check for hang using both snapshots
-        setHangDetectionResult(
+        return (
             dataTracker.periodicHangDetected()
             ? HangDetectionResult::HANGING
             : HangDetectionResult::FAILED
         );
     }
+
+    return HangDetectionResult::ONGOING;
 }
 
-void PeriodicHangDetector::signalLoopIterationCompleted() {
-    if (_status != HangDetectionResult::ONGOING) {
-        return;
-    }
-
+HangDetectionResult PeriodicHangDetector::signalLoopIteration() {
     if (
         !_trackedRunSummary->isInsideLoop() ||
         _loopRunBlockIndex != _trackedRunSummary->getNumRunBlocks()
     ) {
         // Apparently not same periodic loop anymore
-        setHangDetectionResult(HangDetectionResult::FAILED);
-        return;
+        return HangDetectionResult::FAILED;
     }
 
-    captureAndCheckSnapshot();
+    return captureAndCheckSnapshot();
 }
 
-void PeriodicHangDetector::signalLoopExit() {
-    // The assumption is that the loop is endless
-    setHangDetectionResult(HangDetectionResult::FAILED);
-}
-
-HangDetectionResult PeriodicHangDetector::detectHang() {
-    return _status;
+HangDetectionResult PeriodicHangDetector::signalLoopExit() {
+    // The loop should be endless
+    return HangDetectionResult::FAILED;
 }

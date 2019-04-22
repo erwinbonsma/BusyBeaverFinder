@@ -28,22 +28,20 @@ public:
 
     virtual HangType hangType() = 0;
 
-    virtual void start() {};
+    virtual HangDetectionResult start() { return HangDetectionResult::ONGOING; };
 
     // Signalled when it is detected that a new loop is entered. Note, the actual loop will have
     // started earlier, as it requires two loop iterations to detect that execution is in a loop.
-    virtual void signalLoopStartDetected() {}
+    virtual HangDetectionResult signalLoopStartDetected() { return HangDetectionResult::ONGOING; }
 
     // Signalled when it is detected that the loop is exited. It is signalled just before the
     // instruction that follows the loop is executed.
-    virtual void signalLoopExit() {}
+    virtual HangDetectionResult signalLoopExit() { return HangDetectionResult::ONGOING; }
 
     // Signalled when the current loop completed a full iteration. During loop execution it is
     // repeatedly executed, always at the same moment in the loop, which makes it very suitable for
     // checking that the loop behaves how it is supposed to, given the type of hang that is assumed.
-    virtual void signalLoopIterationCompleted() {}
-
-    virtual HangDetectionResult detectHang() = 0;
+    virtual HangDetectionResult signalLoopIteration() { return HangDetectionResult::ONGOING; }
 };
 
 #endif /* HangDetector_h */

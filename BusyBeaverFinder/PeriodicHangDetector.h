@@ -26,15 +26,11 @@ protected:
     //----------------------
     // Hang detection state
 
-    HangDetectionResult _status;
-
     RunSummary* _trackedRunSummary;
     int _loopPeriod;
     int _loopRunBlockIndex;
 
-    void setHangDetectionResult(HangDetectionResult result);
-
-    void captureAndCheckSnapshot();
+    HangDetectionResult captureAndCheckSnapshot();
 
     virtual bool isPeriodicLoopPattern();
 
@@ -46,11 +42,10 @@ public:
 
     HangType hangType() { return HangType::PERIODIC; }
 
-    void start();
-    HangDetectionResult detectHang();
+    HangDetectionResult start();
 
-    void signalLoopIterationCompleted();
-    void signalLoopExit();
+    HangDetectionResult signalLoopIteration();
+    HangDetectionResult signalLoopExit();
 };
 
 #endif /* PeriodicHangDetector_h */

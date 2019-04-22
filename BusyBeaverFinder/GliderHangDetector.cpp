@@ -17,46 +17,40 @@ GliderHangDetector::GliderHangDetector(ExhaustiveSearcher& searcher) :
 {
 }
 
-void GliderHangDetector::start() {
+HangDetectionResult GliderHangDetector::start() {
     // Check basic assumption. The meta-run summary should be in a loop with period two:
     // one ever-increasing loop, one fixed switch
     RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
 
     if ( !metaRunSummary.isInsideLoop() || metaRunSummary.getLoopPeriod() != 2 ) {
-        _status = HangDetectionResult::FAILED;
-    } else {
-        _status = HangDetectionResult::ONGOING;
-        _metaLoopIndex = metaRunSummary.getNumRunBlocks();
+        return HangDetectionResult::FAILED;
     }
+
+    _metaLoopIndex = metaRunSummary.getNumRunBlocks();
 
     _numLoopExits = 0;
     _numStepsAtLastLoopExit = 0;
     _dataPointerAtLoopStart = nullptr;
     _previousLoopLength = 0;
     _searcher.getDataTracker().reset();
+
+    return HangDetectionResult::ONGOING;
 }
 
-void GliderHangDetector::signalLoopStartDetected() {
+HangDetectionResult GliderHangDetector::signalLoopStartDetected() {
     // Reset visited bounds so that the bounds of the various snapshots are comparable, irrespective
     // of the exact momemt when the hang check was started.
     _searcher.getData().resetVisitedBounds();
+
+    return HangDetectionResult::ONGOING;
 }
 
-void GliderHangDetector::checkGliderContract() {
-    if (!_searcher.getDataTracker().gliderHangDetected()) {
-        _status = HangDetectionResult::FAILED;
-    } else {
-        // Possibly require multiple positive checks before concluding it is a hang
-    }
-}
-
-void GliderHangDetector::signalLoopExit() {
+HangDetectionResult GliderHangDetector::signalLoopExit() {
 //    _searcher.dumpHangDetection();
 
     if (_searcher.getMetaRunSummary().getNumRunBlocks() != _metaLoopIndex) {
         // We exited the assumed endless sweep meta-loop
-        _status = HangDetectionResult::FAILED;
-        return;
+        return HangDetectionResult::FAILED;
     }
 
     // Check that the glider loop is increasing in length. This, amongst others, prevents that
@@ -64,28 +58,30 @@ void GliderHangDetector::signalLoopExit() {
     if (_numStepsAtLastLoopExit > 0) {
         int loopLength = _searcher.getNumSteps() - _numStepsAtLastLoopExit;
         if (loopLength <= _previousLoopLength) {
-            _status = HangDetectionResult::FAILED;
-            return;
+            return HangDetectionResult::FAILED;
         }
         _previousLoopLength = loopLength;
     }
     _numStepsAtLastLoopExit = _searcher.getNumSteps();
 
     if (++_numLoopExits > 2) {
-        checkGliderContract();
-        if (_numLoopExits > 3 && _status == HangDetectionResult::ONGOING) {
+        if ( !_searcher.getDataTracker().gliderHangDetected() ) {
+            return HangDetectionResult::FAILED;
+        }
+
+        if (_numLoopExits > 3) {
             // Conclude it's a hang after two successful checks (just in case)
-            _status = HangDetectionResult::HANGING;
+            return HangDetectionResult::HANGING;
         }
     }
 
-    if (_status == HangDetectionResult::ONGOING) {
-        _searcher.getDataTracker().captureSnapShot();
-        _dataPointerAtLoopStart = nullptr;
-    }
+    _searcher.getDataTracker().captureSnapShot();
+    _dataPointerAtLoopStart = nullptr;
+
+    return HangDetectionResult::ONGOING;
 }
 
-void GliderHangDetector::signalLoopIterationCompleted() {
+HangDetectionResult GliderHangDetector::signalLoopIteration() {
     if (_dataPointerAtLoopStart == nullptr) {
         _dataPointerAtLoopStart = _searcher.getData().getDataPointer();
     }
@@ -93,11 +89,8 @@ void GliderHangDetector::signalLoopIterationCompleted() {
         // Execution of the inner-loop of the glider should not result in effective DP-movements
         // (inside the loop, DP is allowed to temporarily move). Effective DP-movement should only
         // be done by the meta-loop, which causes the glider to move.
-        _status = HangDetectionResult::FAILED;
+        return HangDetectionResult::FAILED;
     }
-}
 
-HangDetectionResult GliderHangDetector::detectHang() {
-    // Actual check is done whenever a loop is exited
-    return _status;
+    return HangDetectionResult::ONGOING;
 }

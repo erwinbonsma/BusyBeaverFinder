@@ -74,7 +74,6 @@ class ExhaustiveSearcher {
 
     int _numHangDetectAttempts;
 
-    HangDetector* _activeHangCheck;
     PeriodicHangDetector* _periodicHangDetector;
     MetaPeriodicHangDetector* _metaPeriodicHangDetector;
     SweepHangDetector* _sweepHangDetector;
@@ -87,7 +86,7 @@ class ExhaustiveSearcher {
     void dumpInstructionStack(Ins* stack);
     void initInstructionStack(int size);
 
-    void initiateNewHangCheck();
+    HangDetector* initiateNewHangCheck();
     bool periodicHangDetected();
     bool sweepHangDetected();
     bool isSweepDiverging();

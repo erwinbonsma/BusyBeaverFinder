@@ -135,45 +135,45 @@ void ExhaustiveSearcher::dump() {
     _data.dump();
 }
 
-void ExhaustiveSearcher::initiateNewHangCheck() {
-    assert(_activeHangCheck == nullptr);
-
-    if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
-        // Wait before initiating a new hang check. Too quickly trying the same hang checks in
-        // succession could just be a waste of CPU cycles.
-        return;
-    }
-
+HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
 //    std::cout << "Initiating new hang check @ " << _numSteps << std::endl;
 //    dumpHangDetection();
 
-    if (_numHangDetectAttempts < _settings.maxHangDetectAttempts) {
-        switch (_numHangDetectAttempts % 3) {
-            case 0: {
-                // Alternate between both types of periodic hang detectors
-                if (_numHangDetectAttempts % 6 == 0) {
-                    _activeHangCheck = _periodicHangDetector;
-                } else {
-                    _activeHangCheck = _metaPeriodicHangDetector;
-                }
-                _waitBeforeRetryingHangChecks = (
-                    _runSummary[0].getNumProgramBlocks() +
-                    _settings.minWaitBeforeRetryingHangChecks
-                );
-                break;
-            }
-            case 1: _activeHangCheck = _sweepHangDetector; break;
-            case 2: _activeHangCheck = _gliderHangDetector; break;
-        }
-    }
-
-    if (_activeHangCheck != nullptr) {
-        _numHangDetectAttempts++;
-        _activeHangCheck->start();
-    } else {
+    if (_numHangDetectAttempts == _settings.maxHangDetectAttempts) {
         // Signal end of all checks
         _numHangDetectAttempts = -1;
+        return nullptr;
     }
+
+    HangDetector* newCheck = nullptr;
+
+    switch (_numHangDetectAttempts % 3) {
+        case 0: {
+            if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
+                // Wait before initiating a new hang check. Too quickly trying the same hang checks
+                // in succession could just be a waste of CPU cycles.
+                return nullptr;
+            }
+            _waitBeforeRetryingHangChecks = (
+                _runSummary[0].getNumProgramBlocks() +
+                _settings.minWaitBeforeRetryingHangChecks
+            );
+            // Alternate between both types of periodic hang detectors
+            if (_numHangDetectAttempts % 6 == 0) {
+                newCheck = _periodicHangDetector;
+            } else {
+                newCheck = _metaPeriodicHangDetector;
+            }
+            break;
+        }
+        case 1: newCheck = _sweepHangDetector; break;
+        case 2: newCheck = _gliderHangDetector; break;
+    }
+
+    assert(newCheck != nullptr);
+    _numHangDetectAttempts++;
+
+    return newCheck;
 }
 
 void ExhaustiveSearcher::branch(int depth) {
@@ -215,6 +215,9 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 //    _program.dump();
 //    _compiledProgram.dump();
 
+    HangDetectionResult result = HangDetectionResult::ONGOING;
+    HangDetector* hangCheck = nullptr;
+
     _data.resetHangDetection();
     _dataTracker.reset();
     _runSummary[0].reset();
@@ -226,7 +229,6 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     _waitBeforeRetryingHangChecks = 4;
 
     _numHangDetectAttempts = 0;
-    _activeHangCheck = nullptr;
 
     while (_block->isFinalized()) {
 //        std::cout << "Executing " << _runSummary[0].getNumProgramBlocks()
@@ -249,17 +251,32 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                 }
             }
 
-            if (_activeHangCheck != nullptr) {
+            if (hangCheck != nullptr) {
                 if (wasInLoop) {
                     if (!_runSummary[0].isInsideLoop()) {
-                        _activeHangCheck->signalLoopExit();
+                        result = hangCheck->signalLoopExit();
                     }
                     else if (_runSummary[0].isAtStartOfLoop()) {
-                        _activeHangCheck->signalLoopIterationCompleted();
+                        result = hangCheck->signalLoopIteration();
                     }
                 } else {
-                    _activeHangCheck->signalLoopStartDetected();
+                    result = hangCheck->signalLoopStartDetected();
                 }
+            } else if (_numHangDetectAttempts != -1) {
+                hangCheck = initiateNewHangCheck();
+                if (hangCheck != nullptr) {
+                    result = hangCheck->start();
+                }
+            }
+        }
+
+        if (result == HangDetectionResult::FAILED) {
+            hangCheck = nullptr;
+        }
+        else if (result == HangDetectionResult::HANGING) {
+            _tracker->reportDetectedHang(hangCheck->hangType());
+            if (!_settings.testHangDetection) {
+                return backtrackProgramPointer;
             }
         }
 
@@ -293,26 +310,6 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
         }
 
         _numSteps += _block->getNumSteps();
-
-        if (_activeHangCheck != nullptr) {
-            HangDetectionResult result = _activeHangCheck->detectHang();
-
-            switch (result) {
-                case HangDetectionResult::FAILED:
-                    _activeHangCheck = nullptr;
-                    break;
-                case HangDetectionResult::HANGING:
-                    _tracker->reportDetectedHang(_activeHangCheck->hangType());
-                    if (!_settings.testHangDetection) {
-                        return backtrackProgramPointer;
-                    }
-                    break;
-                case HangDetectionResult::ONGOING:
-                    break;
-            }
-        } else if (_numHangDetectAttempts != -1) {
-            initiateNewHangCheck();
-        }
 
         if (_numSteps >= _settings.maxSteps) {
             _tracker->reportAssumedHang();

@@ -24,8 +24,6 @@ class GliderHangDetector : public HangDetector {
     //----------------------
     // Hang detection state
 
-    HangDetectionResult _status;
-
     // The loop in the meta-run summary (it is used to verify that we remain inside this loop)
     int _metaLoopIndex;
 
@@ -42,13 +40,11 @@ public:
 
     HangType hangType() { return HangType::APERIODIC_GLIDER; }
 
-    void start();
+    HangDetectionResult start();
 
-    void signalLoopStartDetected();
-    void signalLoopIterationCompleted();
-    void signalLoopExit();
-
-    HangDetectionResult detectHang();
+    HangDetectionResult signalLoopStartDetected();
+    HangDetectionResult signalLoopIteration();
+    HangDetectionResult signalLoopExit();
 };
 
 #endif /* GliderHangDetector_h */

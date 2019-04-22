@@ -26,8 +26,6 @@ class SweepHangDetector : public HangDetector {
     //----------------------
     // Hang detection state
 
-    HangDetectionResult _status;
-
     // The last bounds of sweep.
     DataPointer _reversalDp[2];
 
@@ -65,20 +63,18 @@ class SweepHangDetector : public HangDetector {
     bool isSweepLoopPattern();
 
     bool isSweepDiverging();
-    void checkSweepContract();
+    HangDetectionResult checkSweepContract();
 
 public:
     SweepHangDetector(ExhaustiveSearcher& searcher);
 
     HangType hangType() { return HangType::REGULAR_SWEEP; }
 
-    void start();
+    HangDetectionResult start();
 
-    void signalLoopStartDetected();
-    void signalLoopIterationCompleted();
-    void signalLoopExit();
-
-    HangDetectionResult detectHang();
+    HangDetectionResult signalLoopStartDetected();
+    HangDetectionResult signalLoopIteration();
+    HangDetectionResult signalLoopExit();
 };
 
 #endif /* SweepHangDetector_h */
