@@ -17,46 +17,71 @@ PeriodicHangDetector::PeriodicHangDetector(ExhaustiveSearcher& searcher) :
     _searcher(searcher) {
 }
 
-void PeriodicHangDetector::PeriodicHangDetector::start() {
-    _loopPeriod = 0;
-    _trackedRunSummary = &_searcher.getRunSummary();
-    _periodicHangCheckAt = 0;
+void PeriodicHangDetector::setHangDetectionResult(HangDetectionResult result) {
+    _status = result;
+}
+
+bool PeriodicHangDetector::isPeriodicLoopPattern() {
+    return _trackedRunSummary->isInsideLoop();
 }
 
 RunSummary* PeriodicHangDetector::getTargetRunSummary() {
     return &_searcher.getRunSummary();
 }
 
-bool PeriodicHangDetector::insideLoop() {
-    if (getTargetRunSummary()->isInsideLoop()) {
-        _trackedRunSummary = getTargetRunSummary();
-    } else {
-        // Not in a loop (yet)
-        return false;
+void PeriodicHangDetector::PeriodicHangDetector::start() {
+    _trackedRunSummary = getTargetRunSummary();
+    _status = HangDetectionResult::ONGOING;
+
+    if ( !isPeriodicLoopPattern() ) {
+        setHangDetectionResult(HangDetectionResult::FAILED);
+        return;
     }
 
     _loopPeriod = _trackedRunSummary->getLoopPeriod();
     _loopRunBlockIndex = _trackedRunSummary->getNumRunBlocks();
-    // Ensure that first snapshot is taken when program block is entered. In case of the meta-run
-    // summary, this method may not be invoked at the start of a meta-run program block.
-    _periodicHangCheckAt = _trackedRunSummary->getNumProgramBlocks() + 1;
-
-//    std::cout << "loop period = " << _loopPeriod << std::endl;
-//    _searcher.dump();
-//    _searcher.dumpHangDetection();
-
     _searcher.getDataTracker().reset();
-
-    return true;
 }
 
-HangDetectionResult PeriodicHangDetector::detectHang() {
-    if (_trackedRunSummary->getNumProgramBlocks() < _periodicHangCheckAt) {
-        return HangDetectionResult::ONGOING;
-    }
+void PeriodicHangDetector::captureAndCheckSnapshot() {
+    Data& data = _searcher.getData();
+    DataTracker& dataTracker = _searcher.getDataTracker();
 
-    if (_loopPeriod == 0) {
-        return insideLoop() ? HangDetectionResult::ONGOING : HangDetectionResult::FAILED;
+    if (
+        dataTracker.getNewSnapShot() == nullptr
+    ) {
+        // Capture first snapshot
+        dataTracker.captureSnapShot();
+        data.resetHangDetection();
+    }
+    else if (
+         data.getDataPointer() == dataTracker.getNewSnapShot()->dataP &&
+         !data.significantValueChange()
+    ) {
+        // DP remains stationary. Check for hang against single snapshot
+        setHangDetectionResult(
+            dataTracker.compareToSnapShot() != SnapShotComparison::IMPACTFUL
+            ? HangDetectionResult::HANGING
+            : HangDetectionResult::FAILED
+        );
+    }
+    else if (dataTracker.getOldSnapShot() == nullptr) {
+        // Capture second snapshot
+        dataTracker.captureSnapShot();
+    }
+    else {
+        // Check for hang using both snapshots
+        setHangDetectionResult(
+            dataTracker.periodicHangDetected()
+            ? HangDetectionResult::HANGING
+            : HangDetectionResult::FAILED
+        );
+    }
+}
+
+void PeriodicHangDetector::signalLoopIterationCompleted() {
+    if (_status != HangDetectionResult::ONGOING) {
+        return;
     }
 
     if (
@@ -64,51 +89,18 @@ HangDetectionResult PeriodicHangDetector::detectHang() {
         _loopRunBlockIndex != _trackedRunSummary->getNumRunBlocks()
     ) {
         // Apparently not same periodic loop anymore
-        return HangDetectionResult::FAILED;
+        setHangDetectionResult(HangDetectionResult::FAILED);
+        return;
     }
 
-    // TODO: In case of a loop at the meta-run level should add an extra sanity-check that verifies
-    // that each iteration contains a fixed number of program blocks (i.e. the number of iterations
-    // in the lower-level loop is fixed, in contrast to sweep hangs).
+    captureAndCheckSnapshot();
+}
 
-    Data& data = _searcher.getData();
-    DataTracker& dataTracker = _searcher.getDataTracker();
+void PeriodicHangDetector::signalLoopExit() {
+    // The assumption is that the loop is endless
+    setHangDetectionResult(HangDetectionResult::FAILED);
+}
 
-//    _searcher.dump();
-//    _searcher.dumpHangDetection();
-
-    if (
-        dataTracker.getNewSnapShot() == nullptr
-    ) {
-        _searcher.getDataTracker().captureSnapShot();
-        _searcher.getData().resetHangDetection();
-
-        _periodicHangCheckAt = _trackedRunSummary->getNumProgramBlocks() + _loopPeriod;
-    }
-    else if (
-        data.getDataPointer() == dataTracker.getNewSnapShot()->dataP &&
-        !data.significantValueChange()
-    ) {
-        SnapShotComparison result = dataTracker.compareToSnapShot();
-        if (result != SnapShotComparison::IMPACTFUL) {
-            return HangDetectionResult::HANGING;
-        } else {
-            return HangDetectionResult::FAILED;
-        }
-    }
-    else {
-        if (dataTracker.getOldSnapShot() == nullptr) {
-            _periodicHangCheckAt = _trackedRunSummary->getNumProgramBlocks() + _loopPeriod;
-        } else {
-            if (dataTracker.periodicHangDetected()) {
-                return HangDetectionResult::HANGING;
-            } else {
-                return HangDetectionResult::FAILED;
-            }
-        }
-
-        dataTracker.captureSnapShot();
-    }
-
-    return HangDetectionResult::ONGOING;
+HangDetectionResult PeriodicHangDetector::detectHang() {
+    return _status;
 }

@@ -17,18 +17,22 @@
 // detect hangs at the meta-level. These hangs occur when the periodic hang itself contains of one
 // or more (fixed length) loops.
 class MetaPeriodicHangDetector : public PeriodicHangDetector {
-    // When to abort the periodic hang check (in number of recorded instructions for the lowest
-    // level run summary)
-    int _abortHangCheckAt;
+    // The units of the three variables below are all in program blocks
+    int _loopLength;
+    int _abortTime;
+    int _timeOfNextSnapshot;
 
     RunSummary* getTargetRunSummary();
-    bool insideLoop();
+
+    bool isPeriodicLoopPattern();
 
 public:
     MetaPeriodicHangDetector(ExhaustiveSearcher& searcher);
 
     void start();
-    HangDetectionResult detectHang();
+
+    void signalLoopIterationCompleted();
+    void signalLoopExit();
 };
 
 #endif /* MetaPeriodicHangDetector_h */

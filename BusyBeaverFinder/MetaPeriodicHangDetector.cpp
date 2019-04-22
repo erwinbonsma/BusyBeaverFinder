@@ -21,29 +21,79 @@ RunSummary* MetaPeriodicHangDetector::getTargetRunSummary() {
     return &_searcher.getMetaRunSummary();
 }
 
-bool MetaPeriodicHangDetector::insideLoop() {
-    if (PeriodicHangDetector::insideLoop()) {
-        // Set abort switch. This is required in case the assumed endless loop at meta-run level
-        // is aborted and instead an endless loop at the lower level is entered. Without this
-        // limit, the hang check itself would hang.
-        _abortHangCheckAt = _searcher.getRunSummary().getNumProgramBlocks() * 3 / 2;
-        return true;
-    } else {
+bool MetaPeriodicHangDetector::isPeriodicLoopPattern() {
+    RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
+    RunSummary& runSummary = _searcher.getRunSummary();
+
+    if (!metaRunSummary.isInsideLoop()) {
         return false;
     }
+
+    int metaLoopPeriod = metaRunSummary.getLoopPeriod();
+    _loopLength = 0;
+
+    // Skip the last, yet unfinalized, run block
+    int startIndex = runSummary.getNumRunBlocks() - 2;
+    for (int i = 0; i < metaLoopPeriod; i++) {
+        int idx1 = startIndex - i;
+        int len1 = runSummary.getRunBlockLength(idx1);
+        RunBlock* runBlock1 = runSummary.runBlockAt(idx1);
+
+        _loopLength += len1;
+
+        if (runBlock1->isLoop()) {
+            int idx2 = idx1 - metaLoopPeriod;
+            int len2 = runSummary.getRunBlockLength(idx2);
+
+            if (runBlock1->getSequenceIndex() != runSummary.runBlockAt(idx2)->getSequenceIndex()) {
+                // Can happen when the meta-run loop was just detected. In that case, idx2 may just
+                // be outside the loop.
+                return false;
+            }
+
+            if (len1 != len2) {
+                // All loops should be the same size
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 void MetaPeriodicHangDetector::start() {
     PeriodicHangDetector::start();
 
-    _abortHangCheckAt = std::numeric_limits<int>::max();
+    _abortTime = _searcher.getRunSummary().getNumProgramBlocks() + _loopLength;
 }
 
-HangDetectionResult MetaPeriodicHangDetector::detectHang() {
-    if (_searcher.getRunSummary().getNumProgramBlocks() > _abortHangCheckAt) {
-        return HangDetectionResult::FAILED;
+void MetaPeriodicHangDetector::signalLoopIterationCompleted() {
+    if (_searcher.getRunSummary().getNumProgramBlocks() > _abortTime) {
+        // We may be stuck in an inner-loop instead of the assumed meta-loop.
+        setHangDetectionResult(HangDetectionResult::FAILED);
     }
-    else {
-        return PeriodicHangDetector::detectHang();
+}
+
+void MetaPeriodicHangDetector::signalLoopExit() {
+    if (_status != HangDetectionResult::ONGOING) {
+        return;
+    }
+
+    if (
+        !_trackedRunSummary->isInsideLoop() ||
+        _loopRunBlockIndex != _trackedRunSummary->getNumRunBlocks()
+    ) {
+        // Apparently not same periodic loop anymore
+        setHangDetectionResult(HangDetectionResult::FAILED);
+        return;
+    }
+
+    if (
+        _searcher.getDataTracker().getNewSnapShot() == nullptr ||
+        _searcher.getRunSummary().getNumProgramBlocks() == _timeOfNextSnapshot
+    ) {
+        captureAndCheckSnapshot();
+        _timeOfNextSnapshot = _searcher.getRunSummary().getNumProgramBlocks() + _loopLength;
+        _abortTime = _timeOfNextSnapshot;
     }
 }

@@ -111,22 +111,14 @@ SnapShotComparison  DataTracker::compareToSnapShot() {
  * It checks if during both periods the same data changes are made, possibly shifted.
  */
 bool DataTracker::periodicHangDetected() {
-    long _deltaNew = _data.getMaxVisitedP() - _data.getMinVisitedP();
-    long _deltaOld = _newSnapShotP->maxVisitedP - _newSnapShotP->minVisitedP;
-
-    if (_deltaNew != _deltaOld) {
-        // The number of cells visited differ
-        return false;
-    }
-
     assert(_dataBufP == _data.getDataBuffer());
     long shift = _data.getDataPointer() - _newSnapShotP->dataP;
 
-    int *oldBeforeP = _oldSnapShotP->buf + (_newSnapShotP->minVisitedP - _dataBufP);
-    int *oldAfterP = _newSnapShotP->buf + (_newSnapShotP->minVisitedP - _dataBufP);
-    int *newBeforeP = _newSnapShotP->buf + (_data.getMinVisitedP() - _dataBufP);
-    // Expanded for clarity
-    int *newAfterP = _dataBufP + (_data.getMinVisitedP() - _dataBufP);
+    int *newAfterP = _data.getMinVisitedP();
+    int *newBeforeP = _newSnapShotP->buf + (newAfterP - _dataBufP);
+
+    int *oldAfterP = newBeforeP - shift;
+    int *oldBeforeP = _oldSnapShotP->buf + (oldAfterP - _newSnapShotP->buf);
 
     do {
         if (

@@ -16,9 +16,8 @@
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
-    Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-    Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-    Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+    Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+    Ins::NOOP, Ins::TURN, Ins::UNSET
 };
 
 const ProgramPointer backtrackProgramPointer =
@@ -137,9 +136,6 @@ void ExhaustiveSearcher::dump() {
 }
 
 void ExhaustiveSearcher::initiateNewHangCheck() {
-//    std::cout << "Initiate new hang check @ " << _numSteps << std::endl;
-//    dumpHangDetection();
-
     assert(_activeHangCheck == nullptr);
 
     if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
@@ -147,6 +143,9 @@ void ExhaustiveSearcher::initiateNewHangCheck() {
         // succession could just be a waste of CPU cycles.
         return;
     }
+
+//    std::cout << "Initiating new hang check @ " << _numSteps << std::endl;
+//    dumpHangDetection();
 
     if (_numHangDetectAttempts < _settings.maxHangDetectAttempts) {
         switch (_numHangDetectAttempts % 3) {
@@ -221,7 +220,11 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     _runSummary[0].reset();
     _runSummary[1].reset();
 
-    _waitBeforeRetryingHangChecks = 0;
+    // Wait a bit before the initial check, so that there is at least a bit of program block
+    // history available. Otherwise it can take unnecessarily long for a simple periodic hang to be
+    // detected.
+    _waitBeforeRetryingHangChecks = 4;
+
     _numHangDetectAttempts = 0;
     _activeHangCheck = nullptr;
 

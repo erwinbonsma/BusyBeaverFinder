@@ -26,17 +26,17 @@ protected:
     //----------------------
     // Hang detection state
 
+    HangDetectionResult _status;
+
     RunSummary* _trackedRunSummary;
     int _loopPeriod;
     int _loopRunBlockIndex;
 
-    int _sampleStartIndex;
+    void setHangDetectionResult(HangDetectionResult result);
 
-    // When to perform the periodic hang check (in number of recorded instructions for the
-    // tracked run summary)
-    int _periodicHangCheckAt;
+    void captureAndCheckSnapshot();
 
-    virtual bool insideLoop();
+    virtual bool isPeriodicLoopPattern();
 
     // The run summary to monitor for periodic loops
     virtual RunSummary* getTargetRunSummary();
@@ -48,6 +48,9 @@ public:
 
     void start();
     HangDetectionResult detectHang();
+
+    void signalLoopIterationCompleted();
+    void signalLoopExit();
 };
 
 #endif /* PeriodicHangDetector_h */
