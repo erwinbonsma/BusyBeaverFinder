@@ -17,10 +17,10 @@ typedef int ProgramBlockIndex;
 
 // Should be set such that it never is the limiting factor for hang detection (instead, the logic
 // of the available/implemented hang detectors should be)
-const int maxRunBlockHistoryLength = 32768;
+const int maxRunBlockHistoryLength = 1000000;
 
 // Should also be set such that is is never the limiting factor for hang detection
-const int maxNumSequenceBlocks = 512;
+const int maxNumSequenceBlocks = 65536;
 
 
 class RunBlockSequenceNode {
