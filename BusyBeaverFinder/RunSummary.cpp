@@ -109,11 +109,12 @@ int RunSummary::getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* e
     return (int)(sequenceNodeP - _sequenceBlock);
 }
 
-void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, bool isLoop) {
+void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP,
+                                int loopPeriod) {
     int sequenceIndex = getSequenceIndex(startP, endP);
 
     assert((_runBlockHistoryP - _runBlockHistory) < maxRunBlockHistoryLength);
-    (_runBlockHistoryP++)->init((int)(startP - _programBlockHistory), sequenceIndex, isLoop);
+    (_runBlockHistoryP++)->init((int)(startP - _programBlockHistory), sequenceIndex, loopPeriod);
 }
 
 bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
@@ -204,6 +205,62 @@ void RunSummary::dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level)
 
 void RunSummary::dumpSequenceTree() {
     dumpRunBlockSequenceNode(_sequenceBlock, 0);
+}
+
+void RunSummary::dumpCondensed() {
+    for (int i = 0; i < getNumRunBlocks(); i++) {
+        RunBlock* runBlock = runBlockAt(i);
+        int sequenceIndex = runBlock->getSequenceIndex();
+
+        if (i > 0) {
+            std::cout << " ";
+        }
+
+        std::cout << "#" << sequenceIndex;
+
+        if (runBlock->isLoop()) {
+            int len = getRunBlockLength(i);
+            int period = runBlock->getLoopPeriod();
+
+            std::cout << "*" << len / period << "." << (len % period);
+        }
+    }
+    std::cout << std::endl;
+
+    int numUnique = 0;
+    int helperArray[64];
+
+    std::cout << "with:" << std::endl;
+    for (int i = 0; i < getNumRunBlocks(); i++) {
+        RunBlock* runBlock = runBlockAt(i);
+        int sequenceIndex = runBlock->getSequenceIndex();
+
+        int j = 0;
+        while (j < numUnique && helperArray[j] != sequenceIndex) {
+            j++;
+        }
+
+        if (j == numUnique) {
+            // First encounter of this block. So dump it
+            std::cout << sequenceIndex << " =";
+
+            int len = getRunBlockLength(i);
+            if (runBlock->isLoop()) {
+                len = runBlock->getLoopPeriod();
+            }
+
+            ProgramBlockIndex* programBlockP = _programBlockHistory + runBlock->getStartIndex();
+            for (int k = 0; k < len; k++) {
+                std::cout << " " << *(programBlockP++);
+            }
+            std::cout << std::endl;
+
+            helperArray[numUnique++] = sequenceIndex;
+            if (numUnique == 64) {
+                return;
+            }
+        }
+    }
 }
 
 void RunSummary::dump() {

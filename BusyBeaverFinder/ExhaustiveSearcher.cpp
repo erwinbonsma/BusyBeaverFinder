@@ -125,9 +125,11 @@ void ExhaustiveSearcher::dumpHangDetection() {
 
     std::cout << "Run summary: ";
     _runSummary[0].dump();
+    _runSummary[0].dumpCondensed();
 
     std::cout << "Meta-run summary: ";
     _runSummary[1].dump();
+    _runSummary[1].dumpCondensed();
 }
 
 void ExhaustiveSearcher::dump() {
@@ -217,6 +219,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
     HangDetectionResult result = HangDetectionResult::ONGOING;
     HangDetector* hangCheck = nullptr;
+    ProgramBlock* entryBlock = _compiledProgram.getEntryBlock();
 
     _data.resetHangDetection();
     _dataTracker.reset();
@@ -244,7 +247,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
             bool wasInLoop = _runSummary[0].isInsideLoop();
             int numRunBlocks = _runSummary[0].getNumRunBlocks();
 
-            if (_runSummary[0].recordProgramBlock((ProgramBlockIndex)_block->getStartIndex())) {
+            if (_runSummary[0].recordProgramBlock((int)(_block - entryBlock))) {
                 for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
                     RunBlock* runBlock = _runSummary[0].runBlockAt(i);
                     _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());

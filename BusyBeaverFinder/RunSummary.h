@@ -98,7 +98,7 @@ class RunSummary {
     int getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP);
 
     // Creates a run block for the programs blocks from startP (inclusive) to endP (exclusive)
-    void createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, bool isLoop);
+    void createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, int loopPeriod);
 
     void dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level);
 
@@ -136,6 +136,7 @@ public:
     int getRunBlockLength(int index);
 
     void dumpSequenceTree();
+    void dumpCondensed();
     void dump();
 };
 

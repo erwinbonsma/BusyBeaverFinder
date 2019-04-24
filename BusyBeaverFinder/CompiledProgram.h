@@ -62,6 +62,7 @@ public:
     int getAmount();
     int getNumSteps();
 
+    ProgramBlock* getEntryBlock() { return _blocks; }
     ProgramBlock* finalizeBlock(InstructionPointer endP);
     ProgramBlock* enterBlock(ProgramBlock* block);
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
