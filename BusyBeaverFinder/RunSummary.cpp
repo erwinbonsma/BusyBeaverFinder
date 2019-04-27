@@ -43,6 +43,8 @@ void RunSummary::setCapacity(int capacity, int* helperBuf) {
     _programBlockHistoryMaxP = _programBlockHistory + capacity;
 
     _helperBuf = helperBuf;
+
+    reset();
 }
 
 void RunSummary::reset() {
