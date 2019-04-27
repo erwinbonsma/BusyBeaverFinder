@@ -138,5 +138,4 @@ bool ExitFinder::canExitFrom(ProgramBlock* block) {
     }
 
     return escapedFromLoop;
-
 }
