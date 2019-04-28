@@ -28,7 +28,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _data(dataSize),
     _runSummary(),
     _dataTracker(_data),
-    _exitFinder(_program, _compiledProgram)
+    _exitFinder(_program, _interpretedProgram)
 {
     initInstructionStack(width * height);
 
@@ -215,11 +215,11 @@ void ExhaustiveSearcher::branch(int depth) {
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 //    _program.dump();
-//    _compiledProgram.dump();
+//    _interpretedProgram.dump();
 
     HangDetectionResult result = HangDetectionResult::ONGOING;
     HangDetector* hangCheck = nullptr;
-    ProgramBlock* entryBlock = _compiledProgram.getEntryBlock();
+    ProgramBlock* entryBlock = _interpretedProgram.getEntryBlock();
 
     _data.resetHangDetection();
     _dataTracker.reset();
@@ -236,7 +236,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     while (_block->isFinalized()) {
 //        std::cout << "Executing " << _runSummary[0].getNumProgramBlocks()
 //        << " @ " << _numSteps << ": ";
-//        _compiledProgram.dumpBlock(_block);
+//        _interpretedProgram.dumpBlock(_block);
 //        _data.dump();
 
         // Record block before executing it. This way, when signalling a loop exit, the value
@@ -326,14 +326,14 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
         }
     }
 
-    return _compiledProgram.getStartProgramPointer(_block, _program);
+    return _interpretedProgram.getStartProgramPointer(_block, _program);
 }
 
 void ExhaustiveSearcher::run(int depth) {
     DataOp* initialDataUndoP = _data.getUndoStackPointer();
     int initialSteps = _numSteps;
 
-    _compiledProgram.push();
+    _interpretedProgram.push();
 
 //    _program.dump();
 //    std::cout << std::endl;
@@ -355,29 +355,29 @@ processInstruction:
                 switch (_pp.dir) {
                     case Dir::UP:
                         _data.inc();
-                        _compiledProgram.setInstruction(true);
-                        _compiledProgram.incAmount();
+                        _interpretedProgram.setInstruction(true);
+                        _interpretedProgram.incAmount();
                         break;
                     case Dir::DOWN:
                         _data.dec();
-                        _compiledProgram.setInstruction(true);
-                        _compiledProgram.decAmount();
+                        _interpretedProgram.setInstruction(true);
+                        _interpretedProgram.decAmount();
                         break;
                     case Dir::RIGHT:
                         if (! _data.shr()) {
                             _tracker->reportError();
                             goto backtrack;
                         }
-                        _compiledProgram.setInstruction(false);
-                        _compiledProgram.incAmount();
+                        _interpretedProgram.setInstruction(false);
+                        _interpretedProgram.incAmount();
                         break;
                     case Dir::LEFT:
                         if (! _data.shl()) {
                             _tracker->reportError();
                             goto backtrack;
                         }
-                        _compiledProgram.setInstruction(false);
-                        _compiledProgram.decAmount();
+                        _interpretedProgram.setInstruction(false);
+                        _interpretedProgram.decAmount();
                         break;
                 }
                 break;
@@ -387,8 +387,8 @@ processInstruction:
                 } else {
                     _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
                 }
-                if (_compiledProgram.isInstructionSet()) {
-                    _block = _compiledProgram.finalizeBlock(_pp.p);
+                if (_interpretedProgram.isInstructionSet()) {
+                    _block = _interpretedProgram.finalizeBlock(_pp.p);
 
                     // Check if it is possible to exit
                     if (
@@ -402,7 +402,7 @@ processInstruction:
                         }
                     }
 
-                    _block = _compiledProgram.enterBlock(
+                    _block = _interpretedProgram.enterBlock(
                         _pp.p,
                         _data.val()==0 ? TurnDirection::COUNTERCLOCKWISE : TurnDirection::CLOCKWISE
                     );
@@ -417,7 +417,7 @@ processInstruction:
                 goto processInstruction;
         }
 
-        if (_compiledProgram.incSteps() > 64) {
+        if (_interpretedProgram.incSteps() > 64) {
             _tracker->reportDetectedHang(HangType::NO_DATA_LOOP);
             if (!_settings.testHangDetection) {
                 goto backtrack;
@@ -438,7 +438,7 @@ processInstruction:
 backtrack:
     _data.undo(initialDataUndoP);
     _numSteps = initialSteps;
-    _compiledProgram.pop();
+    _interpretedProgram.pop();
 }
 
 void ExhaustiveSearcher::search() {

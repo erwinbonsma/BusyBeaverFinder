@@ -1,13 +1,13 @@
 //
-//  CompiledProgram.h
+//  InterpretedProgram.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 26/03/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#ifndef CompiledProgram_h
-#define CompiledProgram_h
+#ifndef InterpretedProgram_h
+#define InterpretedProgram_h
 
 #include <stdio.h>
 
@@ -32,7 +32,7 @@ struct ProgramStack {
     int numFinalizedBlocks;
 };
 
-class CompiledProgram {
+class InterpretedProgram {
     ProgramBlock _blocks[maxProgramBlocks];
     int _blockIndexLookup[maxProgramBlocks];
     int _finalizedStack[maxProgramBlocks];
@@ -46,7 +46,7 @@ class CompiledProgram {
     void checkState();
 
 public:
-    CompiledProgram();
+    InterpretedProgram();
 
     void push();
     void pop();
@@ -76,4 +76,4 @@ public:
 };
 
 
-#endif /* CompiledProgram_h */
+#endif /* InterpretedProgram_h */

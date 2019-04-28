@@ -14,7 +14,7 @@
 #include "Data.h"
 #include "Program.h"
 
-#include "CompiledProgram.h"
+#include "InterpretedProgram.h"
 
 #include "DataTracker.h"
 #include "ProgressTracker.h"
@@ -69,8 +69,8 @@ class ExhaustiveSearcher {
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
 
-    // A "compiled" representation of the program
-    CompiledProgram _compiledProgram;
+    // An interpreted representation of the program
+    InterpretedProgram _interpretedProgram;
 
     int _numHangDetectAttempts;
 
@@ -112,7 +112,7 @@ public:
 
     Program& getProgram() { return _program; }
     Data& getData() { return _data; }
-    CompiledProgram& getCompiledProgram() { return _compiledProgram; }
+    InterpretedProgram& getInterpretedProgram() { return _interpretedProgram; }
 
     DataTracker& getDataTracker() { return _dataTracker; }
     RunSummary& getRunSummary() { return _runSummary[0]; }

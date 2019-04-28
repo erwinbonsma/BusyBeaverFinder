@@ -35,7 +35,7 @@ void ProgressTracker::report() {
 
 //    _searcher.dumpInstructionStack();
 //    _searcher.getProgram().dump();
-//    _searcher.getCompiledProgram().dump();
+//    _searcher.getInterpretedProgram().dump();
 //    _searcher.getProgram().dumpWeb();
 //    _searcher.dumpHangDetection();
 
@@ -100,7 +100,7 @@ void ProgressTracker::reportAssumedHang() {
 
 //        _searcher.dumpInstructionStack();
 //        _searcher.getProgram().dump();
-//        _searcher.getCompiledProgram().dump();
+//        _searcher.getInterpretedProgram().dump();
 //        _searcher.getProgram().dumpWeb();
 
         if (_dumpUndetectedHangs) {

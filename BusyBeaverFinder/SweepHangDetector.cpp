@@ -19,12 +19,12 @@ SweepHangDetector::SweepHangDetector(ExhaustiveSearcher& searcher) :
 
 int SweepHangDetector::getMaxShiftForLoop(RunBlock* runBlock) {
     RunSummary& runSummary = _searcher.getRunSummary();
-    CompiledProgram& compiledProgram = _searcher.getCompiledProgram();
+    InterpretedProgram& interpretedProgram = _searcher.getInterpretedProgram();
     int maxShift = 0;
 
     for (int i = 0; i < runBlock->getLoopPeriod(); i++) {
         int blockIndex = runSummary.programBlockIndexAt(i + runBlock->getStartIndex());
-        ProgramBlock* programBlock = compiledProgram.getBlock(blockIndex);
+        ProgramBlock* programBlock = interpretedProgram.getBlock(blockIndex);
 
         if (! programBlock->isDelta() ) {
             int amount = programBlock->getInstructionAmount();
@@ -44,7 +44,7 @@ int SweepHangDetector::getMaxShiftForLoop(RunBlock* runBlock) {
 // mean that some values are skipped during a sweep. This then implies that the hang detection needs
 // to analyze more sweeps before it can conclude that all values diverge and there is a hang.
 int SweepHangDetector::determineMaxSweepShift() {
-//    _searcher.getCompiledProgram().dump();
+//    _searcher.getInterpretedProgram().dump();
 //    _searcher.dumpHangDetection();
 
     RunSummary& runSummary = _searcher.getRunSummary();

@@ -12,13 +12,13 @@
 #include <stdio.h>
 
 #include "Program.h"
-#include "CompiledProgram.h"
+#include "InterpretedProgram.h"
 
 typedef ProgramBlock* ProgramBlockP;
 
 class ExitFinder {
     Program& _program;
-    CompiledProgram& _compiledProgram;
+    InterpretedProgram& _interpretedProgram;
     int _maxSteps;
 
     // Tracks if the block with the given index has been visited already
@@ -38,7 +38,7 @@ class ExitFinder {
     bool visitBlock(ProgramBlock* block);
 
 public:
-    ExitFinder(Program& program, CompiledProgram& compiledProgram);
+    ExitFinder(Program& program, InterpretedProgram& interpretedProgram);
 
     // Checks if it is possible to exit from the loop that starts with the given block. It will
     // finalize blocks that are not yet finalized but which can be finalized given the instructions
