@@ -12,6 +12,10 @@
 
 #include "Utils.h"
 
+// Limit on the recursion level of the isPossibleExitValue method. Its a simple guard against
+// infinite recursion without explicitly checking if it has entered a loop.
+const int maxBacktrackDepth = 4;
+
 ExitFinder::ExitFinder(Program& program, InterpretedProgram& interpretedProgram) :
     _program(program),
     _interpretedProgram(interpretedProgram)
@@ -25,6 +29,76 @@ ExitFinder::ExitFinder(Program& program, InterpretedProgram& interpretedProgram)
     // but should be high enough. (If not, it will be discovered as this program itself will end up
     // in an endless loop).
     _maxSteps = (program.getWidth() - 1) * (program.getHeight() - 1);
+}
+
+bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int delta, int depth) {
+//    std::cout << "isPossibleExitValue #"
+//    << (block - _interpretedProgram.getEntryBlock())
+//    << ", delta = " << delta
+//    << ", depth = " << depth << std::endl;
+
+    if ( !block->isDelta() ) {
+        // The block performs a shift. We cannot conclude anything about its exit value
+        return true;
+    }
+
+    if (depth++ > maxBacktrackDepth) {
+        return true;
+    }
+
+    delta -= block->getInstructionAmount();
+
+    for (int i = block->numEntryBlocks(); --i >= 0; ) {
+        ProgramBlock* entryBlock = block->entryBlock(i);
+
+        if (entryBlock->nonZeroBlock() == block) {
+            if (zeroValue && delta == 0) {
+                return false;
+            }
+
+            if (isPossibleExitValue(entryBlock, zeroValue, delta, depth)) {
+                return true;
+            }
+        }
+
+        if (entryBlock->zeroBlock() == block) {
+            // The entry value when coming from this block is zero.
+            if (zeroValue == (delta == 0)) {
+                return true;
+            }
+        }
+    }
+
+    if (block->numEntryBlocks() == 0) {
+        // This is the very first block of the program, whose entry value is always zero
+        return (zeroValue == (delta == 0));
+    }
+
+    return false;
+}
+
+bool ExitFinder::isReachable(ProgramBlock* block) {
+    for (int i = block->numEntryBlocks(); --i >= 0; ) {
+        ProgramBlock* entryBlock = block->entryBlock(i);
+
+        if (entryBlock->nonZeroBlock() == block) {
+//            std::cout << "Check non-zero entry via #"
+//            << (entryBlock - _interpretedProgram.getEntryBlock()) << std::endl;
+            if (isPossibleExitValue(entryBlock, false, 0, 0)) {
+                return true;
+            };
+        }
+
+        if (entryBlock->zeroBlock() == block) {
+//            std::cout << "Check zero entry via #"
+//            << (entryBlock - _interpretedProgram.getEntryBlock()) << std::endl;
+            if (isPossibleExitValue(entryBlock, true, 0, 0)) {
+                return true;
+            };
+        }
+    }
+
+    return false;
 }
 
 bool ExitFinder::finalizeBlock(ProgramBlock* block) {
@@ -104,38 +178,69 @@ bool ExitFinder::visitBlock(ProgramBlock* block) {
         return false;
     }
 
+    _visited[block->getStartIndex()] = true;
+
     if (!block->isFinalized()) {
         if (!finalizeBlock(block)) {
-            // The block cannot yet be finalized.
-            return true;
+            _exits[_numExits++] = block;
+
+            return false;
         }
     }
 
-    // Add to stack
+    // Add to stack of blocks whose children should be visited
     *(_topP++) = block;
-    _visited[block->getStartIndex()] = true;
+
     return false;
 }
 
 bool ExitFinder::canExitFrom(ProgramBlock* block) {
+    std::cout << "START canExitFrom" << std::endl;
+
     _nextP = _pendingStack;
     _topP = _pendingStack;
 
-    bool escapedFromLoop = visitBlock(block);
+    _numExits = 0;
 
-    while (!escapedFromLoop && _nextP < _topP) {
+    visitBlock(block);
+    while (_nextP < _topP) {
         ProgramBlock* block = *_nextP++;
 
-        escapedFromLoop = (
-            visitBlock(block->zeroBlock()) ||
-            visitBlock(block->nonZeroBlock())
-        );
+        visitBlock(block->zeroBlock());
+        visitBlock(block->nonZeroBlock());
     }
 
-    // Reset tracking state
+    // Reset tracking state for finalized blocks
     while (_topP > _pendingStack) {
         _visited[ (*--_topP)->getStartIndex() ] = false;
     }
 
-    return escapedFromLoop;
+    bool canEscape = false;
+
+//    std::cout << "Check canExitFrom #" << (block - _interpretedProgram.getEntryBlock())
+//    << std::endl;
+
+//    std::cout << "Check reachability of " << _numExits << " exits:" << std::endl;
+    for (int i = _numExits; --i >= 0; ) {
+        if (isReachable(_exits[i])) {
+            canEscape = true;
+//            std::cout << "  Exit #" << (_exits[i] - _interpretedProgram.getEntryBlock());
+//            std::cout << " is reachable" << std::endl;
+        }
+//        else {
+//            std::cout << "  Exit #" << (_exits[i] - _interpretedProgram.getEntryBlock());
+//            std::cout << " cannot be reached" << std::endl;
+//        }
+        // Reset tracking state for exit
+        _visited[ _exits[i]->getStartIndex() ] = false;
+    }
+
+    if (!canEscape) {
+        std::cout << "Hang detected" << std::endl;
+        _interpretedProgram.dump();
+    }
+
+    std::cout << "END canExitFrom" << std::endl;
+
+    return canEscape;
 }

@@ -26,9 +26,19 @@ class ExitFinder {
 
     // The blocks still to visit
     ProgramBlockP _pendingStack[maxProgramBlocks];
-
     ProgramBlockP *_nextP;
     ProgramBlockP *_topP;
+
+    // The possible exits
+    ProgramBlockP _exits[maxProgramBlocks];
+    int _numExits;
+
+    // Recursively checks if a given value (zero or non-zero) can be obtained via at least one
+    // possible entry path.
+    bool isPossibleExitValue(ProgramBlock* block, bool zeroValue, int delta, int depth);
+
+    // Performs a simple analysis to check if the given block can be reached.
+    bool isReachable(ProgramBlock* block);
 
     // Tries to finalize the current block.
     // Returns "true" if the block could be finalized (based on the currently set instructions)
