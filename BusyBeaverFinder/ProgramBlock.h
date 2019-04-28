@@ -14,8 +14,16 @@
 
 #include "Types.h"
 
+const int maxProgramBlockEntries = 8;
+
 class ProgramBlock {
     int _startIndex;
+
+    // Entries
+    ProgramBlock* _entries[maxProgramBlockEntries];
+    int _numEntries;
+
+    // Exits
     ProgramBlock* _zeroBlock;
     ProgramBlock* _nonZeroBlock;
 
@@ -40,6 +48,15 @@ public:
     bool isDelta() { return _isDelta; }
     int getInstructionAmount() { return _instructionAmount; }
     int getNumSteps() { return _numSteps; }
+
+    void pushEntry(ProgramBlock* entry) {
+        assert(_numEntries < maxProgramBlockEntries);
+        _entries[_numEntries++] = entry;
+    }
+    ProgramBlock* popEntry() { return _entries[--_numEntries]; }
+
+    int numEntryBlocks() { return _numEntries; }
+    ProgramBlock* entryBlock(int index) { return _entries[index]; }
 
     ProgramBlock* zeroBlock() { return _zeroBlock; }
     ProgramBlock* nonZeroBlock() { return _nonZeroBlock; }

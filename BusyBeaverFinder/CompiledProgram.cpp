@@ -225,9 +225,19 @@ void CompiledProgram::dumpBlock(ProgramBlock* block) {
             std::cout << "-";
         }
 
-        std::cout << "/" << (block->nonZeroBlock() - _blocks)
-        << ", #Steps = " << block->getNumSteps();
+        std::cout << "/" << (block->nonZeroBlock() - _blocks);
+
+        std::cout << ", #Steps = " << block->getNumSteps();
     }
+
+    std::cout << ", Entries[";
+    for (int i = 0; i < block->numEntryBlocks(); i++) {
+        if (i != 0) {
+            std::cout << ", ";
+        }
+        std::cout << (block->entryBlock(i) - _blocks);
+    }
+    std::cout << "]";
 
     std::cout << std::endl;
 }
