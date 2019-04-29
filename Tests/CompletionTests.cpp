@@ -21,6 +21,7 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 10000;
+    settings.disableNoExitHangDetection = true;
     searcher.configure(settings);
 
     SECTION( "DivergingDeltaYetNoHang" ) {
@@ -61,6 +62,19 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
             Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
             Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalSuccess() == 1);
+    }
+    SECTION( "PreviouslyAFalsePositiveOfExitFinder" ) {
+        // Program that was wrongly reported as hanging by an early version of the Exit Finder with
+        // reachability analysis. It failed due to a missing call to InterpretedProgram::enterBlock.
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

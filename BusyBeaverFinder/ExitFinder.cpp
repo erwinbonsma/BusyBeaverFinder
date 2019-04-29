@@ -32,11 +32,6 @@ ExitFinder::ExitFinder(Program& program, InterpretedProgram& interpretedProgram)
 }
 
 bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int delta, int depth) {
-//    std::cout << "isPossibleExitValue #"
-//    << (block - _interpretedProgram.getEntryBlock())
-//    << ", delta = " << delta
-//    << ", depth = " << depth << std::endl;
-
     if ( !block->isDelta() ) {
         // The block performs a shift. We cannot conclude anything about its exit value
         return true;
@@ -82,16 +77,12 @@ bool ExitFinder::isReachable(ProgramBlock* block) {
         ProgramBlock* entryBlock = block->entryBlock(i);
 
         if (entryBlock->nonZeroBlock() == block) {
-//            std::cout << "Check non-zero entry via #"
-//            << (entryBlock - _interpretedProgram.getEntryBlock()) << std::endl;
             if (isPossibleExitValue(entryBlock, false, 0, 0)) {
                 return true;
             };
         }
 
         if (entryBlock->zeroBlock() == block) {
-//            std::cout << "Check zero entry via #"
-//            << (entryBlock - _interpretedProgram.getEntryBlock()) << std::endl;
             if (isPossibleExitValue(entryBlock, true, 0, 0)) {
                 return true;
             };
@@ -195,8 +186,6 @@ bool ExitFinder::visitBlock(ProgramBlock* block) {
 }
 
 bool ExitFinder::canExitFrom(ProgramBlock* block) {
-    std::cout << "START canExitFrom" << std::endl;
-
     _nextP = _pendingStack;
     _topP = _pendingStack;
 
@@ -217,30 +206,14 @@ bool ExitFinder::canExitFrom(ProgramBlock* block) {
 
     bool canEscape = false;
 
-//    std::cout << "Check canExitFrom #" << (block - _interpretedProgram.getEntryBlock())
-//    << std::endl;
-
-//    std::cout << "Check reachability of " << _numExits << " exits:" << std::endl;
     for (int i = _numExits; --i >= 0; ) {
         if (isReachable(_exits[i])) {
             canEscape = true;
-//            std::cout << "  Exit #" << (_exits[i] - _interpretedProgram.getEntryBlock());
-//            std::cout << " is reachable" << std::endl;
         }
-//        else {
-//            std::cout << "  Exit #" << (_exits[i] - _interpretedProgram.getEntryBlock());
-//            std::cout << " cannot be reached" << std::endl;
-//        }
+
         // Reset tracking state for exit
         _visited[ _exits[i]->getStartIndex() ] = false;
     }
-
-    if (!canEscape) {
-        std::cout << "Hang detected" << std::endl;
-        _interpretedProgram.dump();
-    }
-
-    std::cout << "END canExitFrom" << std::endl;
 
     return canEscape;
 }

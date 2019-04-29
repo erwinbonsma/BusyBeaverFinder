@@ -155,10 +155,7 @@ int InterpretedProgram::getNumSteps() {
 ProgramBlock* InterpretedProgram::finalizeBlock(InstructionPointer endP) {
     ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
 
-    if (block->isFinalized()) {
-        // TODO: Change into assertion failure once finalized blocks are executed
-        return nullptr;
-    }
+    assert( !block->isFinalized() );
 
     ProgramBlock* zeroBlock = nullptr;
     if (

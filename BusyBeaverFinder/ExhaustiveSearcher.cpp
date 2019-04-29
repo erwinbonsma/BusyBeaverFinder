@@ -326,6 +326,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
         }
     }
 
+    _interpretedProgram.enterBlock(_block);
     return _interpretedProgram.getStartProgramPointer(_block, _program);
 }
 
