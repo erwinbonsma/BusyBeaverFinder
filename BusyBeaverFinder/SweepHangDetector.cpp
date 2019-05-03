@@ -69,8 +69,10 @@ int SweepHangDetector::determineMaxSweepShift() {
 // Furthermore, the iterations of the sweep loops should increase over time, as the sequence to
 // sweep gets longer.
 //
-// Unfortunately, it can happen that the Reversal sequences themselves contain a fixed loop. If so
-// it should be ignored by this hang detector and considered part of the reveral sequences.
+// Variations:
+// - It can happen that a Reversal sequences contains a fixed loop. If so it should be ignored by
+//   this hang detector and considered part of the reveral sequences.
+// - The transition from one loop to the other may be without a reversal sequence.
 bool SweepHangDetector::isSweepLoopPattern() {
     RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
     RunSummary& runSummary = _searcher.getRunSummary();
@@ -82,7 +84,7 @@ bool SweepHangDetector::isSweepLoopPattern() {
     _metaLoopIndex = metaRunSummary.getNumRunBlocks();
     _metaLoopPeriod = metaRunSummary.getLoopPeriod();
 
-    if (_metaLoopPeriod < 4) {
+    if (_metaLoopPeriod < 2) {
         return false;
     }
 
@@ -158,20 +160,7 @@ bool SweepHangDetector::isSweepDiverging() {
 //    _searcher.getData().dump();
 //    _searcher.getDataTracker().dump();
 
-    Data& data = _searcher.getData();
     DataTracker& dataTracker = _searcher.getDataTracker();
-
-    if (_midSequenceReveralDp != nullptr) {
-        long dataIndex = _midSequenceReveralDp - data.getDataBuffer();
-        if (
-            *_midSequenceReveralDp != dataTracker.getOldSnapShot()->buf[dataIndex]
-        ) {
-            // The value of the mid-turning point should be unchanged since the last reversal at
-            // this side of the sequence. Note, it may have different values during the left and
-            // right reversal.
-            return false;
-        }
-    }
 
     return dataTracker.sweepHangDetected(_midSequenceReveralDp);
 }
