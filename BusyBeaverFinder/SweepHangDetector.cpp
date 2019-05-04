@@ -24,7 +24,7 @@ int SweepHangDetector::getMaxShiftForLoop(RunBlock* runBlock) {
 
     for (int i = 0; i < runBlock->getLoopPeriod(); i++) {
         int blockIndex = runSummary.programBlockIndexAt(i + runBlock->getStartIndex());
-        ProgramBlock* programBlock = interpretedProgram.getBlock(blockIndex);
+        ProgramBlock* programBlock = interpretedProgram.getEntryBlock() + blockIndex;
 
         if (! programBlock->isDelta() ) {
             int amount = programBlock->getInstructionAmount();
@@ -44,17 +44,14 @@ int SweepHangDetector::getMaxShiftForLoop(RunBlock* runBlock) {
 // mean that some values are skipped during a sweep. This then implies that the hang detection needs
 // to analyze more sweeps before it can conclude that all values diverge and there is a hang.
 int SweepHangDetector::determineMaxSweepShift() {
-//    _searcher.getInterpretedProgram().dump();
-//    _searcher.dumpHangDetection();
-
     RunSummary& runSummary = _searcher.getRunSummary();
     int maxShift = 0;
 
     int numRunBlocks = runSummary.getNumRunBlocks();
-    for (int i = numRunBlocks - 4; i < numRunBlocks; i++) {
+    for (int i = numRunBlocks - _metaLoopPeriod; i < numRunBlocks; i++) {
         RunBlock* runBlock = runSummary.runBlockAt(i);
 
-        if (runBlock->isLoop()) {
+        if (runBlock->isLoop() && !shouldIgnoreLoop(runBlock->getSequenceIndex())) {
             int shift = getMaxShiftForLoop(runBlock);
             if (shift > maxShift) {
                 maxShift = shift;
@@ -88,7 +85,7 @@ bool SweepHangDetector::isSweepLoopPattern() {
         return false;
     }
 
-    int numSweepLoops = 0;
+    _numSweepLoops = 0;
     _numNonSweepLoopsToIgnore = 0;
 
     // Skip the last, yet unfinalized, run block
@@ -109,7 +106,7 @@ bool SweepHangDetector::isSweepLoopPattern() {
             }
 
             if (len1 > len2) {
-                numSweepLoops++;
+                _numSweepLoops++;
             }
             else if (len1 == len2) {
                 // A fixed loop, which should be ignored
@@ -129,9 +126,12 @@ bool SweepHangDetector::isSweepLoopPattern() {
         }
     }
 
-    if (numSweepLoops < 2 || (numSweepLoops % 2) != 0) {
+    if (_numSweepLoops < 2 || (_numSweepLoops % 2) != 0) {
         return false;
     }
+
+    // Check if the hard-coded limits on the data structures used by the detector are sufficient
+    assert(_numSweepLoops <= maxSweepsToSample);
 
     _ignoreCurrentLoop = shouldIgnoreCurrentLoop();
 
@@ -144,7 +144,7 @@ HangDetectionResult SweepHangDetector::start() {
     }
 
     _sweepCount = 0;
-    _midSequenceReveralDp = nullptr;
+    _indexOfFirstMidSweepReversal = -1;
     _dataPointerAtLoopStart = nullptr;
     _dataBoundary = nullptr;
 
@@ -162,17 +162,55 @@ bool SweepHangDetector::isSweepDiverging() {
 
     DataTracker& dataTracker = _searcher.getDataTracker();
 
-    return dataTracker.sweepHangDetected(_midSequenceReveralDp);
+    if (_sweepReversalPoint[_sweepCount].midSequence && _sweepCount >= _numSweepLoops) {
+        // Check that the mid-sweep point diverges. It compares the value at the end of each sweep
+        // loop, compared to the value as it was at the end of the same sweep loop, during the
+        // previous iteration of the meta-run loop
+
+        SweepReversalPoint& old = _sweepReversalPoint[_sweepCount - _numSweepLoops];
+        SweepReversalPoint& cur = _sweepReversalPoint[_sweepCount];
+
+        if (old.dp != cur.dp) {
+            // Position of mid-sequence reversal should be fixed
+            return false;
+        }
+
+        if (
+            (old.value != cur.value) && (
+                (old.value == 0) ||
+                (cur.value == 0) ||
+                ((old.value < 0) && (cur.value > old.value)) ||
+                ((old.value > 0) && (cur.value < old.value))
+            )
+        ) {
+            // Non-diverging change to mid-sequence data point
+            return false;
+        }
+    }
+
+    int i = _sweepCount;
+    while (i >= 0 && !_sweepReversalPoint[i].midSequence) {
+        i--;
+    }
+
+    return dataTracker.sweepHangDetected(i >= 0 ? _sweepReversalPoint[i].dp : nullptr);
 }
 
 HangDetectionResult SweepHangDetector::checkSweepContract() {
+//    _searcher.dumpHangDetection();
+
     if (!isSweepDiverging()) {
         // Values do not diverge so we cannot conclude it is a hang.
         return HangDetectionResult::FAILED;
     }
 
     // We should at least sample each different sweep-loop
-    int numSweepsToSample = _searcher.getMetaRunSummary().getLoopPeriod() / 2;
+    int numSweepsToSample = _numSweepLoops;
+
+    if (_indexOfFirstMidSweepReversal != -1) {
+        // We need to check each loop twice, to ensure the mid-sweep point diverges
+        numSweepsToSample *= 2;
+    }
 
     // The amount of sweeps to check depends on the maximum amount that DP shifts within a sweep
     // loop. Values that are skipped during one sweep might impact the next sweep (when they are
@@ -199,16 +237,19 @@ HangDetectionResult SweepHangDetector::checkSweepContract() {
     return HangDetectionResult::HANGING;
 }
 
-bool SweepHangDetector::shouldIgnoreCurrentLoop() {
-    int loopIndex = _searcher.getRunSummary().getLastRunBlock()->getSequenceIndex();
 
+bool SweepHangDetector::shouldIgnoreLoop(int sequenceIndex) {
     for (int i = 0; i < _numNonSweepLoopsToIgnore; i++) {
-        if (_nonSweepLoopIndexToIgnore[i] == loopIndex) {
+        if (_nonSweepLoopIndexToIgnore[i] == sequenceIndex) {
             return true;
         }
     }
 
     return false;
+}
+
+bool SweepHangDetector::shouldIgnoreCurrentLoop() {
+    return shouldIgnoreLoop( _searcher.getRunSummary().getLastRunBlock()->getSequenceIndex() );
 }
 
 HangDetectionResult SweepHangDetector::signalLoopStartDetected() {
@@ -226,21 +267,27 @@ HangDetectionResult SweepHangDetector::signalLoopExit() {
         return HangDetectionResult::FAILED;
     }
 
-    if (_sweepCount < 2) {
-        Data& data = _searcher.getData();
-        DataPointer dp = data.getDataPointer();
+    Data& data = _searcher.getData();
+    DataPointer dp = data.getDataPointer();
 
-        _reversalDp[_sweepCount] = dp;
+    // Record the reversal point
+    SweepReversalPoint& reversalPoint = _sweepReversalPoint[_sweepCount];
+    reversalPoint.dp = dp;
+    reversalPoint.value = *dp;
+    reversalPoint.midSequence =  dp > data.getMinBoundP() && dp < data.getMaxBoundP();
 
-        if (dp > data.getMinBoundP() && dp < data.getMaxBoundP()) {
-            if (_midSequenceReveralDp != nullptr) {
-                // There can be at most one mid-sequence reversal point.
+    if (reversalPoint.midSequence) {
+        if (_indexOfFirstMidSweepReversal != -1) {
+            if (_indexOfFirstMidSweepReversal % 2 != _sweepCount % 2) {
+                // Mid-sweep reversal should only occur at one end of the sequence
                 return HangDetectionResult::FAILED;
             }
-
-            _midSequenceReveralDp = dp;
+        } else {
+            _indexOfFirstMidSweepReversal = _sweepCount;
         }
-    } else {
+    }
+
+    if (_sweepCount >= 2) {
         HangDetectionResult result = checkSweepContract();
         if (result != HangDetectionResult::ONGOING) {
             return result;
@@ -248,6 +295,7 @@ HangDetectionResult SweepHangDetector::signalLoopExit() {
     }
 
     _sweepCount++;
+    assert(_sweepCount < maxSweepsToSample);
     _searcher.getDataTracker().captureSnapShot();
     _dataPointerAtLoopStart = nullptr;
     _dataBoundary = nullptr;

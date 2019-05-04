@@ -17,7 +17,14 @@
 class ExhaustiveSearcher;
 class RunBlock;
 
+const int maxSweepsToSample = 16;
 const int maxNonSweepLoopsToIgnore = 2;
+
+struct SweepReversalPoint {
+    DataPointer dp;
+    int value;
+    bool midSequence;
+};
 
 class SweepHangDetector : public HangDetector {
 
@@ -26,12 +33,8 @@ class SweepHangDetector : public HangDetector {
     //----------------------
     // Hang detection state
 
-    // The last bounds of sweep.
-    DataPointer _reversalDp[2];
-
-    // The mid-sequence reveral point, if any. If there is one, it should be fixed to zero during
-    // the sweep loops
-    DataPointer _midSequenceReveralDp;
+    SweepReversalPoint _sweepReversalPoint[maxSweepsToSample];
+    int _indexOfFirstMidSweepReversal;
 
     DataPointer _dataPointerAtLoopStart;
     DataPointer _dataBoundary;
@@ -49,12 +52,16 @@ class SweepHangDetector : public HangDetector {
     // The maximum amount DP shifts within a program block during a sweep run block.
     int _maxSweepShift;
 
+    // The number of sweep loops in the meta-loop
+    int _numSweepLoops;
+
     int _numNonSweepLoopsToIgnore;
     int _nonSweepLoopIndexToIgnore[maxNonSweepLoopsToIgnore];
     bool _ignoreCurrentLoop;
 
     void setHangDetectionResult(HangDetectionResult result);
 
+    bool shouldIgnoreLoop(int sequenceIndex);
     bool shouldIgnoreCurrentLoop();
 
     int getMaxShiftForLoop(RunBlock* runBlock);
