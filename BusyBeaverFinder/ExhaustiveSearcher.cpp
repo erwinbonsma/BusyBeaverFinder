@@ -208,6 +208,9 @@ void ExhaustiveSearcher::branch(int depth) {
         ) {
             break;
         }
+
+        // Clear so that search continues after resuming
+        resuming = false;
     }
     _program.clearInstruction(insP);
     _instructionStack[depth] = Ins::UNSET;
