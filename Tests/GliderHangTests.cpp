@@ -160,3 +160,58 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
 }
+
+TEST_CASE( "7x7 Glider Hang tests", "[hang][glider][7x7]" ) {
+    ExhaustiveSearcher searcher(7, 7, 1024);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 1000000;
+    settings.maxHangDetectAttempts = 1024;
+    searcher.configure(settings);
+
+    SECTION( "7x7-GliderWithLargeRunBlocks") {
+        // After a fairly chaotic start (which creates various one-off run blocks that contain many
+        // program blocks) this program ends up in a glider hang. The glider hang itself also
+        // consists of two large run blocks
+        //
+        // The loop      : 517 = 7 8 11 15    17 4 6 21
+        //                       7 9 11 14 19 17 4 6 21
+        //                       7 9 10 12       4 6 21
+        // The transition: 596 =                     20
+        //                       7 9 10 12       4 6 21
+        //                       7 8 11 15    17 4 6 20
+        //                       7 9 11 14 19 16
+        //                       7 9 10 12       4 6 21
+        //                       7 8 11 15 16
+        //                       7 9 11 14 19 17 4 6 21 22
+        //                           10 12 4 6       21
+        //                       7 8 10 12 4 5
+        //                       7 8 11 15    17 4 6 21
+        //                       7 9 11 14 19 17 4 6 21
+        //                       7 9 10 12       4 6 20
+        //
+        // Block #596 consists of 79 program blocks. Madness!
+        // The total sequence tree consists of 597 program blocks.
+        //
+        //     *
+        // * _ o _ * *
+        //   * _ o o o *
+        // * o o o _ *
+        //   _ _ * o
+        // * _ o * _ *
+        // o o *   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+}
