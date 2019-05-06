@@ -126,4 +126,23 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
+    SECTION( "6x6-SweepWithVaryingMidSequencePoint") {
+        // Sweep hang where there is a mid-sequence reversal point but where not every sweep loop
+        // exits at the point. The other loop that ends at this side of the sequence jumps over it,
+        // as it shifts two steps.
+        //
+        //     * * *
+        //   * _ o o *
+        //   _ _ _ *
+        // * o o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
 }
