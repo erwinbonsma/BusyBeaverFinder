@@ -19,7 +19,7 @@ typedef int ProgramBlockIndex;
 // (instead, the logic of the available/implemented hang detectors should be)
 #ifdef DEBUG
 const int maxRunBlockHistoryLength = 32768;
-const int maxNumSequenceBlocks = 512;
+const int maxNumSequenceBlocks = 1024;
 #else
 const int maxRunBlockHistoryLength = 1000000;
 const int maxNumSequenceBlocks = 65536;

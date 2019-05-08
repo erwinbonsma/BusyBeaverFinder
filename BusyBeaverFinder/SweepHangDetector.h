@@ -17,7 +17,7 @@
 class ExhaustiveSearcher;
 class RunBlock;
 
-const int maxSweepsToSample = 16;
+const int maxSweepsToSample = 64;
 const int maxNonSweepLoopsToIgnore = 2;
 
 struct SweepReversalPoint {

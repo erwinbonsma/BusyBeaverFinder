@@ -14,7 +14,7 @@
 
 #include "Types.h"
 
-const int maxProgramBlockEntries = 8;
+const int maxProgramBlockEntries = 16;
 
 class ProgramBlock {
     int _startIndex;
