@@ -348,7 +348,7 @@ processInstruction:
 
         switch (_program.getInstruction(insP)) {
             case Ins::DONE:
-                _tracker->reportDone(_numSteps);
+                _tracker->reportDone(_numSteps + 1);
                 goto backtrack;
             case Ins::UNSET:
                 branch(depth);

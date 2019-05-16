@@ -93,7 +93,7 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
     settings.maxSteps = 2000000;
     searcher.configure(settings);
 
-    SECTION( "BB 7x7 #117272" ) {
+    SECTION( "BB 7x7 #117273" ) {
         Ins resumeFrom[] = {
             Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
@@ -103,7 +103,7 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 117272);
+        REQUIRE(tracker.getMaxStepsFound() == 117273);
     }
     SECTION( "BB 7x7 #140164" ) {
         //   *   * * *
@@ -122,9 +122,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 140163);
+        REQUIRE(tracker.getMaxStepsFound() == 140164);
     }
-    SECTION( "BB 7x7 #177556" ) {
+    SECTION( "BB 7x7 #177557" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
@@ -134,9 +134,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 177556);
+        REQUIRE(tracker.getMaxStepsFound() == 177557);
     }
-    SECTION( "BB 7x7 #422154" ) {
+    SECTION( "BB 7x7 #422155" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
@@ -146,9 +146,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 422154);
+        REQUIRE(tracker.getMaxStepsFound() == 422155);
     }
-    SECTION( "BB 7x7 #582561" ) {
+    SECTION( "BB 7x7 #582562" ) {
         Ins resumeFrom[] = {
             Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
@@ -159,9 +159,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 582561);
+        REQUIRE(tracker.getMaxStepsFound() == 582562);
     }
-    SECTION( "BB 7x7 #690345" ) {
+    SECTION( "BB 7x7 #690346" ) {
         Ins resumeFrom[] = {
             Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
@@ -172,9 +172,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 690345);
+        REQUIRE(tracker.getMaxStepsFound() == 690346);
     }
-    SECTION( "BB 7x7 #847272" ) {
+    SECTION( "BB 7x7 #847273" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
@@ -185,9 +185,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 847272);
+        REQUIRE(tracker.getMaxStepsFound() == 847273);
     }
-    SECTION( "BB 7x7 #874580" ) {
+    SECTION( "BB 7x7 #874581" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
@@ -197,9 +197,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 874580);
+        REQUIRE(tracker.getMaxStepsFound() == 874581);
     }
-    SECTION( "BB 7x7 #950174" ) {
+    SECTION( "BB 7x7 #950175" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
@@ -210,9 +210,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 950174);
+        REQUIRE(tracker.getMaxStepsFound() == 950175);
     }
-    SECTION( "BB 7x7 #951920" ) {
+    SECTION( "BB 7x7 #951921" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
@@ -222,9 +222,9 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 951920);
+        REQUIRE(tracker.getMaxStepsFound() == 951921);
     }
-    SECTION( "BB 7x7 #1842682" ) {
+    SECTION( "BB 7x7 #1842683" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
@@ -234,6 +234,6 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getMaxStepsFound() == 1842682);
+        REQUIRE(tracker.getMaxStepsFound() == 1842683);
     }
 }

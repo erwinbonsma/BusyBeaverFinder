@@ -21,13 +21,13 @@ TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
     SECTION( "Find all" ) {
         searcher.search();
 
-        REQUIRE(tracker.getMaxStepsFound() == 4);
+        REQUIRE(tracker.getMaxStepsFound() == 5);
         REQUIRE(tracker.getTotalSuccess() == 59);
     }
     SECTION( "Find one" ) {
         searcher.findOne();
 
-        REQUIRE(tracker.getMaxStepsFound() == 3);
+        REQUIRE(tracker.getMaxStepsFound() == 4);
         REQUIRE(tracker.getTotalSuccess() == 1);
     }
 }
@@ -45,7 +45,7 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
 
     searcher.search();
 
-    REQUIRE(tracker.getMaxStepsFound() == 14);
+    REQUIRE(tracker.getMaxStepsFound() == 15);
     REQUIRE(tracker.getTotalSuccess() == 854);
     REQUIRE(tracker.getTotalErrors() == 0);
     REQUIRE(tracker.getTotalDetectedHangs() == tracker.getTotalHangs());
@@ -65,7 +65,7 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
 
     searcher.search();
 
-    REQUIRE(tracker.getMaxStepsFound() == 43);
+    REQUIRE(tracker.getMaxStepsFound() == 44);
     REQUIRE(tracker.getTotalSuccess() == 51410);
     REQUIRE(tracker.getTotalErrors() == 0);
     REQUIRE(tracker.getTotalHangs() == tracker.getTotalDetectedHangs());
