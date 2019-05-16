@@ -431,6 +431,26 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
     }
+    SECTION( "6x6-DelayedHang4" ) {
+        // Another variant of the previous hang. It is added as this program set the record in the
+        // 6x6 search for requiring the most hang detection attempts before being successfully
+        // detected.
+        //
+        //       *
+        //     * o _ *
+        //   * * o _
+        //   _ o o *
+        // * _ _ o
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+    }
     SECTION( "6x6-PeriodicHangWithThreeInnerLoops" ) {
         // Periodic hang with a period of 136 steps. Each iteration it extends the sequence to the
         // left with four values "1 4 4 1".

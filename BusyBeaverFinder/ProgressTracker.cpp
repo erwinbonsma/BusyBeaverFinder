@@ -113,6 +113,19 @@ void ProgressTracker::reportAssumedHang() {
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType) {
+    if (_searcher.getNumSteps() > _maxStepsUntilHangDetection) {
+        _maxStepsUntilHangDetection = _searcher.getNumSteps();
+//        std::cout << "New step limit: ";
+//        _searcher.dumpInstructionStack();
+//        _searcher.getProgram().dumpWeb();
+    }
+    if (_searcher.getNumHangDetectAttempts() > _maxHangDetectAttempts) {
+        _maxHangDetectAttempts = _searcher.getNumHangDetectAttempts();
+//        std::cout << "New attempt limit: ";
+//        _searcher.dumpInstructionStack();
+//        _searcher.getProgram().dumpWeb();
+    }
+
     if (_searcher.getHangDetectionTestMode()) {
         // Only signal it. The run continues so it can be verified if it was correctly signalled.
         _detectedHang = hangType;
@@ -158,9 +171,6 @@ void ProgressTracker::dumpStats() {
     std::cout
     << "Best=" << _maxStepsSofar
     << ", Total=" << _total
-#ifdef TRACK_EQUIVALENCE
-    << "/" << _equivalenceTotal
-#endif
     << ", Success=";
     if (_searcher.getHangDetectionTestMode()) {
          std::cout << _totalFaultyHangs << "/";
@@ -173,6 +183,8 @@ void ProgressTracker::dumpStats() {
     std::cout << getTotalErrors()
     << ", Hangs=" << getTotalDetectedHangs() << "/" << getTotalHangs()
     << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
+    << ", Hang detection limits=" << _maxHangDetectAttempts << " attempts/"
+    << _maxStepsUntilHangDetection << " steps"
     << std::endl;
 }
 

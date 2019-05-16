@@ -119,6 +119,7 @@ public:
     RunSummary& getMetaRunSummary() { return _runSummary[1]; }
 
     int getNumSteps() { return _numSteps; }
+    int getNumHangDetectAttempts() { return _numHangDetectAttempts; }
 
     ProgramBlock* getProgramBlock() { return _block; }
 

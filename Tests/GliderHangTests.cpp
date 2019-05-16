@@ -159,6 +159,26 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
+    SECTION( "6x6-Glider8" ) {
+        // A glider hang that is detected, but only very late (after 71140 steps).
+        // TODO: Find out why and if this cannot be improved.
+        //
+        //     *   *
+        // * o o o _ *
+        // o _ o o _ *
+        // o _ o * _
+        // o * _ o o *
+        // o   *   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
 }
 
 TEST_CASE( "7x7 Glider Hang tests", "[hang][glider][7x7]" ) {
