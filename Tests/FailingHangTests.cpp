@@ -146,3 +146,37 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
 }
+
+TEST_CASE( "7x7 Failing Hang tests", "[hang][7x7][.fail]" ) {
+    ExhaustiveSearcher searcher(7, 7, 256);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxSteps = 1000000;
+    settings.maxHangDetectAttempts = 1024;
+    searcher.configure(settings);
+
+    SECTION( "7x7-HangThatFillsHistoryBuffer") {
+        // Program that hangs which is not detected. It fills the run history buffer, forcing a
+        // premature abort of the hang detection.
+        //
+        //         *
+        //     * * o _ *
+        //     _ _ o *
+        //   * o o o _ *
+        //   o _ o *
+        // * _ _ o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+}

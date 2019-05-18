@@ -255,6 +255,12 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                     RunBlock* runBlock = _runSummary[0].runBlockAt(i);
                     _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
                 }
+
+                if (_runSummary[0].getNumRunBlocks() == maxRunBlockHistoryLength) {
+                    // Disable hang detection as history buffer is full
+                    hangCheck = nullptr;
+                    _numHangDetectAttempts = -1;
+                }
             }
 
             if (hangCheck != nullptr) {
