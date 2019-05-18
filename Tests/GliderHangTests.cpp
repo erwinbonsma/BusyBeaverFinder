@@ -160,8 +160,9 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
     SECTION( "6x6-Glider8" ) {
-        // A glider hang that is detected, but only very late (after 71140 steps).
-        // TODO: Find out why and if this cannot be improved.
+        // A glider hang that is detected, but only very late (after 71140 steps). The reason it
+        // takes this long is that the length of each loop triples each iteration and the detector
+        // conservatively requires a few meta-loop iterations before concluding its a hang.
         //
         //     *   *
         // * o o o _ *
