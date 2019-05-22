@@ -271,6 +271,25 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
 
         REQUIRE(tracker.getMaxStepsFound() == 1237792);
     }
+    SECTION( "BB 7x7 #1659389" ) {
+        //   *   * *
+        // * o _ o _ *
+        //   * * o o _ *
+        //   _ o o * _
+        // * _ _ o o o *
+        // * _   * _ _
+        // o _ _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getMaxStepsFound() == 1659389);
+    }
     SECTION( "BB 7x7 #1842683" ) {
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
@@ -301,5 +320,24 @@ TEST_CASE( "7x7 Completion tests", "[success][7x7]" ) {
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getMaxStepsFound() == 8447143);
+    }
+    SECTION( "BB 7x7 #9408043" ) {
+        //   *   * *
+        // * o _ o _ *
+        //   * * o o _ *
+        //   _ o o * _
+        // * _ _ o o o *
+        // o _ o * _ _
+        // o _       *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getMaxStepsFound() == 9408043);
     }
 }
