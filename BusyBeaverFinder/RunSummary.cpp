@@ -115,7 +115,7 @@ void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* en
                                 int loopPeriod) {
     int sequenceIndex = getSequenceIndex(startP, endP);
 
-    assert((_runBlockHistoryP - _runBlockHistory) < maxRunBlockHistoryLength);
+    assert(_runBlockHistoryP < _runBlockHistoryThresholdP);
     (_runBlockHistoryP++)->init((int)(startP - _programBlockHistory), sequenceIndex, loopPeriod);
 }
 

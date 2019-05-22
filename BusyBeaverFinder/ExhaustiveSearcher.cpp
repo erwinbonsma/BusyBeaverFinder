@@ -256,7 +256,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                     _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
                 }
 
-                if (_runSummary[0].getNumRunBlocks() == maxRunBlockHistoryLength) {
+                if (!_runSummary[0].hasSpaceRemaining()) {
                     // Disable hang detection as history buffer is full
                     hangCheck = nullptr;
                     _numHangDetectAttempts = -1;
@@ -280,15 +280,15 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                     result = hangCheck->start();
                 }
             }
-        }
 
-        if (result == HangDetectionResult::FAILED) {
-            hangCheck = nullptr;
-        }
-        else if (result == HangDetectionResult::HANGING) {
-            _tracker->reportDetectedHang(hangCheck->hangType());
-            if (!_settings.testHangDetection) {
-                return backtrackProgramPointer;
+            if (result == HangDetectionResult::FAILED) {
+                hangCheck = nullptr;
+            }
+            else if (result == HangDetectionResult::HANGING) {
+                _tracker->reportDetectedHang(hangCheck->hangType());
+                if (!_settings.testHangDetection) {
+                    return backtrackProgramPointer;
+                }
             }
         }
 

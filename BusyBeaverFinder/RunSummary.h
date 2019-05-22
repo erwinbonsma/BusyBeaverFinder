@@ -80,7 +80,11 @@ class RunSummary {
 
     // Stack of recently executed run blocks
     RunBlock _runBlockHistory[maxRunBlockHistoryLength];
-    RunBlock* _runBlockHistoryMaxP = _runBlockHistory + maxRunBlockHistoryLength;
+
+    // Pointer to threshold where buffer is considered full. As a single invocation of
+    // recordProgramBlock can add multiple run blocks, there may still be a few empty spots after
+    // the threshold.
+    RunBlock* _runBlockHistoryThresholdP = _runBlockHistory + maxRunBlockHistoryLength - 1;
 
     // Pointer to current top of the stack
     RunBlock* _runBlockHistoryP = nullptr;
@@ -116,6 +120,8 @@ public:
     bool isInsideLoop() { return _loopP != nullptr; }
     int getLoopPeriod() { return (int)(_programBlockHistoryP - _loopP) - 1; }
     bool isAtStartOfLoop();
+
+    bool hasSpaceRemaining() { return _runBlockHistoryP < _runBlockHistoryThresholdP; }
 
     int getNumProgramBlocks() { return (int)(_programBlockHistoryP - _programBlockHistory); }
     int getNumRunBlocks() { return (int)(_runBlockHistoryP - _runBlockHistory); }
