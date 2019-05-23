@@ -15,10 +15,12 @@
 #include "Program.h"
 
 #include "InterpretedProgram.h"
+#include "FastExecutor.h"
 
 #include "DataTracker.h"
 #include "ProgressTracker.h"
 #include "RunSummary.h"
+
 
 #include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
@@ -33,6 +35,7 @@ enum class SearchMode : char {
 };
 
 struct SearchSettings {
+    int maxHangDetectionSteps;
     int maxSteps;
     int maxHangDetectAttempts;
     int minWaitBeforeRetryingHangChecks;
@@ -72,6 +75,8 @@ class ExhaustiveSearcher {
     // An interpreted representation of the program
     InterpretedProgram _interpretedProgram;
 
+    FastExecutor _fastExecutor;
+
     int _numHangDetectAttempts;
 
     PeriodicHangDetector* _periodicHangDetector;
@@ -108,7 +113,7 @@ public:
 
     bool getHangDetectionTestMode() { return _settings.testHangDetection; }
 
-    void setProgressTracker(ProgressTracker* tracker) { _tracker = tracker; }
+    void setProgressTracker(ProgressTracker* tracker);
 
     Program& getProgram() { return _program; }
     Data& getData() { return _data; }

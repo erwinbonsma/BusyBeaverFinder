@@ -8,6 +8,8 @@
 
 #include "ProgramBlock.h"
 
+#include <iostream>
+
 ProgramBlock::ProgramBlock() {
 }
 
@@ -46,4 +48,19 @@ void ProgramBlock::finalize(bool isDelta, int amount, int numSteps,
 
     _nonZeroBlock = nonZeroBlock;
     nonZeroBlock->pushEntry(this);
+}
+
+void ProgramBlock::dump() {
+    dumpWithoutEOL();
+    std::cout << std::endl;
+}
+
+void ProgramBlock::dumpWithoutEOL() {
+    assert(_isFinalized);
+
+    if (_instructionAmount >= 0) {
+        std::cout << (_isDelta ? "INC " : "SHR ") << _instructionAmount;
+    } else {
+        std::cout << (_isDelta ? "DEC " : "SHL ") << -_instructionAmount;
+    }
 }

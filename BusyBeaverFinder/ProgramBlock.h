@@ -60,6 +60,9 @@ public:
 
     ProgramBlock* zeroBlock() { return _zeroBlock; }
     ProgramBlock* nonZeroBlock() { return _nonZeroBlock; }
+
+    void dump();
+    void dumpWithoutEOL();
 };
 
 #endif /* ProgramBlock_h */

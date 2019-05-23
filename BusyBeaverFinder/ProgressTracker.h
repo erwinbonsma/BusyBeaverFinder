@@ -26,6 +26,8 @@ class ProgressTracker {
 
     long _total = 0;
     long _totalSuccess = 0;
+    long _totalFastExecutions = 0;
+    long _totalLateEscapes = 0;
     long _totalHangsByType[numHangTypes];
     long _totalErrorsByType[numHangTypes];
     long _totalFaultyHangs = 0;
@@ -57,6 +59,8 @@ public:
     long getTotalSuccess() { return _totalSuccess; }
     long getTotalErrors();
     long getTotalHangs();
+    long getTotalFastExecutions() { return _totalFastExecutions; }
+    long getTotalLateEscapes() { return _totalLateEscapes; }
     long getTotalDetectedErrors();
     long getTotalErrors(HangType hangType) { return _totalErrorsByType[(int)hangType]; }
     long getTotalDetectedHangs();
@@ -68,6 +72,12 @@ public:
     void reportError();
     void reportDetectedHang(HangType hangType);
     void reportAssumedHang();
+
+    void reportFastExecution() { _totalFastExecutions++; }
+    // A "late escape" is a program that did not terminate while hang detection was enabled, but
+    // whose execution escaped from its interpreted program during fast execution (at which time
+    // the program cannot be expanded further).
+    void reportLateEscape(int numSteps);
 
     void dumpStats();
     void dumpHangStats();

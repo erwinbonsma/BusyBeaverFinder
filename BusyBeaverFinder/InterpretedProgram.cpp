@@ -207,12 +207,7 @@ void InterpretedProgram::dumpBlock(ProgramBlock* block) {
     if (!block->isFinalized()) {
         std::cout << "-";
     } else {
-        int amount = block->getInstructionAmount();
-        if (amount >= 0) {
-            std::cout << (block->isDelta() ? "INC " : "SHR ") << amount;
-        } else {
-            std::cout << (block->isDelta() ? "DEC " : "SHL ") << -amount;
-        }
+        block->dumpWithoutEOL();
 
         std::cout << " => ";
 

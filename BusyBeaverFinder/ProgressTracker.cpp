@@ -112,6 +112,26 @@ void ProgressTracker::reportAssumedHang() {
     report();
 }
 
+void ProgressTracker::reportLateEscape(int numSteps) {
+    _totalLateEscapes++;
+
+    std::cout << "Late escape (" << numSteps << "): ";
+    _searcher.dumpInstructionStack();
+
+    if (_detectedHang != HangType::UNDETECTED) {
+        // Hang incorrectly signalled
+        _totalFaultyHangs++;
+
+        std::cout << "Faulty hang, type = " << (int)_detectedHang;
+        _searcher.getProgram().dump();
+        _searcher.dumpInstructionStack();
+
+        _detectedHang = HangType::UNDETECTED;
+    }
+
+    report();
+}
+
 void ProgressTracker::reportDetectedHang(HangType hangType) {
     if (_searcher.getNumSteps() > _maxStepsUntilHangDetection) {
         _maxStepsUntilHangDetection = _searcher.getNumSteps();
@@ -182,6 +202,7 @@ void ProgressTracker::dumpStats() {
     }
     std::cout << getTotalErrors()
     << ", Hangs=" << getTotalDetectedHangs() << "/" << getTotalHangs()
+    << ", Fast execs=" << getTotalLateEscapes() << "/" << getTotalFastExecutions()
     << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
     << ", Hang detection limits=" << _maxHangDetectAttempts << " attempts/"
     << _maxStepsUntilHangDetection << " steps"

@@ -27,6 +27,7 @@ void init(int argc, char * argv[]) {
         ("h,height", "Program height", cxxopts::value<int>())
         ("d,datasize", "Data size", cxxopts::value<int>())
         ("max-steps", "Maximum program execution steps", cxxopts::value<int>())
+        ("max-hang-detection-steps", "Max steps to execute with hang detection", cxxopts::value<int>())
         ("max-hang-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
@@ -62,10 +63,17 @@ void init(int argc, char * argv[]) {
     if (result.count("max-steps")) {
         settings.maxSteps = result["max-steps"].as<int>();
     }
+    if (result.count("max-hang-detection-steps")) {
+        settings.maxHangDetectionSteps = result["max-hang-detection-steps"].as<int>();
+    }
+    if (settings.maxSteps < settings.maxHangDetectionSteps) {
+        settings.maxSteps = settings.maxHangDetectionSteps;
+    }
 
     if (result.count("max-hang-attempts")) {
         settings.maxHangDetectAttempts = result["max-hang-attempts"].as<int>();
     }
+
 
     // Enable testing of hang detection?
     if (result.count("t")) {

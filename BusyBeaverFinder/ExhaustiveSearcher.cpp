@@ -28,7 +28,8 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _data(dataSize),
     _runSummary(),
     _dataTracker(_data),
-    _exitFinder(_program, _interpretedProgram)
+    _exitFinder(_program, _interpretedProgram),
+    _fastExecutor(dataSize)
 {
     initInstructionStack(width * height);
 
@@ -42,6 +43,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     // Init defaults
     _settings.maxSteps = 1024;
+    _settings.maxHangDetectionSteps = _settings.maxSteps;
     _settings.maxHangDetectAttempts = 128;
     _settings.minWaitBeforeRetryingHangChecks = 16;
     _settings.testHangDetection = false;
@@ -65,11 +67,11 @@ void ExhaustiveSearcher::reconfigure() {
     if (_zArrayHelperBuf != nullptr) {
         delete[] _zArrayHelperBuf;
     }
-    _zArrayHelperBuf = new int[_settings.maxSteps / 2];
+    _zArrayHelperBuf = new int[_settings.maxHangDetectionSteps / 2];
 
-    _runSummary[0].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
-    _runSummary[1].setCapacity(_settings.maxSteps, _zArrayHelperBuf);
-    _data.setStackSize(_settings.maxSteps);
+    _runSummary[0].setCapacity(_settings.maxHangDetectionSteps, _zArrayHelperBuf);
+    _runSummary[1].setCapacity(_settings.maxHangDetectionSteps, _zArrayHelperBuf);
+    _data.setStackSize(_settings.maxHangDetectionSteps);
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -112,7 +114,7 @@ void ExhaustiveSearcher::dumpSettings() {
     std::cout
     << "Size = " << _program.getWidth() << "x" << _program.getHeight()
     << ", DataSize = " << _data.getSize()
-    << ", MaxSteps = " << _settings.maxSteps
+    << ", MaxSteps = " << _settings.maxHangDetectionSteps << "/" << _settings.maxSteps
     << ", MaxHangDetectAttempts = " << _settings.maxHangDetectAttempts
     << ", MinWaitBeforeRetryingHangChecks = " << _settings.minWaitBeforeRetryingHangChecks
     << ", TestHangDetection = " << _settings.testHangDetection
@@ -135,6 +137,11 @@ void ExhaustiveSearcher::dumpHangDetection() {
 void ExhaustiveSearcher::dump() {
     _program.dump(_pp.p);
     _data.dump();
+}
+
+void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
+    _tracker = tracker;
+    _fastExecutor.setProgressTracker(tracker);
 }
 
 HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
@@ -237,16 +244,10 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     _numHangDetectAttempts = 0;
 
     while (_block->isFinalized()) {
-//        std::cout << "Executing " << _runSummary[0].getNumProgramBlocks()
-//        << " @ " << _numSteps << ": ";
-//        _interpretedProgram.dumpBlock(_block);
-//        _data.dump();
-
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
         if (_numHangDetectAttempts >= 0) {
             // Only track execution while hang detection is still active
-
             bool wasInLoop = _runSummary[0].isInsideLoop();
             int numRunBlocks = _runSummary[0].getNumRunBlocks();
 
@@ -274,7 +275,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
                 } else {
                     result = hangCheck->signalLoopStartDetected();
                 }
-            } else if (_numHangDetectAttempts != -1) {
+            } else if (_numHangDetectAttempts >= 0) {
                 hangCheck = initiateNewHangCheck();
                 if (hangCheck != nullptr) {
                     result = hangCheck->start();
@@ -323,16 +324,16 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
         _numSteps += _block->getNumSteps();
 
-        if (_numSteps >= _settings.maxSteps) {
-            _tracker->reportAssumedHang();
+        if (_numSteps >= _settings.maxHangDetectionSteps) {
+            if (_numSteps >= _settings.maxSteps) {
+                _tracker->reportAssumedHang();
+            } else {
+                _fastExecutor.execute(_interpretedProgram.getEntryBlock(), _settings.maxSteps);
+            }
             return backtrackProgramPointer;
         }
 
-        if (_data.val() == 0) {
-            _block = _block->zeroBlock();
-        } else {
-            _block = _block->nonZeroBlock();
-        }
+        _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
     }
 
     _interpretedProgram.enterBlock(_block);
