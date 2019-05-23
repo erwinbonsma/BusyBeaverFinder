@@ -35,7 +35,7 @@ void FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
     _tracker->reportFastExecution();
 
     // Clear data
-    memset(_data, 0, (_maxDataP - _minDataP) * sizeof(_data));
+    memset(_data, 0, (_maxDataP - _minDataP) * sizeof(int));
 
     _dataP = _midDataP;
 
