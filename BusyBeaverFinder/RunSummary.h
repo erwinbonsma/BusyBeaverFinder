@@ -21,7 +21,7 @@ typedef int ProgramBlockIndex;
 const int maxRunBlockHistoryLength = 32768;
 const int maxNumSequenceBlocks = 1024;
 #else
-const int maxRunBlockHistoryLength = 1000000;
+const int maxRunBlockHistoryLength = 1000000; // TODO: Make dynamic
 const int maxNumSequenceBlocks = 65536;
 #endif
 
@@ -80,6 +80,8 @@ class RunSummary {
 
     // Stack of recently executed run blocks
     RunBlock _runBlockHistory[maxRunBlockHistoryLength];
+
+    RunBlock* _runBlockHistoryMaxP = _runBlockHistory + maxRunBlockHistoryLength;
 
     // Pointer to threshold where buffer is considered full. As a single invocation of
     // recordProgramBlock can add multiple run blocks, there may still be a few empty spots after
