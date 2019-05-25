@@ -50,8 +50,8 @@
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
-		AAD5C50E2211F7140057EDBC /* SearchOrchestrator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestrator.cpp */; };
-		AAD5C50F2211F7140057EDBC /* SearchOrchestrator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestrator.cpp */; };
+		AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
+		AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
 /* End PBXBuildFile section */
 
@@ -127,8 +127,8 @@
 		AA90A5862200EB9D00242D3D /* ProgressTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressTracker.h; sourceTree = "<group>"; };
 		AA90A5882201052900242D3D /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Utils.cpp; sourceTree = "<group>"; };
 		AA90A5892201052900242D3D /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
-		AAD5C50C2211F7140057EDBC /* SearchOrchestrator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SearchOrchestrator.cpp; sourceTree = "<group>"; };
-		AAD5C50D2211F7140057EDBC /* SearchOrchestrator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestrator.h; sourceTree = "<group>"; };
+		AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SearchOrchestration.cpp; sourceTree = "<group>"; };
+		AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestration.h; sourceTree = "<group>"; };
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -185,8 +185,8 @@
 				AA90A5862200EB9D00242D3D /* ProgressTracker.h */,
 				AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */,
 				AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */,
-				AAD5C50C2211F7140057EDBC /* SearchOrchestrator.cpp */,
-				AAD5C50D2211F7140057EDBC /* SearchOrchestrator.h */,
+				AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */,
+				AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */,
 				AA1101FE21F32120005C67CF /* main.cpp */,
 				AA4F4505224967A00069FF36 /* ProgramBlock.cpp */,
 				AA4F4506224967A00069FF36 /* ProgramBlock.h */,
@@ -321,7 +321,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA4F4507224967A00069FF36 /* ProgramBlock.cpp in Sources */,
-				AAD5C50E2211F7140057EDBC /* SearchOrchestrator.cpp in Sources */,
+				AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */,
 				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
 				AA90A58A2201052900242D3D /* Utils.cpp in Sources */,
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
@@ -361,7 +361,7 @@
 				AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */,
 				AA4F45142259E88B0069FF36 /* RunSummary.cpp in Sources */,
 				AA28C09F22073A0C00F7EC25 /* ExhaustiveSearcher.cpp in Sources */,
-				AAD5C50F2211F7140057EDBC /* SearchOrchestrator.cpp in Sources */,
+				AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */,
 				AA4F4501223E76BB0069FF36 /* FailingHangTests.cpp in Sources */,
 				AA28C097220738F900F7EC25 /* main.cpp in Sources */,
 				AA0D5AE52263C488001909AF /* GliderHangTests.cpp in Sources */,

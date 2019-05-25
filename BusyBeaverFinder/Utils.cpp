@@ -220,3 +220,11 @@ void dumpDataBuffer(int* buf, int* dataP, int size) {
     }
     std::cout << std::endl;
 }
+
+void dumpInstructionStack(Ins* stack) {
+    while (*stack != Ins::UNSET) {
+        std::cout << (int)*stack << ",";
+        stack++;
+    }
+    std::cout << std::endl;
+}

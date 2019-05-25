@@ -43,5 +43,6 @@ Ins* loadResumeStackFromStream(std::istream &input, int maxSize);
 Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
 
 void dumpDataBuffer(int* buf, int* dataP, int size);
+void dumpInstructionStack(Ins* stack);
 
 #endif /* Utils_h */

@@ -1,21 +1,21 @@
 //
-//  SearchOrchestrator.cpp
+//  SearchOrchestration.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 11/02/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#include "SearchOrchestrator.h"
+#include "SearchOrchestration.h"
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include "ExhaustiveSearcher.h"
+#include "Utils.h"
 
-SearchOrchestrator::SearchOrchestrator(ExhaustiveSearcher& searcher)
-    : _searcher(searcher) {
-    // void
-}
-
-Ins* SearchOrchestrator::addInstructionsUntilTurn(Ins* topP, int numNoop, int numData) {
+Ins* addInstructionsUntilTurn(Ins* topP, int numNoop, int numData) {
     while (numNoop-- > 0) {
         *(topP++) = Ins::NOOP;
     }
@@ -27,11 +27,11 @@ Ins* SearchOrchestrator::addInstructionsUntilTurn(Ins* topP, int numNoop, int nu
     return topP;
 }
 
-void SearchOrchestrator::search() {
-    int h = _searcher.getProgram().getHeight();
-    int w = _searcher.getProgram().getWidth();
+void orchestratedSearch(ExhaustiveSearcher& searcher) {
+    int h = searcher.getProgram().getHeight();
+    int w = searcher.getProgram().getWidth();
     int maxInstructions = (h + 1 > w + 2) ? h + 1 : w + 2;
-    Ins* startFrom = new Ins[maxInstructions];
+    Ins startFrom[maxInstructions];
 
     // Only the number of DATA instructions before the first TURN matters, not their position, as
     // they will only be visited once at the very start of the program (and possibly as final
@@ -60,15 +60,38 @@ void SearchOrchestrator::search() {
                         Ins* topP2 = addInstructionsUntilTurn(topP, numNoop2, numData2);
 
                         (*topP2) = Ins::UNSET;
-                        _searcher.searchSubTree(startFrom);
+                        searcher.searchSubTree(startFrom);
                     }
                 }
             } else {
                 (*topP) = Ins::UNSET;
-                _searcher.searchSubTree(startFrom);
+                searcher.searchSubTree(startFrom);
             }
         }
     }
+}
 
-    delete[] startFrom;
+void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile) {
+    std::ifstream input(lateEscapesFile);
+    if (!input) {
+        std::cout << "Could not read file" << std::endl;
+        return;
+    }
+
+    Ins* resumeStack = nullptr;
+    Program& program = searcher.getProgram();
+    int maxSize = program.getWidth() * program.getHeight();
+
+    std::string line;
+    while (getline(input, line)) {
+        std::istringstream iss(line);
+        int numSteps;
+
+        if (iss >> numSteps) {
+            resumeStack = loadResumeStackFromStream(iss, maxSize);
+
+            std::cout << "Late escape(" << numSteps << "):";
+            dumpInstructionStack(resumeStack);
+        }
+    }
 }

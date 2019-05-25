@@ -13,12 +13,13 @@
 #include "Utils.h"
 #include "ExhaustiveSearcher.h"
 #include "ProgressTracker.h"
-#include "SearchOrchestrator.h"
+#include "SearchOrchestration.h"
 
 ExhaustiveSearcher* searcher;
 ProgressTracker* tracker;
 
 Ins* resumeStack = nullptr;
+std::string lateEscapeFile;
 
 void init(int argc, char * argv[]) {
     cxxopts::Options options("BusyBeaverFinder", "Searcher for Busy Beaver Programs");
@@ -30,6 +31,7 @@ void init(int argc, char * argv[]) {
         ("max-hang-detection-steps", "Max steps to execute with hang detection", cxxopts::value<int>())
         ("max-hang-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
+        ("late-escapes", "File with late escapes", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
         ("dump-period", "The period of dumping basic stats", cxxopts::value<int>())
         ("dump-undetected-hangs", "Report undetected hangs")
@@ -89,6 +91,10 @@ void init(int argc, char * argv[]) {
         resumeStack = loadResumeStackFromFile(resumeFile, width * height);
     }
 
+    if (result.count("late-escapes")) {
+        lateEscapeFile = result["late-escapes"].as<std::string>();
+    }
+
     tracker = new ProgressTracker(*searcher);
     if (result.count("dump-period")) {
         tracker->setDumpStatsPeriod(result["dump-period"].as<int>());
@@ -106,9 +112,12 @@ int main(int argc, char * argv[]) {
     searcher->dumpSettings();
     if (resumeStack != nullptr) {
         searcher->search((Ins*)resumeStack);
-    } else {
-        SearchOrchestrator orchestrator(*searcher);
-        orchestrator.search();
+    }
+    else if (!lateEscapeFile.empty()) {
+        searchLateEscapes(*searcher, lateEscapeFile);
+    }
+    else {
+        orchestratedSearch(*searcher);
     }
     tracker->dumpFinalStats();
 

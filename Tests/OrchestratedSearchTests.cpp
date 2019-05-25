@@ -10,12 +10,11 @@
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"
-#include "SearchOrchestrator.h"
+#include "SearchOrchestration.h"
 
 TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     ExhaustiveSearcher searcher(5, 5, 128);
     ProgressTracker tracker(searcher);
-    SearchOrchestrator orchestrator(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
@@ -24,7 +23,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     settings.maxSteps = 2048;
     searcher.configure(settings);
 
-    orchestrator.search();
+    orchestratedSearch(searcher);
 //    tracker.dumpFinalStats();
 
     REQUIRE(tracker.getMaxStepsFound() == 44);
@@ -37,7 +36,6 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
 TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
     ExhaustiveSearcher searcher(6, 6, 4096);
     ProgressTracker tracker(searcher);
-    SearchOrchestrator orchestrator(searcher);
 
     tracker.setDumpUndetectedHangs(true);
 //    tracker.setDumpStatsPeriod(10000000);
@@ -45,11 +43,11 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 100000;
+    settings.maxHangDetectionSteps = 100000;
 //    settings.testHangDetection = true;
     searcher.configure(settings);
 
-    orchestrator.search();
+    orchestratedSearch(searcher);
     tracker.dumpFinalStats();
 
     REQUIRE(tracker.getMaxStepsFound() == 573);

@@ -82,14 +82,6 @@ void ExhaustiveSearcher::initInstructionStack(int size) {
     }
 }
 
-void ExhaustiveSearcher::dumpInstructionStack(Ins* stack) {
-    while (*stack != Ins::UNSET) {
-        std::cout << (int)*stack << ",";
-        stack++;
-    }
-    std::cout << std::endl;
-}
-
 bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) {
     Ins* p1 = _instructionStack;
     Ins* p2 = reference;
@@ -107,7 +99,7 @@ bool ExhaustiveSearcher::atTargetProgram() {
 }
 
 void ExhaustiveSearcher::dumpInstructionStack() {
-    dumpInstructionStack(_instructionStack);
+    ::dumpInstructionStack(_instructionStack);
 }
 
 void ExhaustiveSearcher::dumpSettings() {
@@ -466,7 +458,7 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _resumeFrom = resumeFrom;
 
     std::cout << "Resuming from: ";
-    dumpInstructionStack(_resumeFrom);
+    ::dumpInstructionStack(_resumeFrom);
 
     _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;

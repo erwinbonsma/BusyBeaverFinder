@@ -21,7 +21,6 @@
 #include "ProgressTracker.h"
 #include "RunSummary.h"
 
-
 #include "ExitFinder.h"
 #include "PeriodicHangDetector.h"
 #include "MetaPeriodicHangDetector.h"
@@ -88,7 +87,6 @@ class ExhaustiveSearcher {
 
     ProgressTracker* _tracker;
 
-    void dumpInstructionStack(Ins* stack);
     void initInstructionStack(int size);
 
     HangDetector* initiateNewHangCheck();
