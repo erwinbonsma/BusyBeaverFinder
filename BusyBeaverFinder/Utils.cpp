@@ -9,7 +9,10 @@
 #include "Utils.h"
 
 #include <assert.h>
+#include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 const int dx[4] = { 0, 1, 0, -1 };
 const int dy[4] = { 1, 0, -1, 0 };
@@ -157,51 +160,47 @@ int findRepeatedSequence(const int* input, int* buf, int len) {
     return 0;
 }
 
-int readNextChar(FILE* file) {
-    int ch;
-    bool skip = false;
-
-    do {
-        ch = getc(file);
-
-        while (ch == '#') {
-            // Swallow characters until EOL
-            do {
-                std::cout << (char)ch;
-                ch = getc(file);
-            } while (ch != 10 && ch != EOF);
-            std::cout << std::endl;
-        }
-
-        // Ignore whitespace
-        skip = (isspace(ch) || ch == 10);
-    } while (skip);
-
-    return ch;
-}
-
-Ins* loadResumeStackFromFile(std::string inputFile, int maxSize) {
-    Ins* resumeStack = new Ins[maxSize];
+// Returns nullptr when input did not contain any instructions (this could be a comment line)
+Ins* loadResumeStackFromStream(std::istream &input, int maxSize) {
+    Ins* resumeStack = nullptr;
+    int intVal;
     int numInstructions = 0;
 
-    std::cout << "Resuming from " << inputFile << std::endl;
-    FILE *file = fopen(inputFile.c_str(), "r");
-    if (file) {
-        int ch;
-        while (numInstructions < maxSize - 1 && (ch = readNextChar(file)) != EOF) {
-            int intVal = ch - '0';
-            assert(intVal >= 0 && intVal <= 3);
-            resumeStack[numInstructions++] = (Ins)intVal;
-
-            ch = readNextChar(file);
-            assert(ch == ',' || ch == EOF);
+    while (input >> intVal) {
+        if (resumeStack == nullptr) {
+            // Lazily allocate it
+            resumeStack = new Ins[maxSize + 1];
         }
-        fclose(file);
+        resumeStack[numInstructions++] = (Ins)intVal;
+        assert(numInstructions < maxSize);
     }
-    else {
+
+    if (resumeStack != nullptr) {
+        resumeStack[numInstructions] = Ins::UNSET;
+    }
+
+    return resumeStack;
+}
+
+// Loads a resume stack from file. It expects the stack to be on a single line, but will skip
+// comment lines.
+Ins* loadResumeStackFromFile(std::string inputFile, int maxSize) {
+    std::cout << "Resuming from " << inputFile << std::endl;
+
+    std::ifstream input(inputFile);
+    if (!input) {
         std::cout << "Could not read file" << std::endl;
+        return nullptr;
     }
-    resumeStack[numInstructions] = Ins::UNSET; // Add UNSET instruction as guard
+
+    Ins* resumeStack = nullptr;
+    std::string line;
+    while (resumeStack == nullptr && getline(input, line)) {
+        std::replace(line.begin(), line.end(), ',', ' ');
+
+        std::istringstream iss(line);
+        resumeStack = loadResumeStackFromStream(iss, maxSize);
+    }
 
     return resumeStack;
 }

@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <istream>
 
 #include "Types.h"
 
@@ -36,6 +37,8 @@ int findPeriod(const char* input, int* buf, int len);
 // abcdabc => 0
 // abcdee => 1
 int findRepeatedSequence(const int* input, int* buf, int len);
+
+Ins* loadResumeStackFromStream(std::istream &input, int maxSize);
 
 Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
 
