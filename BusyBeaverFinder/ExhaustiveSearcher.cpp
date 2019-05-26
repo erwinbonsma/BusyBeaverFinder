@@ -44,6 +44,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     // Init defaults
     _settings.maxSteps = 1024;
     _settings.maxHangDetectionSteps = _settings.maxSteps;
+    _settings.undoCapacity = 1024;
     _settings.maxHangDetectAttempts = 128;
     _settings.minWaitBeforeRetryingHangChecks = 16;
     _settings.testHangDetection = false;
@@ -71,7 +72,7 @@ void ExhaustiveSearcher::reconfigure() {
 
     _runSummary[0].setCapacity(_settings.maxHangDetectionSteps, _zArrayHelperBuf);
     _runSummary[1].setCapacity(_settings.maxHangDetectionSteps, _zArrayHelperBuf);
-    _data.setStackSize(_settings.maxHangDetectionSteps);
+    _data.setStackSize(_settings.undoCapacity);
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -107,6 +108,7 @@ void ExhaustiveSearcher::dumpSettings() {
     << "Size = " << _program.getWidth() << "x" << _program.getHeight()
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _settings.maxHangDetectionSteps << "/" << _settings.maxSteps
+    << ", UndoCapacity = " << _settings.undoCapacity
     << ", MaxHangDetectAttempts = " << _settings.maxHangDetectAttempts
     << ", MinWaitBeforeRetryingHangChecks = " << _settings.minWaitBeforeRetryingHangChecks
     << ", TestHangDetection = " << _settings.testHangDetection

@@ -38,6 +38,7 @@ struct SearchSettings {
     int maxSteps;
     int maxHangDetectAttempts;
     int minWaitBeforeRetryingHangChecks;
+    int undoCapacity;
     bool testHangDetection;
     bool disableNoExitHangDetection;
 };

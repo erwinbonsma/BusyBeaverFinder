@@ -30,6 +30,7 @@ void init(int argc, char * argv[]) {
         ("max-steps", "Maximum program execution steps", cxxopts::value<int>())
         ("max-hang-detection-steps", "Max steps to execute with hang detection", cxxopts::value<int>())
         ("max-hang-attempts", "Maximum hang detect attempts", cxxopts::value<int>())
+        ("undo-capacity", "Maximum data operations to undo", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
         ("late-escapes", "File with late escapes", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
@@ -76,6 +77,9 @@ void init(int argc, char * argv[]) {
         settings.maxHangDetectAttempts = result["max-hang-attempts"].as<int>();
     }
 
+    if (result.count("undo-capacity")) {
+        settings.undoCapacity = result["undo-capacity"].as<int>();
+    }
 
     // Enable testing of hang detection?
     if (result.count("t")) {
