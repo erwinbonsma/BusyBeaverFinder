@@ -385,4 +385,22 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
 
         twoShotSearch(searcher, resumeFrom, 9408043);
     }
+    SECTION( "BB 7x7 #9607923" ) {
+        //       * * *
+        //     * o o _ *
+        //   * o o o *
+        //   _ o * o _
+        // * _ o o o _ *
+        // * _ * _ _ _ *
+        // o _ _ o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+
+        twoShotSearch(searcher, resumeFrom, 9607923);
+    }
 }
