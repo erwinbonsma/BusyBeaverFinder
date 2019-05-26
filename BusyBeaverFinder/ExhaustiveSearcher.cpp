@@ -181,6 +181,11 @@ void ExhaustiveSearcher::branch(int depth) {
     ProgramPointer pp0 = _pp;
     InstructionPointer insP = nextInstructionPointer(_pp);
     bool resuming = *_resumeFrom != Ins::UNSET;
+    bool backtracking = (
+        _searchMode != SearchMode::FIND_ONE &&
+        (_searchMode != SearchMode::SUB_TREE || !resuming)
+    );
+    _data.setEnableUndo(backtracking);
 
     for (int i = 0; i < 3; i++) {
         Ins ins = validInstructions[i];
@@ -201,10 +206,8 @@ void ExhaustiveSearcher::branch(int depth) {
         run(depth + 1);
         _pp = pp0;
 
-        if (
-            _searchMode == SearchMode::FIND_ONE ||
-            (_searchMode == SearchMode::SUB_TREE && resuming)
-        ) {
+        if (!backtracking) {
+            assert(_data.getUndoStackSize() == 0);
             break;
         }
 
@@ -502,6 +505,7 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
     _numSteps = 0;
+    _data.reset();
     run(0);
 }
 

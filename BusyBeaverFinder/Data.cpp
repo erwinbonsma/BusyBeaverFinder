@@ -20,17 +20,11 @@ const int undoStackSentinelCapacity = 64;
 Data::Data(int size) {
     _data = new int[size];
 
-    for (int i = 0; i < size; i++) {
-        _data[i] = 0;
-    }
-
     _midDataP = &_data[size / 2];
     _minDataP = &_data[0]; // Inclusive
     _maxDataP = &_data[size - 1]; // Inclusive
-    _dataP = _midDataP;
 
-    _minBoundP = _midDataP;
-    _maxBoundP = _minBoundP - 1; // Empty bounds
+    reset();
 }
 
 Data::~Data() {
@@ -39,6 +33,19 @@ Data::~Data() {
     if (_undoStack != nullptr) {
         delete[] _undoStack;
     }
+}
+
+void Data::reset() {
+    for (int i = 0; i < (_maxDataP - _minDataP + 1); i++) {
+        _data[i] = 0;
+    }
+
+    _dataP = _midDataP;
+
+    _minBoundP = _midDataP;
+    _maxBoundP = _minBoundP - 1; // Empty bounds
+
+    _undoP = _undoStack;
 }
 
 void Data::setStackSize(int size) {
@@ -81,7 +88,10 @@ void Data::updateBounds() {
 
 void Data::inc() {
     (*_dataP)++;
-    *(_undoP++) = DataOp::INC;
+
+    if (_undoEnabled) {
+        *(_undoP++) = DataOp::INC;
+    }
 
     updateBounds();
 
@@ -92,7 +102,10 @@ void Data::inc() {
 
 void Data::dec() {
     (*_dataP)--;
-    *(_undoP++) = DataOp::DEC;
+
+    if (_undoEnabled) {
+        *(_undoP++) = DataOp::DEC;
+    }
 
     updateBounds();
 
@@ -103,7 +116,10 @@ void Data::dec() {
 
 bool Data::shr() {
     _dataP++;
-    *(_undoP++) = DataOp::SHR;
+
+    if (_undoEnabled) {
+        *(_undoP++) = DataOp::SHR;
+    }
 
     if (_dataP > _maxVisitedP) {
         _maxVisitedP = _dataP;
@@ -114,7 +130,10 @@ bool Data::shr() {
 
 bool Data::shl() {
     _dataP--;
-    *(_undoP++) = DataOp::SHL;
+
+    if (_undoEnabled) {
+        *(_undoP++) = DataOp::SHL;
+    }
 
     if (_dataP < _minVisitedP) {
         _minVisitedP = _dataP;

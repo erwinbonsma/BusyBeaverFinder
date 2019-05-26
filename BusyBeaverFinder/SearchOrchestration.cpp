@@ -92,6 +92,8 @@ void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile
 
             std::cout << "Late escape(" << numSteps << "):";
             dumpInstructionStack(resumeStack);
+
+            searcher.searchSubTree(resumeStack);
         }
     }
 }
