@@ -37,13 +37,14 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     ExhaustiveSearcher searcher(6, 6, 4096);
     ProgressTracker tracker(searcher);
 
-    tracker.setDumpUndetectedHangs(true);
-//    tracker.setDumpStatsPeriod(10000000);
-//    tracker.setDumpStackPeriod(10000000);
+//    tracker.setDumpUndetectedHangs(true);
+    tracker.setDumpStatsPeriod(10000000);
+    tracker.setDumpStackPeriod(10000000);
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
     settings.maxHangDetectionSteps = 100000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
 //    settings.testHangDetection = true;
     searcher.configure(settings);
 

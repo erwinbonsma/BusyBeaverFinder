@@ -28,6 +28,7 @@ class Data {
     int *_data;
 
     DataOp *_undoP = nullptr;
+    DataOp *_maxUndoP = nullptr;
     // Undo-stack for data operations
     DataOp *_undoStack = nullptr;
 
@@ -68,6 +69,7 @@ public:
     bool shr();
     bool shl();
 
+    bool hasUndoCapacity() { return _undoP < _maxUndoP; }
     DataOp* getUndoStackPointer() { return _undoP; }
     void undo(DataOp* _targetUndoP);
 

@@ -13,6 +13,10 @@
 #include "Data.h"
 #include "Utils.h"
 
+// Extra capacity beyond the requested maximum (as a single program block may add multiple items
+// to the stack and ExhaustiveSearcher::run does not check capacity)
+const int undoStackSentinelCapacity = 64;
+
 Data::Data(int size) {
     _data = new int[size];
 
@@ -42,8 +46,9 @@ void Data::setStackSize(int size) {
         delete[] _undoStack;
     }
 
-    _undoStack = new DataOp[size];
-    _undoP = &_undoStack[0];
+    _undoStack = new DataOp[size + undoStackSentinelCapacity];
+    _undoP = _undoStack;
+    _maxUndoP = _undoStack + size;
 }
 
 void Data::updateBounds() {

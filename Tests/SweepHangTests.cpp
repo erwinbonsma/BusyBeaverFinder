@@ -74,7 +74,8 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 16384;
+    settings.maxHangDetectionSteps = 16384;
+    settings.maxSteps = settings.maxHangDetectionSteps;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Regular Sweep Hang Detector
     settings.disableNoExitHangDetection = true;

@@ -215,7 +215,68 @@ void ExhaustiveSearcher::branch(int depth) {
     _instructionStack[depth] = Ins::UNSET;
 }
 
-ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
+// Returns "true" if the search should backtrack. This can be for several reason: the program exited
+// with an error (as it ran out of data tape), the undo buffer is full, or a hang is assumed (given
+// the amount of steps executed)
+bool ExhaustiveSearcher::executeCurrentBlock() {
+    int amount = _block->getInstructionAmount();
+    if (_block->isDelta()) {
+        if (amount > 0) {
+            while (amount-- > 0) {
+                _data.inc();
+            }
+        } else {
+            while (amount++ < 0) {
+                _data.dec();
+            }
+        }
+    } else {
+        if (amount > 0) {
+            while (amount-- > 0) {
+                if (!_data.shr()) {
+                    _tracker->reportError();
+                    return true;
+                }
+            }
+        } else {
+            while (amount++ < 0) {
+                if (!_data.shl()) {
+                    _tracker->reportError();
+                    return true;
+                }
+            }
+        }
+    }
+
+    _numSteps += _block->getNumSteps();
+
+    if (_numSteps >= _settings.maxSteps) {
+        _tracker->reportAssumedHang();
+        return true;
+    }
+
+    if (!_data.hasUndoCapacity()) {
+        _fastExecutor.execute(_interpretedProgram.getEntryBlock(), _settings.maxSteps);
+        return true;
+    }
+
+
+    _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
+    return false;
+}
+
+ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithBacktracking() {
+    while (_block->isFinalized()) {
+        if (executeCurrentBlock()) {
+            return backtrackProgramPointer;
+        }
+    }
+
+    _interpretedProgram.enterBlock(_block);
+    return _interpretedProgram.getStartProgramPointer(_block, _program);
+}
+
+ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
 //    _program.dump();
 //    _interpretedProgram.dump();
 
@@ -251,8 +312,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 
                 if (!_runSummary[0].hasSpaceRemaining()) {
                     // Disable hang detection as history buffer is full
-                    hangCheck = nullptr;
-                    _numHangDetectAttempts = -1;
+                    return executeCompiledBlocksWithBacktracking();
                 }
             }
 
@@ -285,51 +345,30 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
             }
         }
 
-        int amount = _block->getInstructionAmount();
-        if (_block->isDelta()) {
-            if (amount > 0) {
-                while (amount-- > 0) {
-                    _data.inc();
-                }
-            } else {
-                while (amount++ < 0) {
-                    _data.dec();
-                }
-            }
-        } else {
-            if (amount > 0) {
-                while (amount-- > 0) {
-                    if (!_data.shr()) {
-                        _tracker->reportError();
-                        return backtrackProgramPointer;
-                    }
-                }
-            } else {
-                while (amount++ < 0) {
-                    if (!_data.shl()) {
-                        _tracker->reportError();
-                        return backtrackProgramPointer;
-                    }
-                }
-            }
-        }
-
-        _numSteps += _block->getNumSteps();
-
-        if (_numSteps >= _settings.maxHangDetectionSteps) {
-            if (_numSteps >= _settings.maxSteps) {
-                _tracker->reportAssumedHang();
-            } else {
-                _fastExecutor.execute(_interpretedProgram.getEntryBlock(), _settings.maxSteps);
-            }
+        if (executeCurrentBlock()) {
             return backtrackProgramPointer;
         }
 
-        _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
+        if (_numSteps >= _settings.maxHangDetectionSteps) {
+            return executeCompiledBlocksWithBacktracking();
+        }
     }
 
     _interpretedProgram.enterBlock(_block);
     return _interpretedProgram.getStartProgramPointer(_block, _program);
+}
+
+ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
+    if (!_data.hasUndoCapacity()) {
+        _fastExecutor.execute(_interpretedProgram.getEntryBlock(), _settings.maxSteps);
+        return backtrackProgramPointer;
+    }
+
+    if (_numSteps >= _settings.maxHangDetectionSteps) {
+        return executeCompiledBlocksWithBacktracking();
+    }
+
+    return executeCompiledBlocksWithHangDetection();
 }
 
 void ExhaustiveSearcher::run(int depth) {

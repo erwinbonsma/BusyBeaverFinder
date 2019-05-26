@@ -239,7 +239,8 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 2048;
+    settings.maxHangDetectionSteps = 2048;
+    settings.maxSteps = settings.maxHangDetectionSteps;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Periodic Hang Detector
     settings.disableNoExitHangDetection = true;

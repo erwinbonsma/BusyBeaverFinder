@@ -19,7 +19,8 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1000000;
+    settings.maxHangDetectionSteps = 1000000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
     settings.disableNoExitHangDetection = true;
     searcher.configure(settings);
 
@@ -189,7 +190,8 @@ TEST_CASE( "7x7 Glider Hang tests", "[hang][glider][7x7]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1000000;
+    settings.maxHangDetectionSteps = 1000000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
     settings.maxHangDetectAttempts = 1024;
     searcher.configure(settings);
 

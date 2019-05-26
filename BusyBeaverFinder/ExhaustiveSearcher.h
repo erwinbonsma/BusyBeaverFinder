@@ -96,6 +96,10 @@ class ExhaustiveSearcher {
 
     void reconfigure();
 
+    bool executeCurrentBlock();
+
+    ProgramPointer executeCompiledBlocksWithBacktracking();
+    ProgramPointer executeCompiledBlocksWithHangDetection();
     ProgramPointer executeCompiledBlocks();
 
     void run(int depth);
@@ -111,6 +115,7 @@ public:
 
     bool getHangDetectionTestMode() { return _settings.testHangDetection; }
 
+    ProgressTracker* getProgressTracker() { return _tracker; }
     void setProgressTracker(ProgressTracker* tracker);
 
     Program& getProgram() { return _program; }
