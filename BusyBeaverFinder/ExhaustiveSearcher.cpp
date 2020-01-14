@@ -330,7 +330,9 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
                         result = hangCheck->signalLoopIteration();
                     }
                 } else {
-                    result = hangCheck->signalLoopStartDetected();
+                    if (_runSummary[0].isInsideLoop()) {
+                        result = hangCheck->signalLoopStartDetected();
+                    }
                 }
             } else if (_numHangDetectAttempts >= 0) {
                 hangCheck = initiateNewHangCheck();
