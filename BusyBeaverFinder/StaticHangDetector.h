@@ -12,11 +12,16 @@
 #include <stdio.h>
 
 #include "Types.h"
+#include "HangDetector.h"
 
 class ExhaustiveSearcher;
 
 class StaticHangDetector {
+    // When last check was done
     int _lastCheckPoint;
+
+    // When check was done of hang detection that was still indecisive (which can be continued)
+    int _ongoingCheckPoint;
 
 protected:
     ExhaustiveSearcher& _searcher;
@@ -33,7 +38,7 @@ protected:
     virtual bool exhibitsHangBehaviour() = 0;
 
     // Checks if it can be proven that the program hang. Returns "true" iff so.
-    virtual bool canProofHang() = 0;
+    virtual HangDetectionResult tryProofHang(bool resumed) = 0;
 
 public:
     StaticHangDetector(ExhaustiveSearcher& searcher);

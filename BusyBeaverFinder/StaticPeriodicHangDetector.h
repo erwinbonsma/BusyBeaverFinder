@@ -15,13 +15,16 @@
 
 #include "ExhaustiveSearcher.h"
 #include "RunSummary.h"
+#include "LoopClassification.h"
 
 class StaticPeriodicHangDetector : public StaticHangDetector {
+    LoopClassification _loop;
+
     int currentCheckPoint() { return _searcher.getRunSummary().getNumRunBlocks(); }
 
     bool exhibitsHangBehaviour();
 
-    bool canProofHang();
+    HangDetectionResult tryProofHang(bool resumed);
 
 public:
     HangType hangType() { return HangType::PERIODIC; }

@@ -12,16 +12,27 @@ StaticHangDetector::StaticHangDetector(ExhaustiveSearcher& searcher) :
     _searcher(searcher)
 {
     _lastCheckPoint = -1;
+    _ongoingCheckPoint = -1;
 }
 
 bool StaticHangDetector::detectHang() {
-    if (currentCheckPoint() != _lastCheckPoint) {
-        if (exhibitsHangBehaviour()) {
-            if (canProofHang()) {
-                return true;
+    bool resumed = (currentCheckPoint() == _ongoingCheckPoint);
+
+    if (resumed || currentCheckPoint() != _lastCheckPoint) {
+        if (resumed || exhibitsHangBehaviour()) {
+            HangDetectionResult result = tryProofHang(resumed);
+            switch (result) {
+                case HangDetectionResult::HANGING:
+                    return true;
+                case HangDetectionResult::ONGOING:
+                    _ongoingCheckPoint = currentCheckPoint();
+                default:
+                    _ongoingCheckPoint = -1;
             }
         }
         _lastCheckPoint = currentCheckPoint();
     }
+
+    // Could not detect hang (yet)
     return false;
 }

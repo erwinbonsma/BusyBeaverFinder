@@ -14,7 +14,6 @@
 #include "ProgramBlock.h"
 
 const int dummySteps = 1;
-const int maxLoopSize = 8;
 
 TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
     ProgramBlock exitBlock;
