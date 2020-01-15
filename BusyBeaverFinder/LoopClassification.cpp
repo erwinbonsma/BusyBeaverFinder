@@ -20,15 +20,6 @@ void ExitCondition::init(Operator op, int value, int dpOffset) {
     _dpOffset = dpOffset;
 
     _modulus = 1;
-    _modulusResult = 0;
-}
-
-void ExitCondition::setModulusConstraint(int modulus, int modulusResult) {
-    assert(modulus > 0);
-    assert(modulusResult >= 0 && modulusResult < modulus);
-
-    _modulus = modulus;
-    _modulusResult = modulusResult;
 }
 
 bool ExitCondition::isTrueForValue(int value) {
@@ -47,12 +38,32 @@ bool ExitCondition::isTrueForValue(int value) {
             break;
     }
 
-    int mod = value % _modulus;
-    if (mod < 0) {
-        mod += _modulus;
-    }
-    return mod == _modulusResult;
+    int mod1 = value % _modulus;
+    int mod2 = _value % _modulus;
+
+    return mod1 == mod2 || (mod1 + abs(_modulus)) % _modulus == (mod2 + abs(_modulus)) % _modulus;
 }
+
+void ExitCondition::dump(bool bootstrapOnly) {
+    std::cout << "Data[" << _dpOffset << "] ";
+    switch (_operator) {
+        case Operator::EQUALS: std::cout << "=="; break;
+        case Operator::LESS_THAN_OR_EQUAL: std::cout << "<="; break;
+        case Operator::GREATER_THAN_OR_EQUAL: std::cout << ">="; break;
+    }
+    std::cout << " " << _value;
+
+    if (abs(_modulus) > 1) {
+        std::cout << ", Modulus = " << _modulus;
+    }
+
+    if (bootstrapOnly) {
+        std::cout << ", Bootstrap only";
+    }
+
+    std::cout << std::endl;
+}
+
 
 LoopClassification::LoopClassification() {
     _dpDelta = 0;
@@ -150,31 +161,50 @@ void LoopClassification::initExitsForStationaryLoop() {
             } else {
                 loopExit.exitCondition.init(Operator::GREATER_THAN_OR_EQUAL, -currentDelta, dp);
             }
-            int mod = currentDelta % abs(finalDelta);
-            if (mod < 0) {
-                mod += abs(finalDelta);
-            }
-            loopExit.exitCondition.setModulusConstraint(abs(finalDelta), mod);
+            loopExit.exitCondition.setModulusConstraint(finalDelta);
         }
+
+        // Reset status
+        loopExit.bootstrapOnly = false;
     }
 
-    // Identify bootstrap-only exits. For stationary loops, these are exits that can never be
-    // reached.
+    // Identify bootstrap-only exits (and exits that can never be reached).
     for (int i = _numBlocks; --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
         int dp = _effectiveResult[i].dpOffset();
-        int currentDelta = _effectiveResult[i].delta();
+        int delta = _effectiveResult[i].delta();
+        int mc = loopExit.exitCondition.modulusConstraint();
+        int deltaMod = delta % mc;
+        if (deltaMod < 0) {
+            deltaMod += abs(mc);
+        }
 
-        loopExit.bootstrapOnly = false;
         for (int j = i; --j >= 0; ) {
             if (
-                _effectiveResult[j].dpOffset() == dp &&
-                _effectiveResult[j].delta() == currentDelta
+                j != i &&
+                _effectiveResult[j].dpOffset() == dp
             ) {
-                // The effective condition for instruction i is the same as that for this earlier
-                // instruction j, so mark the exit as unreachable.
-                loopExit.bootstrapOnly = true;
-                break;
+                int delta2 = _effectiveResult[j].delta();
+                int delta2Mod = delta2 % mc;
+                if (delta2Mod < 0) {
+                    delta2Mod += abs(mc);
+                }
+
+                if (delta2Mod == deltaMod) {
+                    // One of these instructions cancels the other out. Determine the one
+
+                    if (
+                        // In case of equal deltas, j cancels out i, as it executes first
+                        delta2 == delta ||
+                        // Otherwise, it depends on the size of the delta (wrt to the change dir)
+                        (mc > 0 && delta2 > delta) ||
+                        (mc < 0 && delta2 < delta)
+                    ) {
+                        loopExit.bootstrapOnly = true;
+                    } else {
+                        _loopExit[j].bootstrapOnly = true;
+                    }
+                }
             }
         }
     }
@@ -299,7 +329,7 @@ void LoopClassification::classifyLoop(InterpretedProgram& program,
 void LoopClassification::dump() {
     std::cout << "delta DP = " << _dpDelta << std::endl;
 
-    for (int i = 0; i < _numDataDeltas; i++)  {
+    for (int i = 0; i < _numDataDeltas; i++) {
         if (i > 0) {
             std::cout << ", ";
         }
@@ -310,4 +340,9 @@ void LoopClassification::dump() {
         std::cout << _dataDelta[i].delta();
     }
     std::cout << std::endl;
+
+    for (int i = 0; i < _numBlocks; i++) {
+        std::cout << "Exit #" << i << ": ";
+        _loopExit[i].exitCondition.dump(_loopExit[i].bootstrapOnly);
+    }
 }

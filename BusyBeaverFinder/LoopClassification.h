@@ -49,15 +49,16 @@ class ExitCondition {
     int _dpOffset;
 
     int _value;
-    int _modulus, _modulusResult;
+    int _modulus;
     Operator _operator;
 
 public:
     void init(Operator op, int value, int dpOffset);
 
-    // Set (optional) modulus constraint. This is required when DP is stationary and values increase
+    // An (optional) modulus constraint. This is required when DP is stationary and values increase
     // (or decrease) by more than one, as this may result in skipping the zero.
-    void setModulusConstraint(int modulus, int modulusResult);
+    int modulusConstraint() { return _modulus; }
+    void setModulusConstraint(int modulus) { _modulus = modulus; }
 
     // Checks if the condition holds for the specified value. It's the responsibility of the caller
     // to pass the correct value(s), i.e. one which the instruction that can cause this exit will
@@ -72,6 +73,11 @@ public:
     // - Stationary/Sentry Go (d = 0): The offset relative to the position of DP before the first
     //   instruction in the loop executes.
     int dpOffset() { return _dpOffset; }
+
+    bool expressionEquals(Operator op, int value) { return op == _operator && value == _value; }
+    bool modulusContraintEquals(int modulus) { return modulus == _modulus; }
+
+    void dump(bool bootstrapOnly);
 };
 
 class LoopExit {
@@ -123,7 +129,7 @@ public:
     DataDelta* dataDeltaAt(int index) { return _dataDelta + index; }
 
     // Returns the loop exit for the specified loop instruction
-    LoopExit& loopExit(int index) { return _loopExit[index]; }
+    LoopExit& exit(int index) { return _loopExit[index]; }
 
     void classifyLoop(ProgramBlock* entryBlock, int numBlocks);
 
