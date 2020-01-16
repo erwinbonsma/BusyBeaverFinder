@@ -295,13 +295,15 @@ void LoopClassification::classifyLoop() {
     _dpDelta = 0;
     _numDataDeltas = 0;
 
-    int minDp = 0;
-    int maxDp = 0;
     int i = 0;
 
     // Determine the intermediate results and final results of a single loop iteration
     ProgramBlock* programBlock = _loopBlocks[0];
     ProgramBlock* prevBlock = _loopBlocks[_numBlocks - 1];
+
+    int minDp = programBlock->isDelta() ? 0 : programBlock->getInstructionAmount();
+    int maxDp = minDp;
+
     while (i < _numBlocks) {
         if (programBlock->isDelta()) {
             int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount());

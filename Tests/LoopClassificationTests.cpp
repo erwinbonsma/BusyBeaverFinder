@@ -36,6 +36,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
     }
@@ -46,6 +47,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 3));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(-3));
@@ -65,6 +67,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -2));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(5));
@@ -87,6 +90,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(5));
@@ -104,6 +108,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 2);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(1));
@@ -124,6 +129,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 0);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).bootstrapOnly);
         REQUIRE(lc.exit(1).bootstrapOnly);
@@ -132,6 +138,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
         lc.classifyLoop(loopBlock, 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.dataPointerDelta() == 1);
         REQUIRE(lc.numDataDeltas() == 0);
@@ -144,6 +151,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
         lc.classifyLoop(loopBlock, 2);
+        REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.dataPointerDelta() == 1);
         REQUIRE(lc.numDataDeltas() == 1);
@@ -151,6 +159,23 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 1));
         REQUIRE(!lc.exit(0).bootstrapOnly);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(!lc.exit(1).bootstrapOnly);
+    }
+    SECTION( "TravellingSingleChange2" ) {
+        // As TravellingSingleChange, but with instructions reversed. This, amongst others, changes
+        // the number of bootstrap cycles
+        loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0);
+
+        lc.classifyLoop(loopBlock, 2);
+        REQUIRE(lc.numBootstrapCycles() == 0);
+
+        REQUIRE(lc.dataPointerDelta() == 1);
+        REQUIRE(lc.numDataDeltas() == 1);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
         REQUIRE(!lc.exit(1).bootstrapOnly);
     }
     SECTION( "TravellingSingleChangeInThreeSteps" ) {
@@ -171,6 +196,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 1);
         REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 2);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(lc.exit(0).bootstrapOnly);
@@ -199,6 +225,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == -1);
         REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 2);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(lc.exit(0).bootstrapOnly);
@@ -216,7 +243,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
     SECTION( "TravellingSingleChangeInThreeSteps3" ) {
         // Similar to TravellingSingleChangeInThreeSteps but with a single shift change, which
         // changes the order in which instructions consume new values and leads to different
-        // bootstrap-only exits.
+        // bootstrap-only exits. Also, it increases the number of bootstrap cycles.
         loopBlock[0].finalize(MOV, 2, dummySteps, &exitBlock, loopBlock + 1);  // SHR 2   (3)
         loopBlock[1].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 2);  // INC     (4)
         loopBlock[2].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 3);  // SHR     (5)
@@ -228,7 +255,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == -1);
         REQUIRE(lc.numDataDeltas() == 1);
-        // TODO: Verify number of bootstrap cycles
+        REQUIRE(lc.numBootstrapCycles() == 4);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(lc.exit(0).bootstrapOnly);
@@ -253,6 +280,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 2);
         REQUIRE(lc.numDataDeltas() == 2);
+        REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(!lc.exit(0).bootstrapOnly);
@@ -276,6 +304,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 3);
         REQUIRE(lc.numDataDeltas() == 2);
+        REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(!lc.exit(0).bootstrapOnly);
@@ -298,6 +327,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 1);
         REQUIRE(lc.numDataDeltas() == 0);
+        REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(!lc.exit(0).bootstrapOnly);
@@ -321,6 +351,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.dataPointerDelta() == 3);
         REQUIRE(lc.numDataDeltas() == 0);
+        REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(lc.exit(0).bootstrapOnly);
