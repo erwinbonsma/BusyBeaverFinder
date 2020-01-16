@@ -8,8 +8,9 @@
 
 #include "LoopClassification.h"
 
-#include <iostream>
 #include <algorithm>
+#include <array>
+#include <iostream>
 
 #include "ProgramBlock.h"
 #include "RunSummary.h"
@@ -219,9 +220,17 @@ void LoopClassification::initExitsForStationaryLoop() {
 }
 
 void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
+    // Temporary helper array that contains instruction indices, which will be sorted based on
+    // the order in which they consume data values.
+    static std::array<int, maxLoopSize> indices;
+
+    // Temporary helper array that maintains the delta of the value after an instruction is
+    // executed wrt to when the value was first encountered by the loop.
+    static std::array<int, maxLoopSize> cumDelta;
+
     for (int i = _numBlocks; --i >= 0; ) {
-        _indices[i] = i;
-        _tmpDeltas[i] = 0;
+        indices[i] = i;
+        cumDelta[i] = 0;
     }
 
     // Sort instructions by the order in which they inspect new data values
@@ -234,13 +243,13 @@ void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
         return diff == 0 ? (a < b) : (diff < 0);
     };
 
-    std::sort(_indices.begin(), _indices.begin() + _numBlocks,
+    std::sort(indices.begin(), indices.begin() + _numBlocks,
               _dpDelta > 0 ? compareUp : compareDn);
 
     // Establish effective data value delta for each instruction
     int ad = abs(_dpDelta);
     for (int ii = 0 ; ii < _numBlocks; ii++ ) {
-        int i = _indices[ii];
+        int i = indices[ii];
         // std::cout << "Instruction #" << i;
 
         int mod = _effectiveResult[i].dpOffset() % ad;
@@ -249,7 +258,7 @@ void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
         }
         bool foundOne = false;
         for (int jj = ii; --jj >= 0; ) {
-            int j = _indices[jj];
+            int j = indices[jj];
             int mod2 = _effectiveResult[j].dpOffset() % ad;
             if (mod2 < 0) {
                 mod2 += ad;
@@ -260,19 +269,19 @@ void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
 
                 if (!foundOne) {
                     // Found the instruction preceding the current one. Determine the delta sofar
-                    _tmpDeltas[i] = _tmpDeltas[j];
+                    cumDelta[i] = cumDelta[j];
                     if (_loopBlocks[i]->isDelta()) {
-                        _tmpDeltas[i] += _loopBlocks[i]->getInstructionAmount();
+                        cumDelta[i] += _loopBlocks[i]->getInstructionAmount();
                     }
                     foundOne = true;
                 }
 
-                if (_tmpDeltas[i] == _tmpDeltas[j]) {
+                if (cumDelta[i] == cumDelta[j]) {
                     _loopExit[i].bootstrapOnly = true;
                 }
             }
         }
-        // std::cout << ", Delta = " << _tmpDeltas[i] << std::endl;
+        // std::cout << ", Delta = " << cumDelta[i] << std::endl;
     }
 }
 

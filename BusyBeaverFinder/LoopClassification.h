@@ -10,7 +10,6 @@
 #define LoopClassification_h
 
 #include <stdio.h>
-#include <array>
 
 class InterpretedProgram;
 class RunBlock;
@@ -106,10 +105,6 @@ class LoopClassification {
     DataDelta _effectiveResult[maxLoopSize];
 
     LoopExit _loopExit[maxLoopExits];
-
-    // Work array containing instruction indices, which can be sorted as required.
-    std::array<int, maxLoopSize> _indices;
-    std::array<int, maxLoopSize> _tmpDeltas;
 
     int deltaAt(int dpOffset);
 
