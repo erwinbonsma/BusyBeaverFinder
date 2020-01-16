@@ -10,6 +10,7 @@
 #define LoopClassification_h
 
 #include <stdio.h>
+#include <array>
 
 class InterpretedProgram;
 class RunBlock;
@@ -74,6 +75,8 @@ public:
     //   instruction in the loop executes.
     int dpOffset() { return _dpOffset; }
 
+    int value() { return _value; }
+
     bool expressionEquals(Operator op, int value) { return op == _operator && value == _value; }
     bool modulusContraintEquals(int modulus) { return modulus == _modulus; }
 
@@ -104,6 +107,10 @@ class LoopClassification {
 
     LoopExit _loopExit[maxLoopExits];
 
+    // Work array containing instruction indices, which can be sorted as required.
+    std::array<int, maxLoopSize> _indices;
+    std::array<int, maxLoopSize> _tmpDeltas;
+
     int deltaAt(int dpOffset);
 
     // Updates and returns the effective delta at the specified data position.
@@ -113,6 +120,8 @@ class LoopClassification {
     void squashDeltas();
 
     void initExitsForStationaryLoop();
+
+    void identifyBootstrapOnlyExitsForNonStationaryLoop();
     void initExitsForNonStationaryLoop();
 
     void classifyLoop();

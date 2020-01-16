@@ -9,6 +9,7 @@
 #include "LoopClassification.h"
 
 #include <iostream>
+#include <algorithm>
 
 #include "ProgramBlock.h"
 #include "RunSummary.h"
@@ -217,6 +218,64 @@ void LoopClassification::initExitsForStationaryLoop() {
     }
 }
 
+void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
+    for (int i = _numBlocks; --i >= 0; ) {
+        _indices[i] = i;
+        _tmpDeltas[i] = 0;
+    }
+
+    // Sort instructions by the order in which they inspect new data values
+    std::function<bool (const int, const int)> compareUp = [this](const int a, const int b) {
+        int diff = _effectiveResult[a].dpOffset() - _effectiveResult[b].dpOffset();
+        return diff == 0 ? (a < b) : (diff > 0);
+    };
+    std::function<bool (const int, const int)> compareDn = [this](const int a, const int b) {
+        int diff = _effectiveResult[a].dpOffset() - _effectiveResult[b].dpOffset();
+        return diff == 0 ? (a < b) : (diff < 0);
+    };
+
+    std::sort(_indices.begin(), _indices.begin() + _numBlocks,
+              _dpDelta > 0 ? compareUp : compareDn);
+
+    // Establish effective data value delta for each instruction
+    int ad = abs(_dpDelta);
+    for (int ii = 0 ; ii < _numBlocks; ii++ ) {
+        int i = _indices[ii];
+        // std::cout << "Instruction #" << i;
+
+        int mod = _effectiveResult[i].dpOffset() % ad;
+        if (mod < 0) {
+            mod += ad;
+        }
+        bool foundOne = false;
+        for (int jj = ii; --jj >= 0; ) {
+            int j = _indices[jj];
+            int mod2 = _effectiveResult[j].dpOffset() % ad;
+            if (mod2 < 0) {
+                mod2 += ad;
+            }
+
+            if (mod == mod2) {
+                // Both instructions process the same data values
+
+                if (!foundOne) {
+                    // Found the instruction preceding the current one. Determine the delta sofar
+                    _tmpDeltas[i] = _tmpDeltas[j];
+                    if (_loopBlocks[i]->isDelta()) {
+                        _tmpDeltas[i] += _loopBlocks[i]->getInstructionAmount();
+                    }
+                    foundOne = true;
+                }
+
+                if (_tmpDeltas[i] == _tmpDeltas[j]) {
+                    _loopExit[i].bootstrapOnly = true;
+                }
+            }
+        }
+        // std::cout << ", Delta = " << _tmpDeltas[i] << std::endl;
+    }
+}
+
 void LoopClassification::initExitsForNonStationaryLoop() {
     // Initialise all exits
     for (int i = _numBlocks; --i >= 0; ) {
@@ -225,40 +284,11 @@ void LoopClassification::initExitsForNonStationaryLoop() {
         int currentDelta = _effectiveResult[i].delta();
 
         loopExit.exitCondition.init(Operator::EQUALS, -currentDelta, dp);
-        loopExit.bootstrapOnly = true; // Initial assumption
+        loopExit.bootstrapOnly = false; // Initial assumption
     }
 
     // Identify bootstrap-only exits.
-    for (int i = abs(_dpDelta); --i >= 0; ) {
-        // The index of first instruction that encounters data value at relative position i
-        int first = -1;
-        // The DP offset of the instruction that encountered the data value first. A later
-        // instruction that looks further ahead may beat an earlier instruction
-        int firstDpDiv = 0;
-
-        for (int j = _numBlocks; --j >= 0; ) {
-            int dp = _effectiveResult[j].dpOffset();
-            int dp_rem = dp % _dpDelta;
-            if (dp_rem < 0) {
-                dp_rem += abs(_dpDelta);
-            }
-
-            if (dp_rem == i) {
-                // This instruction examines the current value
-
-                int dpDiv = dp / _dpDelta;
-                if (first == -1 || dpDiv > firstDpDiv) {
-                    // Furthermore, so far it is the first to examine it
-                    first = j;
-                    firstDpDiv = dpDiv;
-                }
-            }
-        }
-
-        if (first != -1) {
-            _loopExit[first].bootstrapOnly = false;
-        }
-    }
+    identifyBootstrapOnlyExitsForNonStationaryLoop();
 }
 
 void LoopClassification::classifyLoop() {
@@ -305,6 +335,8 @@ void LoopClassification::classifyLoop() {
 
         _numBootstrapCycles = 0;
     }
+
+    dump(); // TEMP
 }
 
 void LoopClassification::classifyLoop(ProgramBlock* entryBlock, int numBlocks) {
