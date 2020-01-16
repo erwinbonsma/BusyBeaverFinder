@@ -123,9 +123,13 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         loopBlock[1].finalize(true, -1, dummySteps, &exitBlock, loopBlock + 0);
 
         lc.classifyLoop(loopBlock, 2);
+        lc.dump();
 
         REQUIRE(lc.dataPointerDelta() == 0);
         REQUIRE(lc.numDataDeltas() == 0);
+
+        REQUIRE(lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(1).bootstrapOnly);
     }
     SECTION( "TravellingConstant" ) {
         loopBlock[0].finalize(false, 1, dummySteps, &exitBlock, loopBlock + 0);

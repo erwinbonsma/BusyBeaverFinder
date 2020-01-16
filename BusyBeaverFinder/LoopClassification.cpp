@@ -155,6 +155,7 @@ void LoopClassification::initExitsForStationaryLoop() {
 
         if (finalDelta == 0) {
             loopExit.exitCondition.init(Operator::EQUALS, -currentDelta, dp);
+            loopExit.bootstrapOnly = true;
         } else {
             if (finalDelta > 0) {
                 loopExit.exitCondition.init(Operator::LESS_THAN_OR_EQUAL, -currentDelta, dp);
@@ -162,15 +163,21 @@ void LoopClassification::initExitsForStationaryLoop() {
                 loopExit.exitCondition.init(Operator::GREATER_THAN_OR_EQUAL, -currentDelta, dp);
             }
             loopExit.exitCondition.setModulusConstraint(finalDelta);
-        }
 
-        // Reset status
-        loopExit.bootstrapOnly = false;
+            // Reset to known state. May be updated by loop below.
+            loopExit.bootstrapOnly = false;
+        }
     }
 
     // Identify bootstrap-only exits (and exits that can never be reached).
     for (int i = _numBlocks; --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
+
+        if (loopExit.bootstrapOnly) {
+            // This cannot cancel out other exits which are not yet marked as bootstrap-only.
+            continue;
+        }
+
         int dp = _effectiveResult[i].dpOffset();
         int delta = _effectiveResult[i].delta();
         int mc = loopExit.exitCondition.modulusConstraint();
