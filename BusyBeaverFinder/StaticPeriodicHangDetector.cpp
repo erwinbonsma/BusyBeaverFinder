@@ -8,6 +8,9 @@
 
 #include "StaticPeriodicHangDetector.h"
 
+StaticPeriodicHangDetector::StaticPeriodicHangDetector(ExhaustiveSearcher& searcher)
+    : StaticHangDetector(searcher) {}
+
 bool StaticPeriodicHangDetector::exhibitsHangBehaviour() {
     return _searcher.getRunSummary().isInsideLoop();
 }
@@ -32,7 +35,7 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
     assert(loopLen % loopRunBlock->getLoopPeriod() == 0);
 
     if (_loop.dataPointerDelta() == 0) {
-        for (int i = loopLen; --i >=0; ) {
+        for (int i = loopRunBlock->getLoopPeriod(); --i >=0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 Data &data = _searcher.getData();
@@ -42,11 +45,8 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
                 }
             }
         }
-
-        // None of the exit conditions can be met
-        return HangDetectionResult::HANGING;
     } else {
-        for (int i = loopLen; --i >=0; ) {
+        for (int i = loopRunBlock->getLoopPeriod(); --i >=0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 if (exit.exitCondition.isTrueForValue(0)) {
@@ -54,7 +54,10 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
                 }
             }
         }
+
+        // TODO: Check that there are only zero-values ahead.
     }
 
-    return HangDetectionResult::FAILED;
+    // None of the exit conditions can be met
+    return HangDetectionResult::HANGING;
 }

@@ -26,6 +26,7 @@ bool StaticHangDetector::detectHang() {
                     return true;
                 case HangDetectionResult::ONGOING:
                     _ongoingCheckPoint = currentCheckPoint();
+                    break;
                 default:
                     _ongoingCheckPoint = -1;
             }

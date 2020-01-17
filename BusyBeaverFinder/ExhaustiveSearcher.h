@@ -22,10 +22,13 @@
 #include "RunSummary.h"
 
 #include "ExitFinder.h"
-#include "PeriodicHangDetector.h"
-#include "MetaPeriodicHangDetector.h"
-#include "SweepHangDetector.h"
-#include "GliderHangDetector.h"
+
+class HangDetector;
+class PeriodicHangDetector;
+class MetaPeriodicHangDetector;
+class SweepHangDetector;
+class GliderHangDetector;
+class StaticPeriodicHangDetector;
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -83,6 +86,7 @@ class ExhaustiveSearcher {
     MetaPeriodicHangDetector* _metaPeriodicHangDetector;
     SweepHangDetector* _sweepHangDetector;
     GliderHangDetector* _gliderHangDetector;
+    StaticPeriodicHangDetector* _staticPeriodicHangDetector;
     ExitFinder _exitFinder;
     int _waitBeforeRetryingHangChecks;
 

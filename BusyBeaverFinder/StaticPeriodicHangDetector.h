@@ -27,6 +27,8 @@ class StaticPeriodicHangDetector : public StaticHangDetector {
     HangDetectionResult tryProofHang(bool resumed);
 
 public:
+    StaticPeriodicHangDetector(ExhaustiveSearcher& searcher);
+
     HangType hangType() { return HangType::PERIODIC; }
 };
 

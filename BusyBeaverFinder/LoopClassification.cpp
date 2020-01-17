@@ -400,12 +400,11 @@ void LoopClassification::classifyLoop() {
     int i = 0;
 
     // Determine the intermediate results and final results of a single loop iteration
-
-    ProgramBlock* programBlock = _loopBlocks[i];
-    int minDp = programBlock->isDelta() ? 0 : programBlock->getInstructionAmount();
+    int minDp = _loopBlocks[0]->isDelta() ? 0 : _loopBlocks[0]->getInstructionAmount();
     int maxDp = minDp;
 
     while (i < _numBlocks) {
+        ProgramBlock* programBlock = _loopBlocks[i];
         if (programBlock->isDelta()) {
             int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount());
             _effectiveResult[i].init(_dpDelta);
@@ -419,7 +418,6 @@ void LoopClassification::classifyLoop() {
             _effectiveResult[i].changeDelta(deltaAt(_dpDelta));
         }
 
-        programBlock++;
         i++;
     }
 
@@ -457,7 +455,7 @@ void LoopClassification::classifyLoop(InterpretedProgram& program,
     for (int i = _numBlocks; --i >= 0; ) {
         int index = runSummary.programBlockIndexAt(runBlock->getStartIndex() + i);
 
-        _loopBlocks[i] = program.getBlock(index);
+        _loopBlocks[i] = program.getEntryBlock() + index;
     }
 
     classifyLoop();
@@ -480,7 +478,10 @@ void LoopClassification::dump() {
     std::cout << std::endl;
 
     for (int i = 0; i < _numBlocks; i++) {
-        std::cout << "Exit #" << i << ": ";
+        std::cout << "Intruction #" << i << ": ";
+        _loopBlocks[i]->dumpWithoutEOL();
+
+        std::cout << ", Exit: ";
         _loopExit[i].exitCondition.dump(_loopExit[i].exitWindow);
     }
 }
