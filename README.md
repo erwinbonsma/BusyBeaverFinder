@@ -15,7 +15,7 @@ The data pointer (DP) points to one of these cells.
 
 The language consist of only two symbols:
 
-*   **TURN**, visualised by a Black square
+*   **TURN**, visualised by a Black circle
 
     When PP would enter a cell with a TURN instruction, it changes direction to prevent this.
     The direction it turns to depends on the value that DP points to:
@@ -23,7 +23,7 @@ The language consist of only two symbols:
     *   When the value is zero, PP turns ninety degrees counter-clockwise.
     *   Otherwise, PP turns ninety degrees clockwise.
 
-*   **DATA**, visualised by a White square
+*   **DATA**, visualised by a White circle
 
     What happens when PP enters a cell with a DATA instruction depends on the direction of PP:
 
