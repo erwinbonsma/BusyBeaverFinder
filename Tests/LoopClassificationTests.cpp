@@ -18,7 +18,7 @@ const int dummySteps = 1;
 const int INC = true;
 const int MOV = false;
 
-TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
+TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]" ) {
     ProgramBlock exitBlock;
     exitBlock.init(-1);
 
@@ -39,6 +39,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "StationarySingleChangeDecByThree" ) {
         loopBlock[0].finalize(INC, -3, dummySteps, &exitBlock, loopBlock + 0);
@@ -51,6 +52,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 3));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(-3));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
 
         REQUIRE(lc.exit(0).exitCondition.isTrueForValue(3));
         REQUIRE(lc.exit(0).exitCondition.isTrueForValue(6));
@@ -71,8 +73,10 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -2));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(5));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
         REQUIRE(lc.exit(1).exitCondition.modulusContraintEquals(5));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
 
         REQUIRE(lc.exit(0).exitCondition.isTrueForValue(-2));
         REQUIRE(lc.exit(0).exitCondition.isTrueForValue(-7));
@@ -82,9 +86,9 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(!lc.exit(0).exitCondition.isTrueForValue(0));
     }
     SECTION( "StationarySingleChangeInThreeSteps" ) {
-        loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);
-        loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 2);
-        loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);
+        loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);  // INC 5
+        loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 2); // DEC 2
+        loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC 2
 
         lc.classifyLoop(loopBlock, 3);
 
@@ -94,15 +98,53 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(5));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -3));
         REQUIRE(lc.exit(1).exitCondition.modulusContraintEquals(5));
-        REQUIRE(lc.exit(2).bootstrapOnly); // Cannot be reached.
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::NEVER);
+    }
+    SECTION( "StationarySingleChangeWithDummyShift" ) {
+        loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);  // SHR
+        loopBlock[1].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 2); // SHL
+        loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC
+
+        lc.classifyLoop(loopBlock, 3);
+
+        REQUIRE(lc.dataPointerDelta() == 0);
+        REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(2).exitCondition.modulusContraintEquals(2));
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
+    }
+    SECTION( "StationarySingleChangeWithDummyShiftAndNonZeroExit" ) {
+        loopBlock[0].finalize(MOV, 1, dummySteps, loopBlock + 1, &exitBlock);  // SHR   # Expects 0
+        loopBlock[1].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 2); // SHL
+        loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC
+
+        lc.classifyLoop(loopBlock, 3);
+
+        REQUIRE(lc.dataPointerDelta() == 0);
+        REQUIRE(lc.numDataDeltas() == 1);
+        REQUIRE(lc.numBootstrapCycles() == 0);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(2).exitCondition.modulusContraintEquals(2));
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "StationaryTwoChanges" ) {
-        loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);
-        loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 2);
-        loopBlock[2].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 3);
-        loopBlock[3].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 0);
+        loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);  // INC
+        loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 2);  // SHR
+        loopBlock[2].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 3); // DEC 2
+        loopBlock[3].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 0); // SHL
 
         lc.classifyLoop(loopBlock, 4);
 
@@ -112,14 +154,13 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
         REQUIRE(lc.exit(0).exitCondition.modulusContraintEquals(1));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
-        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 0));
-        REQUIRE(lc.exit(1).exitCondition.modulusContraintEquals(-2));
-        REQUIRE(lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 2));
         REQUIRE(lc.exit(2).exitCondition.modulusContraintEquals(-2));
-        REQUIRE(!lc.exit(2).bootstrapOnly);
-        REQUIRE(lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::NEVER);
     }
     SECTION( "StationaryOscillating" ) {
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);
@@ -131,9 +172,55 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numDataDeltas() == 0);
         REQUIRE(lc.numBootstrapCycles() == 0);
 
-        REQUIRE(lc.exit(0).bootstrapOnly);
-        REQUIRE(lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
+    SECTION( "StationaryOscillatingWithNonZeroExit" ) {
+        loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);  // INC
+        loopBlock[1].finalize(INC, -1, dummySteps, loopBlock + 0, &exitBlock); // DEC   # Expects 0
+
+        lc.classifyLoop(loopBlock, 2);
+
+        REQUIRE(lc.dataPointerDelta() == 0);
+        REQUIRE(lc.numDataDeltas() == 0);
+        REQUIRE(lc.numBootstrapCycles() == 0);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+    }
+    SECTION( "StationaryOscillatingWithNonZeroExit" ) {
+        // As StationaryOscillatingWithNonZeroExit, but with non-zero condition swapped
+        loopBlock[0].finalize(INC, 1, dummySteps, loopBlock + 1, &exitBlock);  // INC   # Expects 0
+        loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0); // DEC
+
+        lc.classifyLoop(loopBlock, 2);
+
+        REQUIRE(lc.dataPointerDelta() == 0);
+        REQUIRE(lc.numDataDeltas() == 0);
+        REQUIRE(lc.numBootstrapCycles() == 0);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, -1));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::NEVER);
+    }
+}
+
+TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]" ) {
+    ProgramBlock exitBlock;
+    exitBlock.init(-1);
+
+    ProgramBlock loopBlock[maxLoopSize];
+    for (int i = 0; i < maxLoopSize; i++) {
+        loopBlock[i].init(i);
+    }
+
+    LoopClassification lc;
+
     SECTION( "TravellingConstant" ) {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -144,7 +231,7 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numDataDeltas() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChange" ) {
         loopBlock[0].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 1);
@@ -157,9 +244,9 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numDataDeltas() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 1));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChange2" ) {
         // As TravellingSingleChange, but with instructions reversed. This, amongst others, changes
@@ -174,9 +261,40 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numDataDeltas() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
+    }
+    SECTION( "TravellingSingleChangeAndNonZeroExit" ) {
+        loopBlock[0].finalize(MOV, 1, dummySteps, loopBlock + 1, &exitBlock); // SHR   # Expects 0
+        loopBlock[1].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0); // INC
+
+        lc.classifyLoop(loopBlock, 2);
+        REQUIRE(lc.numBootstrapCycles() == 0);
+
+        REQUIRE(lc.dataPointerDelta() == 1);
+        REQUIRE(lc.numDataDeltas() == 1);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::NEVER);
+    }
+    SECTION( "TravellingSingleChangeAndNonZeroExit2" ) {
+        // As TravellingSingleChangeAndNonZeroExit, but with order reversed
+        loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1); // INC
+        loopBlock[1].finalize(MOV, 1, dummySteps, loopBlock + 0, &exitBlock); // SHR   # Expects 0
+
+        lc.classifyLoop(loopBlock, 2);
+        REQUIRE(lc.numBootstrapCycles() == 1);
+
+        REQUIRE(lc.dataPointerDelta() == 1);
+        REQUIRE(lc.numDataDeltas() == 1);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChangeInThreeSteps" ) {
         // A single change realized in three separate increments, each of which can break the loop.
@@ -199,17 +317,17 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 2);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(4).bootstrapOnly);
+        REQUIRE(lc.exit(4).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(5).bootstrapOnly);
+        REQUIRE(lc.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChangeInThreeSteps2" ) {
         // As TravellingSingleChangeInThreeSteps, but with shifts reversed. This should not impact
@@ -228,17 +346,17 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 2);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(4).bootstrapOnly);
+        REQUIRE(lc.exit(4).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(5).bootstrapOnly);
+        REQUIRE(lc.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChangeInThreeSteps3" ) {
         // Similar to TravellingSingleChangeInThreeSteps but with a single shift change, which
@@ -258,17 +376,17 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 4);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(4).bootstrapOnly);
+        REQUIRE(lc.exit(4).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(5).bootstrapOnly);
+        REQUIRE(lc.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingTwoChanges" ) {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);  // SHR
@@ -283,13 +401,13 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 0);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingTwoChanges2" ) {
         // A variant of TravellingOscillating2 but with modified shifts so that deltas do not
@@ -307,15 +425,15 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(4).bootstrapOnly);
+        REQUIRE(lc.exit(4).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingOscillating" ) {
         loopBlock[0].finalize(MOV, 2, dummySteps, &exitBlock, loopBlock + 1);  // SHR 2
@@ -330,13 +448,13 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
-        REQUIRE(!lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::BOOTSTRAP);
     }
     SECTION( "TravellingOscillating2" ) {
         // A more complex oscillating change, where original DP-offsets are both positive and
@@ -354,14 +472,14 @@ TEST_CASE( "Loop classification tests", "[classify-loop]" ) {
         REQUIRE(lc.numBootstrapCycles() == 1);
 
         REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(lc.exit(0).bootstrapOnly);
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
-        REQUIRE(lc.exit(1).bootstrapOnly);
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(2).bootstrapOnly);
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
-        REQUIRE(!lc.exit(3).bootstrapOnly);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(lc.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
-        REQUIRE(!lc.exit(4).bootstrapOnly);
+        REQUIRE(lc.exit(4).exitWindow == ExitWindow::ANYTIME);
     }
 }

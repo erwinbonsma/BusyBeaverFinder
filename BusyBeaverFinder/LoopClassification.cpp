@@ -16,6 +16,9 @@
 #include "RunSummary.h"
 #include "InterpretedProgram.h"
 
+// It is set big enough so that the effective increment realized by a loop is always smaller.
+const int UNSET_FIXED_VALUE = 1024;
+
 void ExitCondition::init(Operator op, int value, int dpOffset) {
     _operator = op;
     _value = value;
@@ -28,6 +31,8 @@ bool ExitCondition::isTrueForValue(int value) {
     switch (_operator) {
         case Operator::EQUALS:
             return (value == _value);
+        case Operator::UNEQUAL:
+            return (value != _value);
         case Operator::LESS_THAN_OR_EQUAL:
             if (value > _value) {
                 return false;
@@ -46,10 +51,11 @@ bool ExitCondition::isTrueForValue(int value) {
     return mod1 == mod2 || (mod1 + abs(_modulus)) % _modulus == (mod2 + abs(_modulus)) % _modulus;
 }
 
-void ExitCondition::dump(bool bootstrapOnly) {
+void ExitCondition::dump(ExitWindow window) {
     std::cout << "Data[" << _dpOffset << "] ";
     switch (_operator) {
         case Operator::EQUALS: std::cout << "=="; break;
+        case Operator::UNEQUAL: std::cout << "!="; break;
         case Operator::LESS_THAN_OR_EQUAL: std::cout << "<="; break;
         case Operator::GREATER_THAN_OR_EQUAL: std::cout << ">="; break;
     }
@@ -59,8 +65,10 @@ void ExitCondition::dump(bool bootstrapOnly) {
         std::cout << ", Modulus = " << _modulus;
     }
 
-    if (bootstrapOnly) {
-        std::cout << ", Bootstrap only";
+    switch (window) {
+        case ExitWindow::BOOTSTRAP: std::cout << ", Bootstrap only"; break;
+        case ExitWindow::NEVER: std::cout << ", Unreachable"; break;
+        default: ; // void
     }
 
     std::cout << std::endl;
@@ -70,6 +78,13 @@ void ExitCondition::dump(bool bootstrapOnly) {
 LoopClassification::LoopClassification() {
     _dpDelta = 0;
     _numDataDeltas = 0;
+}
+
+bool LoopClassification::exitsOnZero(int index) {
+    ProgramBlock* curBlock = _loopBlocks[index];
+    ProgramBlock* nxtBlock = _loopBlocks[(index + 1) % _numBlocks];
+
+    return curBlock->nonZeroBlock() == nxtBlock;
 }
 
 int LoopClassification::deltaAt(int dpOffset) {
@@ -147,8 +162,30 @@ void LoopClassification::squashDeltas() {
     }
 }
 
-void LoopClassification::initExitsForStationaryLoop() {
-    // Initialise all exits
+void LoopClassification::markUnreachableExitsForStationaryLoop() {
+    for (int i = _numBlocks; --i >= 0; ) {
+        if (!exitsOnZero(i)) {
+            // After this instruction executed successfully and the loop continues the value will
+            // be zero. This makes it possible to verify if the instructions that follow it that
+            // depends on the same data value can abort the loop.
+
+            int dpOffset = _effectiveResult[i].dpOffset();
+
+            for (int j = i + 1; j < _numBlocks; j++) {
+                if (
+                    dpOffset == _effectiveResult[j].dpOffset() &&
+                    !_loopExit[j].exitCondition.isTrueForValue(
+                        _effectiveResult[j].delta() - _effectiveResult[i].delta()
+                    )
+                ) {
+                    _loopExit[j].exitWindow = ExitWindow::NEVER;
+                }
+            }
+        }
+    }
+}
+
+void LoopClassification::setExitConditionsForStationaryLoop() {
     for (int i = 0; i < _numBlocks; i++) {
         LoopExit& loopExit = _loopExit[i];
         int dp = _effectiveResult[i].dpOffset();
@@ -156,26 +193,28 @@ void LoopClassification::initExitsForStationaryLoop() {
         int finalDelta = deltaAt(dp);
 
         if (finalDelta == 0) {
-            loopExit.exitCondition.init(Operator::EQUALS, -currentDelta, dp);
-            loopExit.bootstrapOnly = true;
+            Operator  op = exitsOnZero(i) ? Operator::EQUALS : Operator::UNEQUAL;
+            loopExit.exitCondition.init(op, -currentDelta, dp);
+            loopExit.exitWindow = ExitWindow::BOOTSTRAP;
         } else {
-            if (finalDelta > 0) {
-                loopExit.exitCondition.init(Operator::LESS_THAN_OR_EQUAL, -currentDelta, dp);
-            } else {
-                loopExit.exitCondition.init(Operator::GREATER_THAN_OR_EQUAL, -currentDelta, dp);
-            }
+            assert(exitsOnZero(i)); // Otherwise the loop cannot loop
+            Operator  op =
+                (finalDelta > 0) ? Operator::LESS_THAN_OR_EQUAL : Operator::GREATER_THAN_OR_EQUAL;
+            loopExit.exitCondition.init(op, -currentDelta, dp);
             loopExit.exitCondition.setModulusConstraint(finalDelta);
 
-            // Reset to known state. May be updated by loop below.
-            loopExit.bootstrapOnly = false;
+            // Reset to known state. May still be changed later
+            loopExit.exitWindow = ExitWindow::ANYTIME;
         }
     }
+}
 
+void LoopClassification::identifyBootstrapOnlyExitsForStationaryLoop() {
     // Identify bootstrap-only exits (and exits that can never be reached).
     for (int i = _numBlocks; --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
 
-        if (loopExit.bootstrapOnly) {
+        if (loopExit.exitWindow != ExitWindow::ANYTIME) {
             // This cannot cancel out other exits which are not yet marked as bootstrap-only.
             continue;
         }
@@ -201,25 +240,43 @@ void LoopClassification::initExitsForStationaryLoop() {
 
                 if (delta2Mod == deltaMod) {
                     // One of these instructions cancels the other out. Determine the one
-
-                    if (
+                    int k = (
                         // In case of equal deltas, j cancels out i, as it executes first
                         delta2 == delta ||
                         // Otherwise, it depends on the size of the delta (wrt to the change dir)
                         (mc > 0 && delta2 > delta) ||
                         (mc < 0 && delta2 < delta)
-                    ) {
-                        loopExit.bootstrapOnly = true;
-                    } else {
-                        _loopExit[j].bootstrapOnly = true;
-                    }
+                    ) ? i : j;
+
+                    // Convert it to a bootstrap-only exit
+                    _loopExit[k].exitWindow = k == j ? ExitWindow::BOOTSTRAP : ExitWindow::NEVER;
+                    _loopExit[k].exitCondition.setOperator(Operator::EQUALS);
+                    _loopExit[k].exitCondition.clearModulusConstraint();
                 }
             }
         }
     }
 }
 
-void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
+void LoopClassification::initExitsForStationaryLoop() {
+    setExitConditionsForStationaryLoop();
+    identifyBootstrapOnlyExitsForStationaryLoop();
+    markUnreachableExitsForStationaryLoop();
+}
+
+void LoopClassification::setExitConditionsForTravellingLoop() {
+    for (int i = _numBlocks; --i >= 0; ) {
+        LoopExit& loopExit = _loopExit[i];
+        int dp = _effectiveResult[i].dpOffset();
+        int currentDelta = _effectiveResult[i].delta();
+        Operator  op = exitsOnZero(i) ? Operator::EQUALS : Operator::UNEQUAL;
+
+        loopExit.exitCondition.init(op, -currentDelta, dp);
+        loopExit.exitWindow = ExitWindow::ANYTIME; // Initial assumption
+    }
+}
+
+void LoopClassification::identifyBootstrapOnlyExitsForTravellingLoop() {
     // Temporary helper array that contains instruction indices, which will be sorted based on
     // the order in which they consume data values.
     static std::array<int, maxLoopSize> indices;
@@ -228,9 +285,14 @@ void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
     // executed wrt to when the value was first encountered by the loop.
     static std::array<int, maxLoopSize> cumDelta;
 
+    // Temporary helper array that tracks if the instruction has a zero-based continuation
+    // condition, thereby fixing the entry value required for the loop to spin up.
+    static std::array<int, maxLoopSize> fixedExitValue;
+
     for (int i = _numBlocks; --i >= 0; ) {
         indices[i] = i;
         cumDelta[i] = 0;
+        fixedExitValue[i] = UNSET_FIXED_VALUE;
     }
 
     // Sort instructions by the order in which they inspect new data values
@@ -243,20 +305,24 @@ void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
         return diff == 0 ? (a < b) : (diff < 0);
     };
 
-    std::sort(indices.begin(), indices.begin() + _numBlocks,
-              _dpDelta > 0 ? compareUp : compareDn);
+    std::sort(indices.begin(), indices.begin() + _numBlocks, _dpDelta > 0 ? compareUp : compareDn);
 
     // Establish effective data value delta for each instruction
     int ad = abs(_dpDelta);
     for (int ii = 0 ; ii < _numBlocks; ii++ ) {
         int i = indices[ii];
-        // std::cout << "Instruction #" << i;
+//        std::cout << "Instruction #" << i;
 
         int mod = _effectiveResult[i].dpOffset() % ad;
         if (mod < 0) {
             mod += ad;
         }
         bool foundOne = false;
+
+        if (!exitsOnZero(i)) {
+            fixedExitValue[i] = 0;
+        }
+
         for (int jj = ii; --jj >= 0; ) {
             int j = indices[jj];
             int mod2 = _effectiveResult[j].dpOffset() % ad;
@@ -268,36 +334,63 @@ void LoopClassification::identifyBootstrapOnlyExitsForNonStationaryLoop() {
                 // Both instructions process the same data values
 
                 if (!foundOne) {
-                    // Found the instruction preceding the current one. Determine the delta sofar
+                    // Found the instruction preceding the current one.
+                    foundOne = true;
+
+                    // Determine the cummulative delta
                     cumDelta[i] = cumDelta[j];
                     if (_loopBlocks[i]->isDelta()) {
                         cumDelta[i] += _loopBlocks[i]->getInstructionAmount();
                     }
-                    foundOne = true;
+
+                    // If the value is fixed, propagate its setting
+                    if (fixedExitValue[j] != UNSET_FIXED_VALUE) {
+                        fixedExitValue[i] = fixedExitValue[j];
+
+                        if (_loopBlocks[i]->isDelta()) {
+                            fixedExitValue[i] += _loopBlocks[i]->getInstructionAmount();
+                        }
+                    }
                 }
 
-                if (cumDelta[i] == cumDelta[j]) {
-                    _loopExit[i].bootstrapOnly = true;
+                if (
+                    // The same data value (wrt to loop-entry) will cause both instructions to exit
+                    // the loop
+                    cumDelta[i] == cumDelta[j] ||
+
+                    // The earlier instruction fixes the entry value to a value that does not
+                    // trigger the later instruction to exit
+                    (
+                        fixedExitValue[j] != UNSET_FIXED_VALUE &&
+
+                        // Note: need to check fixedExitValue[i] not fixedExitValue[j]
+                        !_loopExit[i].exitCondition.isTrueForValue(fixedExitValue[i])
+                    )
+                ) {
+                    if (_effectiveResult[i].dpOffset() == _effectiveResult[j].dpOffset()) {
+                        // Both instructions see the same value in the same loop iteration, so the
+                        // later instruction will never exit
+                        _loopExit[i].exitWindow = ExitWindow::NEVER;
+                        break;
+                    } else {
+                        // The later instruction can still exit the loop during bootstrap
+                        _loopExit[i].exitWindow = ExitWindow::BOOTSTRAP;
+                    }
                 }
             }
         }
-        // std::cout << ", Delta = " << cumDelta[i] << std::endl;
+
+//        std::cout << ", Delta = " << cumDelta[i];
+//        if (fixedExitValue[i] != UNSET_FIXED_VALUE) {
+//            std::cout << ", Exit value = " << fixedExitValue[i];
+//        }
+//        std::cout << std::endl;
     }
 }
 
-void LoopClassification::initExitsForNonStationaryLoop() {
-    // Initialise all exits
-    for (int i = _numBlocks; --i >= 0; ) {
-        LoopExit& loopExit = _loopExit[i];
-        int dp = _effectiveResult[i].dpOffset();
-        int currentDelta = _effectiveResult[i].delta();
-
-        loopExit.exitCondition.init(Operator::EQUALS, -currentDelta, dp);
-        loopExit.bootstrapOnly = false; // Initial assumption
-    }
-
-    // Identify bootstrap-only exits.
-    identifyBootstrapOnlyExitsForNonStationaryLoop();
+void LoopClassification::initExitsForTravellingLoop() {
+    setExitConditionsForTravellingLoop();
+    identifyBootstrapOnlyExitsForTravellingLoop();
 }
 
 void LoopClassification::classifyLoop() {
@@ -307,9 +400,8 @@ void LoopClassification::classifyLoop() {
     int i = 0;
 
     // Determine the intermediate results and final results of a single loop iteration
-    ProgramBlock* programBlock = _loopBlocks[0];
-    ProgramBlock* prevBlock = _loopBlocks[_numBlocks - 1];
 
+    ProgramBlock* programBlock = _loopBlocks[i];
     int minDp = programBlock->isDelta() ? 0 : programBlock->getInstructionAmount();
     int maxDp = minDp;
 
@@ -327,18 +419,14 @@ void LoopClassification::classifyLoop() {
             _effectiveResult[i].changeDelta(deltaAt(_dpDelta));
         }
 
-        // For now, the classification only supports blocks where each loop-exit is zero-based.
-        // Verify that this assumption holds for the current loop.
-        assert(prevBlock->nonZeroBlock() == programBlock);
-
-        prevBlock = programBlock++;
+        programBlock++;
         i++;
     }
 
     // Collapse the results considering multiple loop iterations (only for non-stationary loops)
     if (_dpDelta != 0) {
         squashDeltas();
-        initExitsForNonStationaryLoop();
+        initExitsForTravellingLoop();
 
         _numBootstrapCycles = (maxDp - minDp) / abs(_dpDelta);
     } else {
@@ -393,6 +481,6 @@ void LoopClassification::dump() {
 
     for (int i = 0; i < _numBlocks; i++) {
         std::cout << "Exit #" << i << ": ";
-        _loopExit[i].exitCondition.dump(_loopExit[i].bootstrapOnly);
+        _loopExit[i].exitCondition.dump(_loopExit[i].exitWindow);
     }
 }
