@@ -24,6 +24,8 @@ class StaticPeriodicHangDetector : public StaticHangDetector {
 
     bool exhibitsHangBehaviour();
 
+    bool checkAllFreshlyConsumedValuesWillBeZero();
+
     HangDetectionResult tryProofHang(bool resumed);
 
 public:

@@ -11,6 +11,10 @@
 StaticHangDetector::StaticHangDetector(ExhaustiveSearcher& searcher) :
     _searcher(searcher)
 {
+    reset();
+}
+
+void StaticHangDetector::reset() {
     _lastCheckPoint = -1;
     _ongoingCheckPoint = -1;
 }

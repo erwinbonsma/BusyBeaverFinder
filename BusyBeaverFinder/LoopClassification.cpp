@@ -51,7 +51,7 @@ bool ExitCondition::isTrueForValue(int value) {
     return mod1 == mod2 || (mod1 + abs(_modulus)) % _modulus == (mod2 + abs(_modulus)) % _modulus;
 }
 
-void ExitCondition::dump(ExitWindow window) {
+void ExitCondition::dumpWithoutEOL() {
     std::cout << "Data[" << _dpOffset << "] ";
     switch (_operator) {
         case Operator::EQUALS: std::cout << "=="; break;
@@ -64,16 +64,30 @@ void ExitCondition::dump(ExitWindow window) {
     if (abs(_modulus) > 1) {
         std::cout << ", Modulus = " << _modulus;
     }
+}
 
-    switch (window) {
+void ExitCondition::dump() {
+    dumpWithoutEOL();
+
+    std::cout << std::endl;
+}
+
+void LoopExit::dump() {
+    exitCondition.dumpWithoutEOL();
+
+    switch (exitWindow) {
         case ExitWindow::BOOTSTRAP: std::cout << ", Bootstrap only"; break;
         case ExitWindow::NEVER: std::cout << ", Unreachable"; break;
         default: ; // void
     }
 
-    std::cout << std::endl;
-}
+    if (firstForValue) {
+        std::cout << ", First consumer";
+    }
 
+    std::cout << std::endl;
+
+}
 
 LoopClassification::LoopClassification() {
     _dpDelta = 0;
@@ -206,6 +220,9 @@ void LoopClassification::setExitConditionsForStationaryLoop() {
             // Reset to known state. May still be changed later
             loopExit.exitWindow = ExitWindow::ANYTIME;
         }
+
+        // TODO: Actually set this value for stationary-loops
+        loopExit.firstForValue = false; // Default value
     }
 }
 
@@ -273,6 +290,7 @@ void LoopClassification::setExitConditionsForTravellingLoop() {
 
         loopExit.exitCondition.init(op, -currentDelta, dp);
         loopExit.exitWindow = ExitWindow::ANYTIME; // Initial assumption
+        loopExit.firstForValue = false; // Default value
     }
 }
 
@@ -362,6 +380,7 @@ void LoopClassification::identifyBootstrapOnlyExitsForTravellingLoop() {
                     // trigger the later instruction to exit
                     (
                         fixedExitValue[j] != UNSET_FIXED_VALUE &&
+                        !exitsOnZero(j) &&
 
                         // Note: need to check fixedExitValue[i] not fixedExitValue[j]
                         !_loopExit[i].exitCondition.isTrueForValue(fixedExitValue[i])
@@ -380,11 +399,10 @@ void LoopClassification::identifyBootstrapOnlyExitsForTravellingLoop() {
             }
         }
 
-//        std::cout << ", Delta = " << cumDelta[i];
-//        if (fixedExitValue[i] != UNSET_FIXED_VALUE) {
-//            std::cout << ", Exit value = " << fixedExitValue[i];
-//        }
-//        std::cout << std::endl;
+        if (!foundOne) {
+            // This instruction freshly consumes values.
+            _loopExit[i].firstForValue = true;
+        }
     }
 }
 
@@ -433,7 +451,7 @@ void LoopClassification::classifyLoop() {
         _numBootstrapCycles = 0;
     }
 
-    dump(); // TEMP
+//    dump(); // TEMP
 }
 
 void LoopClassification::classifyLoop(ProgramBlock* entryBlock, int numBlocks) {
@@ -452,6 +470,13 @@ void LoopClassification::classifyLoop(InterpretedProgram& program,
     assert(runBlock->isLoop());
 
     _numBlocks = runBlock->getLoopPeriod();
+    if (_numBlocks > maxLoopSize) {
+        program.dump();
+        runSummary.dumpCondensed();
+    }
+    // TODO: Handle gracefully. I.e. don't analyse this loop
+    assert(_numBlocks < maxLoopSize);
+
     for (int i = _numBlocks; --i >= 0; ) {
         int index = runSummary.programBlockIndexAt(runBlock->getStartIndex() + i);
 
@@ -482,6 +507,6 @@ void LoopClassification::dump() {
         _loopBlocks[i]->dumpWithoutEOL();
 
         std::cout << ", Exit: ";
-        _loopExit[i].exitCondition.dump(_loopExit[i].exitWindow);
+        _loopExit[i].dump();
     }
 }

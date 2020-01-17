@@ -482,4 +482,27 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         REQUIRE(lc.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(lc.exit(4).exitWindow == ExitWindow::ANYTIME);
     }
+    SECTION( "TravellingOscillatingWithNonZeroExit" ) {
+        // A loop that occurs in BB 7x7 #950175 which was wrongly analysed.
+        loopBlock[0].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 1); // SHL
+        loopBlock[1].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 2);  // INC 2
+        loopBlock[2].finalize(MOV, 2, dummySteps, loopBlock + 3, &exitBlock);  // SHR 2 # Expects 0
+        loopBlock[3].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 4);  // INC
+        loopBlock[4].finalize(INC, -3, dummySteps, &exitBlock, loopBlock + 0); // DEC 3
+
+        lc.classifyLoop(loopBlock, 5);
+
+        REQUIRE(lc.dataPointerDelta() == 1);
+        REQUIRE(lc.numDataDeltas() == 0);
+        REQUIRE(lc.numBootstrapCycles() == 2);
+
+        REQUIRE(lc.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(lc.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -2));
+        REQUIRE(lc.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(lc.exit(2).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
+        REQUIRE(lc.exit(2).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(lc.exit(3).exitWindow == ExitWindow::NEVER);
+        REQUIRE(lc.exit(4).exitWindow == ExitWindow::NEVER);
+    }
 }

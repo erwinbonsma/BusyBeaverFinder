@@ -127,7 +127,8 @@ void ExhaustiveSearcher::dumpSettings() {
 }
 
 void ExhaustiveSearcher::dumpHangDetection() {
-    _data.dumpHangInfo();
+    std::cout << "Num steps: " << _numSteps << std::endl;
+    _data.dump();
     _dataTracker.dump();
 
     std::cout << "Run summary: ";
@@ -172,13 +173,7 @@ HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
                 _runSummary[0].getNumProgramBlocks() +
                 _settings.minWaitBeforeRetryingHangChecks
             );
-            // Alternate between both types of periodic hang detectors
-            if (_numHangDetectAttempts % 6 == 0) {
-                newCheck = _periodicHangDetector;
-                //newCheck = _metaPeriodicHangDetector;
-            } else {
-                newCheck = _metaPeriodicHangDetector;
-            }
+            newCheck = _metaPeriodicHangDetector;
             break;
         }
         case 1: newCheck = _sweepHangDetector; break;
@@ -306,6 +301,8 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
     _runSummary[0].reset();
     _runSummary[1].reset();
 
+    _staticPeriodicHangDetector->reset();
+
     // Wait a bit before the initial check, so that there is at least a bit of program block
     // history available. Otherwise it can take unnecessarily long for a simple periodic hang to be
     // detected.
@@ -319,9 +316,9 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
         if (_numHangDetectAttempts >= 0) {
             // Only track execution while hang detection is still active
             bool wasInLoop = _runSummary[0].isInsideLoop();
+            int numRunBlocks = _runSummary[0].getNumRunBlocks();
 
             if (_runSummary[0].recordProgramBlock((int)(_block - entryBlock))) {
-                int numRunBlocks = _runSummary[0].getNumRunBlocks();
                 for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
                     RunBlock* runBlock = _runSummary[0].runBlockAt(i);
                     _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
@@ -362,21 +359,21 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
                     return backtrackProgramPointer;
                 }
             }
-
-            if (_runSummary[0].isInsideLoop() && _runSummary[0].isAtStartOfLoop()) {
-                //_interpretedProgram.dump();
-                //_runSummary[0].dump();
-                if (_staticPeriodicHangDetector->detectHang()) {
-                    _tracker->reportDetectedHang(_staticPeriodicHangDetector->hangType());
-                    if (!_settings.testHangDetection) {
-                        return backtrackProgramPointer;
-                    }
-                }
-            }
         }
 
         if (executeCurrentBlock()) {
             return backtrackProgramPointer;
+        }
+
+        if (_runSummary[0].isInsideLoop() && _runSummary[0].isAtStartOfLoop()) {
+            //_interpretedProgram.dump();
+            //_runSummary[0].dump();
+            if (_staticPeriodicHangDetector->detectHang()) {
+                _tracker->reportDetectedHang(_staticPeriodicHangDetector->hangType());
+                if (!_settings.testHangDetection) {
+                    return backtrackProgramPointer;
+                }
+            }
         }
 
         if (_numSteps >= _settings.maxHangDetectionSteps) {

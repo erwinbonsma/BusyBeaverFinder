@@ -16,8 +16,9 @@ class RunBlock;
 class RunSummary;
 class ProgramBlock;
 
-const int maxLoopSize = 16;
-const int maxDataDeltasPerLoop = 8;
+// TODO: Limit this and gracefully ignore loops that are larger than configured size
+const int maxLoopSize = 256;
+const int maxDataDeltasPerLoop = 128;
 const int maxLoopExits = maxLoopSize;
 
 class DataDelta {
@@ -94,11 +95,16 @@ public:
     bool expressionEquals(Operator op, int value) { return op == _operator && value == _value; }
     bool modulusContraintEquals(int modulus) { return modulus == _modulus; }
 
-    void dump(ExitWindow window);
+    void dump();
+    void dumpWithoutEOL();
 };
 
 class LoopExit {
 public:
+    // Indicates that this exit is the first that is based on this value, once the loop is fully
+    // bootstrapped.
+    bool firstForValue;
+
     // Indicates when the exit may occur
     ExitWindow exitWindow;
 
@@ -106,6 +112,8 @@ public:
     // iteration. When the exit window is ALWAYS, the condition is wrt to the value when it is
     // first consumed by the loop (once the loop has finished executing its bootstrap cycles)
     ExitCondition exitCondition;
+
+    void dump();
 };
 
 class LoopClassification {
@@ -149,6 +157,8 @@ class LoopClassification {
     void classifyLoop();
 public:
     LoopClassification();
+
+    int loopSize() { return _numBlocks; }
 
     int dataPointerDelta() { return _dpDelta; }
 

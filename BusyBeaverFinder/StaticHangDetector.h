@@ -45,6 +45,8 @@ public:
 
     virtual HangType hangType() = 0;
 
+    void reset();
+
     // Returns true if a hang is detected
     bool detectHang();
 };
