@@ -365,7 +365,10 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             return backtrackProgramPointer;
         }
 
-        if (_runSummary[0].isInsideLoop() && _runSummary[0].isAtStartOfLoop()) {
+        if (
+            _runSummary[0].isInsideLoop() &&
+            _runSummary[0].isAtStartOfLoop((int)(_block - entryBlock))
+        ) {
             //_interpretedProgram.dump();
             //_runSummary[0].dump();
             if (_staticPeriodicHangDetector->detectHang()) {

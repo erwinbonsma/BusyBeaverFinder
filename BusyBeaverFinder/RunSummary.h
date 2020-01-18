@@ -121,7 +121,11 @@ public:
 
     bool isInsideLoop() { return _loopP != nullptr; }
     int getLoopPeriod() { return (int)(_programBlockHistoryP - _loopP) - 1; }
+
     bool isAtStartOfLoop();
+    bool isAtStartOfLoop(ProgramBlockIndex nextBlockIndex) {
+        return isAtStartOfLoop() && *(_loopP + 1) == nextBlockIndex;
+    }
 
     bool hasSpaceRemaining() { return _runBlockHistoryP < _runBlockHistoryThresholdP; }
 
