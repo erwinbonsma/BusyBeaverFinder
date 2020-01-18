@@ -11,8 +11,8 @@
 StaticPeriodicHangDetector::StaticPeriodicHangDetector(ExhaustiveSearcher& searcher)
     : StaticHangDetector(searcher) {}
 
-bool StaticPeriodicHangDetector::exhibitsHangBehaviour() {
-    return _searcher.getRunSummary().isInsideLoop();
+Trilian StaticPeriodicHangDetector::exhibitsHangBehaviour(bool loopContinues) {
+    return loopContinues ? Trilian::YES : Trilian::NO;
 }
 
 bool StaticPeriodicHangDetector::analyseLoop(LoopAnalysis &loop, int &loopStart) {
@@ -53,18 +53,18 @@ bool StaticPeriodicHangDetector::checkAllFreshlyConsumedValuesWillBeZero() {
     return true;
 }
 
-HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
+Trilian StaticPeriodicHangDetector::canProofHang(bool resumed) {
     if (!resumed) {
-        // We are in a new loop, so classify it.
+        // We are in a new loop that requires analysis
         if (!analyseLoop(_loop, _loopStart)) {
-            return HangDetectionResult::FAILED;
+            return Trilian::NO; // Analysis failed
         }
     }
 
     int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
-        return HangDetectionResult::ONGOING;
+        return Trilian::MAYBE;
     }
 
     // The detector should only be invoked at the start of a loop iteration (so that the DP-offsets
@@ -78,7 +78,7 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
                 Data &data = _searcher.getData();
                 int value = *(data.getDataPointer() + exit.exitCondition.dpOffset());
                 if (exit.exitCondition.isTrueForValue(value)) {
-                    return HangDetectionResult::FAILED;
+                    return Trilian::NO;
                 }
             }
         }
@@ -87,7 +87,7 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 if (exit.exitCondition.isTrueForValue(0)) {
-                    return HangDetectionResult::FAILED;
+                    return Trilian::NO;
                 }
             }
         }
@@ -99,7 +99,7 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
         // ahead of its current DP and may still freshly consume some datas behind its DP.
         if (!checkAllFreshlyConsumedValuesWillBeZero()) {
             // We cannot conclude this is a hang.
-            return HangDetectionResult::ONGOING;
+            return Trilian::MAYBE;
         }
     }
 
@@ -108,5 +108,5 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
 //    _loop.dump();
 
     // None of the exit conditions can be met
-    return HangDetectionResult::HANGING;
+    return Trilian::YES;
 }

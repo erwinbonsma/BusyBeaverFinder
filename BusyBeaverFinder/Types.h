@@ -69,4 +69,10 @@ enum class HangType : char {
     UNDETECTED = 6 // Should always be last
 };
 
+enum class Trilian : char {
+    NO = 0,
+    YES = 1,
+    MAYBE = 2
+};
+
 #endif /* Types_h */

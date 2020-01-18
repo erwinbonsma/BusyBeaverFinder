@@ -26,13 +26,13 @@ class StaticPeriodicHangDetector : public StaticHangDetector {
 protected:
     int currentCheckPoint() { return _searcher.getRunSummary().getNumRunBlocks(); }
 
+    Trilian exhibitsHangBehaviour(bool loopContinues);
+
     // Analyses the loop. Returns "true" iff analysis was successful. It will then also have updated
     // loopStart to the point where the loop starts.
     virtual bool analyseLoop(LoopAnalysis &loop, int &loopStart);
 
-    bool exhibitsHangBehaviour();
-
-    HangDetectionResult tryProofHang(bool resumed);
+    Trilian canProofHang(bool resumed);
 
 public:
     StaticPeriodicHangDetector(ExhaustiveSearcher& searcher);

@@ -177,7 +177,7 @@ int RunSummary::getRunBlockLength(int index) {
     }
 }
 
-bool RunSummary::isAtStartOfLoop() {
+bool RunSummary::isAtEndOfLoop() {
     assert(_loopP != nullptr);
     assert(_programBlockPendingP == nullptr);
 

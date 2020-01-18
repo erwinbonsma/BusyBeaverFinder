@@ -335,7 +335,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
                     if (!_runSummary[0].isInsideLoop()) {
                         result = hangCheck->signalLoopExit();
                     }
-                    else if (_runSummary[0].isAtStartOfLoop()) {
+                    else if (_runSummary[0].isAtEndOfLoop()) {
                         result = hangCheck->signalLoopIteration();
                     }
                 } else {
@@ -365,13 +365,11 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             return backtrackProgramPointer;
         }
 
-        if (
-            _runSummary[0].isInsideLoop() &&
-            _runSummary[0].isAtStartOfLoop((int)(_block - entryBlock))
-        ) {
+        if (_runSummary[0].isInsideLoop() && _runSummary[0].isAtEndOfLoop()) {
+            bool loopContinues = _runSummary[0].isAtStartOfLoop((int)(_block - entryBlock));
             //_interpretedProgram.dump();
             //_runSummary[0].dump();
-            if (_staticPeriodicHangDetector->detectHang()) {
+            if (_staticPeriodicHangDetector->detectHang(loopContinues)) {
                 _tracker->reportDetectedHang(_staticPeriodicHangDetector->hangType());
                 if (!_settings.testHangDetection) {
                     return backtrackProgramPointer;

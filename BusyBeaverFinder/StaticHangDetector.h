@@ -12,11 +12,18 @@
 #include <stdio.h>
 
 #include "Types.h"
-#include "HangDetector.h"
 
 class ExhaustiveSearcher;
 
+enum class DetectionStage : char {
+    WAIT_FOR_CHECKPOINT = 0,
+    CHECK_BEHAVIOR = 1,
+    VERIFY_HANG = 2
+};
+
 class StaticHangDetector {
+    DetectionStage _stage;
+
     // When last check was done
     int _lastCheckPoint;
 
@@ -35,10 +42,10 @@ protected:
 
     // Checks if the run summary and possibly meta-run summary exhibit the characteristic behaviour
     // for the hang that is being detected. Returns "true" iff so.
-    virtual bool exhibitsHangBehaviour() = 0;
+    virtual Trilian exhibitsHangBehaviour(bool loopContinues) = 0;
 
     // Checks if it can be proven that the program hang. Returns "true" iff so.
-    virtual HangDetectionResult tryProofHang(bool resumed) = 0;
+    virtual Trilian canProofHang(bool resumed) = 0;
 
 public:
     StaticHangDetector(ExhaustiveSearcher& searcher);
@@ -47,8 +54,12 @@ public:
 
     void reset();
 
-    // Returns true if a hang is detected
-    bool detectHang();
+    // Returns true if a hang is detected. It should only be executed when an iteration of an
+    // (inner) loop just completed. The loopContinues flag signals if the loop will also continue.
+    // This flag is useful as some hang detectors want the loop to continue (e.g. simple periodic
+    // hangs), whereas in case of nested loops, termination of an inner-loop can is often a good
+    // synchronization point to initiate a check
+    bool detectHang(bool loopContinues);
 };
 
 #endif /* StaticHangDetector_h */
