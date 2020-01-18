@@ -21,9 +21,9 @@
 		AA2865AE23CDEC6A00F738ED /* StaticHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865AB23CDEC6A00F738ED /* StaticHangDetector.cpp */; };
 		AA2865B123CDF44F00F738ED /* StaticPeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865AF23CDF44F00F738ED /* StaticPeriodicHangDetector.cpp */; };
 		AA2865B223CDF44F00F738ED /* StaticPeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865AF23CDF44F00F738ED /* StaticPeriodicHangDetector.cpp */; };
-		AA2865B523CDFF7200F738ED /* LoopClassification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B323CDFF7200F738ED /* LoopClassification.cpp */; };
-		AA2865B623CDFF7200F738ED /* LoopClassification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B323CDFF7200F738ED /* LoopClassification.cpp */; };
-		AA2865B823CE044B00F738ED /* LoopClassificationTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B723CE044B00F738ED /* LoopClassificationTests.cpp */; };
+		AA2865B523CDFF7200F738ED /* LoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */; };
+		AA2865B623CDFF7200F738ED /* LoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */; };
+		AA2865B823CE044B00F738ED /* LoopAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */; };
 		AA28C097220738F900F7EC25 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C096220738F900F7EC25 /* main.cpp */; };
 		AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C09C2207398C00F7EC25 /* ExhaustiveSearchTests.cpp */; };
 		AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
@@ -105,9 +105,9 @@
 		AA2865AC23CDEC6A00F738ED /* StaticHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StaticHangDetector.h; sourceTree = "<group>"; };
 		AA2865AF23CDF44F00F738ED /* StaticPeriodicHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StaticPeriodicHangDetector.cpp; sourceTree = "<group>"; };
 		AA2865B023CDF44F00F738ED /* StaticPeriodicHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StaticPeriodicHangDetector.h; sourceTree = "<group>"; };
-		AA2865B323CDFF7200F738ED /* LoopClassification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopClassification.cpp; sourceTree = "<group>"; };
-		AA2865B423CDFF7200F738ED /* LoopClassification.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopClassification.h; sourceTree = "<group>"; };
-		AA2865B723CE044B00F738ED /* LoopClassificationTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopClassificationTests.cpp; sourceTree = "<group>"; };
+		AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopAnalysis.cpp; sourceTree = "<group>"; };
+		AA2865B423CDFF7200F738ED /* LoopAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopAnalysis.h; sourceTree = "<group>"; };
+		AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopAnalysisTests.cpp; sourceTree = "<group>"; };
 		AA28C094220738F800F7EC25 /* Tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Tests; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA28C096220738F900F7EC25 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		AA28C09B2207393400F7EC25 /* catch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = catch.hpp; sourceTree = "<group>"; };
@@ -232,7 +232,7 @@
 				AA0D5ADE225D1901001909AF /* RepeatDetectionTests.cpp */,
 				AA153A8F228371BA00F7B1DF /* InterpretationTests.cpp */,
 				AA37E6CD229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp */,
-				AA2865B723CE044B00F738ED /* LoopClassificationTests.cpp */,
+				AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -259,8 +259,8 @@
 				AA28C0AE220CCE2A00F7EC25 /* DataTracker.h */,
 				AA4F45112259E88B0069FF36 /* RunSummary.cpp */,
 				AA4F45122259E88B0069FF36 /* RunSummary.h */,
-				AA2865B323CDFF7200F738ED /* LoopClassification.cpp */,
-				AA2865B423CDFF7200F738ED /* LoopClassification.h */,
+				AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */,
+				AA2865B423CDFF7200F738ED /* LoopAnalysis.h */,
 			);
 			name = HangDetection;
 			sourceTree = "<group>";
@@ -353,7 +353,7 @@
 				AA2865B123CDF44F00F738ED /* StaticPeriodicHangDetector.cpp in Sources */,
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
 				AA4F44EC2234079E0069FF36 /* PeriodicHangDetector.cpp in Sources */,
-				AA2865B523CDFF7200F738ED /* LoopClassification.cpp in Sources */,
+				AA2865B523CDFF7200F738ED /* LoopAnalysis.cpp in Sources */,
 				AA4F450B224ABF320069FF36 /* InterpretedProgram.cpp in Sources */,
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AA0D5AE22263B5B6001909AF /* GliderHangDetector.cpp in Sources */,
@@ -374,11 +374,11 @@
 				AA153A8E226DBEB200F7B1DF /* MetaPeriodicHangDetector.cpp in Sources */,
 				AA0D5AE32263B5B6001909AF /* GliderHangDetector.cpp in Sources */,
 				AA4F4508224967A00069FF36 /* ProgramBlock.cpp in Sources */,
-				AA2865B623CDFF7200F738ED /* LoopClassification.cpp in Sources */,
+				AA2865B623CDFF7200F738ED /* LoopAnalysis.cpp in Sources */,
 				AA37E6CC2295D62200117A85 /* FastExecutor.cpp in Sources */,
 				AA28C0A122073A1500F7EC25 /* Program.cpp in Sources */,
 				AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */,
-				AA2865B823CE044B00F738ED /* LoopClassificationTests.cpp in Sources */,
+				AA2865B823CE044B00F738ED /* LoopAnalysisTests.cpp in Sources */,
 				AA28C0B0220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
 				AA4F4516225A44830069FF36 /* RunSummaryTests.cpp in Sources */,
 				AA28C0A222073A1A00F7EC25 /* Utils.cpp in Sources */,

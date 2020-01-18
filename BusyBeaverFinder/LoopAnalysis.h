@@ -1,13 +1,13 @@
 //
-//  LoopClassification.h
+//  LoopAnalysis.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#ifndef LoopClassification_h
-#define LoopClassification_h
+#ifndef LoopAnalysis_h
+#define LoopAnalysis_h
 
 #include <stdio.h>
 
@@ -21,7 +21,7 @@ const int maxDataDeltasPerLoop = 32;
 const int maxLoopExits = maxLoopSize;
 
 class DataDelta {
-    friend class LoopClassification;
+    friend class LoopAnalysis;
 
     int _dpOffset;
     int _delta;
@@ -115,7 +115,7 @@ public:
     void dump();
 };
 
-class LoopClassification {
+class LoopAnalysis {
     ProgramBlock* _loopBlocks[maxLoopSize];
     int _numBlocks;
 
@@ -153,9 +153,9 @@ class LoopClassification {
     void identifyBootstrapOnlyExitsForTravellingLoop();
     void initExitsForTravellingLoop();
 
-    bool classifyLoop();
+    bool analyseLoop();
 public:
-    LoopClassification();
+    LoopAnalysis();
 
     int loopSize() { return _numBlocks; }
 
@@ -172,10 +172,10 @@ public:
     LoopExit& exit(int index) { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
-    bool classifyLoop(ProgramBlock* entryBlock, int numBlocks);
-    bool classifyLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* runBlock);
+    bool analyseLoop(ProgramBlock* entryBlock, int numBlocks);
+    bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* runBlock);
 
     void dump();
 };
 
-#endif /* LoopClassification_h */
+#endif /* LoopAnalysis_h */

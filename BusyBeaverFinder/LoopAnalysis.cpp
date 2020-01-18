@@ -1,12 +1,12 @@
 //
-//  LoopClassification.cpp
+//  LoopAnalysis.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "LoopClassification.h"
+#include "LoopAnalysis.h"
 
 #include <algorithm>
 #include <array>
@@ -89,19 +89,19 @@ void LoopExit::dump() {
 
 }
 
-LoopClassification::LoopClassification() {
+LoopAnalysis::LoopAnalysis() {
     _dpDelta = 0;
     _numDataDeltas = 0;
 }
 
-bool LoopClassification::exitsOnZero(int index) {
+bool LoopAnalysis::exitsOnZero(int index) {
     ProgramBlock* curBlock = _loopBlocks[index];
     ProgramBlock* nxtBlock = _loopBlocks[(index + 1) % _numBlocks];
 
     return curBlock->nonZeroBlock() == nxtBlock;
 }
 
-int LoopClassification::deltaAt(int dpOffset) {
+int LoopAnalysis::deltaAt(int dpOffset) {
     int deltaIndex = 0;
 
     // Find existing delta record, if any
@@ -112,7 +112,7 @@ int LoopClassification::deltaAt(int dpOffset) {
     return (deltaIndex == _numDataDeltas) ? 0 : _dataDelta[deltaIndex].delta();
 }
 
-int LoopClassification::updateDelta(int dpOffset, int delta) {
+int LoopAnalysis::updateDelta(int dpOffset, int delta) {
     int deltaIndex = 0;
 
     // Find existing delta record, if any
@@ -138,7 +138,7 @@ int LoopClassification::updateDelta(int dpOffset, int delta) {
     }
 }
 
-void LoopClassification::squashDeltas() {
+void LoopAnalysis::squashDeltas() {
     int i = 0;
     while (i < _numDataDeltas) {
         int dpOffsetMod = _dataDelta[i]._dpOffset % _dpDelta;
@@ -176,7 +176,7 @@ void LoopClassification::squashDeltas() {
     }
 }
 
-void LoopClassification::markUnreachableExitsForStationaryLoop() {
+void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
     for (int i = _numBlocks; --i >= 0; ) {
         if (!exitsOnZero(i)) {
             // After this instruction executed successfully and the loop continues the value will
@@ -199,7 +199,7 @@ void LoopClassification::markUnreachableExitsForStationaryLoop() {
     }
 }
 
-void LoopClassification::setExitConditionsForStationaryLoop() {
+void LoopAnalysis::setExitConditionsForStationaryLoop() {
     for (int i = 0; i < _numBlocks; i++) {
         LoopExit& loopExit = _loopExit[i];
         int dp = _effectiveResult[i].dpOffset();
@@ -226,7 +226,7 @@ void LoopClassification::setExitConditionsForStationaryLoop() {
     }
 }
 
-void LoopClassification::identifyBootstrapOnlyExitsForStationaryLoop() {
+void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
     // Identify bootstrap-only exits (and exits that can never be reached).
     for (int i = _numBlocks; --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
@@ -275,13 +275,13 @@ void LoopClassification::identifyBootstrapOnlyExitsForStationaryLoop() {
     }
 }
 
-void LoopClassification::initExitsForStationaryLoop() {
+void LoopAnalysis::initExitsForStationaryLoop() {
     setExitConditionsForStationaryLoop();
     identifyBootstrapOnlyExitsForStationaryLoop();
     markUnreachableExitsForStationaryLoop();
 }
 
-void LoopClassification::setExitConditionsForTravellingLoop() {
+void LoopAnalysis::setExitConditionsForTravellingLoop() {
     for (int i = _numBlocks; --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
         int dp = _effectiveResult[i].dpOffset();
@@ -294,7 +294,7 @@ void LoopClassification::setExitConditionsForTravellingLoop() {
     }
 }
 
-void LoopClassification::identifyBootstrapOnlyExitsForTravellingLoop() {
+void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
     // Temporary helper array that contains instruction indices, which will be sorted based on
     // the order in which they consume data values.
     static std::array<int, maxLoopSize> indices;
@@ -406,12 +406,12 @@ void LoopClassification::identifyBootstrapOnlyExitsForTravellingLoop() {
     }
 }
 
-void LoopClassification::initExitsForTravellingLoop() {
+void LoopAnalysis::initExitsForTravellingLoop() {
     setExitConditionsForTravellingLoop();
     identifyBootstrapOnlyExitsForTravellingLoop();
 }
 
-bool LoopClassification::classifyLoop() {
+bool LoopAnalysis::analyseLoop() {
     _dpDelta = 0;
     _numDataDeltas = 0;
 
@@ -456,7 +456,7 @@ bool LoopClassification::classifyLoop() {
     return true;
 }
 
-bool LoopClassification::classifyLoop(ProgramBlock* entryBlock, int numBlocks) {
+bool LoopAnalysis::analyseLoop(ProgramBlock* entryBlock, int numBlocks) {
     if (numBlocks > maxLoopSize) {
         return false;
     }
@@ -467,10 +467,10 @@ bool LoopClassification::classifyLoop(ProgramBlock* entryBlock, int numBlocks) {
         _loopBlocks[i] = entryBlock + i;
     }
 
-    return classifyLoop();
+    return analyseLoop();
 }
 
-bool LoopClassification::classifyLoop(InterpretedProgram& program,
+bool LoopAnalysis::analyseLoop(InterpretedProgram& program,
                                       RunSummary& runSummary,
                                       RunBlock* runBlock) {
     assert(runBlock->isLoop());
@@ -487,11 +487,11 @@ bool LoopClassification::classifyLoop(InterpretedProgram& program,
         _loopBlocks[i] = program.getEntryBlock() + index;
     }
 
-    return classifyLoop();
+    return analyseLoop();
 }
 
 
-void LoopClassification::dump() {
+void LoopAnalysis::dump() {
     std::cout << "delta DP = " << _dpDelta << std::endl;
 
     for (int i = 0; i < _numDataDeltas; i++) {

@@ -15,10 +15,10 @@
 
 #include "ExhaustiveSearcher.h"
 #include "RunSummary.h"
-#include "LoopClassification.h"
+#include "LoopAnalysis.h"
 
 class StaticPeriodicHangDetector : public StaticHangDetector {
-    LoopClassification _loop;
+    LoopAnalysis _loop;
 
     int currentCheckPoint() { return _searcher.getRunSummary().getNumRunBlocks(); }
 
