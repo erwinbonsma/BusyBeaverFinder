@@ -15,6 +15,14 @@ bool StaticPeriodicHangDetector::exhibitsHangBehaviour() {
     return _searcher.getRunSummary().isInsideLoop();
 }
 
+bool StaticPeriodicHangDetector::analyseLoop(LoopAnalysis &loop, int &loopStart) {
+    RunSummary& runSummary = _searcher.getRunSummary();
+    RunBlock* loopRunBlock = runSummary.getLastRunBlock();
+
+    loopStart = loopRunBlock->getStartIndex();
+    return loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary, loopRunBlock);
+}
+
 bool StaticPeriodicHangDetector::checkAllFreshlyConsumedValuesWillBeZero() {
     Data &data = _searcher.getData();
 
@@ -46,28 +54,25 @@ bool StaticPeriodicHangDetector::checkAllFreshlyConsumedValuesWillBeZero() {
 }
 
 HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
-    RunSummary& runSummary = _searcher.getRunSummary();
-    RunBlock* loopRunBlock = runSummary.getLastRunBlock();
-
     if (!resumed) {
         // We are in a new loop, so classify it.
-        if (! _loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary, loopRunBlock)) {
+        if (!analyseLoop(_loop, _loopStart)) {
             return HangDetectionResult::FAILED;
-        };
+        }
     }
 
-    int loopLen = runSummary.getNumProgramBlocks() - loopRunBlock->getStartIndex();
-    if (loopLen <= loopRunBlock->getLoopPeriod() * _loop.numBootstrapCycles()) {
+    int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
+    if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
         return HangDetectionResult::ONGOING;
     }
 
     // The detector should only be invoked at the start of a loop iteration (so that the DP-offsets
     // of the exit conditions are correct)
-    assert(loopLen % loopRunBlock->getLoopPeriod() == 0);
+    assert(loopLen % _loop.loopSize() == 0);
 
     if (_loop.dataPointerDelta() == 0) {
-        for (int i = loopRunBlock->getLoopPeriod(); --i >=0; ) {
+        for (int i = _loop.loopSize(); --i >=0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 Data &data = _searcher.getData();
@@ -78,7 +83,7 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
             }
         }
     } else {
-        for (int i = loopRunBlock->getLoopPeriod(); --i >=0; ) {
+        for (int i = _loop.loopSize(); --i >=0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 if (exit.exitCondition.isTrueForValue(0)) {
