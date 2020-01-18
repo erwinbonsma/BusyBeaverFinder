@@ -16,9 +16,8 @@ class RunBlock;
 class RunSummary;
 class ProgramBlock;
 
-// TODO: Limit this and gracefully ignore loops that are larger than configured size
-const int maxLoopSize = 256;
-const int maxDataDeltasPerLoop = 128;
+const int maxLoopSize = 64;
+const int maxDataDeltasPerLoop = 32;
 const int maxLoopExits = maxLoopSize;
 
 class DataDelta {
@@ -154,7 +153,7 @@ class LoopClassification {
     void identifyBootstrapOnlyExitsForTravellingLoop();
     void initExitsForTravellingLoop();
 
-    void classifyLoop();
+    bool classifyLoop();
 public:
     LoopClassification();
 
@@ -172,9 +171,9 @@ public:
     // Returns the loop exit for the specified loop instruction
     LoopExit& exit(int index) { return _loopExit[index]; }
 
-    void classifyLoop(ProgramBlock* entryBlock, int numBlocks);
-
-    void classifyLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* runBlock);
+    // Analyses the loop. Returns true if analysis was successful.
+    bool classifyLoop(ProgramBlock* entryBlock, int numBlocks);
+    bool classifyLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* runBlock);
 
     void dump();
 };

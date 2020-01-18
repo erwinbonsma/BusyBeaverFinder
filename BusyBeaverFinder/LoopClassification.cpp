@@ -411,7 +411,7 @@ void LoopClassification::initExitsForTravellingLoop() {
     identifyBootstrapOnlyExitsForTravellingLoop();
 }
 
-void LoopClassification::classifyLoop() {
+bool LoopClassification::classifyLoop() {
     _dpDelta = 0;
     _numDataDeltas = 0;
 
@@ -452,30 +452,34 @@ void LoopClassification::classifyLoop() {
     }
 
 //    dump(); // TEMP
+
+    return true;
 }
 
-void LoopClassification::classifyLoop(ProgramBlock* entryBlock, int numBlocks) {
+bool LoopClassification::classifyLoop(ProgramBlock* entryBlock, int numBlocks) {
+    if (numBlocks > maxLoopSize) {
+        return false;
+    }
+
     _numBlocks = numBlocks;
 
     for (int i = _numBlocks; --i >= 0; ) {
         _loopBlocks[i] = entryBlock + i;
     }
 
-    classifyLoop();
+    return classifyLoop();
 }
 
-void LoopClassification::classifyLoop(InterpretedProgram& program,
+bool LoopClassification::classifyLoop(InterpretedProgram& program,
                                       RunSummary& runSummary,
                                       RunBlock* runBlock) {
     assert(runBlock->isLoop());
 
-    _numBlocks = runBlock->getLoopPeriod();
-    if (_numBlocks > maxLoopSize) {
-        program.dump();
-        runSummary.dumpCondensed();
+    if (runBlock->getLoopPeriod() > maxLoopSize) {
+        // This loop is too large to analyse
+        return false;
     }
-    // TODO: Handle gracefully. I.e. don't analyse this loop
-    assert(_numBlocks < maxLoopSize);
+    _numBlocks = runBlock->getLoopPeriod();
 
     for (int i = _numBlocks; --i >= 0; ) {
         int index = runSummary.programBlockIndexAt(runBlock->getStartIndex() + i);
@@ -483,7 +487,7 @@ void LoopClassification::classifyLoop(InterpretedProgram& program,
         _loopBlocks[i] = program.getEntryBlock() + index;
     }
 
-    classifyLoop();
+    return classifyLoop();
 }
 
 

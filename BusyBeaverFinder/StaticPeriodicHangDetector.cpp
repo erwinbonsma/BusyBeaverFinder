@@ -51,7 +51,9 @@ HangDetectionResult StaticPeriodicHangDetector::tryProofHang(bool resumed) {
 
     if (!resumed) {
         // We are in a new loop, so classify it.
-        _loop.classifyLoop(_searcher.getInterpretedProgram(), runSummary, loopRunBlock);
+        if (! _loop.classifyLoop(_searcher.getInterpretedProgram(), runSummary, loopRunBlock)) {
+            return HangDetectionResult::FAILED;
+        };
     }
 
     int loopLen = runSummary.getNumProgramBlocks() - loopRunBlock->getStartIndex();
