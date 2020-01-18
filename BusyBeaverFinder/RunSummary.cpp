@@ -142,12 +142,12 @@ bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
             }
             createRunBlock(loopStartP, _programBlockHistoryP, loopPeriod);
 
-            _loopP = _programBlockHistoryP - loopPeriod;
+            _loopP = _programBlockHistoryP - loopPeriod + 1;
             _programBlockPendingP = nullptr;
             newRunBlocks = true;
         }
     } else {
-        if (*++_loopP != *_programBlockHistoryP) {
+        if (*_loopP++ != *_programBlockHistoryP) {
 //            std::cout << "Loop exited!" << std::endl;
             // Loop is broken
             _programBlockPendingP = _programBlockHistoryP;
