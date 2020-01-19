@@ -28,7 +28,7 @@ class PeriodicHangDetector;
 class MetaPeriodicHangDetector;
 class SweepHangDetector;
 class GliderHangDetector;
-class StaticPeriodicHangDetector;
+class StaticHangDetector;
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -86,8 +86,9 @@ class ExhaustiveSearcher {
     MetaPeriodicHangDetector* _metaPeriodicHangDetector;
     SweepHangDetector* _sweepHangDetector;
     GliderHangDetector* _gliderHangDetector;
-    StaticPeriodicHangDetector* _staticPeriodicHangDetector;
+    StaticHangDetector *_staticHangDetector[2];
     ExitFinder _exitFinder;
+
     int _waitBeforeRetryingHangChecks;
 
     ProgressTracker* _tracker;

@@ -13,15 +13,10 @@
 
 #include "StaticPeriodicHangDetector.h"
 
-class StaticMetaPeriodicHangDetector : StaticPeriodicHangDetector {
-    int _loopLength;
-
+class StaticMetaPeriodicHangDetector : public StaticPeriodicHangDetector {
 protected:
-    int currentCheckPoint() { return _searcher.getMetaRunSummary().getNumRunBlocks(); }
-
-    Trilian exhibitsHangBehaviour(bool loopContinues);
-
-    bool analyseLoop(LoopAnalysis &loop, int &loopStart);
+    bool shouldCheckNow(bool loopContinues);
+    bool analyzeHangBehaviour();
 
 public:
     StaticMetaPeriodicHangDetector(ExhaustiveSearcher& searcher);

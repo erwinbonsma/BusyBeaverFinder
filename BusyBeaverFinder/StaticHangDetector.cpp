@@ -9,6 +9,7 @@
 #include "StaticHangDetector.h"
 
 #include <cassert>
+#include <iostream>
 
 StaticHangDetector::StaticHangDetector(ExhaustiveSearcher& searcher) :
     _searcher(searcher)
@@ -18,51 +19,36 @@ StaticHangDetector::StaticHangDetector(ExhaustiveSearcher& searcher) :
 
 void StaticHangDetector::reset() {
     _lastCheckPoint = -1;
-    _ongoingCheckPoint = -1;
-    _stage = DetectionStage::WAIT_FOR_CHECKPOINT;
+    _analysisCheckPoint = -1;
 }
 
 bool StaticHangDetector::detectHang(bool loopContinues) {
-    int now = currentCheckPoint();
-    bool resuming = _ongoingCheckPoint != -1;
-
-    if (resuming && _ongoingCheckPoint != now) {
-        _stage = DetectionStage::WAIT_FOR_CHECKPOINT;
-        resuming = false;
-        _ongoingCheckPoint = -1;
+    if (!shouldCheckNow(loopContinues)) {
+        return false;
     }
 
-    if (_stage == DetectionStage::WAIT_FOR_CHECKPOINT) {
-        if (now == _lastCheckPoint) {
-            return false;
-        }
-        _stage = DetectionStage::CHECK_BEHAVIOR;
+    int now = currentCheckPoint() + !loopContinues;
+
+    if (now == _lastCheckPoint) {
+        // We already checked this and it failed. Ignore.
+        return false;
     }
 
-    if (_stage == DetectionStage::CHECK_BEHAVIOR) {
-        Trilian result = exhibitsHangBehaviour(loopContinues);
-        if (result == Trilian::MAYBE) {
-            _ongoingCheckPoint = now;
-            return false;
-        }
-        if (result == Trilian::NO) {
+    if (_analysisCheckPoint != now) {
+        // We have not yet analysed the current situation
+        if (!analyzeHangBehaviour()) {
             _lastCheckPoint = now;
-            _stage = DetectionStage::WAIT_FOR_CHECKPOINT;
             return false;
         }
-        _stage = DetectionStage::VERIFY_HANG;
+        _analysisCheckPoint = now;
     }
 
-    assert(_stage == DetectionStage::VERIFY_HANG);
-
-    Trilian result = canProofHang(resuming);
+    Trilian result = proofHang();
     if (result == Trilian::MAYBE) {
-        _ongoingCheckPoint = now;
         return false;
     }
     if (result == Trilian::NO) {
         _lastCheckPoint = now;
-        _stage = DetectionStage::WAIT_FOR_CHECKPOINT;
         return false;
     }
 

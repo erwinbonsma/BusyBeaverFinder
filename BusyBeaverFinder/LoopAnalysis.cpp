@@ -470,21 +470,16 @@ bool LoopAnalysis::analyseLoop(ProgramBlock* entryBlock, int numBlocks) {
     return analyseLoop();
 }
 
-bool LoopAnalysis::analyseLoop(InterpretedProgram& program,
-                                      RunSummary& runSummary,
-                                      RunBlock* runBlock) {
-    assert(runBlock->isLoop());
-
-    if (runBlock->getLoopPeriod() > maxLoopSize) {
+bool LoopAnalysis::analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
+                               int startIndex, int period) {
+    if (period > maxLoopSize) {
         // This loop is too large to analyse
         return false;
     }
-    _numBlocks = runBlock->getLoopPeriod();
 
+    _numBlocks = period;
     for (int i = _numBlocks; --i >= 0; ) {
-        int index = runSummary.programBlockIndexAt(runBlock->getStartIndex() + i);
-
-        _loopBlocks[i] = program.getEntryBlock() + index;
+        _loopBlocks[i] = program.getEntryBlock() + runSummary.programBlockIndexAt(startIndex + i);
     }
 
     return analyseLoop();

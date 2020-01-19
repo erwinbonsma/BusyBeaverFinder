@@ -8,19 +8,22 @@
 
 #include "StaticPeriodicHangDetector.h"
 
+#include <iostream>
+
 StaticPeriodicHangDetector::StaticPeriodicHangDetector(ExhaustiveSearcher& searcher)
     : StaticHangDetector(searcher) {}
 
-Trilian StaticPeriodicHangDetector::exhibitsHangBehaviour(bool loopContinues) {
-    return loopContinues ? Trilian::YES : Trilian::NO;
+bool StaticPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
+    return loopContinues && _searcher.getRunSummary().isAtEndOfLoop();
 }
 
-bool StaticPeriodicHangDetector::analyseLoop(LoopAnalysis &loop, int &loopStart) {
+bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
     RunSummary& runSummary = _searcher.getRunSummary();
     RunBlock* loopRunBlock = runSummary.getLastRunBlock();
 
-    loopStart = loopRunBlock->getStartIndex();
-    return loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary, loopRunBlock);
+    _loopStart = loopRunBlock->getStartIndex();
+    return _loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary,
+                             _loopStart, loopRunBlock->getLoopPeriod());
 }
 
 bool StaticPeriodicHangDetector::checkAllFreshlyConsumedValuesWillBeZero() {
@@ -53,14 +56,7 @@ bool StaticPeriodicHangDetector::checkAllFreshlyConsumedValuesWillBeZero() {
     return true;
 }
 
-Trilian StaticPeriodicHangDetector::canProofHang(bool resumed) {
-    if (!resumed) {
-        // We are in a new loop that requires analysis
-        if (!analyseLoop(_loop, _loopStart)) {
-            return Trilian::NO; // Analysis failed
-        }
-    }
-
+Trilian StaticPeriodicHangDetector::proofHang() {
     int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging

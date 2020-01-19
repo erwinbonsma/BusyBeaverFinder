@@ -18,21 +18,20 @@
 #include "LoopAnalysis.h"
 
 class StaticPeriodicHangDetector : public StaticHangDetector {
-    LoopAnalysis _loop;
-    int _loopStart;
 
     bool checkAllFreshlyConsumedValuesWillBeZero();
 
 protected:
-    int currentCheckPoint() { return _searcher.getRunSummary().getNumRunBlocks(); }
+    LoopAnalysis _loop;
+    int _loopStart;
 
-    Trilian exhibitsHangBehaviour(bool loopContinues);
+    bool shouldCheckNow(bool loopContinues);
 
-    // Analyses the loop. Returns "true" iff analysis was successful. It will then also have updated
-    // loopStart to the point where the loop starts.
-    virtual bool analyseLoop(LoopAnalysis &loop, int &loopStart);
+    // Analyses the loop. Returns YES if it exhibits periodic hang behavior. In that case, _loop
+    // and _loopStart should point to the analyzed periodic loop and its starting point.
+    bool analyzeHangBehaviour();
 
-    Trilian canProofHang(bool resumed);
+    Trilian proofHang();
 
 public:
     StaticPeriodicHangDetector(ExhaustiveSearcher& searcher);

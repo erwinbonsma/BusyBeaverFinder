@@ -19,7 +19,7 @@ typedef int ProgramBlockIndex;
 // (instead, the logic of the available/implemented hang detectors should be)
 #ifdef DEBUG
 const int maxRunBlockHistoryLength = 32768;
-const int maxNumSequenceBlocks = 1024;
+const int maxNumSequenceBlocks = 8192;
 #else
 const int maxRunBlockHistoryLength = 1000000; // TODO: Make dynamic
 const int maxNumSequenceBlocks = 65536;
@@ -128,6 +128,10 @@ public:
     // Returns true when the loop will start a next iteration
     bool isAtStartOfLoop(ProgramBlockIndex nextBlockIndex) {
         return isAtEndOfLoop() && *_loopP == nextBlockIndex;
+    }
+
+    bool loopContinues(ProgramBlockIndex nextBlockIndex) {
+        return *_loopP == nextBlockIndex;
     }
 
     bool hasSpaceRemaining() { return _runBlockHistoryP < _runBlockHistoryThresholdP; }

@@ -174,7 +174,8 @@ public:
     // Analyses the loop. Returns true if analysis was successful.
     bool analyseLoop(ProgramBlock* entryBlock, int numBlocks);
     bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* runBlock);
-    bool analyseMetaLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* metaRunBlock);
+    bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
+                     int startIndex, int period);
 
     void dump();
 };

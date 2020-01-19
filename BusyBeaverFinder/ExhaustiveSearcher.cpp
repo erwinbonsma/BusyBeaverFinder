@@ -17,7 +17,8 @@
 #include "MetaPeriodicHangDetector.h"
 #include "PeriodicHangDetector.h"
 #include "SweepHangDetector.h"
-#include "StaticPeriodicHangDetector.h"
+
+#include "StaticMetaPeriodicHangDetector.h"
 
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
@@ -44,7 +45,10 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _metaPeriodicHangDetector = new MetaPeriodicHangDetector(*this);
     _sweepHangDetector = new SweepHangDetector(*this);
     _gliderHangDetector = new GliderHangDetector(*this);
-    _staticPeriodicHangDetector = new StaticPeriodicHangDetector(*this);
+
+    _staticHangDetector[0] = new StaticPeriodicHangDetector(*this);
+    _staticHangDetector[1] = new StaticMetaPeriodicHangDetector(*this);
+
     _zArrayHelperBuf = nullptr;
 
     _searchMode = SearchMode::FULL_TREE;
@@ -66,7 +70,11 @@ ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete _metaPeriodicHangDetector;
     delete _sweepHangDetector;
     delete _gliderHangDetector;
-    delete _staticPeriodicHangDetector;
+
+    for (auto hangDetector : _staticHangDetector) {
+        delete hangDetector;
+    }
+
     delete[] _zArrayHelperBuf;
 }
 
@@ -162,7 +170,7 @@ HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
 
     HangDetector* newCheck = nullptr;
 
-    switch (_numHangDetectAttempts % 3) {
+    switch (_numHangDetectAttempts % 2) {
         case 0: {
             if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
                 // Wait before initiating a new hang check. Too quickly trying the same hang checks
@@ -173,11 +181,10 @@ HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
                 _runSummary[0].getNumProgramBlocks() +
                 _settings.minWaitBeforeRetryingHangChecks
             );
-            newCheck = _metaPeriodicHangDetector;
+            newCheck = _sweepHangDetector; break;
             break;
         }
-        case 1: newCheck = _sweepHangDetector; break;
-        case 2: newCheck = _gliderHangDetector; break;
+        case 1: newCheck = _gliderHangDetector; break;
     }
 
     assert(newCheck != nullptr);
@@ -301,7 +308,9 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
     _runSummary[0].reset();
     _runSummary[1].reset();
 
-    _staticPeriodicHangDetector->reset();
+    for (auto hangDetector : _staticHangDetector) {
+        hangDetector->reset();
+    }
 
     // Wait a bit before the initial check, so that there is at least a bit of program block
     // history available. Otherwise it can take unnecessarily long for a simple periodic hang to be
@@ -313,7 +322,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
     while (_block->isFinalized()) {
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
-        if (_numHangDetectAttempts >= 0) {
+        if (true) {
             // Only track execution while hang detection is still active
             bool wasInLoop = _runSummary[0].isInsideLoop();
             int numRunBlocks = _runSummary[0].getNumRunBlocks();
@@ -365,14 +374,14 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             return backtrackProgramPointer;
         }
 
-        if (_runSummary[0].isInsideLoop() && _runSummary[0].isAtEndOfLoop()) {
-            bool loopContinues = _runSummary[0].isAtStartOfLoop((int)(_block - entryBlock));
-            //_interpretedProgram.dump();
-            //_runSummary[0].dump();
-            if (_staticPeriodicHangDetector->detectHang(loopContinues)) {
-                _tracker->reportDetectedHang(_staticPeriodicHangDetector->hangType());
-                if (!_settings.testHangDetection) {
-                    return backtrackProgramPointer;
+        if (_runSummary[0].isInsideLoop()) {
+            bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
+            for (auto hangDetector : _staticHangDetector) {
+                if (hangDetector->detectHang(loopContinues)) {
+                    _tracker->reportDetectedHang(hangDetector->hangType());
+                    if (!_settings.testHangDetection) {
+                        return backtrackProgramPointer;
+                    }
                 }
             }
         }
