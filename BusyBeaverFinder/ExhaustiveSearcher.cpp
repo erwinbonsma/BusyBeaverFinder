@@ -14,8 +14,6 @@
 #include "Utils.h"
 
 #include "GliderHangDetector.h"
-#include "MetaPeriodicHangDetector.h"
-#include "PeriodicHangDetector.h"
 #include "SweepHangDetector.h"
 
 #include "StaticMetaPeriodicHangDetector.h"
@@ -41,8 +39,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 {
     initInstructionStack(width * height);
 
-    _periodicHangDetector = new PeriodicHangDetector(*this);
-    _metaPeriodicHangDetector = new MetaPeriodicHangDetector(*this);
     _sweepHangDetector = new SweepHangDetector(*this);
     _gliderHangDetector = new GliderHangDetector(*this);
 
@@ -66,8 +62,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
-    delete _periodicHangDetector;
-    delete _metaPeriodicHangDetector;
     delete _sweepHangDetector;
     delete _gliderHangDetector;
 
