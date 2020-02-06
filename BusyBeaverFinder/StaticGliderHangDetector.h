@@ -22,13 +22,16 @@ class StaticGliderHangDetector : public StaticHangDetector {
     LoopAnalysis _loop;
     RunBlock* _loopRunBlock;
 
-    bool isGliderLoop(int &currentCounterDpOffset, int &nextCounterDpOffset);
+    int _curCounterDpOffset, _curCounterDelta;
+    int _nxtCounterDpOffset, _nxtCounterDelta;
 
-    bool exitingAtLoopCounterChange(int currentCounterDpOffset);
+    bool identifyLoopCounter();
 
-    bool transitionChangesLoopCounter(int curCounterDpOffset, int nxtCounterDpOffset);
+    bool isGliderLoop();
 
-    bool onlyZeroesAhead(int dpShift);
+    bool transitionChangesLoopCounter();
+
+    bool onlyZeroesAhead();
 
 protected:
     bool shouldCheckNow(bool loopContinues);
