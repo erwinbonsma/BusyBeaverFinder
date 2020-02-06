@@ -89,53 +89,14 @@ void LoopExit::dump() {
 
 }
 
-LoopAnalysis::LoopAnalysis() {
-    _dpDelta = 0;
-    _numDataDeltas = 0;
+LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
 }
 
 bool LoopAnalysis::exitsOnZero(int index) {
-    ProgramBlock* curBlock = _loopBlocks[index];
-    ProgramBlock* nxtBlock = _loopBlocks[(index + 1) % _numBlocks];
+    ProgramBlock* curBlock = _programBlocks[index];
+    ProgramBlock* nxtBlock = _programBlocks[(index + 1) % _numBlocks];
 
     return curBlock->nonZeroBlock() == nxtBlock;
-}
-
-int LoopAnalysis::deltaAt(int dpOffset) {
-    int deltaIndex = 0;
-
-    // Find existing delta record, if any
-    while (deltaIndex < _numDataDeltas && _dataDelta[deltaIndex].dpOffset() != dpOffset) {
-        deltaIndex++;
-    }
-
-    return (deltaIndex == _numDataDeltas) ? 0 : _dataDelta[deltaIndex].delta();
-}
-
-int LoopAnalysis::updateDelta(int dpOffset, int delta) {
-    int deltaIndex = 0;
-
-    // Find existing delta record, if any
-    while (deltaIndex < _numDataDeltas && _dataDelta[deltaIndex].dpOffset() != dpOffset) {
-        deltaIndex++;
-    }
-
-    if (deltaIndex == _numDataDeltas) {
-        // An existing record was not found,  so create one.
-        assert(_numDataDeltas < maxDataDeltasPerLoop);
-        _dataDelta[_numDataDeltas++].init(dpOffset);
-    }
-
-    if (_dataDelta[deltaIndex].changeDelta(delta)) {
-        // This change cancelled out previous changes. Remove the entry to reflect this
-        if (deltaIndex != --_numDataDeltas) {
-            _dataDelta[deltaIndex] = _dataDelta[_numDataDeltas];
-        }
-
-        return 0;
-    } else {
-        return _dataDelta[deltaIndex].delta();
-    }
 }
 
 void LoopAnalysis::squashDeltas() {
@@ -357,16 +318,16 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
 
                     // Determine the cummulative delta
                     cumDelta[i] = cumDelta[j];
-                    if (_loopBlocks[i]->isDelta()) {
-                        cumDelta[i] += _loopBlocks[i]->getInstructionAmount();
+                    if (_programBlocks[i]->isDelta()) {
+                        cumDelta[i] += _programBlocks[i]->getInstructionAmount();
                     }
 
                     // If the value is fixed, propagate its setting
                     if (fixedExitValue[j] != UNSET_FIXED_VALUE) {
                         fixedExitValue[i] = fixedExitValue[j];
 
-                        if (_loopBlocks[i]->isDelta()) {
-                            fixedExitValue[i] += _loopBlocks[i]->getInstructionAmount();
+                        if (_programBlocks[i]->isDelta()) {
+                            fixedExitValue[i] += _programBlocks[i]->getInstructionAmount();
                         }
                     }
                 }
@@ -411,63 +372,24 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     identifyBootstrapOnlyExitsForTravellingLoop();
 }
 
-bool LoopAnalysis::analyseLoop() {
-    _dpDelta = 0;
-    _numDataDeltas = 0;
-
-    int i = 0;
-
-    // Determine the intermediate results and final results of a single loop iteration
-    int minDp = _loopBlocks[0]->isDelta() ? 0 : _loopBlocks[0]->getInstructionAmount();
-    int maxDp = minDp;
-
-    while (i < _numBlocks) {
-        ProgramBlock* programBlock = _loopBlocks[i];
-        if (programBlock->isDelta()) {
-            int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount());
-            _effectiveResult[i].init(_dpDelta);
-            _effectiveResult[i].changeDelta(effectiveDelta);
-        } else {
-            _dpDelta += programBlock->getInstructionAmount();
-            minDp = std::min(minDp, _dpDelta);
-            maxDp = std::max(maxDp, _dpDelta);
-
-            _effectiveResult[i].init(_dpDelta);
-            _effectiveResult[i].changeDelta(deltaAt(_dpDelta));
-        }
-
-        i++;
-    }
+void LoopAnalysis::analyseSequence() {
+    SequenceAnalysis::analyseSequence();
 
     // Collapse the results considering multiple loop iterations (only for non-stationary loops)
     if (_dpDelta != 0) {
         squashDeltas();
         initExitsForTravellingLoop();
 
-        _numBootstrapCycles = (maxDp - minDp) / abs(_dpDelta);
+        _numBootstrapCycles = (_maxDp - _minDp) / abs(_dpDelta);
     } else {
         initExitsForStationaryLoop();
 
         _numBootstrapCycles = 0;
     }
-
-//    dump(); // TEMP
-
-    return true;
 }
 
 bool LoopAnalysis::analyseLoop(ProgramBlock* entryBlock, int numBlocks) {
-    if (numBlocks > maxLoopSize) {
-        return false;
-    }
-
-    _numBlocks = numBlocks;
-
-    for (int i = _numBlocks; --i >= 0; ) {
-        _loopBlocks[i] = entryBlock + i;
-    }
-
-    return analyseLoop();
+    return SequenceAnalysis::analyseSequence(entryBlock, numBlocks);
 }
 
 bool LoopAnalysis::analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
@@ -479,31 +401,20 @@ bool LoopAnalysis::analyseLoop(InterpretedProgram& program, RunSummary& runSumma
 
     _numBlocks = period;
     for (int i = _numBlocks; --i >= 0; ) {
-        _loopBlocks[i] = program.getEntryBlock() + runSummary.programBlockIndexAt(startIndex + i);
+        _programBlocks[i] = program.getEntryBlock() + runSummary.programBlockIndexAt(startIndex+i);
     }
 
-    return analyseLoop();
+    analyseSequence();
+
+    return true;
 }
 
-
 void LoopAnalysis::dump() {
-    std::cout << "delta DP = " << _dpDelta << std::endl;
-
-    for (int i = 0; i < _numDataDeltas; i++) {
-        if (i > 0) {
-            std::cout << ", ";
-        }
-        std::cout << "[" << _dataDelta[i].dpOffset() << "]";
-        if (_dataDelta[i].delta() > 0) {
-            std::cout << "+";
-        }
-        std::cout << _dataDelta[i].delta();
-    }
-    std::cout << std::endl;
+    SequenceAnalysis::dump();
 
     for (int i = 0; i < _numBlocks; i++) {
         std::cout << "Intruction #" << i << ": ";
-        _loopBlocks[i]->dumpWithoutEOL();
+        _programBlocks[i]->dumpWithoutEOL();
 
         std::cout << ", Exit: ";
         _loopExit[i].dump();

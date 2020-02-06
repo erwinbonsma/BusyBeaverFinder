@@ -11,33 +11,13 @@
 
 #include <stdio.h>
 
+#include "SequenceAnalysis.h"
+
 class InterpretedProgram;
-class RunBlock;
 class RunSummary;
-class ProgramBlock;
 
 const int maxLoopSize = 64;
-const int maxDataDeltasPerLoop = 32;
-const int maxLoopExits = maxLoopSize;
-
-class DataDelta {
-    friend class LoopAnalysis;
-
-    int _dpOffset;
-    int _delta;
-
-    void init(int dpOffset) { _dpOffset = dpOffset; _delta = 0; }
-
-    // Returns "true" if this results in a zero changes (so that the delta can be removed).
-    bool changeDelta(int delta) { _delta += delta; return _delta == 0; }
-
-public:
-    // Specifies the position of the data value relative to an assumed reference point
-    int dpOffset() { return _dpOffset; }
-
-    // Specifies how much this value changes
-    int delta() { return _delta; }
-};
+const int maxLoopExits = maxSequenceSize;
 
 enum class Operator : char {
     EQUALS = 0,
@@ -115,31 +95,12 @@ public:
     void dump();
 };
 
-class LoopAnalysis {
-    ProgramBlock* _loopBlocks[maxLoopSize];
-    int _numBlocks;
-
-    int _dpDelta;
+class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
-
-    // The result of executing one loop iteration once the loop is fully spun up. I.e. changes in
-    // subsequent loop iterations that cancel each other out have been taken into account.
-    DataDelta _dataDelta[maxDataDeltasPerLoop];
-    int _numDataDeltas;
-
-    // The result after executing an instruction in the loop, relative to the start of the loop.
-    // It shows how much DP has shifted, and how much the value that DP now points at has changed.
-    DataDelta _effectiveResult[maxLoopSize];
-
     LoopExit _loopExit[maxLoopExits];
 
     // Returns true if the specified loop instruction exits the loop on a zero-value
     bool exitsOnZero(int index);
-
-    int deltaAt(int dpOffset);
-
-    // Updates and returns the effective delta at the specified data position.
-    int updateDelta(int dpOffset, int delta);
 
     // Determine the effective delta over multiple iterations, taking into account the shifting DP
     void squashDeltas();
@@ -153,27 +114,21 @@ class LoopAnalysis {
     void identifyBootstrapOnlyExitsForTravellingLoop();
     void initExitsForTravellingLoop();
 
-    bool analyseLoop();
+    void analyseSequence();
 public:
     LoopAnalysis();
 
     int loopSize() { return _numBlocks; }
 
-    int dataPointerDelta() { return _dpDelta; }
-
     // The number of iterations before the loop is fully spun up. A loop is spun up once it is
     // always the same loop instruction (or set of instructions) that first sees a data value.
     int numBootstrapCycles() { return _numBootstrapCycles; }
-
-    int numDataDeltas() { return _numDataDeltas; }
-    DataDelta* dataDeltaAt(int index) { return _dataDelta + index; }
 
     // Returns the loop exit for the specified loop instruction
     LoopExit& exit(int index) { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
     bool analyseLoop(ProgramBlock* entryBlock, int numBlocks);
-    bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary, RunBlock* runBlock);
     bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
                      int startIndex, int period);
 
