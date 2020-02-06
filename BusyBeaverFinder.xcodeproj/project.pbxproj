@@ -59,6 +59,8 @@
 		AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
+		AAF43BCE23EC068D00D1EB33 /* StaticGliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* StaticGliderHangDetector.cpp */; };
+		AAF43BCF23EC223600D1EB33 /* StaticGliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* StaticGliderHangDetector.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -142,6 +144,8 @@
 		AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SearchOrchestration.cpp; sourceTree = "<group>"; };
 		AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestration.h; sourceTree = "<group>"; };
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
+		AAF43BCC23EC068D00D1EB33 /* StaticGliderHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StaticGliderHangDetector.cpp; sourceTree = "<group>"; };
+		AAF43BCD23EC068D00D1EB33 /* StaticGliderHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StaticGliderHangDetector.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -245,6 +249,8 @@
 				AA2865B023CDF44F00F738ED /* StaticPeriodicHangDetector.h */,
 				AA2865B923D30F8900F738ED /* StaticMetaPeriodicHangDetector.cpp */,
 				AA2865BA23D30F8900F738ED /* StaticMetaPeriodicHangDetector.h */,
+				AAF43BCC23EC068D00D1EB33 /* StaticGliderHangDetector.cpp */,
+				AAF43BCD23EC068D00D1EB33 /* StaticGliderHangDetector.h */,
 				AA4F44F22235068E0069FF36 /* SweepHangDetector.cpp */,
 				AA4F44F32235068E0069FF36 /* SweepHangDetector.h */,
 				AA0D5AE02263B5B6001909AF /* GliderHangDetector.cpp */,
@@ -346,6 +352,7 @@
 				AA4F45132259E88B0069FF36 /* RunSummary.cpp in Sources */,
 				AA2865B123CDF44F00F738ED /* StaticPeriodicHangDetector.cpp in Sources */,
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
+				AAF43BCE23EC068D00D1EB33 /* StaticGliderHangDetector.cpp in Sources */,
 				AA2865B523CDFF7200F738ED /* LoopAnalysis.cpp in Sources */,
 				AA4F450B224ABF320069FF36 /* InterpretedProgram.cpp in Sources */,
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
@@ -390,6 +397,7 @@
 				AA0D5AE52263C488001909AF /* GliderHangTests.cpp in Sources */,
 				AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */,
 				AA4F44F52235068E0069FF36 /* SweepHangDetector.cpp in Sources */,
+				AAF43BCF23EC223600D1EB33 /* StaticGliderHangDetector.cpp in Sources */,
 				AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */,
 				AA28C0A022073A0F00F7EC25 /* Data.cpp in Sources */,
 				AA28C0A422073D2A00F7EC25 /* SweepHangTests.cpp in Sources */,

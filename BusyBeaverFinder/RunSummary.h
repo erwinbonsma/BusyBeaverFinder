@@ -140,6 +140,8 @@ public:
     int getNumRunBlocks() { return (int)(_runBlockHistoryP - _runBlockHistory); }
 
     ProgramBlockIndex programBlockIndexAt(int index) { return _programBlockHistory[index]; }
+    ProgramBlockIndex getLastProgramBlockIndex() { return *(_programBlockHistoryP - 1); }
+
     RunBlock* runBlockAt(int index) { return _runBlockHistory + index; }
     RunBlock* getLastRunBlock() { return (_runBlockHistoryP - 1); }
 
