@@ -235,24 +235,24 @@ bool ExhaustiveSearcher::executeCurrentBlock() {
     int amount = _block->getInstructionAmount();
     if (_block->isDelta()) {
         if (amount > 0) {
-            while (amount-- > 0) {
+            while (--amount >= 0) {
                 _data.inc();
             }
         } else {
-            while (amount++ < 0) {
+            while (++amount <= 0) {
                 _data.dec();
             }
         }
     } else {
         if (amount > 0) {
-            while (amount-- > 0) {
+            while (--amount >= 0) {
                 if (!_data.shr()) {
                     _tracker->reportError();
                     return true;
                 }
             }
         } else {
-            while (amount++ < 0) {
+            while (++amount <= 0) {
                 if (!_data.shl()) {
                     _tracker->reportError();
                     return true;
