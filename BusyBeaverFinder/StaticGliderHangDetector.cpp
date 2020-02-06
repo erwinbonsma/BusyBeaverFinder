@@ -8,6 +8,8 @@
 
 #include "StaticGliderHangDetector.h"
 
+#include <iostream>
+
 #include "InterpretedProgram.h"
 
 StaticGliderHangDetector::StaticGliderHangDetector(ExhaustiveSearcher& searcher)
@@ -88,6 +90,7 @@ bool StaticGliderHangDetector::isGliderLoop() {
         ddNxt = _loop.dataDeltaAt(1);
     }
 
+    _nxtCounterDpOffset = ddNxt->dpOffset();
     _curCounterDelta = ddCur->delta();
     _nxtCounterDelta = ddNxt->delta();
 
@@ -168,14 +171,14 @@ bool StaticGliderHangDetector::onlyZeroesAhead() {
     DataPointer dp = data.getDataPointer() + dpOffset;
 
     if (dpOffset > 0) {
-        while (++dp <= data.getMaxDataP()) {
-            if (*dp) {
+        while (dp < data.getMaxDataP()) {
+            if (*++dp) {
                 return false;
             }
         }
     } else {
-        while (--dp >= data.getMinDataP()) {
-            if (*dp) {
+        while (dp > data.getMinDataP()) {
+            if (*--dp) {
                 return false;
             }
         }
