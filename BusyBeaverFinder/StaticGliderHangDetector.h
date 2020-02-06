@@ -26,7 +26,7 @@ class StaticGliderHangDetector : public StaticHangDetector {
 
     bool exitingAtLoopCounterChange(int currentCounterDpOffset);
 
-    bool transitionChangesLoopCounter(int targetDpShift);
+    bool transitionChangesLoopCounter(int curCounterDpOffset, int nxtCounterDpOffset);
 
     bool onlyZeroesAhead(int dpShift);
 

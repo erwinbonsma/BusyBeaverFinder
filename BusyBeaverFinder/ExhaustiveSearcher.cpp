@@ -16,6 +16,7 @@
 #include "GliderHangDetector.h"
 #include "SweepHangDetector.h"
 
+#include "StaticGliderHangDetector.h"
 #include "StaticMetaPeriodicHangDetector.h"
 
 
@@ -44,6 +45,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     _staticHangDetector[0] = new StaticPeriodicHangDetector(*this);
     _staticHangDetector[1] = new StaticMetaPeriodicHangDetector(*this);
+    _staticHangDetector[2] = new StaticGliderHangDetector(*this);
 
     _zArrayHelperBuf = nullptr;
 
@@ -164,7 +166,7 @@ HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
 
     HangDetector* newCheck = nullptr;
 
-    switch (_numHangDetectAttempts % 2) {
+    switch (_numHangDetectAttempts % 1) {
         case 0: {
             if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
                 // Wait before initiating a new hang check. Too quickly trying the same hang checks
