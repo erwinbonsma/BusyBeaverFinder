@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-const int maxSequenceSize = 64;
+const int maxSequenceSize = 128;
 const int maxDataDeltasPerSequence = 32;
 
 class DataDelta {
