@@ -124,8 +124,6 @@ bool StaticGliderHangDetector::checkTransitionDeltas() {
     int maxDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
     int shift = _nxtCounterDpOffset - _curCounterDpOffset;
 
-    _transitionSequence.dump();
-
     for (int i = _transitionSequence.numDataDeltas(); --i >= 0; ) {
         DataDelta *dd = _transitionSequence.dataDeltaAt(i);
         int relDelta = dd->dpOffset();
