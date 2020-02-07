@@ -29,6 +29,8 @@ class StaticGliderHangDetector : public StaticHangDetector {
 
     bool isGliderLoop();
 
+    bool transitionSequenceIsFixed();
+
     bool transitionChangesLoopCounter();
 
     bool onlyZeroesAhead();

@@ -103,6 +103,31 @@ bool StaticGliderHangDetector::isGliderLoop() {
     return abs(_curCounterDelta) <= abs(_nxtCounterDelta);
 }
 
+// Checks that the transition sequence is identical each time. I.e. if it contains loops, their
+// iteration count is always fixed. This in turn means that it always does the same thing.
+bool StaticGliderHangDetector::transitionSequenceIsFixed() {
+    RunSummary& runSummary = _searcher.getRunSummary();
+    RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
+    RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
+    int metaPeriod = metaRunBlock->getLoopPeriod();
+
+    // Iterate over all run-blocks that comprise this meta-loop
+    int startIndex = metaRunBlock->getStartIndex();
+    int endIndex = runSummary.getNumRunBlocks();
+    int loopRefIndex = startIndex + (runSummary.getNumRunBlocks() - startIndex - 1) % metaPeriod;
+    for (int i = startIndex + metaPeriod; i < endIndex; i++) {
+        int refIndex = startIndex + (i - startIndex) % metaPeriod;
+        if (
+            refIndex != loopRefIndex &&
+            runSummary.getRunBlockLength(i) != runSummary.getRunBlockLength(refIndex)
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool StaticGliderHangDetector::transitionChangesLoopCounter() {
     RunSummary& runSummary = _searcher.getRunSummary();
     RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
@@ -196,6 +221,10 @@ Trilian StaticGliderHangDetector::proofHang() {
     }
 
     if (!isGliderLoop()) {
+        return Trilian::NO;
+    }
+
+    if (!transitionSequenceIsFixed()) {
         return Trilian::NO;
     }
 
