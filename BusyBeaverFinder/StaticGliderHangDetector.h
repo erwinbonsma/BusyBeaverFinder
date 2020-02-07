@@ -13,15 +13,16 @@
 
 #include "StaticHangDetector.h"
 
-//#include "ExhaustiveSearcher.h"
-//#include "RunSummary.h"
 #include "LoopAnalysis.h"
+
+const int maxAheadOffset = 4;
 
 class StaticGliderHangDetector : public StaticHangDetector {
 
     SequenceAnalysis _transitionSequence;
     LoopAnalysis _loop;
     RunBlock* _loopRunBlock;
+    int _aheadDelta[maxAheadOffset];
 
     int _curCounterDpOffset, _curCounterDelta;
     int _nxtCounterDpOffset, _nxtCounterDelta;
@@ -35,8 +36,6 @@ class StaticGliderHangDetector : public StaticHangDetector {
     // Sequence analysis
     bool checkTransitionDeltas();
     bool analyzeTransitionSequence();
-
-    //bool transitionChangesLoopCounter();
 
     // Dynamic checks
     bool isBootstrapping();

@@ -119,20 +119,26 @@ bool StaticGliderHangDetector::analyzeLoop() {
 
 bool StaticGliderHangDetector::checkTransitionDeltas() {
     int totalNxtDelta = 0;
-    int nxtNxtDelta = 0;
+    int totalNxtNxtDelta = 0;
     int minDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
     int maxDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
     int shift = _nxtCounterDpOffset - _curCounterDpOffset;
 
+    for (int i = maxAheadOffset; --i >= 0; ) {
+        _aheadDelta[i] = 0;
+    }
+
     for (int i = _transitionSequence.numDataDeltas(); --i >= 0; ) {
         DataDelta *dd = _transitionSequence.dataDeltaAt(i);
         int relDelta = dd->dpOffset();
-        if (relDelta % shift == 0 && relDelta * shift > 0) {
+        bool isAhead = relDelta * shift > 0;
+
+        if (relDelta % shift == 0 && isAhead) {
             // This modifies a future loop counter. Track by how much
             totalNxtDelta += dd->delta();
 
-            if (relDelta / shift == 2) {
-                nxtNxtDelta = dd->delta();
+            if (relDelta / shift >= 2) {
+                totalNxtNxtDelta = dd->delta();
             }
         } else {
             // Changing other values may impact how long it takes to bootstrap the hang. For
@@ -142,6 +148,21 @@ bool StaticGliderHangDetector::checkTransitionDeltas() {
             // that it changed itself.
             minDpOffset = std::min(minDpOffset, dd->dpOffset());
             maxDpOffset = std::max(maxDpOffset, dd->dpOffset());
+        }
+
+        if ((relDelta - 2 * shift) * shift > 0) {
+            // The value is ahead of the next loop counter. Update the ahead values. Loop in case
+            // it is so far ahead it contributes more than once.
+            //
+            // Note, shifting twice. Once to make the offset relative to the next loop counter
+            // (instead of the current one), and once more to take into account that at the moment
+            // of the check the next transition sequence has not yet been executed.
+            int dpOffset = std::abs(relDelta - 2 * shift);
+            assert(dpOffset < maxAheadOffset);
+            while (dpOffset >= 0) {
+                _aheadDelta[dpOffset] += dd->delta();
+                dpOffset -= std::abs(shift);
+            }
         }
     }
 
@@ -155,7 +176,7 @@ bool StaticGliderHangDetector::checkTransitionDeltas() {
         return false;
     }
 
-    if (nxtNxtDelta == 0) {
+    if (totalNxtNxtDelta == 0) {
         // For now, only detect glider hangs where the glider loop cannot handle a zero-valued next
         // loop counter
 
@@ -243,23 +264,39 @@ bool StaticGliderHangDetector::transitionSequenceIsFixed() {
     return true;
 }
 
+// Verify that the values ahead of the next counter match those made by the (accumulated) effect of
+// the transition sequence and are zero everywhere else.
 bool StaticGliderHangDetector::onlyZeroesAhead() {
     Data& data = _searcher.getData();
-    int dpOffset = _nxtCounterDpOffset - _curCounterDpOffset;
-    DataPointer dp = data.getDataPointer() + dpOffset;
+    int shift = _nxtCounterDpOffset - _curCounterDpOffset;
+    int delta = (shift > 0) ? 1 : -1;
+    DataPointer dpStart = data.getDataPointer() + shift;
+    DataPointer dpEnd = (shift > 0) ? data.getMaxDataP() : data.getMinDataP();
+    DataPointer dp = dpStart;
 
-    if (dpOffset > 0) {
-        while (dp < data.getMaxDataP()) {
-            if (*++dp) {
-                return false;
+    //_searcher.dumpHangDetection();
+
+    while (true) {
+        if (dp != dpStart) {
+            int dpOffset = std::abs((int)(dp - dpStart));
+            if (dpOffset < maxAheadOffset) {
+                if (*dp != _aheadDelta[dpOffset]) {
+                    return false;
+                }
+            } else {
+                if (*dp) { // Data value should be zero
+                    return false;
+                }
             }
+        } else {
+            // void. Ignore the next loop counter.
         }
-    } else {
-        while (dp > data.getMinDataP()) {
-            if (*--dp) {
-                return false;
-            }
+
+        if (dp == dpEnd) {
+            break;
         }
+
+        dp += delta;
     }
 
     return true;

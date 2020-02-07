@@ -222,7 +222,7 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
     }
-    SECTION( "6x6-Glider10" ) {
+    SECTION( "6x6-Glider11" ) {
         // A glider hang where the transition sequence consists of a fixed loop that always loops
         // twice. It was first detected by the static hang detector.
         //
@@ -237,6 +237,26 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
             Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
+    SECTION( "6x6-Glider12" ) {
+        // A glider hang where the transition sequence modifies values further ahead than the
+        // next-next loop counter. This caused the old "only zeros ahead" check to fail.
+        //
+        //   * *   *
+        // * o o o _ *
+        // * o o o o *
+        // * _ o o *
+        // * * _ _
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
