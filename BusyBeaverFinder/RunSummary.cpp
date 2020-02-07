@@ -177,6 +177,15 @@ int RunSummary::getRunBlockLength(int index) {
     }
 }
 
+int RunSummary::getLoopIteration() {
+    assert(_loopP != nullptr);
+
+    int startIndex = (_runBlockHistoryP - 1)->getStartIndex();
+    int loopLength = (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+
+    return loopLength / getLoopPeriod();
+}
+
 bool RunSummary::isAtEndOfLoop() {
     assert(_loopP != nullptr);
     assert(_programBlockPendingP == nullptr);

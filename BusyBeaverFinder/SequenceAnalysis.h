@@ -34,7 +34,9 @@ public:
     int delta() { return _delta; }
 };
 
+class InterpretedProgram;
 class ProgramBlock;
+class RunSummary;
 
 class SequenceAnalysis {
 
@@ -74,6 +76,8 @@ public:
     DataDelta* dataDeltaAt(int index) { return _dataDelta + index; }
 
     bool analyseSequence(ProgramBlock* entryBlock, int numBlocks);
+    bool analyseSequence(InterpretedProgram& program, RunSummary& runSummary,
+                         int startIndex, int length);
 
     void dump();
 };

@@ -121,6 +121,7 @@ public:
 
     bool isInsideLoop() { return _loopP != nullptr; }
     int getLoopPeriod() { return (int)(_programBlockHistoryP - _loopP); }
+    int getLoopIteration();
 
     // Returns true when the loop just completed an iteration
     bool isAtEndOfLoop();

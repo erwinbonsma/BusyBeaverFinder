@@ -11,7 +11,9 @@
 #include <algorithm>
 #include <iostream>
 
+#include "InterpretedProgram.h"
 #include "ProgramBlock.h"
+#include "RunSummary.h"
 
 SequenceAnalysis::SequenceAnalysis() {
     _dpDelta = 0;
@@ -93,6 +95,23 @@ bool SequenceAnalysis::analyseSequence(ProgramBlock* entryBlock, int numBlocks) 
 
     for (int i = _numBlocks; --i >= 0; ) {
         _programBlocks[i] = entryBlock + i;
+    }
+
+    analyseSequence();
+
+    return true;
+}
+
+bool SequenceAnalysis::analyseSequence(InterpretedProgram& program, RunSummary& runSummary,
+                                       int startIndex, int length) {
+    if (length > maxSequenceSize) {
+        // This sequence is too large to analyse
+        return false;
+    }
+
+    _numBlocks = length;
+    for (int i = _numBlocks; --i >= 0; ) {
+        _programBlocks[i] = program.getEntryBlock() + runSummary.programBlockIndexAt(startIndex+i);
     }
 
     analyseSequence();

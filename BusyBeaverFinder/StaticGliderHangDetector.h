@@ -19,20 +19,28 @@
 
 class StaticGliderHangDetector : public StaticHangDetector {
 
+    SequenceAnalysis _transitionSequence;
     LoopAnalysis _loop;
     RunBlock* _loopRunBlock;
 
     int _curCounterDpOffset, _curCounterDelta;
     int _nxtCounterDpOffset, _nxtCounterDelta;
+    int _numBootstrapCycles;
 
+    // Loop analysis
     bool identifyLoopCounter();
-
     bool isGliderLoop();
+    bool analyzeLoop();
 
+    // Sequence analysis
+    bool checkTransitionDeltas();
+    bool analyzeTransitionSequence();
+
+    //bool transitionChangesLoopCounter();
+
+    // Dynamic checks
+    bool isBootstrapping();
     bool transitionSequenceIsFixed();
-
-    bool transitionChangesLoopCounter();
-
     bool onlyZeroesAhead();
 
 protected:

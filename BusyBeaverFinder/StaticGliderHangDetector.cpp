@@ -20,15 +20,7 @@ bool StaticGliderHangDetector::shouldCheckNow(bool loopContinues) {
     return !loopContinues && _searcher.getMetaRunSummary().isInsideLoop();
 }
 
-bool StaticGliderHangDetector::analyzeHangBehaviour() {
-    // Assume that the loop which just finished is the glider-loop
-    RunSummary& runSummary = _searcher.getRunSummary();
 
-    _loopRunBlock = runSummary.getLastRunBlock();
-
-    return _loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary,
-                             _loopRunBlock->getStartIndex(), _loopRunBlock->getLoopPeriod());
-}
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
 bool StaticGliderHangDetector::identifyLoopCounter() {
@@ -103,6 +95,131 @@ bool StaticGliderHangDetector::isGliderLoop() {
     return abs(_curCounterDelta) <= abs(_nxtCounterDelta);
 }
 
+bool StaticGliderHangDetector::analyzeLoop() {
+    // Assume that the loop which just finished is the glider-loop
+    RunSummary& runSummary = _searcher.getRunSummary();
+
+    _loopRunBlock = runSummary.getLastRunBlock();
+
+    if (!_loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary,
+                           _loopRunBlock->getStartIndex(), _loopRunBlock->getLoopPeriod())) {
+        return false;
+    }
+
+    if (!identifyLoopCounter()) {
+        return false;
+    }
+
+    if (!isGliderLoop()) {
+        return false;
+    }
+
+    return true;
+}
+
+bool StaticGliderHangDetector::checkTransitionDeltas() {
+    int totalNxtDelta = 0;
+    int nxtNxtDelta = 0;
+    int minDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
+    int maxDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
+    int shift = _nxtCounterDpOffset - _curCounterDpOffset;
+
+    _transitionSequence.dump();
+
+    for (int i = _transitionSequence.numDataDeltas(); --i >= 0; ) {
+        DataDelta *dd = _transitionSequence.dataDeltaAt(i);
+        int relDelta = dd->dpOffset();
+        if (relDelta % shift == 0 && relDelta * shift > 0) {
+            // This modifies a future loop counter. Track by how much
+            totalNxtDelta += dd->delta();
+
+            if (relDelta / shift == 2) {
+                nxtNxtDelta = dd->delta();
+            }
+        } else {
+            // Changing other values may impact how long it takes to bootstrap the hang. For
+            // example, if the glider loop moves one data cell each iteration of the meta-loop and
+            // the transition sequence changes a value three positions behind the current loop
+            // counter, then the loop needs to have run four times before it only encounters values
+            // that it changed itself.
+            minDpOffset = std::min(minDpOffset, dd->dpOffset());
+            maxDpOffset = std::max(maxDpOffset, dd->dpOffset());
+        }
+    }
+
+    if (
+        abs(_curCounterDelta) == abs(_nxtCounterDelta) &&
+        totalNxtDelta * _nxtCounterDelta <= 0
+    ) {
+        // If in the glider loop the delta of both counter is the same, the transition sequence
+        // needs to increase (the absolute value of) the next counter to ensure the hang is
+        // a-periodic
+        return false;
+    }
+
+    if (nxtNxtDelta == 0) {
+        // For now, only detect glider hangs where the glider loop cannot handle a zero-valued next
+        // loop counter
+
+        // TODO: Extend once more complex glider hangs are encountered.
+        return false;
+    }
+
+    // Calculate number of bootstrap cycles
+    _numBootstrapCycles = std::max(std::abs(minDpOffset), std::abs(maxDpOffset)) / std::abs(shift);
+
+    return (_curCounterDpOffset + _transitionSequence.dataPointerDelta()) == shift;
+}
+
+bool StaticGliderHangDetector::analyzeTransitionSequence() {
+    RunSummary& runSummary = _searcher.getRunSummary();
+    RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
+    InterpretedProgram& interpretedProgram = _searcher.getInterpretedProgram();
+
+    RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
+    int metaPeriod = metaRunBlock->getLoopPeriod();
+
+    // The instructions comprising the (last) transition sequence
+    int startIndex =
+    runSummary.runBlockAt(runSummary.getNumRunBlocks() - metaPeriod)->getStartIndex();
+    int endIndex = _loopRunBlock->getStartIndex();
+
+    if (!_transitionSequence.analyseSequence(interpretedProgram, runSummary,
+                                             startIndex, endIndex - startIndex)) {
+        return false;
+    }
+
+    if (!checkTransitionDeltas()) {
+        return false;
+    }
+
+    return true;
+}
+
+
+
+bool StaticGliderHangDetector::analyzeHangBehaviour() {
+    //std::cout <<  "Analysing" << std::endl;
+    //_searcher.getInterpretedProgram().dump();
+    //_searcher.dumpHangDetection();
+
+    if (!analyzeLoop()) {
+        return false;
+    }
+
+    if (!analyzeTransitionSequence()) {
+        return false;
+    }
+
+    return true;
+}
+
+bool StaticGliderHangDetector::isBootstrapping() {
+    RunSummary& runSummary = _searcher.getRunSummary();
+
+    return (runSummary.getLoopIteration() < _numBootstrapCycles);
+}
+
 // Checks that the transition sequence is identical each time. I.e. if it contains loops, their
 // iteration count is always fixed. This in turn means that it always does the same thing.
 bool StaticGliderHangDetector::transitionSequenceIsFixed() {
@@ -128,68 +245,6 @@ bool StaticGliderHangDetector::transitionSequenceIsFixed() {
     return true;
 }
 
-bool StaticGliderHangDetector::transitionChangesLoopCounter() {
-    RunSummary& runSummary = _searcher.getRunSummary();
-    RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
-    InterpretedProgram& interpretedProgram = _searcher.getInterpretedProgram();
-
-    RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
-    int metaPeriod = metaRunBlock->getLoopPeriod();
-
-    // The instructions comprising the (last) transition sequence
-    int startIndex =
-        runSummary.runBlockAt(runSummary.getNumRunBlocks() - metaPeriod)->getStartIndex();
-    int endIndex = _loopRunBlock->getStartIndex();
-
-    int nxtNxtCounterDpOffset = _nxtCounterDpOffset + (_nxtCounterDpOffset - _curCounterDpOffset);
-    int nxtNxtDelta = 0;
-
-    int dpOffset = _curCounterDpOffset;
-    for (int i = startIndex; i < endIndex; i++) {
-        ProgramBlock* pb = interpretedProgram.getEntryBlock() + runSummary.programBlockIndexAt(i);
-        if (pb->isDelta()) {
-            if (
-                dpOffset != _curCounterDpOffset &&
-                dpOffset != _nxtCounterDpOffset &&
-                dpOffset != nxtNxtCounterDpOffset
-            ) {
-                // For now, let sequence only modify the loop counters, both of the current loop
-                // iteration and the next. The latter is typically needed to make the next next
-                // counter non-zero (so that updating it does not abort the next loop).
-
-                // TODO: Extend once more complex transition sequences are encountered.
-                return false;
-            }
-
-            if (dpOffset == nxtNxtCounterDpOffset) {
-                nxtNxtDelta += pb->getInstructionAmount();
-            }
-        } else {
-            dpOffset += pb->getInstructionAmount();
-        }
-    }
-
-    if (
-        abs(_curCounterDelta) == abs(_nxtCounterDelta) &&
-        nxtNxtDelta * _nxtCounterDelta <= 0
-    ) {
-        // If in the glider loop the delta of both counter is the same, the transition sequence
-        // needs to increase the (absolute value of the) next counter to ensure the hang is
-        // a-periodic
-        return false;
-    }
-
-    if (nxtNxtDelta == 0) {
-        // For now, only detect glider hangs where the glider loop cannot handle a zero-valued next
-        // loop counter
-
-        // TODO: Extend once more complex glider hangs are encountered.
-        return false;
-    }
-
-    return dpOffset == (_nxtCounterDpOffset - _curCounterDpOffset);
-}
-
 bool StaticGliderHangDetector::onlyZeroesAhead() {
     Data& data = _searcher.getData();
     int dpOffset = _nxtCounterDpOffset - _curCounterDpOffset;
@@ -213,27 +268,18 @@ bool StaticGliderHangDetector::onlyZeroesAhead() {
 }
 
 Trilian StaticGliderHangDetector::proofHang() {
-//    _searcher.getInterpretedProgram().dump();
-//    _searcher.dumpHangDetection();
-
-    if (!identifyLoopCounter()) {
-        return Trilian::NO;
-    }
-
-    if (!isGliderLoop()) {
-        return Trilian::NO;
+    if (isBootstrapping()) {
+        return Trilian::MAYBE;
     }
 
     if (!transitionSequenceIsFixed()) {
-        return Trilian::NO;
-    }
-
-    if (!transitionChangesLoopCounter()) {
+        // TODO: Account for bootstrap variation?
         return Trilian::NO;
     }
 
     if (!onlyZeroesAhead()) {
-        return Trilian::NO;
+        // TODO: Account for changes made by loop itself.
+        return Trilian::MAYBE;
     }
 
     return Trilian::YES;
