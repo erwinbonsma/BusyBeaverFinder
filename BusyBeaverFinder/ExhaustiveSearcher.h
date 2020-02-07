@@ -25,7 +25,6 @@
 
 class HangDetector;
 class SweepHangDetector;
-class GliderHangDetector;
 class StaticHangDetector;
 
 enum class SearchMode : char {
@@ -81,7 +80,6 @@ class ExhaustiveSearcher {
     int _numHangDetectAttempts;
 
     SweepHangDetector* _sweepHangDetector;
-    GliderHangDetector* _gliderHangDetector;
     StaticHangDetector* _staticHangDetector[3];
     ExitFinder _exitFinder;
 

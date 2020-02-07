@@ -13,7 +13,6 @@
 
 #include "Utils.h"
 
-#include "GliderHangDetector.h"
 #include "SweepHangDetector.h"
 
 #include "StaticGliderHangDetector.h"
@@ -41,7 +40,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     initInstructionStack(width * height);
 
     _sweepHangDetector = new SweepHangDetector(*this);
-    _gliderHangDetector = new GliderHangDetector(*this);
 
     _staticHangDetector[0] = new StaticPeriodicHangDetector(*this);
     _staticHangDetector[1] = new StaticMetaPeriodicHangDetector(*this);
@@ -65,7 +63,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
     delete _sweepHangDetector;
-    delete _gliderHangDetector;
 
     for (auto hangDetector : _staticHangDetector) {
         delete hangDetector;
@@ -166,22 +163,14 @@ HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
 
     HangDetector* newCheck = nullptr;
 
-    switch (_numHangDetectAttempts % 1) {
-        case 0: {
-            if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
-                // Wait before initiating a new hang check. Too quickly trying the same hang checks
-                // in succession could just be a waste of CPU cycles.
-                return nullptr;
-            }
-            _waitBeforeRetryingHangChecks = (
-                _runSummary[0].getNumProgramBlocks() +
-                _settings.minWaitBeforeRetryingHangChecks
-            );
-            newCheck = _sweepHangDetector; break;
-            break;
-        }
-        case 1: newCheck = _gliderHangDetector; break;
+    if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
+        // Wait before initiating a new hang check. Too quickly trying the same hang checks
+        // in succession could just be a waste of CPU cycles.
+        return nullptr;
     }
+    _waitBeforeRetryingHangChecks =
+        _runSummary[0].getNumProgramBlocks() + _settings.minWaitBeforeRetryingHangChecks;
+    newCheck = _sweepHangDetector;
 
     assert(newCheck != nullptr);
     _numHangDetectAttempts++;
