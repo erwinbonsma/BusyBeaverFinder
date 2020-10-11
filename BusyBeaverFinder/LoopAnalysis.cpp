@@ -48,7 +48,7 @@ bool ExitCondition::isTrueForValue(int value) {
     int mod1 = value % _modulus;
     int mod2 = _value % _modulus;
 
-    return mod1 == mod2 || (mod1 + abs(_modulus)) % _modulus == (mod2 + abs(_modulus)) % _modulus;
+    return mod1 == mod2 || (mod1 + _modulus) % _modulus == (mod2 + _modulus) % _modulus;
 }
 
 void ExitCondition::dumpWithoutEOL() {
@@ -61,7 +61,7 @@ void ExitCondition::dumpWithoutEOL() {
     }
     std::cout << " " << _value;
 
-    if (abs(_modulus) > 1) {
+    if (_modulus > 1) {
         std::cout << ", Modulus = " << _modulus;
     }
 }
@@ -176,7 +176,7 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             Operator  op =
                 (finalDelta > 0) ? Operator::LESS_THAN_OR_EQUAL : Operator::GREATER_THAN_OR_EQUAL;
             loopExit.exitCondition.init(op, -currentDelta, dp);
-            loopExit.exitCondition.setModulusConstraint(finalDelta);
+            loopExit.exitCondition.setModulusConstraint(abs(finalDelta));
 
             // Reset to known state. May still be changed later
             loopExit.exitWindow = ExitWindow::ANYTIME;
@@ -202,7 +202,7 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
         int mc = loopExit.exitCondition.modulusConstraint();
         int deltaMod = delta % mc;
         if (deltaMod < 0) {
-            deltaMod += abs(mc);
+            deltaMod += mc;
         }
 
         for (int j = i; --j >= 0; ) {
@@ -213,17 +213,20 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
                 int delta2 = _effectiveResult[j].delta();
                 int delta2Mod = delta2 % mc;
                 if (delta2Mod < 0) {
-                    delta2Mod += abs(mc);
+                    delta2Mod += mc;
                 }
 
                 if (delta2Mod == deltaMod) {
+                    bool deltaIsPositive = (
+                        loopExit.exitCondition.getOperator() == Operator::LESS_THAN_OR_EQUAL
+                    );
                     // One of these instructions cancels the other out. Determine the one
                     int k = (
                         // In case of equal deltas, j cancels out i, as it executes first
                         delta2 == delta ||
                         // Otherwise, it depends on the size of the delta (wrt to the change dir)
-                        (mc > 0 && delta2 > delta) ||
-                        (mc < 0 && delta2 < delta)
+                        (deltaIsPositive && delta2 > delta) ||
+                        (!deltaIsPositive && delta2 < delta)
                     ) ? i : j;
 
                     // Convert it to a bootstrap-only exit

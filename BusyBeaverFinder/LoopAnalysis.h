@@ -41,18 +41,19 @@ class ExitCondition {
     int _dpOffset;
 
     int _value;
-    int _modulus;
+    unsigned int _modulus;
     Operator _operator;
 
 public:
     void init(Operator op, int value, int dpOffset);
 
+    Operator getOperator() { return _operator; }
     void setOperator(Operator op) { _operator = op; }
 
     // An (optional) modulus constraint. This is required when DP is stationary and values increase
     // (or decrease) by more than one, as this may result in skipping the zero.
-    int modulusConstraint() { return _modulus; }
-    void setModulusConstraint(int modulus) { _modulus = modulus; }
+    unsigned int modulusConstraint() { return _modulus; }
+    void setModulusConstraint(unsigned int modulus) { _modulus = modulus; }
     void clearModulusConstraint() { _modulus = 1; }
 
     // Checks if the condition holds for the specified value. It's the responsibility of the caller
@@ -62,9 +63,9 @@ public:
 
     // Specifies which data value the condition applies to. How to interpret this depends on whether
     // the DP is Travelling during loop execution. Let d = abs(dataPointerDelta)
-    // - Travelling (d > 0): When d > 1, the offset gives the index in the d-sized window of
-    //   new values that each loop consumes. It is always positive. The zero-index corresponds to DP
-    //   before the first instruction executes.
+    // - Travelling (d > 0): The offset gives the index in the d-sized window of new values that
+    //   each loop consumes. It is always positive. The zero-index corresponds to DP before the
+    //   first instruction executes.
     // - Stationary/Sentry Go (d = 0): The offset relative to the position of DP before the first
     //   instruction in the loop executes.
     int dpOffset() { return _dpOffset; }

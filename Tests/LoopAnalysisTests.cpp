@@ -51,7 +51,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 3));
-        REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(-3));
+        REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(3));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
 
         REQUIRE(la.exit(0).exitCondition.isTrueForValue(3));
@@ -158,7 +158,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 2));
-        REQUIRE(la.exit(2).exitCondition.modulusContraintEquals(-2));
+        REQUIRE(la.exit(2).exitCondition.modulusContraintEquals(2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(3).exitWindow == ExitWindow::NEVER);
     }
