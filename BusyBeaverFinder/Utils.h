@@ -24,6 +24,11 @@
 bool isPowerOfTwo(int val);
 int makePowerOfTwo(int val);
 
+inline int normalizedMod(int operand, int modulus) {
+    int val = operand % modulus;
+    return (val >= 0) ? val : val + abs(modulus);
+}
+
 InstructionPointer nextInstructionPointer(ProgramPointer insP);
 
 void calculateZArray(const char* input, int* output, int len);

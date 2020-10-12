@@ -15,6 +15,7 @@
 #include "ProgramBlock.h"
 #include "RunSummary.h"
 #include "InterpretedProgram.h"
+#include "Utils.h"
 
 // It is set big enough so that the effective increment realized by a loop is always smaller.
 const int UNSET_FIXED_VALUE = 1024;
@@ -245,20 +246,7 @@ void LoopAnalysis::initExitsForStationaryLoop() {
     markUnreachableExitsForStationaryLoop();
 }
 
-void LoopAnalysis::setExitConditionsForTravellingLoop() {
-    for (int i = _numBlocks; --i >= 0; ) {
-        LoopExit& loopExit = _loopExit[i];
-        int dp = _effectiveResult[i].dpOffset();
-        int currentDelta = _effectiveResult[i].delta();
-        Operator  op = exitsOnZero(i) ? Operator::EQUALS : Operator::UNEQUAL;
-
-        loopExit.exitCondition.init(op, -currentDelta, dp);
-        loopExit.exitWindow = ExitWindow::ANYTIME; // Initial assumption
-        loopExit.firstForValue = false; // Default value
-    }
-}
-
-void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
+void LoopAnalysis::initExitsForTravellingLoop() {
     // Temporary helper array that contains instruction indices, which will be sorted based on
     // the order in which they consume data values.
     static std::array<int, maxLoopSize> indices;
@@ -273,8 +261,6 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
 
     for (int i = _numBlocks; --i >= 0; ) {
         indices[i] = i;
-        cumDelta[i] = 0;
-        fixedExitValue[i] = UNSET_FIXED_VALUE;
     }
 
     // Sort instructions by the order in which they inspect new data values
@@ -289,41 +275,41 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
 
     std::sort(indices.begin(), indices.begin() + _numBlocks, _dpDelta > 0 ? compareUp : compareDn);
 
-    // Establish effective data value delta for each instruction
-    int ad = abs(_dpDelta);
+    _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
+
+    // Establish the exit condition for each instruction
     for (int ii = 0 ; ii < _numBlocks; ii++ ) {
         int i = indices[ii];
-//        std::cout << "Instruction #" << i;
 
-        int mod = _effectiveResult[i].dpOffset() % ad;
-        if (mod < 0) {
-            mod += ad;
-        }
-        bool foundOne = false;
+        int dp_i = _effectiveResult[i].dpOffset();
+        int mod_i = normalizedMod(dp_i, _dpDelta);
 
-        if (!exitsOnZero(i)) {
-            fixedExitValue[i] = 0;
-        }
+        bool hasZeroExit = exitsOnZero(i);
+        LoopExit& loopExit = _loopExit[i];
+        Operator op = hasZeroExit ? Operator::EQUALS : Operator::UNEQUAL;
+        loopExit.exitWindow = ExitWindow::ANYTIME; // Initial assumption
 
+        fixedExitValue[i] = hasZeroExit ? UNSET_FIXED_VALUE : 0;
+        cumDelta[i] = _programBlocks[i]->isDelta() ? _programBlocks[i]->getInstructionAmount() : 0;
+
+        bool foundPreceding = false;
         for (int jj = ii; --jj >= 0; ) {
             int j = indices[jj];
-            int mod2 = _effectiveResult[j].dpOffset() % ad;
-            if (mod2 < 0) {
-                mod2 += ad;
-            }
+            int dp_j = _effectiveResult[j].dpOffset();
+            int mod_j = normalizedMod(dp_j, _dpDelta);
 
-            if (mod == mod2) {
+            if (mod_i == mod_j) {
                 // Both instructions process the same data values
 
-                if (!foundOne) {
-                    // Found the instruction preceding the current one.
-                    foundOne = true;
+                if (!foundPreceding) {
+                    // Found the instruction preceding the current one
+                    foundPreceding = true;
 
-                    // Determine the cummulative delta
-                    cumDelta[i] = cumDelta[j];
-                    if (_programBlocks[i]->isDelta()) {
-                        cumDelta[i] += _programBlocks[i]->getInstructionAmount();
-                    }
+                    // Update the cummulative delta
+                    cumDelta[i] += cumDelta[j];
+
+                    loopExit.firstForValue = false;
+                    loopExit.exitCondition.init(op, -cumDelta[i], dp_i);
 
                     // If the value is fixed, propagate its setting
                     if (fixedExitValue[j] != UNSET_FIXED_VALUE) {
@@ -336,17 +322,13 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
                 }
 
                 if (
-                    // The same data value (wrt to loop-entry) will cause both instructions to exit
-                    // the loop
+                    // Both instructions exit on the same data value (wrt to loop-entry)
                     cumDelta[i] == cumDelta[j] ||
 
                     // The earlier instruction fixes the entry value to a value that does not
                     // trigger the later instruction to exit
                     (
-                        fixedExitValue[j] != UNSET_FIXED_VALUE &&
-                        !exitsOnZero(j) &&
-
-                        // Note: need to check fixedExitValue[i] not fixedExitValue[j]
+                        fixedExitValue[j] != UNSET_FIXED_VALUE && !exitsOnZero(j) &&
                         !_loopExit[i].exitCondition.isTrueForValue(fixedExitValue[i])
                     )
                 ) {
@@ -354,25 +336,23 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForTravellingLoop() {
                         // Both instructions see the same value in the same loop iteration, so the
                         // later instruction will never exit
                         _loopExit[i].exitWindow = ExitWindow::NEVER;
+
                         break;
-                    } else {
+                    } else if (loopExit.exitWindow != ExitWindow::BOOTSTRAP) {
                         // The later instruction can still exit the loop during bootstrap
-                        _loopExit[i].exitWindow = ExitWindow::BOOTSTRAP;
+                        loopExit.exitWindow = ExitWindow::BOOTSTRAP;
+                        int numBootstrapCycles = abs((dp_j - dp_i) / _dpDelta);
+                        _numBootstrapCycles = std::max(_numBootstrapCycles, numBootstrapCycles);
                     }
                 }
             }
         }
 
-        if (!foundOne) {
-            // This instruction freshly consumes values.
-            _loopExit[i].firstForValue = true;
+        if (!foundPreceding) {
+            loopExit.firstForValue = true;
+            loopExit.exitCondition.init(op, -cumDelta[i], dp_i);
         }
     }
-}
-
-void LoopAnalysis::initExitsForTravellingLoop() {
-    setExitConditionsForTravellingLoop();
-    identifyBootstrapOnlyExitsForTravellingLoop();
 }
 
 void LoopAnalysis::analyseSequence() {
@@ -382,11 +362,10 @@ void LoopAnalysis::analyseSequence() {
     if (_dpDelta != 0) {
         squashDeltas();
         initExitsForTravellingLoop();
-
-        _numBootstrapCycles = (_maxDp - _minDp) / abs(_dpDelta);
     } else {
         initExitsForStationaryLoop();
 
+        // TODO: Fix
         _numBootstrapCycles = 0;
     }
 }

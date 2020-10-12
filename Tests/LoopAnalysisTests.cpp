@@ -116,8 +116,10 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitCondition.dpOffset() == 1);
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(1).exitCondition.dpOffset() == 0);
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(2).exitCondition.modulusContraintEquals(2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
@@ -233,12 +235,49 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
+    SECTION( "TravellingConstantWithBootstrap" ) {
+        loopBlock[0].finalize(MOV, 5, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(MOV, -4, dummySteps, &exitBlock, loopBlock + 0);
+
+        la.analyseLoop(loopBlock, 2);
+        REQUIRE(la.numBootstrapCycles() == 4);
+
+        REQUIRE(la.dataPointerDelta() == 1);
+        REQUIRE(la.numDataDeltas() == 0);
+
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
+
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+    }
+    SECTION( "TravellingConstantWithBootstrap2" ) {
+        loopBlock[0].finalize(MOV, 3, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(MOV, -5, dummySteps, &exitBlock, loopBlock + 2);
+        loopBlock[2].finalize(MOV, 3, dummySteps, &exitBlock, loopBlock + 0);
+
+        la.analyseLoop(loopBlock, 3);
+
+        REQUIRE(la.numBootstrapCycles() == 3);
+
+        REQUIRE(la.dataPointerDelta() == 1);
+        REQUIRE(la.numDataDeltas() == 0);
+
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
+
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+
+        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(2).exitWindow == ExitWindow::BOOTSTRAP);
+    }
     SECTION( "TravellingSingleChange" ) {
         loopBlock[0].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
         la.analyseLoop(loopBlock, 2);
-        REQUIRE(la.numBootstrapCycles() == 1);
+        REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
         REQUIRE(la.numDataDeltas() == 1);
@@ -270,6 +309,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[1].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0); // INC
 
         la.analyseLoop(loopBlock, 2);
+
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
@@ -314,19 +354,19 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
 
         REQUIRE(la.dataPointerDelta() == 1);
         REQUIRE(la.numDataDeltas() == 1);
-        REQUIRE(la.numBootstrapCycles() == 2);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
-        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -2));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(3).exitWindow == ExitWindow::ANYTIME);
-        REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, -2));
         REQUIRE(la.exit(4).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -3));
         REQUIRE(la.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChangeInThreeSteps2" ) {
@@ -343,19 +383,19 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
 
         REQUIRE(la.dataPointerDelta() == -1);
         REQUIRE(la.numDataDeltas() == 1);
-        REQUIRE(la.numBootstrapCycles() == 2);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
-        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -2));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(3).exitWindow == ExitWindow::ANYTIME);
-        REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, -2));
         REQUIRE(la.exit(4).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -3));
         REQUIRE(la.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
     SECTION( "TravellingSingleChangeInThreeSteps3" ) {
@@ -373,15 +413,15 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
 
         REQUIRE(la.dataPointerDelta() == -1);
         REQUIRE(la.numDataDeltas() == 1);
-        REQUIRE(la.numBootstrapCycles() == 4);
+        REQUIRE(la.numBootstrapCycles() == 3);
 
-        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -2));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::ANYTIME);
-        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, -2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -3));
         REQUIRE(la.exit(3).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(4).exitWindow == ExitWindow::ANYTIME);
@@ -422,7 +462,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
 
         REQUIRE(la.dataPointerDelta() == 3);
         REQUIRE(la.numDataDeltas() == 2);
-        REQUIRE(la.numBootstrapCycles() == 1);
+        REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -451,9 +491,9 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::ANYTIME);
-        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 1));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
+        REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(3).exitWindow == ExitWindow::BOOTSTRAP);
     }
     SECTION( "TravellingOscillating2" ) {
@@ -471,9 +511,9 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         REQUIRE(la.numDataDeltas() == 0);
         REQUIRE(la.numBootstrapCycles() == 1);
 
-        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 1));
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
@@ -496,9 +536,10 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         REQUIRE(la.numDataDeltas() == 0);
         REQUIRE(la.numBootstrapCycles() == 2);
 
-        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 2));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
-        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -2));
+        // How can this loop ever run? Is it correctly encoded??
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);

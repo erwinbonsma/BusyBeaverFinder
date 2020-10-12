@@ -111,8 +111,6 @@ class LoopAnalysis : public SequenceAnalysis {
     void markUnreachableExitsForStationaryLoop();
     void initExitsForStationaryLoop();
 
-    void setExitConditionsForTravellingLoop();
-    void identifyBootstrapOnlyExitsForTravellingLoop();
     void initExitsForTravellingLoop();
 
     void analyseSequence();
