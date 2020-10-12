@@ -23,7 +23,7 @@ class DataDelta {
 
     void init(int dpOffset) { _dpOffset = dpOffset; _delta = 0; }
 
-    // Returns "true" if this results in a zero changes (so that the delta can be removed).
+    // Returns "true" if this results in a zero change (so that the delta can be removed).
     bool changeDelta(int delta) { _delta += delta; return _delta == 0; }
 
 public:

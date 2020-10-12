@@ -88,11 +88,11 @@ void SequenceAnalysis::analyseSequence() {
 
 bool SequenceAnalysis::analyseSequence(ProgramBlock* entryBlock, int numBlocks) {
     if (numBlocks > maxSequenceSize) {
+        // This sequence is too large to analyse
         return false;
     }
 
     _numBlocks = numBlocks;
-
     for (int i = _numBlocks; --i >= 0; ) {
         _programBlocks[i] = entryBlock + i;
     }
