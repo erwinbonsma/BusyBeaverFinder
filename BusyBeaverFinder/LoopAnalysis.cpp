@@ -162,6 +162,8 @@ void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
 }
 
 void LoopAnalysis::setExitConditionsForStationaryLoop() {
+    _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
+
     for (int i = 0; i < _numBlocks; i++) {
         LoopExit& loopExit = _loopExit[i];
         int dp = _effectiveResult[i].dpOffset();
@@ -172,6 +174,7 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             Operator  op = exitsOnZero(i) ? Operator::EQUALS : Operator::UNEQUAL;
             loopExit.exitCondition.init(op, -currentDelta, dp);
             loopExit.exitWindow = ExitWindow::BOOTSTRAP;
+            _numBootstrapCycles = 1;
         } else {
             assert(exitsOnZero(i)); // Otherwise the loop cannot loop
             Operator  op =
@@ -182,14 +185,11 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             // Reset to known state. May still be changed later
             loopExit.exitWindow = ExitWindow::ANYTIME;
         }
-
-        // TODO: Actually set this value for stationary-loops
-        loopExit.firstForValue = false; // Default value
     }
 }
 
+// Identify bootstrap-only exits (and exits that can never be reached).
 void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
-    // Identify bootstrap-only exits (and exits that can never be reached).
     for (int i = _numBlocks; --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
 
@@ -201,42 +201,42 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
         int dp = _effectiveResult[i].dpOffset();
         int delta = _effectiveResult[i].delta();
         int mc = loopExit.exitCondition.modulusConstraint();
-        int deltaMod = delta % mc;
-        if (deltaMod < 0) {
-            deltaMod += mc;
-        }
+        int deltaMod = normalizedMod(delta, mc);
 
         for (int j = i; --j >= 0; ) {
-            if (
-                j != i &&
-                _effectiveResult[j].dpOffset() == dp
-            ) {
+            if (_effectiveResult[j].dpOffset() == dp) {
                 int delta2 = _effectiveResult[j].delta();
-                int delta2Mod = delta2 % mc;
-                if (delta2Mod < 0) {
-                    delta2Mod += mc;
-                }
+                int delta2Mod = normalizedMod(delta2, mc);
 
                 if (delta2Mod == deltaMod) {
-                    bool deltaIsPositive = (
-                        loopExit.exitCondition.getOperator() == Operator::LESS_THAN_OR_EQUAL
-                    );
-                    // One of these instructions cancels the other out. Determine the one
-                    int k = (
-                        // In case of equal deltas, j cancels out i, as it executes first
-                        delta2 == delta ||
-                        // Otherwise, it depends on the size of the delta (wrt to the change dir)
-                        (deltaIsPositive && delta2 > delta) ||
-                        (!deltaIsPositive && delta2 < delta)
-                    ) ? i : j;
+                    // One of these instructions (partially) masks the other
 
-                    // Convert it to a bootstrap-only exit
-                    _loopExit[k].exitWindow = k == j ? ExitWindow::BOOTSTRAP : ExitWindow::NEVER;
-                    _loopExit[k].exitCondition.setOperator(Operator::EQUALS);
-                    _loopExit[k].exitCondition.clearModulusConstraint();
+                    if (delta != delta2) {
+                        // The masked condition can only occur during bootstrap
+                        bool deltaIsPositive = deltaAt(dp) > 0;
+                        int k = (deltaIsPositive == (delta2 > delta)) ? i : j;
+
+                        int numBootstrapCycles = abs((delta2 - delta) / mc);
+                        _numBootstrapCycles = std::max(_numBootstrapCycles, numBootstrapCycles);
+
+                        _loopExit[k].exitWindow = ExitWindow::BOOTSTRAP;
+                        if (numBootstrapCycles == 1) {
+                            // Simplify operator
+                            _loopExit[k].exitCondition.setOperator(Operator::EQUALS);
+                        }
+                    } else {
+                        // The masked condition can never occur
+                        _loopExit[i].exitWindow = ExitWindow::NEVER;
+                    }
                 }
             }
         }
+    }
+
+    // Final bookkeeping
+    for (int i = _numBlocks; --i >= 0; ) {
+        LoopExit& loopExit = _loopExit[i];
+        loopExit.firstForValue = (loopExit.exitWindow == ExitWindow::ANYTIME);
     }
 }
 
@@ -364,9 +364,6 @@ void LoopAnalysis::analyseSequence() {
         initExitsForTravellingLoop();
     } else {
         initExitsForStationaryLoop();
-
-        // TODO: Fix
-        _numBootstrapCycles = 0;
     }
 }
 

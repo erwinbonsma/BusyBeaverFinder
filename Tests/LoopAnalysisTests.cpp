@@ -18,6 +18,48 @@ const int dummySteps = 1;
 const int INC = true;
 const int MOV = false;
 
+TEST_CASE( "Exit condition tests", "[classify-loop]" ) {
+    ExitCondition exitCondition;
+
+    SECTION( "ModuloGreaterThanExitCondition" ) {
+        exitCondition.init(Operator::GREATER_THAN_OR_EQUAL, 3, 0);
+        exitCondition.setModulusConstraint(3);
+
+        REQUIRE(exitCondition.isTrueForValue(3));
+        REQUIRE(exitCondition.isTrueForValue(6));
+        REQUIRE(exitCondition.isTrueForValue(9));
+
+        // Match modulus, but not comparison
+        REQUIRE(!exitCondition.isTrueForValue(0));
+        REQUIRE(!exitCondition.isTrueForValue(-3));
+
+        // Match comparison, but not modulus
+        REQUIRE(!exitCondition.isTrueForValue(4));
+        REQUIRE(!exitCondition.isTrueForValue(5));
+
+        // Match neither
+        REQUIRE(!exitCondition.isTrueForValue(2));
+    }
+    SECTION( "ModuloLessThanCondition" ) {
+        exitCondition.init(Operator::LESS_THAN_OR_EQUAL, -2, 0);
+        exitCondition.setModulusConstraint(5);
+
+        REQUIRE(exitCondition.isTrueForValue(-2));
+        REQUIRE(exitCondition.isTrueForValue(-7));
+        REQUIRE(exitCondition.isTrueForValue(-12));
+
+        // Match modulus, but not comparison
+        REQUIRE(!exitCondition.isTrueForValue(3));
+        REQUIRE(!exitCondition.isTrueForValue(8));
+
+        // Match comparison, but not modulus
+        REQUIRE(!exitCondition.isTrueForValue(-3));
+
+        // Match neither
+        REQUIRE(!exitCondition.isTrueForValue(0));
+    }
+}
+
 TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]" ) {
     ProgramBlock exitBlock;
     exitBlock.init(-1);
@@ -53,13 +95,6 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 3));
         REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(3));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
-
-        REQUIRE(la.exit(0).exitCondition.isTrueForValue(3));
-        REQUIRE(la.exit(0).exitCondition.isTrueForValue(6));
-        REQUIRE(la.exit(0).exitCondition.isTrueForValue(9));
-        REQUIRE(!la.exit(0).exitCondition.isTrueForValue(0));
-        REQUIRE(!la.exit(0).exitCondition.isTrueForValue(2));
-        REQUIRE(!la.exit(0).exitCondition.isTrueForValue(4));
     }
     SECTION( "StationarySingleChangeInTwoSteps" ) {
         loopBlock[0].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 1);
@@ -77,13 +112,59 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
         REQUIRE(la.exit(1).exitCondition.modulusContraintEquals(5));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
+    }
+    SECTION( "StationarySingleChangeInTwoStepsWithBootstrap" ) {
+        loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(INC, -4, dummySteps, &exitBlock, loopBlock + 0);
 
-        REQUIRE(la.exit(0).exitCondition.isTrueForValue(-2));
-        REQUIRE(la.exit(0).exitCondition.isTrueForValue(-7));
-        REQUIRE(la.exit(0).exitCondition.isTrueForValue(-12));
-        REQUIRE(!la.exit(0).exitCondition.isTrueForValue(-3));
-        REQUIRE(!la.exit(0).exitCondition.isTrueForValue(3));
-        REQUIRE(!la.exit(0).exitCondition.isTrueForValue(0));
+        la.analyseLoop(loopBlock, 2);
+
+        REQUIRE(la.dataPointerDelta() == 0);
+        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.numBootstrapCycles() == 4);
+
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
+        REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(1));
+        REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
+        REQUIRE(la.exit(1).exitCondition.modulusContraintEquals(1));
+        REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+    }
+    SECTION( "StationarySingleChangeInTwoStepsWithBootstrapAndModulus" ) {
+        loopBlock[0].finalize(INC, 4, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 0);
+
+        la.analyseLoop(loopBlock, 2);
+
+        REQUIRE(la.dataPointerDelta() == 0);
+        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.numBootstrapCycles() == 1);
+
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -4));
+        REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(2));
+        REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -2));
+        REQUIRE(la.exit(1).exitCondition.modulusContraintEquals(2));
+        REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+    }
+    SECTION( "StationarySingleChangeInTwoStepsWithBootstrapAndModulus2" ) {
+        // As StationarySingleChangeInTwoStepsWithBootstrapAndModulus, but with longer bootstrap.
+        // This also impacts the bootstrap operator.
+        loopBlock[0].finalize(INC, 6, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(INC, -4, dummySteps, &exitBlock, loopBlock + 0);
+
+        la.analyseLoop(loopBlock, 2);
+
+        REQUIRE(la.dataPointerDelta() == 0);
+        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.numBootstrapCycles() == 2);
+
+        REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -6));
+        REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(2));
+        REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
+        REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -2));
+        REQUIRE(la.exit(1).exitCondition.modulusContraintEquals(2));
+        REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
     SECTION( "StationarySingleChangeInThreeSteps" ) {
         loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);  // INC 5
@@ -113,7 +194,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
-        REQUIRE(la.numBootstrapCycles() == 0);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitCondition.dpOffset() == 1);
@@ -121,6 +202,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitCondition.dpOffset() == 0);
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -2));
         REQUIRE(la.exit(2).exitCondition.modulusContraintEquals(2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
     }
@@ -133,12 +215,13 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
-        REQUIRE(la.numBootstrapCycles() == 0);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
+        REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -2));
         REQUIRE(la.exit(2).exitCondition.modulusContraintEquals(2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
     }
@@ -152,7 +235,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 2);
-        REQUIRE(la.numBootstrapCycles() == 0);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
         REQUIRE(la.exit(0).exitCondition.modulusContraintEquals(1));
@@ -172,7 +255,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 0);
-        REQUIRE(la.numBootstrapCycles() == 0);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
@@ -187,14 +270,14 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 0);
-        REQUIRE(la.numBootstrapCycles() == 0);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "StationaryOscillatingWithNonZeroExit" ) {
+    SECTION( "StationaryOscillatingWithNonZeroExit2" ) {
         // As StationaryOscillatingWithNonZeroExit, but with non-zero condition swapped
         loopBlock[0].finalize(INC, 1, dummySteps, loopBlock + 1, &exitBlock);  // INC   # Expects 0
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0); // DEC
@@ -203,7 +286,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 0);
-        REQUIRE(la.numBootstrapCycles() == 0);
+        REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
