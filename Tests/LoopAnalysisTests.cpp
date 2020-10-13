@@ -524,6 +524,10 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
     }
     SECTION( "TravellingOscillatingWithNonZeroExit" ) {
         // A loop that occurs in BB 7x7 #950175 which was wrongly analysed.
+        //
+        // Note: This is a short-running loop. It cannot complete three iterations, as it has two
+        // conficting exit conditions (Intruction 1 and 2). It can, however, complete its two
+        // bootstrap iterations, which is enough to classify it as a loop.
         loopBlock[0].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 1); // SHL
         loopBlock[1].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 2);  // INC 2
         loopBlock[2].finalize(MOV, 2, dummySteps, loopBlock + 3, &exitBlock);  // SHR 2 # Expects 0
@@ -538,7 +542,6 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 2));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
-        // How can this loop ever run? Is it correctly encoded??
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
