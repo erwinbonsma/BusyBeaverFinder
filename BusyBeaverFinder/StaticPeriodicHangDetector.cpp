@@ -26,7 +26,7 @@ bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
                              _loopStart, loopRunBlock->getLoopPeriod());
 }
 
-bool StaticPeriodicHangDetector::checkAllFreshlyConsumedValuesWillBeZero() {
+bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
     Data &data = _searcher.getData();
 
     for (int i = _loop.loopSize(); --i >= 0; ) {
@@ -68,7 +68,10 @@ Trilian StaticPeriodicHangDetector::proofHang() {
     assert(loopLen % _loop.loopSize() == 0);
 
     if (_loop.dataPointerDelta() == 0) {
-        for (int i = _loop.loopSize(); --i >=0; ) {
+        // Stationary loop
+
+        // Check if any of the non-bootstrap conditions will be met.
+        for (int i = _loop.loopSize(); --i >= 0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 Data &data = _searcher.getData();
@@ -79,7 +82,11 @@ Trilian StaticPeriodicHangDetector::proofHang() {
             }
         }
     } else {
-        for (int i = _loop.loopSize(); --i >=0; ) {
+        // Travelling loop
+
+        // A travelling loop can only hang if none of its non-bootstrap exits exit on zero.
+        // As the data tape is infinity and initialized with zeros, it will always encounter zeros.
+        for (int i = _loop.loopSize(); --i >= 0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 if (exit.exitCondition.isTrueForValue(0)) {
@@ -88,13 +95,16 @@ Trilian StaticPeriodicHangDetector::proofHang() {
             }
         }
 
-        // This loop is only guaranteed to hang when all data values that the loop will freshly
-        // consume are zero.
+        // This loop is guaranteed to hang when all data values that the loop will consume are zero.
         //
         // Note: A complicating factor is that the loop may already have consumed some data values
-        // ahead of its current DP and may still freshly consume some datas behind its DP.
-        if (!checkAllFreshlyConsumedValuesWillBeZero()) {
-            // We cannot conclude this is a hang.
+        // ahead of its current DP and may still freshly consume some datas behind its DP. It may
+        // also skip values.
+        // Note 2: Not all non-zero values will cause the loop to exit. A more advanced check could
+        // ignore those. The current check still always correctly detects hangs, but possibly
+        // later. On the other hand, a more advanced check may execute more slowly.
+        if (!allValuesToBeConsumedAreBeZero()) {
+            // We cannot yet conclude this is a hang.
             return Trilian::MAYBE;
         }
     }

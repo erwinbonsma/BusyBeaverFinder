@@ -19,7 +19,7 @@
 
 class StaticPeriodicHangDetector : public StaticHangDetector {
 
-    bool checkAllFreshlyConsumedValuesWillBeZero();
+    bool allValuesToBeConsumedAreBeZero();
 
 protected:
     LoopAnalysis _loop;
