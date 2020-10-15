@@ -38,7 +38,8 @@ protected:
     // have analysed the loop(s) that comprise the assumed hang.
     virtual bool analyzeHangBehaviour() = 0;
 
-    // Checks if it can be proven that the program hang. Returns YES if this is the case.
+    // Checks if it can be proven that the program hang. Returns YES if this is the case. Can
+    // return MAYBE if it is not yet clear yet.
     virtual Trilian proofHang() = 0;
 
 public:
@@ -47,7 +48,7 @@ public:
 
     virtual HangType hangType() = 0;
 
-    void reset();
+    virtual void reset();
 
     // Returns true if a hang is detected. It should only be executed when the program is inside a
     // loop. The loopContinues flag signals if the loop will also continue. This flag is useful as

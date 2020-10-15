@@ -45,13 +45,39 @@ bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
+    int metaLoopStart = idx1 + 1;
+    if (metaLoopStart == _metaLoopStart) {
+        // Nothing needs doing. We already analyzed this loop.
+        return true;
+    }
+
+    // Ensure the loop starts so that it ends when a lower-level loop exited
     int startRunBlockIndex = endIndex - numMetaIterations * metaLoopPeriod + 1;
     int endRunBlockIndex = startRunBlockIndex + metaLoopPeriod - 1;
 
+    _metaLoopStart = metaLoopStart;
     _loopStart = runSummary.runBlockAt(startRunBlockIndex)->getStartIndex();
     int loopEnd = runSummary.runBlockAt(endRunBlockIndex)->getStartIndex()
                   + runSummary.getRunBlockLength(endRunBlockIndex);
     int loopPeriod = loopEnd - _loopStart;
 
     return _loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
+}
+
+Trilian StaticMetaPeriodicHangDetector::proofHang() {
+    int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
+
+    if (loopLen % _loop.loopSize() != 0) {
+        // The meta loop may contain multiple loops, which may trigger an invocation of proofHang
+        // that is not in sync with the analyzed loop. Ignore these.
+        return Trilian::MAYBE;
+    }
+
+    return StaticPeriodicHangDetector::proofHang();
+}
+
+void StaticMetaPeriodicHangDetector::reset() {
+    StaticPeriodicHangDetector::reset();
+
+    _metaLoopStart = -1;
 }

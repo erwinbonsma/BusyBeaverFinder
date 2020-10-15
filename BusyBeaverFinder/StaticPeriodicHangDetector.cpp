@@ -56,7 +56,7 @@ bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
     return true;
 }
 
-Trilian StaticPeriodicHangDetector::proofHang() {
+Trilian StaticPeriodicHangDetector::proofHangPhase1() {
     int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
@@ -81,11 +81,13 @@ Trilian StaticPeriodicHangDetector::proofHang() {
                 }
             }
         }
+
+        return Trilian::YES;
     } else {
         // Travelling loop
 
         // A travelling loop can only hang if none of its non-bootstrap exits exit on zero.
-        // As the data tape is infinity and initialized with zeros, it will always encounter zeros.
+        // As the data tape is infinite and initialized with zeros, it will always encounter zeros.
         for (int i = _loop.loopSize(); --i >= 0; ) {
             LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
@@ -95,24 +97,49 @@ Trilian StaticPeriodicHangDetector::proofHang() {
             }
         }
 
-        // This loop is guaranteed to hang when all data values that the loop will consume are zero.
-        //
-        // Note: A complicating factor is that the loop may already have consumed some data values
-        // ahead of its current DP and may still freshly consume some datas behind its DP. It may
-        // also skip values.
-        // Note 2: Not all non-zero values will cause the loop to exit. A more advanced check could
-        // ignore those. The current check still always correctly detects hangs, but possibly
-        // later. On the other hand, a more advanced check may execute more slowly.
-        if (!allValuesToBeConsumedAreBeZero()) {
-            // We cannot yet conclude this is a hang.
-            return Trilian::MAYBE;
+        // A hang requires that all data values that the loop will consume are zero. Check this.
+        if (allValuesToBeConsumedAreBeZero()) {
+            // This may be a hang. The only thing that can prevent this is when some values already
+            // consumed by the loop cause an exit of one the "slow" non-bootstrap exits (which
+            // may see values a few iterations later). Check against this by letting the loop run
+            // for a few more cycles.
+            _proofPhase = 2;
+            _targetLoopLen = loopLen + _loop.loopSize() * _loop.numBootstrapCycles();
+        } else {
+            // Not all non-zero values will cause the loop to exit. That the check failed does not
+            // mean the loop does not hang.
         }
+
+        // We cannot yet conclude this is a hang.
+        return Trilian::MAYBE;
+    }
+}
+
+Trilian StaticPeriodicHangDetector::proofHangPhase2() {
+    int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
+
+    if (loopLen >= _targetLoopLen) {
+        // The loop ran the required number of extra iterations without exiting. This means it
+        // really hangs
+        return Trilian::YES;
+    } else {
+        return Trilian::MAYBE;
+    }
+}
+
+Trilian StaticPeriodicHangDetector::proofHang() {
+    if (_loopStart != _loopStartLastProof) {
+        // Reset proof state
+
+        _proofPhase = 1;
+        _loopStartLastProof = _loopStart;
     }
 
-//    _searcher.dumpHangDetection();
-//    _searcher.getInterpretedProgram().dump();
-//    _loop.dump();
+    return _proofPhase == 1 ? proofHangPhase1() : proofHangPhase2();
+}
 
-    // None of the exit conditions can be met
-    return Trilian::YES;
+void StaticPeriodicHangDetector::reset() {
+    StaticHangDetector::reset();
+
+    _loopStartLastProof = -1;
 }

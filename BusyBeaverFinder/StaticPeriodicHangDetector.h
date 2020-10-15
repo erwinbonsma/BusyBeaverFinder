@@ -21,6 +21,10 @@ class StaticPeriodicHangDetector : public StaticHangDetector {
 
     bool allValuesToBeConsumedAreBeZero();
 
+    int _loopStartLastProof;
+    int _proofPhase;
+    int _targetLoopLen;
+
 protected:
     LoopAnalysis _loop;
     int _loopStart;
@@ -31,12 +35,17 @@ protected:
     // and _loopStart should point to the analyzed periodic loop and its starting point.
     bool analyzeHangBehaviour();
 
+    Trilian proofHangPhase1();
+    Trilian proofHangPhase2();
+
     Trilian proofHang();
 
 public:
     StaticPeriodicHangDetector(ExhaustiveSearcher& searcher);
 
     HangType hangType() { return HangType::PERIODIC; }
+
+    void reset();
 };
 
 #endif /* StaticPeriodicHangDetector_h */

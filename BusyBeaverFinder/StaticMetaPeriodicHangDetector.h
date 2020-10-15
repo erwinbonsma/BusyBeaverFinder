@@ -14,12 +14,17 @@
 #include "StaticPeriodicHangDetector.h"
 
 class StaticMetaPeriodicHangDetector : public StaticPeriodicHangDetector {
+    int _metaLoopStart;
+
 protected:
     bool shouldCheckNow(bool loopContinues);
     bool analyzeHangBehaviour();
+    Trilian proofHang();
 
 public:
     StaticMetaPeriodicHangDetector(ExhaustiveSearcher& searcher);
+
+    void reset();
 };
 
 #endif /* StaticMetaPeriodicHangDetector_h */
