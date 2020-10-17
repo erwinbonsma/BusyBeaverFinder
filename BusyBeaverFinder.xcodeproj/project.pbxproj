@@ -54,6 +54,8 @@
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
+		AABDCBB0253B197B0009516B /* StaticSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */; };
+		AABDCBB1253B197B0009516B /* StaticSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */; };
 		AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
@@ -139,6 +141,8 @@
 		AA90A5862200EB9D00242D3D /* ProgressTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressTracker.h; sourceTree = "<group>"; };
 		AA90A5882201052900242D3D /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Utils.cpp; sourceTree = "<group>"; };
 		AA90A5892201052900242D3D /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
+		AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StaticSweepHangDetector.cpp; sourceTree = "<group>"; };
+		AABDCBAF253B197B0009516B /* StaticSweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StaticSweepHangDetector.h; sourceTree = "<group>"; };
 		AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SearchOrchestration.cpp; sourceTree = "<group>"; };
 		AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestration.h; sourceTree = "<group>"; };
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
@@ -251,6 +255,8 @@
 				AA2865BA23D30F8900F738ED /* StaticMetaPeriodicHangDetector.h */,
 				AAF43BCC23EC068D00D1EB33 /* StaticGliderHangDetector.cpp */,
 				AAF43BCD23EC068D00D1EB33 /* StaticGliderHangDetector.h */,
+				AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */,
+				AABDCBAF253B197B0009516B /* StaticSweepHangDetector.h */,
 				AA4F44F22235068E0069FF36 /* SweepHangDetector.cpp */,
 				AA4F44F32235068E0069FF36 /* SweepHangDetector.h */,
 				AA28C0AD220CCE2A00F7EC25 /* DataTracker.cpp */,
@@ -358,6 +364,7 @@
 				AA2865B523CDFF7200F738ED /* LoopAnalysis.cpp in Sources */,
 				AA4F450B224ABF320069FF36 /* InterpretedProgram.cpp in Sources */,
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
+				AABDCBB0253B197B0009516B /* StaticSweepHangDetector.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA2865BB23D30F8900F738ED /* StaticMetaPeriodicHangDetector.cpp in Sources */,
 				AA28C0AF220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,
@@ -385,6 +392,7 @@
 				AA28C0A222073A1A00F7EC25 /* Utils.cpp in Sources */,
 				AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */,
 				AA4F4510224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
+				AABDCBB1253B197B0009516B /* StaticSweepHangDetector.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* InterpretedProgram.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,

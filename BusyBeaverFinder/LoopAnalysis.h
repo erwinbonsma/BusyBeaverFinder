@@ -113,7 +113,7 @@ class LoopAnalysis : public SequenceAnalysis {
 
     void initExitsForTravellingLoop();
 
-    void analyseSequence();
+    void analyseSequence() override;
 public:
     LoopAnalysis();
 
@@ -131,7 +131,7 @@ public:
     bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
                      int startIndex, int period);
 
-    void dump();
+    void dump() override;
 };
 
 #endif /* LoopAnalysis_h */

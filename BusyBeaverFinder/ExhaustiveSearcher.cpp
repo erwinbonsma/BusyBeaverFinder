@@ -17,7 +17,7 @@
 
 #include "StaticGliderHangDetector.h"
 #include "StaticMetaPeriodicHangDetector.h"
-
+#include "StaticSweepHangDetector.h"
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
@@ -44,6 +44,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _staticHangDetector[0] = new StaticPeriodicHangDetector(*this);
     _staticHangDetector[1] = new StaticMetaPeriodicHangDetector(*this);
     _staticHangDetector[2] = new StaticGliderHangDetector(*this);
+    _staticHangDetector[3] = new StaticSweepHangDetector(*this);
 
     _zArrayHelperBuf = nullptr;
 
@@ -338,7 +339,8 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
                     }
                 }
             } else if (_numHangDetectAttempts >= 0) {
-                hangCheck = initiateNewHangCheck();
+                //hangCheck = initiateNewHangCheck();
+                hangCheck = nullptr;
                 if (hangCheck != nullptr) {
                     result = hangCheck->start();
                 }

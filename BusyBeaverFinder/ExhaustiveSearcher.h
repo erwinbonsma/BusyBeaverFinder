@@ -80,7 +80,7 @@ class ExhaustiveSearcher {
     int _numHangDetectAttempts;
 
     SweepHangDetector* _sweepHangDetector;
-    StaticHangDetector* _staticHangDetector[3];
+    StaticHangDetector* _staticHangDetector[4];
     ExitFinder _exitFinder;
 
     int _waitBeforeRetryingHangChecks;

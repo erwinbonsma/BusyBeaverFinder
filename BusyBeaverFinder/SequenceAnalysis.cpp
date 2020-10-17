@@ -31,7 +31,7 @@ int SequenceAnalysis::deltaAt(int dpOffset) {
     return (deltaIndex == _numDataDeltas) ? 0 : _dataDelta[deltaIndex].delta();
 }
 
-int SequenceAnalysis::updateDelta(int dpOffset, int delta) {
+int SequenceAnalysis::updateDelta(int dpOffset, int delta, int index) {
     int deltaIndex = 0;
 
     // Find existing delta record, if any
@@ -43,6 +43,9 @@ int SequenceAnalysis::updateDelta(int dpOffset, int delta) {
         // An existing record was not found,  so create one.
         assert(_numDataDeltas < maxDataDeltasPerSequence);
         _dataDelta[_numDataDeltas++].init(dpOffset);
+    } else {
+        // Record the effective result that this masks
+        _effectiveResult[_dataDelta[deltaIndex]._lastUpdatedByIndex]._maskedByIndex = index;
     }
 
     if (_dataDelta[deltaIndex].changeDelta(delta)) {
@@ -53,6 +56,8 @@ int SequenceAnalysis::updateDelta(int dpOffset, int delta) {
 
         return 0;
     } else {
+        _dataDelta[deltaIndex]._lastUpdatedByIndex = index;
+
         return _dataDelta[deltaIndex].delta();
     }
 }
@@ -69,16 +74,18 @@ void SequenceAnalysis::analyseSequence() {
 
     while (i < _numBlocks) {
         ProgramBlock* programBlock = _programBlocks[i];
+        _effectiveResult[i].init(_dpDelta);
+
         if (programBlock->isDelta()) {
-            int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount());
-            _effectiveResult[i].init(_dpDelta);
+            int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount(), i);
+
             _effectiveResult[i].changeDelta(effectiveDelta);
+            _effectiveResult[i]._maskedByIndex = maxSequenceSize; // Not yet masked
         } else {
             _dpDelta += programBlock->getInstructionAmount();
             _minDp = std::min(_minDp, _dpDelta);
             _maxDp = std::max(_maxDp, _dpDelta);
 
-            _effectiveResult[i].init(_dpDelta);
             _effectiveResult[i].changeDelta(deltaAt(_dpDelta));
         }
 
@@ -119,6 +126,19 @@ bool SequenceAnalysis::analyseSequence(InterpretedProgram& program, RunSummary& 
     return true;
 }
 
+bool SequenceAnalysis::anyDataDeltasUpUntil(int index) {
+    for (int i = 0; i <= index; i++) {
+        if (
+            _effectiveResult[i].maskedIndex() > index &&
+            _effectiveResult[i].delta() != 0
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void SequenceAnalysis::dump() {
     std::cout << "delta DP = " << _dpDelta << std::endl;
 
@@ -132,6 +152,7 @@ void SequenceAnalysis::dump() {
         }
         std::cout << _dataDelta[i].delta();
     }
-    std::cout << std::endl;
+    if (_numDataDeltas > 0) {
+        std::cout << std::endl;
+    }
 }
-

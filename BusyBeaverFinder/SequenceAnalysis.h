@@ -18,8 +18,17 @@ class DataDelta {
     friend class SequenceAnalysis;
     friend class LoopAnalysis;
 
+protected:
     int _dpOffset;
     int _delta;
+
+    // Depending on usage, track a different index
+    union {
+        // For effectiveResult: Which instruction next changes this delta?
+        int _maskedByIndex;
+        // For dataDelta: Which instruction last changed this delta?
+        int _lastUpdatedByIndex;
+    };
 
     void init(int dpOffset) { _dpOffset = dpOffset; _delta = 0; }
 
@@ -32,6 +41,11 @@ public:
 
     // Specifies how much this value changes
     int delta() { return _delta; }
+};
+
+class MaskedDataDelta : public DataDelta {
+public:
+    int maskedIndex() { return _maskedByIndex; }
 };
 
 class InterpretedProgram;
@@ -56,12 +70,14 @@ protected:
 
     // The result after executing an instruction in the sequence, relative to when it started.
     // It shows how much DP has shifted, and how much the value that DP now points at has changed.
-    DataDelta _effectiveResult[maxSequenceSize];
+    MaskedDataDelta _effectiveResult[maxSequenceSize];
 
     int deltaAt(int dpOffset);
 
     // Updates and returns the effective delta at the specified data position.
-    int updateDelta(int dpOffset, int delta);
+    //
+    // The index should specify the index of the instruction that performed this delta.
+    int updateDelta(int dpOffset, int delta, int index);
 
     virtual void analyseSequence();
 
@@ -73,13 +89,19 @@ public:
     int dataPointerDelta() { return _dpDelta; }
 
     int numDataDeltas() { return _numDataDeltas; }
-    DataDelta* dataDeltaAt(int index) { return _dataDelta + index; }
+    DataDelta& dataDeltaAt(int index) { return _dataDelta[index]; }
+
+    MaskedDataDelta& effectiveResultAt(int index) { return _effectiveResult[index]; }
+
+    // Returns "true" when there are any data deltas when the sequence is partially executed,
+    // up until (inclusive) the specified instruction.
+    bool anyDataDeltasUpUntil(int index);
 
     bool analyseSequence(ProgramBlock* entryBlock, int numBlocks);
     bool analyseSequence(InterpretedProgram& program, RunSummary& runSummary,
                          int startIndex, int length);
 
-    void dump();
+    virtual void dump();
 };
 
 #endif /* SequenceAnalysis_h */
