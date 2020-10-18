@@ -9,7 +9,7 @@
 #ifndef ProgramBlock_h
 #define ProgramBlock_h
 
-#include <stdio.h>
+#include <iostream>
 #include <assert.h>
 
 #include "Types.h"
@@ -41,13 +41,13 @@ public:
                   ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock);
 
     // Index that uniquely specifies the starting position (including turn direction)
-    int getStartIndex() { return _startIndex; }
+    int getStartIndex() const { return _startIndex; }
 
-    bool isFinalized() { return _isFinalized; }
+    bool isFinalized() const { return _isFinalized; }
 
-    bool isDelta() { return _isDelta; }
-    int getInstructionAmount() { return _instructionAmount; }
-    int getNumSteps() { return _numSteps; }
+    bool isDelta() const { return _isDelta; }
+    int getInstructionAmount() const { return _instructionAmount; }
+    int getNumSteps() const { return _numSteps; }
 
     void pushEntry(ProgramBlock* entry) {
         assert(_numEntries < maxProgramBlockEntries);
@@ -55,14 +55,15 @@ public:
     }
     ProgramBlock* popEntry() { return _entries[--_numEntries]; }
 
-    int numEntryBlocks() { return _numEntries; }
+    int numEntryBlocks() const { return _numEntries; }
     ProgramBlock* entryBlock(int index) { return _entries[index]; }
 
-    ProgramBlock* zeroBlock() { return _zeroBlock; }
-    ProgramBlock* nonZeroBlock() { return _nonZeroBlock; }
+    ProgramBlock* zeroBlock() const { return _zeroBlock; }
+    ProgramBlock* nonZeroBlock() const { return _nonZeroBlock; }
 
-    void dump();
-    void dumpWithoutEOL();
+    void dump() const;
 };
+
+std::ostream &operator<<(std::ostream &os, const ProgramBlock &pb);
 
 #endif /* ProgramBlock_h */

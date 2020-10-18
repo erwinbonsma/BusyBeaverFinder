@@ -133,7 +133,7 @@ public:
     bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
                      int startIndex, int period);
 
-    void dump() const { std::cout << this << std::endl; }
+    void dump() const;
 };
 
 std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la);

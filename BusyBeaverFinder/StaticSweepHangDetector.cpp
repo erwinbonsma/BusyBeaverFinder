@@ -205,11 +205,11 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
     }
 
     if (!analyseLoops()) {
-        return failed(_searcher);
+        return false;
     }
 
     if (!analyseTransitions()) {
-        return failed(_searcher);
+        return false;
     }
 
     return true;
@@ -228,6 +228,10 @@ Trilian StaticSweepHangDetector::proofHang() {
     }
 
     return Trilian::YES;
+}
+
+void StaticSweepHangDetector::dump() const {
+    std::cout << *this << std::endl;
 }
 
 std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector) {

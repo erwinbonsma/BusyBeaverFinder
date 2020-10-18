@@ -60,7 +60,7 @@ public:
 
     virtual HangType hangType() { return HangType::REGULAR_SWEEP; }
 
-    void dump() const { std::cout << this << std::endl; }
+    void dump() const;
 };
 
 std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector);

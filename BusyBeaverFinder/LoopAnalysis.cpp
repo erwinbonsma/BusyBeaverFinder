@@ -383,12 +383,16 @@ bool LoopAnalysis::analyseLoop(InterpretedProgram& program, RunSummary& runSumma
     return true;
 }
 
+void LoopAnalysis::dump() const {
+    std::cout << *this << std::endl;
+}
+
 std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
-    os << (const SequenceAnalysis&)la;
+    os << (const SequenceAnalysis&)la << std::endl;
 
     for (int i = 0; i < la.sequenceSize(); i++) {
-        os << "Intruction #" << i << ": " << la.programBlockAt(i);
-        os << ", Exit: " << la.exit(i);
+        os << "Instruction #" << i << ": " << *(la.programBlockAt(i));
+        os << ", Exit: " << la.exit(i) << std::endl;
     }
 
     return os;

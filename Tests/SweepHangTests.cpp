@@ -19,7 +19,7 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 2048;
-    // Prevent No Exit hang detection from also catching some of the hangs below as is test case
+    // Prevent No Exit hang detection from also catching some of the hangs below as this test case
     // is testing the Regular Sweep Hang Detector
     settings.disableNoExitHangDetection = true;
     searcher.configure(settings);

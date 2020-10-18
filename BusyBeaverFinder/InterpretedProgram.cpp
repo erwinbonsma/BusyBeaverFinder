@@ -207,8 +207,7 @@ void InterpretedProgram::dumpBlock(ProgramBlock* block) {
     if (!block->isFinalized()) {
         std::cout << "-";
     } else {
-        block->dumpWithoutEOL();
-
+        std::cout << *block;
         std::cout << " => ";
 
         if (block->zeroBlock() != nullptr) {

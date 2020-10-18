@@ -141,21 +141,17 @@ bool SequenceAnalysis::anyDataDeltasUpUntil(int index) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {
-    os << "delta DP = " << sa.dataPointerDelta() << std::endl;
+    os << "delta DP = " << sa.dataPointerDelta();
 
     for (int i = 0; i < sa.numDataDeltas(); i++) {
         const DataDelta& dd = sa.dataDeltaAt(i);
-        if (i > 0) {
-            os << ", ";
-        }
+
+        os << ", ";
         os << "[" << dd.dpOffset() << "]";
         if (dd.delta() > 0) {
             os << "+";
         }
         os << dd.delta();
-    }
-    if (sa.numDataDeltas() > 0) {
-        os << std::endl;
     }
 
     return os;
