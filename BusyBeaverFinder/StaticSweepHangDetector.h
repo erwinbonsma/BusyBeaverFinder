@@ -21,14 +21,17 @@ public:
 class SweepTransitionAnalysis : public SequenceAnalysis {
     bool _extendsSweep;
 public:
-    bool extendsSweep() { return _extendsSweep; }
+    bool extendsSweep() const { return _extendsSweep; }
 
     bool analyseSweepTransition(RunBlock* runBlock, bool atRight, ExhaustiveSearcher& searcher);
 
-    void dump() override;
+    void dump() const { std::cout << this << std::endl; }
 };
 
+std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
+
 class StaticSweepHangDetector : public StaticHangDetector {
+    friend std::ostream &operator<<(std::ostream&, const StaticSweepHangDetector&);
 
     SweepLoopAnalysis _loop[2];
     RunBlock* _loopRunBlock[2];
@@ -56,6 +59,10 @@ public:
     StaticSweepHangDetector(ExhaustiveSearcher& searcher);
 
     virtual HangType hangType() { return HangType::REGULAR_SWEEP; }
+
+    void dump() const { std::cout << this << std::endl; }
 };
+
+std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector);
 
 #endif /* StaticSweepHangDetector_h */

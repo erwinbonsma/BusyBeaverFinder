@@ -9,7 +9,7 @@
 #ifndef SequenceAnalysis_h
 #define SequenceAnalysis_h
 
-#include <stdio.h>
+#include <iostream>
 
 const int maxSequenceSize = 128;
 const int maxDataDeltasPerSequence = 32;
@@ -37,15 +37,15 @@ protected:
 
 public:
     // Specifies the position of the data value relative to an assumed reference point
-    int dpOffset() { return _dpOffset; }
+    int dpOffset() const { return _dpOffset; }
 
     // Specifies how much this value changes
-    int delta() { return _delta; }
+    int delta() const { return _delta; }
 };
 
 class MaskedDataDelta : public DataDelta {
 public:
-    int maskedIndex() { return _maskedByIndex; }
+    int maskedIndex() const { return _maskedByIndex; }
 };
 
 class InterpretedProgram;
@@ -84,24 +84,25 @@ protected:
 public:
     SequenceAnalysis();
 
-    int sequenceSize() { return _numBlocks; }
+    int sequenceSize() const { return _numBlocks; }
+    const ProgramBlock* programBlockAt(int index) const { return _programBlocks[index]; }
 
-    int dataPointerDelta() { return _dpDelta; }
+    int dataPointerDelta() const { return _dpDelta; }
 
-    int numDataDeltas() { return _numDataDeltas; }
-    DataDelta& dataDeltaAt(int index) { return _dataDelta[index]; }
+    int numDataDeltas() const { return _numDataDeltas; }
+    const DataDelta& dataDeltaAt(int index) const { return _dataDelta[index]; }
 
-    MaskedDataDelta& effectiveResultAt(int index) { return _effectiveResult[index]; }
+    const MaskedDataDelta& effectiveResultAt(int index) const { return _effectiveResult[index]; }
 
     // Returns "true" when there are any data deltas when the sequence is partially executed,
     // up until (inclusive) the specified instruction.
-    bool anyDataDeltasUpUntil(int index);
+    bool anyDataDeltasUpUntil(int index) const;
 
     bool analyseSequence(ProgramBlock* entryBlock, int numBlocks);
     bool analyseSequence(InterpretedProgram& program, RunSummary& runSummary,
                          int startIndex, int length);
-
-    virtual void dump();
 };
+
+std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa);
 
 #endif /* SequenceAnalysis_h */

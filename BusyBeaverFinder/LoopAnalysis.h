@@ -9,7 +9,7 @@
 #ifndef LoopAnalysis_h
 #define LoopAnalysis_h
 
-#include <stdio.h>
+#include <iostream>
 
 #include "SequenceAnalysis.h"
 
@@ -47,19 +47,19 @@ class ExitCondition {
 public:
     void init(Operator op, int value, int dpOffset);
 
-    Operator getOperator() { return _operator; }
+    Operator getOperator() const { return _operator; }
     void setOperator(Operator op) { _operator = op; }
 
     // An (optional) modulus constraint. This is required when DP is stationary and values increase
     // (or decrease) by more than one, as this may result in skipping the zero.
-    unsigned int modulusConstraint() { return _modulus; }
+    unsigned int modulusConstraint() const { return _modulus; }
     void setModulusConstraint(unsigned int modulus) { _modulus = modulus; }
     void clearModulusConstraint() { _modulus = 1; }
 
     // Checks if the condition holds for the specified value. It's the responsibility of the caller
     // to pass the correct value(s), i.e. one which the instruction that can cause this exit will
     // actually consume. To ensure this you need to use dpOffset().
-    bool isTrueForValue(int value);
+    bool isTrueForValue(int value) const;
 
     // Specifies which data value the condition applies to. How to interpret this depends on whether
     // the DP is Travelling during loop execution. Let d = abs(dataPointerDelta)
@@ -68,16 +68,17 @@ public:
     //   first instruction executes.
     // - Stationary/Sentry Go (d = 0): The offset relative to the position of DP before the first
     //   instruction in the loop executes.
-    int dpOffset() { return _dpOffset; }
+    int dpOffset() const { return _dpOffset; }
 
-    int value() { return _value; }
+    int value() const { return _value; }
 
-    bool expressionEquals(Operator op, int value) { return op == _operator && value == _value; }
-    bool modulusContraintEquals(int modulus) { return modulus == _modulus; }
-
-    void dump();
-    void dumpWithoutEOL();
+    bool expressionEquals(Operator op, int value) const {
+        return op == _operator && value == _value;
+    }
+    bool modulusContraintEquals(int modulus) const { return modulus == _modulus; }
 };
+
+std::ostream &operator<<(std::ostream &os, const ExitCondition &ec);
 
 class LoopExit {
 public:
@@ -92,13 +93,14 @@ public:
     // iteration. When the exit window is ALWAYS, the condition is wrt to the value when it is
     // first consumed by the loop (once the loop has finished executing its bootstrap cycles)
     ExitCondition exitCondition;
-
-    void dump();
 };
+
+std::ostream &operator<<(std::ostream &os, const LoopExit &le);
 
 class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
     LoopExit _loopExit[maxLoopExits];
+
 
     // Returns true if the specified loop instruction exits the loop on a zero-value
     bool exitsOnZero(int index);
@@ -117,21 +119,23 @@ class LoopAnalysis : public SequenceAnalysis {
 public:
     LoopAnalysis();
 
-    int loopSize() { return _numBlocks; }
+    int loopSize() const { return _numBlocks; }
 
     // The number of iterations before the loop is fully spun up. A loop is spun up once it is
     // always the same loop instruction (or set of instructions) that first sees a data value.
-    int numBootstrapCycles() { return _numBootstrapCycles; }
+    int numBootstrapCycles() const { return _numBootstrapCycles; }
 
     // Returns the loop exit for the specified loop instruction
-    LoopExit& exit(int index) { return _loopExit[index]; }
+    const LoopExit& exit(int index) const { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
     bool analyseLoop(ProgramBlock* entryBlock, int numBlocks);
     bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
                      int startIndex, int period);
 
-    void dump() override;
+    void dump() const { std::cout << this << std::endl; }
 };
+
+std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la);
 
 #endif /* LoopAnalysis_h */

@@ -14,6 +14,9 @@ int numFailed = 0;
 bool failed(ExhaustiveSearcher& searcher) {
     numFailed++;
     searcher.dumpHangDetection();
+    searcher.getInterpretedProgram().dump();
+    searcher.getRunSummary().dump();
+    searcher.getMetaRunSummary().dump();
     return false;
 }
 
@@ -81,7 +84,7 @@ bool SweepTransitionAnalysis::analyseSweepTransition(RunBlock* runBlock, bool at
 
     _extendsSweep = false; // Default
     for (int i = numDataDeltas(); --i >= 0; ) {
-        DataDelta &dd = dataDeltaAt(i);
+        const DataDelta &dd = dataDeltaAt(i);
 
         if (dd.dpOffset() == 0) {
             _extendsSweep = true;
@@ -92,10 +95,11 @@ bool SweepTransitionAnalysis::analyseSweepTransition(RunBlock* runBlock, bool at
     return true;
 }
 
-void SweepTransitionAnalysis::dump() {
-    SequenceAnalysis::dump();
+std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
+    os << (const SequenceAnalysis&)sta;
+    os << ", extends = " << sta.extendsSweep();
 
-    std::cout << "Extends = " << _extendsSweep << std::endl;
+    return os;
 }
 
 StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
@@ -224,4 +228,13 @@ Trilian StaticSweepHangDetector::proofHang() {
     }
 
     return Trilian::YES;
+}
+
+std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector) {
+    os << "T#0" << std::endl << detector._transition[0] << std::endl;
+    os << "L#0" << std::endl << detector._loop[0] << std::endl;
+    os << "T#1" << std::endl << detector._transition[1] << std::endl;
+    os << "L#1" << std::endl << detector._loop[1] << std::endl;
+
+    return os;
 }

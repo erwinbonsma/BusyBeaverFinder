@@ -28,7 +28,7 @@ void ExitCondition::init(Operator op, int value, int dpOffset) {
     _modulus = 1;
 }
 
-bool ExitCondition::isTrueForValue(int value) {
+bool ExitCondition::isTrueForValue(int value) const {
     switch (_operator) {
         case Operator::EQUALS:
             return (value == _value);
@@ -52,42 +52,37 @@ bool ExitCondition::isTrueForValue(int value) {
     return mod1 == mod2 || (mod1 + _modulus) % _modulus == (mod2 + _modulus) % _modulus;
 }
 
-void ExitCondition::dumpWithoutEOL() {
-    std::cout << "Data[" << _dpOffset << "] ";
-    switch (_operator) {
-        case Operator::EQUALS: std::cout << "=="; break;
-        case Operator::UNEQUAL: std::cout << "!="; break;
-        case Operator::LESS_THAN_OR_EQUAL: std::cout << "<="; break;
-        case Operator::GREATER_THAN_OR_EQUAL: std::cout << ">="; break;
+std::ostream &operator<<(std::ostream &os, const ExitCondition &ec) {
+    os << "Data[" << ec.dpOffset() << "] ";
+    switch (ec.getOperator()) {
+        case Operator::EQUALS: os << "=="; break;
+        case Operator::UNEQUAL: os << "!="; break;
+        case Operator::LESS_THAN_OR_EQUAL: os << "<="; break;
+        case Operator::GREATER_THAN_OR_EQUAL: os << ">="; break;
     }
-    std::cout << " " << _value;
+    os << " " << ec.value();
 
-    if (_modulus > 1) {
-        std::cout << ", Modulus = " << _modulus;
+    if (ec.modulusConstraint() > 1) {
+        os << ", Modulus = " << ec.modulusConstraint();
     }
+
+    return os;
 }
 
-void ExitCondition::dump() {
-    dumpWithoutEOL();
+std::ostream &operator<<(std::ostream &os, const LoopExit &le) {
+    os << le.exitCondition;
 
-    std::cout << std::endl;
-}
-
-void LoopExit::dump() {
-    exitCondition.dumpWithoutEOL();
-
-    switch (exitWindow) {
-        case ExitWindow::BOOTSTRAP: std::cout << ", Bootstrap only"; break;
-        case ExitWindow::NEVER: std::cout << ", Unreachable"; break;
+    switch (le.exitWindow) {
+        case ExitWindow::BOOTSTRAP: os << ", Bootstrap only"; break;
+        case ExitWindow::NEVER: os << ", Unreachable"; break;
         default: ; // void
     }
 
-    if (firstForValue) {
-        std::cout << ", First consumer";
+    if (le.firstForValue) {
+        os << ", First consumer";
     }
 
-    std::cout << std::endl;
-
+    return os;
 }
 
 LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
@@ -388,14 +383,13 @@ bool LoopAnalysis::analyseLoop(InterpretedProgram& program, RunSummary& runSumma
     return true;
 }
 
-void LoopAnalysis::dump() {
-    SequenceAnalysis::dump();
+std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
+    os << (const SequenceAnalysis&)la;
 
-    for (int i = 0; i < _numBlocks; i++) {
-        std::cout << "Intruction #" << i << ": ";
-        _programBlocks[i]->dumpWithoutEOL();
-
-        std::cout << ", Exit: ";
-        _loopExit[i].dump();
+    for (int i = 0; i < la.sequenceSize(); i++) {
+        os << "Intruction #" << i << ": " << la.programBlockAt(i);
+        os << ", Exit: " << la.exit(i);
     }
+
+    return os;
 }

@@ -72,7 +72,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase1() {
 
         // Check if any of the non-bootstrap conditions will be met.
         for (int i = _loop.loopSize(); --i >= 0; ) {
-            LoopExit &exit = _loop.exit(i);
+            const LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 Data &data = _searcher.getData();
                 int value = *(data.getDataPointer() + exit.exitCondition.dpOffset());
@@ -89,7 +89,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase1() {
         // A travelling loop can only hang if none of its non-bootstrap exits exit on zero.
         // As the data tape is infinite and initialized with zeros, it will always encounter zeros.
         for (int i = _loop.loopSize(); --i >= 0; ) {
-            LoopExit &exit = _loop.exit(i);
+            const LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 if (exit.exitCondition.isTrueForValue(0)) {
                     return Trilian::NO;

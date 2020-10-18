@@ -107,7 +107,7 @@ bool StaticGliderHangDetector::checkTransitionDeltas() {
     }
 
     for (int i = _transitionSequence.numDataDeltas(); --i >= 0; ) {
-        DataDelta& dd = _transitionSequence.dataDeltaAt(i);
+        const DataDelta& dd = _transitionSequence.dataDeltaAt(i);
         int relDelta = dd.dpOffset();
         bool isAhead = relDelta * shift > 0;
 
