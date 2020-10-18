@@ -40,7 +40,7 @@ int SequenceAnalysis::updateDelta(int dpOffset, int delta, int index) {
     }
 
     if (deltaIndex == _numDataDeltas) {
-        // An existing record was not found,  so create one.
+        // An existing record was not found, so create one.
         assert(_numDataDeltas < maxDataDeltasPerSequence);
         _dataDelta[_numDataDeltas++].init(dpOffset);
     } else {
@@ -74,11 +74,11 @@ void SequenceAnalysis::analyseSequence() {
 
     while (i < _numBlocks) {
         ProgramBlock* programBlock = _programBlocks[i];
-        _effectiveResult[i].init(_dpDelta);
 
         if (programBlock->isDelta()) {
             int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount(), i);
 
+            _effectiveResult[i].init(_dpDelta);
             _effectiveResult[i].changeDelta(effectiveDelta);
             _effectiveResult[i]._maskedByIndex = maxSequenceSize; // Not yet masked
         } else {
@@ -86,6 +86,7 @@ void SequenceAnalysis::analyseSequence() {
             _minDp = std::min(_minDp, _dpDelta);
             _maxDp = std::max(_maxDp, _dpDelta);
 
+            _effectiveResult[i].init(_dpDelta);
             _effectiveResult[i].changeDelta(deltaAt(_dpDelta));
         }
 
