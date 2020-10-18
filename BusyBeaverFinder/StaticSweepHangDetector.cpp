@@ -13,10 +13,10 @@
 int numFailed = 0;
 bool failed(ExhaustiveSearcher& searcher) {
     numFailed++;
-    searcher.dumpHangDetection();
-    searcher.getInterpretedProgram().dump();
-    searcher.getRunSummary().dump();
-    searcher.getMetaRunSummary().dump();
+//    searcher.dumpHangDetection();
+//    searcher.getInterpretedProgram().dump();
+//    searcher.getRunSummary().dump();
+//    searcher.getMetaRunSummary().dump();
     return false;
 }
 
@@ -65,7 +65,6 @@ bool SweepLoopAnalysis::analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher&
         return failed(searcher);
     }
 
-    dump();
     return true;
 }
 
@@ -91,8 +90,11 @@ bool SweepTransitionAnalysis::analyseSweepTransition(RunBlock* runBlock, bool at
         }
     }
 
-    dump();
     return true;
+}
+
+void SweepTransitionAnalysis::dump() const {
+    std::cout << *this << std::endl;
 }
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
@@ -201,6 +203,13 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
     if (metaPeriod != 4) {
         // For now, assume that each transition sequence consists of a single run block (i.e. it
         // does not contain a fixed loop)
+
+//        _searcher.dumpHangDetection();
+//        _searcher.getInterpretedProgram().dump();
+//        _searcher.getRunSummary().dump();
+//        _searcher.getMetaRunSummary().dump();
+//        dump();
+
         return failed(_searcher);
     }
 
@@ -216,7 +225,6 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
 }
 
 Trilian StaticSweepHangDetector::proofHang() {
-    _searcher.getData().dump();
     if (_transition[0].extendsSweep() &&
         !onlyZeroesAhead(_loop[0].dataPointerDelta() > 0, true)) {
         return Trilian::MAYBE;

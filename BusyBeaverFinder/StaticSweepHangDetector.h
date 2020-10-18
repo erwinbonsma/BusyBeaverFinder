@@ -25,7 +25,7 @@ public:
 
     bool analyseSweepTransition(RunBlock* runBlock, bool atRight, ExhaustiveSearcher& searcher);
 
-    void dump() const { std::cout << this << std::endl; }
+    void dump() const;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
