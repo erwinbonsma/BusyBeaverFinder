@@ -9,6 +9,7 @@
 #include "StaticSweepHangDetector.h"
 
 #include <iostream>
+#include "Utils.h"
 
 int numFailed = 0;
 bool failed(ExhaustiveSearcher& searcher) {
@@ -38,32 +39,40 @@ bool SweepLoopAnalysis::analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher&
         return failed(searcher);
     }
 
+    _deltaSign = 0;
+    for (int i = numDataDeltas(); --i >= 0; ) {
+        int sgn = sign(dataDeltaAt(i).delta());
+        if (_deltaSign != 0 && _deltaSign != sgn) {
+            // TODO?: Support sweep loops that make changes in opposite directions
+            return failed(searcher);
+        }
+        _deltaSign = sgn;
+    }
+
     int numAnytimeExits = 0;
     for (int i = loopSize(); --i >= 0; ) {
         if (exit(i).exitWindow == ExitWindow::ANYTIME) {
             numAnytimeExits++;
 
-            if (anyDataDeltasUpUntil(i)) {
-                // TODO: Support loops that through an early exit make a change
-                return failed(searcher);
-            }
+//            if (anyDataDeltasUpUntil(i)) {
+//                // TODO: Support loops that through an early exit make a change
+//                this->dump();
+//                return failed(searcher);
+//            }
 
-            if (!exit(i).exitCondition.isTrueForValue(0)) {
+            if (!exitsOnZero(i)) {
                 // TODO: Support loops that exit on non-zero
+//                this->dump();
                 return failed(searcher);
             }
         }
     }
 
-    if (numAnytimeExits > 1) {
-        // TODO: Support more than one exit
-        return failed(searcher);
-    }
-
-    if (numDataDeltas() > 0) {
-        // TODO: Support loops that not only move, but also modify
-        return failed(searcher);
-    }
+//    if (numAnytimeExits > 1) {
+//        // TODO: Support more than one exit
+//        this->dump();
+//        return failed(searcher);
+//    }
 
     return true;
 }
@@ -113,16 +122,21 @@ bool StaticSweepHangDetector::analyseLoops() {
 
     _loopRunBlock[1] = runSummary.getLastRunBlock();
     if (!_loop[1].analyseSweepLoop(_loopRunBlock[1], _searcher)) {
-        return failed(_searcher);
+        return false;
     }
 
     _loopRunBlock[0] = _loopRunBlock[1] - 2;
     if (!_loop[0].analyseSweepLoop(_loopRunBlock[0], _searcher)) {
-        return failed(_searcher);
+        return false;
     }
 
     // Both loops should move in opposite directions
     if (_loop[0].dataPointerDelta() * _loop[1].dataPointerDelta() >= 0) {
+        return failed(_searcher);
+    }
+
+    if (_loop[0].deltaSign() * _loop[1].deltaSign() == -1) {
+        // TODO?: Support loops that makes changes to the sequence in opposite directions
         return failed(_searcher);
     }
 
@@ -152,27 +166,36 @@ bool StaticSweepHangDetector::analyseTransitions() {
     return true;
 }
 
-bool StaticSweepHangDetector::onlyZeroesAhead(bool atRight, bool skipNonZeroes) {
+bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight, int deltaSign) {
     Data& data = _searcher.getData();
     int delta = atRight ? 1 : -1;
-    DataPointer dpStart = data.getDataPointer();
     DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
-    DataPointer dp = dpStart;
 
     // DP is at the other side of the sweep. Find the other end of the sweep.
-    if (skipNonZeroes) {
-        dp += delta;
-        while (*dp) {
-            if (!*dp) {
-                // Found end of sweep at other end
-                break;
-            }
-
-            assert(dp != dpEnd);
-
-            dp += delta;
+    dp += delta;
+    while (*dp) {
+        if (!*dp) {
+            // Found end of sweep at other end
+            break;
         }
+
+        if (deltaSign * sign(*dp) < 0) {
+            // The sweep makes changes to the sequence that move some values towards zero
+            return failed(_searcher);
+        }
+
+        assert(dp != dpEnd);
+
+        dp += delta;
     }
+
+    return true;
+}
+
+bool StaticSweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
+    Data& data = _searcher.getData();
+    int delta = atRight ? 1 : -1;
+    DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
 
     assert(!*dp);
     while (true) {
@@ -225,13 +248,22 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
 }
 
 Trilian StaticSweepHangDetector::proofHang() {
+    Data& data = _searcher.getData();
+    DataPointer dp1 = data.getDataPointer();
+    DataPointer dp0 = dp1; // Initial value
+    int deltaSign = _loop[(int)(_loop[0].deltaSign() == 0)].deltaSign();
+
+    if (!scanSweepSequence(dp0, _loop[0].dataPointerDelta() > 0, deltaSign)) {
+        return Trilian::MAYBE;
+    }
+
     if (_transition[0].extendsSweep() &&
-        !onlyZeroesAhead(_loop[0].dataPointerDelta() > 0, true)) {
+        !onlyZeroesAhead(dp0, _loop[0].dataPointerDelta() > 0)) {
         return Trilian::MAYBE;
     }
 
     if (_transition[1].extendsSweep() &&
-        !onlyZeroesAhead(_loop[1].dataPointerDelta() > 0, false)) {
+        !onlyZeroesAhead(dp1, _loop[1].dataPointerDelta() > 0)) {
         return Trilian::MAYBE;
     }
 

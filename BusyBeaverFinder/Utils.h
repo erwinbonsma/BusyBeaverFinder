@@ -29,6 +29,10 @@ inline int normalizedMod(int operand, int modulus) {
     return (val >= 0) ? val : val + abs(modulus);
 }
 
+inline int sign(int val) {
+    return val > 0 ? 1 : (val < 0 ? -1 : 0);
+}
+
 InstructionPointer nextInstructionPointer(ProgramPointer insP);
 
 void calculateZArray(const char* input, int* output, int len);

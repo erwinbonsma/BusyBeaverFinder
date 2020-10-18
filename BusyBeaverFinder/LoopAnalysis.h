@@ -101,10 +101,6 @@ class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
     LoopExit _loopExit[maxLoopExits];
 
-
-    // Returns true if the specified loop instruction exits the loop on a zero-value
-    bool exitsOnZero(int index);
-
     // Determine the effective delta over multiple iterations, taking into account the shifting DP
     void squashDeltas();
 
@@ -116,6 +112,11 @@ class LoopAnalysis : public SequenceAnalysis {
     void initExitsForTravellingLoop();
 
     void analyseSequence() override;
+
+protected:
+    // Returns true if the specified loop instruction exits the loop on a zero-value
+    bool exitsOnZero(int index);
+
 public:
     LoopAnalysis();
 

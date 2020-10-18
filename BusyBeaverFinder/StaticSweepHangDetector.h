@@ -14,7 +14,13 @@
 #include "LoopAnalysis.h"
 
 class SweepLoopAnalysis : public LoopAnalysis {
+    // If the loop makes any changes, this gives the sign of the delta. For now it is assumed that
+    // the sign of all deltas match.
+    int _deltaSign;
+
 public:
+    int deltaSign() const { return _deltaSign; }
+
     bool analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
 };
 
@@ -45,8 +51,11 @@ class StaticSweepHangDetector : public StaticHangDetector {
     // Sequence analysis
     bool analyseTransitions();
 
-    // Dynamic checks
-    bool onlyZeroesAhead(bool atRight, bool skipNonZeroes);
+    /* Dynamic checks */
+    // Find the other end of the sequence. Updates dp accordingly. When deltaSign is non-zero, it
+    // verifies that this delta moves the entire sequence away from zero.
+    bool scanSweepSequence(DataPointer &dp, bool atRight, int deltaSign);
+    bool onlyZeroesAhead(DataPointer &dp, bool atRight);
 
 protected:
     bool shouldCheckNow(bool loopContinues);
