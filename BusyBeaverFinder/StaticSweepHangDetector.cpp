@@ -21,6 +21,11 @@ bool failed(ExhaustiveSearcher& searcher) {
     return false;
 }
 
+
+bool SweepLoopAnalysis::isExitValue(int value) {
+    return std::find(_exitValues.begin(), _exitValues.end(), value) != _exitValues.end();
+}
+
 bool SweepLoopAnalysis::analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
     if (!analyseLoop(searcher.getInterpretedProgram(),
                      searcher.getRunSummary(),
@@ -42,6 +47,7 @@ bool SweepLoopAnalysis::analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher&
     _deltaSign = 0;
     for (int i = numDataDeltas(); --i >= 0; ) {
         int sgn = sign(dataDeltaAt(i).delta());
+
         if (_deltaSign != 0 && _deltaSign != sgn) {
             // TODO?: Support sweep loops that make changes in opposite directions
             return failed(searcher);
@@ -49,32 +55,36 @@ bool SweepLoopAnalysis::analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher&
         _deltaSign = sgn;
     }
 
-    int numAnytimeExits = 0;
+    _exitValues.clear();
     for (int i = loopSize(); --i >= 0; ) {
         if (exit(i).exitWindow == ExitWindow::ANYTIME) {
-            numAnytimeExits++;
-
-//            if (anyDataDeltasUpUntil(i)) {
-//                // TODO: Support loops that through an early exit make a change
-//                this->dump();
-//                return failed(searcher);
-//            }
+            _exitValues.push_back(exit(i).exitCondition.value());
 
             if (!exitsOnZero(i)) {
-                // TODO: Support loops that exit on non-zero
-//                this->dump();
+                // TODO?: Support loops that exit on non-zero
                 return failed(searcher);
             }
         }
     }
 
-//    if (numAnytimeExits > 1) {
-//        // TODO: Support more than one exit
-//        this->dump();
-//        return failed(searcher);
-//    }
-
     return true;
+}
+
+std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
+    os << (const LoopAnalysis&)sta;
+    os << "Exit values: ";
+    bool isFirst = true;
+    for (int value : sta._exitValues) {
+        if (isFirst) {
+            isFirst = false;
+        } else {
+            os << ", ";
+        }
+        os << value;
+    }
+    os << std::endl;
+
+    return os;
 }
 
 bool SweepTransitionAnalysis::analyseSweepTransition(RunBlock* runBlock, bool atRight,
@@ -139,6 +149,7 @@ bool StaticSweepHangDetector::analyseLoops() {
         // TODO?: Support loops that makes changes to the sequence in opposite directions
         return failed(_searcher);
     }
+    _sweepDeltaSign = _loop[(int)(_loop[0].deltaSign() == 0)].deltaSign();
 
     return true;
 }
@@ -166,25 +177,28 @@ bool StaticSweepHangDetector::analyseTransitions() {
     return true;
 }
 
-bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight, int deltaSign) {
+bool StaticSweepHangDetector::scanSweepSequence(
+    DataPointer &dp, SweepLoopAnalysis &sweepLoop
+) {
     Data& data = _searcher.getData();
-    int delta = atRight ? 1 : -1;
-    DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
+    int delta = sweepLoop.dataPointerDelta();
+    DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
 
     // DP is at the other side of the sweep. Find the other end of the sweep.
     dp += delta;
     while (*dp) {
-        if (!*dp) {
+        if (sweepLoop.isExitValue(*dp)) {
             // Found end of sweep at other end
             break;
         }
 
-        if (deltaSign * sign(*dp) < 0) {
+        if (_sweepDeltaSign * sign(*dp) < 0) {
             // The sweep makes changes to the sequence that move some values towards zero
+            data.dump();
             return failed(_searcher);
         }
 
-        assert(dp != dpEnd);
+        assert(dp != dpEnd); // Assumes abs(dataPointerDelta) == 1
 
         dp += delta;
     }
@@ -244,6 +258,8 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
+    dump();
+
     return true;
 }
 
@@ -251,9 +267,8 @@ Trilian StaticSweepHangDetector::proofHang() {
     Data& data = _searcher.getData();
     DataPointer dp1 = data.getDataPointer();
     DataPointer dp0 = dp1; // Initial value
-    int deltaSign = _loop[(int)(_loop[0].deltaSign() == 0)].deltaSign();
 
-    if (!scanSweepSequence(dp0, _loop[0].dataPointerDelta() > 0, deltaSign)) {
+    if (!scanSweepSequence(dp0, _loop[0])) {
         return Trilian::MAYBE;
     }
 
@@ -276,9 +291,9 @@ void StaticSweepHangDetector::dump() const {
 
 std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector) {
     os << "T#0" << std::endl << detector._transition[0] << std::endl;
-    os << "L#0" << std::endl << detector._loop[0] << std::endl;
+    os << "L#0" << std::endl << detector._loop[0];
     os << "T#1" << std::endl << detector._transition[1] << std::endl;
-    os << "L#1" << std::endl << detector._loop[1] << std::endl;
+    os << "L#1" << std::endl << detector._loop[1];
 
     return os;
 }

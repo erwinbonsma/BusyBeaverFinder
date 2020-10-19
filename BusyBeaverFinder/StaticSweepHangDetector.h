@@ -12,17 +12,25 @@
 #include "StaticHangDetector.h"
 
 #include "LoopAnalysis.h"
+#include <vector>
 
 class SweepLoopAnalysis : public LoopAnalysis {
+    friend std::ostream &operator<<(std::ostream&, const SweepLoopAnalysis&);
+
     // If the loop makes any changes, this gives the sign of the delta. For now it is assumed that
     // the sign of all deltas match.
     int _deltaSign;
 
+    std::vector<int> _exitValues;
+
 public:
     int deltaSign() const { return _deltaSign; }
+    bool isExitValue(int value);
 
     bool analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
 };
+
+std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 
 class SweepTransitionAnalysis : public SequenceAnalysis {
     bool _extendsSweep;
@@ -45,6 +53,8 @@ class StaticSweepHangDetector : public StaticHangDetector {
     SweepTransitionAnalysis _transition[2];
     RunBlock* _transitionRunBlock[2];
 
+    int _sweepDeltaSign;
+
     // Loop analysis
     bool analyseLoops();
 
@@ -54,7 +64,7 @@ class StaticSweepHangDetector : public StaticHangDetector {
     /* Dynamic checks */
     // Find the other end of the sequence. Updates dp accordingly. When deltaSign is non-zero, it
     // verifies that this delta moves the entire sequence away from zero.
-    bool scanSweepSequence(DataPointer &dp, bool atRight, int deltaSign);
+    bool scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop);
     bool onlyZeroesAhead(DataPointer &dp, bool atRight);
 
 protected:
