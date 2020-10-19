@@ -13,6 +13,9 @@
 
 #include "LoopAnalysis.h"
 #include <vector>
+#include <map>
+
+const int MAX_UNIQUE_TRANSITIONS_PER_SWEEP = 8;
 
 class SweepLoopAnalysis : public LoopAnalysis {
     friend std::ostream &operator<<(std::ostream&, const SweepLoopAnalysis&);
@@ -44,14 +47,22 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
 
+// TODO: Extend to also include loop that precedes it?
+struct SweepTransitionGroup {
+    std::map<int, SweepTransitionAnalysis*> transitions;
+    bool positionIsFixed;
+
+    void clear();
+};
+
 class StaticSweepHangDetector : public StaticHangDetector {
     friend std::ostream &operator<<(std::ostream&, const StaticSweepHangDetector&);
 
     SweepLoopAnalysis _loop[2];
     RunBlock* _loopRunBlock[2];
 
-    SweepTransitionAnalysis _transition[2];
-    RunBlock* _transitionRunBlock[2];
+    SweepTransitionAnalysis _transitionPool[MAX_UNIQUE_TRANSITIONS_PER_SWEEP];
+    SweepTransitionGroup _transitionGroup[2];
 
     int _sweepDeltaSign;
 
