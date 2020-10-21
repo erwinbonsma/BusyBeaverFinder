@@ -123,8 +123,32 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-void SweepTransitionGroup::clear() {
-    transitions.clear();
+bool SweepTransitionGroup::analyseLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
+    _loopRunBlock = runBlock;
+
+    if (!_loop.analyseSweepLoop(_loopRunBlock, searcher)) {
+        return false;
+    }
+
+    _locatedAtRight = _loop.dataPointerDelta() > 0;
+    _transitions.clear();
+
+    return true;
+}
+
+std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
+    os << group._loop;
+
+    auto iter = group._transitions.begin();
+    while (iter != group._transitions.end()) {
+        os << "  Exit at " << iter->first << ": " << *(iter->second) << std::endl;
+        ++iter;
+    }
+
+    os << "at right = " << group.locatedAtRight()
+    << ", is fixed = " << group.positionIsFixed();
+
+    return os;
 }
 
 StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
@@ -133,27 +157,26 @@ StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
 bool StaticSweepHangDetector::analyseLoops() {
     // Assume that the loop which just finished is one of the sweep loops
     RunSummary& runSummary = _searcher.getRunSummary();
+    SweepTransitionGroup *group = _transitionGroup;
 
-    _loopRunBlock[1] = runSummary.getLastRunBlock();
-    if (!_loop[1].analyseSweepLoop(_loopRunBlock[1], _searcher)) {
+    RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
+    if (!group[1].analyseLoop(loop1RunBlock, _searcher)) {
         return false;
     }
-
-    _loopRunBlock[0] = _loopRunBlock[1] - 2;
-    if (!_loop[0].analyseSweepLoop(_loopRunBlock[0], _searcher)) {
+    if (!group[0].analyseLoop(loop1RunBlock - 2, _searcher)) {
         return false;
     }
 
     // Both loops should move in opposite directions
-    if (_loop[0].dataPointerDelta() * _loop[1].dataPointerDelta() >= 0) {
+    if (group[0].locatedAtRight() == group[1].locatedAtRight()) {
         return failed(_searcher);
     }
 
-    if (_loop[0].deltaSign() * _loop[1].deltaSign() == -1) {
+    if (group[0].loop().deltaSign() * group[1].loop().deltaSign() == -1) {
         // TODO?: Support loops that makes changes to the sequence in opposite directions
         return failed(_searcher);
     }
-    _sweepDeltaSign = _loop[(int)(_loop[0].deltaSign() == 0)].deltaSign();
+    _sweepDeltaSign = group[(int)(group[0].loop().deltaSign() == 0)].loop().deltaSign();
 
     return true;
 }
@@ -163,9 +186,6 @@ bool StaticSweepHangDetector::analyseTransitions() {
     int i = runSummary.getNumRunBlocks() - 2;
     int numTransitions = 0, numUniqueTransitions = 0;
 
-    _transitionGroup[0].clear();
-    _transitionGroup[1].clear();
-
     while (i > 0) {
         RunBlock* transitionBlock = runSummary.runBlockAt(i);
         RunBlock* loopBlock = runSummary.runBlockAt(i - 1);
@@ -174,7 +194,7 @@ bool StaticSweepHangDetector::analyseTransitions() {
 
         if (
             !loopBlock->isLoop() ||
-            loopBlock->getSequenceIndex() != _loopRunBlock[j]->getSequenceIndex()
+            loopBlock->getSequenceIndex() != tg.loopRunBlock()->getSequenceIndex()
         ) {
             // Loops do not follow expected sweep pattern
             break;
@@ -183,18 +203,16 @@ bool StaticSweepHangDetector::analyseTransitions() {
         int loopLen = runSummary.getRunBlockLength(i - 1);
         int exitInstruction = loopLen % loopBlock->getLoopPeriod();
 
-        if (tg.transitions.find(exitInstruction) == tg.transitions.end()) {
+        if (!tg.hasTransitionForExit(exitInstruction)) {
             // This is the first transition that follows the given loop exit
             assert(numUniqueTransitions < MAX_UNIQUE_TRANSITIONS_PER_SWEEP);
             SweepTransitionAnalysis *sa = &_transitionPool[numUniqueTransitions++];
 
-            if (!sa->analyseSweepTransition(transitionBlock,
-                                            _loop[j].dataPointerDelta() > 0,
-                                            _searcher)) {
+            if (!sa->analyseSweepTransition(transitionBlock, tg.locatedAtRight(), _searcher)) {
                 return false;
             }
 
-            tg.transitions[exitInstruction] = sa;
+            tg.addTransitionForExit(sa, exitInstruction);
         }
 
         i -= 2;
@@ -206,9 +224,15 @@ bool StaticSweepHangDetector::analyseTransitions() {
         return failed(_searcher);
     }
 
-    // TODO: Analyse transition groups
-    // 1) Is position fixed, or can it move?
-    // 2) Are all possible loop exits covered?
+    return true;
+}
+
+bool StaticSweepHangDetector::analyseTransitionGroups() {
+    for (SweepTransitionGroup &tg : _transitionGroup) {
+        if (!tg.analyseGroup()) {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -217,11 +241,12 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
     Data& data = _searcher.getData();
     int delta = sweepLoop.dataPointerDelta();
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
+    SweepLoopAnalysis &loop0 = _transitionGroup[0].loop(), &loop1 = _transitionGroup[1].loop();
 
     // DP is at the other side of the sweep. Find the other end of the sweep.
     dp += delta;
     while (*dp) {
-        if (_loop[0].isExitValue(*dp) || _loop[1].isExitValue(*dp)) {
+        if (loop0.isExitValue(*dp) || loop1.isExitValue(*dp)) {
             // Found end of sweep at other end
             break;
         }
@@ -294,22 +319,14 @@ Trilian StaticSweepHangDetector::proofHang() {
     DataPointer dp1 = data.getDataPointer();
     DataPointer dp0 = dp1; // Initial value
 
-    if (!scanSweepSequence(dp0, _loop[0])) {
+    if (!scanSweepSequence(dp0, _transitionGroup[0].loop())) {
         return Trilian::MAYBE;
     }
 
-    if (
-        !_transitionGroup[0].positionIsFixed &&
-        !onlyZeroesAhead(dp0, _loop[0].dataPointerDelta() > 0)
-    ) {
-        return Trilian::MAYBE;
-    }
-
-    if (
-        !_transitionGroup[1].positionIsFixed &&
-        !onlyZeroesAhead(dp1, _loop[1].dataPointerDelta() > 0)
-    ) {
-        return Trilian::MAYBE;
+    for (SweepTransitionGroup &tg : _transitionGroup) {
+        if (!tg.positionIsFixed() && !onlyZeroesAhead(dp0, tg.locatedAtRight())) {
+            return Trilian::MAYBE;
+        }
     }
 
     return Trilian::YES;
@@ -319,20 +336,12 @@ void StaticSweepHangDetector::dump() const {
     std::cout << *this << std::endl;
 }
 
-void dumpTransitions(std::ostream &os, const SweepTransitionGroup &transitionGroup) {
-    auto iter = transitionGroup.transitions.begin();
-    while (iter != transitionGroup.transitions.end()) {
-        os << "  Exit at " << iter->first << ": " << *(iter->second) << std::endl;
-        ++iter;
-    }
-}
-
 std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector) {
-    os << "Loop #0" << std::endl << detector._loop[0];
-    dumpTransitions(os, detector._transitionGroup[0]);
+    os << "Loop #0" << std::endl;
+    os << detector._transitionGroup[0] << std::endl;
 
-    os << "Loop #1" << std::endl << detector._loop[1];
-    dumpTransitions(os, detector._transitionGroup[1]);
+    os << "Loop #1" << std::endl;
+    os << detector._transitionGroup[1] << std::endl;
 
     return os;
 }

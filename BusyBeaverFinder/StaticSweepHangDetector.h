@@ -47,30 +47,48 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
 
-// TODO: Extend to also include loop that precedes it?
-struct SweepTransitionGroup {
-    std::map<int, SweepTransitionAnalysis*> transitions;
-    bool positionIsFixed;
+class SweepTransitionGroup {
+    friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
-    void clear();
+    SweepLoopAnalysis _loop;
+    RunBlock* _loopRunBlock;
+
+    std::map<int, SweepTransitionAnalysis*> _transitions;
+    bool _positionIsFixed;
+    bool _locatedAtRight;
+
+public:
+    bool locatedAtRight() const { return _locatedAtRight; }
+    bool positionIsFixed() const { return _positionIsFixed; }
+
+    SweepLoopAnalysis& loop() { return _loop; }
+    RunBlock* loopRunBlock() { return _loopRunBlock; }
+
+    bool hasTransitionForExit(int instructionIndex) {
+        return _transitions.find(instructionIndex) != _transitions.end();
+    }
+    void addTransitionForExit(SweepTransitionAnalysis *sta, int instructionIndex) {
+        _transitions[instructionIndex] = sta;
+    }
+
+    bool analyseLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyseGroup();
 };
+
+std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
 
 class StaticSweepHangDetector : public StaticHangDetector {
     friend std::ostream &operator<<(std::ostream&, const StaticSweepHangDetector&);
-
-    SweepLoopAnalysis _loop[2];
-    RunBlock* _loopRunBlock[2];
 
     SweepTransitionAnalysis _transitionPool[MAX_UNIQUE_TRANSITIONS_PER_SWEEP];
     SweepTransitionGroup _transitionGroup[2];
 
     int _sweepDeltaSign;
 
-    // Loop analysis
+    // Analysis
     bool analyseLoops();
-
-    // Sequence analysis
     bool analyseTransitions();
+    bool analyseTransitionGroups();
 
     /* Dynamic checks */
     // Find the other end of the sequence. Updates dp accordingly. When deltaSign is non-zero, it
