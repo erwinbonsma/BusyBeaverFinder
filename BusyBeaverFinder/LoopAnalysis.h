@@ -17,7 +17,7 @@ class InterpretedProgram;
 class RunSummary;
 
 const int maxLoopSize = 64;
-const int maxLoopExits = maxSequenceSize;
+const int maxLoopExits = 128;
 
 enum class Operator : char {
     EQUALS = 0,
@@ -101,6 +101,8 @@ class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
     LoopExit _loopExit[maxLoopExits];
 
+    DataDeltas _squashedDeltas;
+
     // Determine the effective delta over multiple iterations, taking into account the shifting DP
     void squashDeltas();
 
@@ -111,7 +113,7 @@ class LoopAnalysis : public SequenceAnalysis {
 
     void initExitsForTravellingLoop();
 
-    void analyseSequence() override;
+    void analyzeSequence() override;
 
 protected:
     // Returns true if the specified loop instruction exits the loop on a zero-value
@@ -120,18 +122,21 @@ protected:
 public:
     LoopAnalysis();
 
-    int loopSize() const { return _numBlocks; }
+    int loopSize() const { return sequenceSize(); }
 
     // The number of iterations before the loop is fully spun up. A loop is spun up once it is
     // always the same loop instruction (or set of instructions) that first sees a data value.
     int numBootstrapCycles() const { return _numBootstrapCycles; }
 
+    int numDataDeltas() const override;
+    const DataDelta& dataDeltaAt(int idx) const override;
+
     // Returns the loop exit for the specified loop instruction
     const LoopExit& exit(int index) const { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
-    bool analyseLoop(ProgramBlock* entryBlock, int numBlocks);
-    bool analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
+    bool analyzeLoop(ProgramBlock* entryBlock, int numBlocks);
+    bool analyzeLoop(InterpretedProgram& program, RunSummary& runSummary,
                      int startIndex, int period);
 
     void dump() const;

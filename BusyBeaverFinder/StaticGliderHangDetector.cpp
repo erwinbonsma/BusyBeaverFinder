@@ -79,7 +79,7 @@ bool StaticGliderHangDetector::analyzeLoop() {
 
     _loopRunBlock = runSummary.getLastRunBlock();
 
-    if (!_loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary,
+    if (!_loop.analyzeLoop(_searcher.getInterpretedProgram(), runSummary,
                            _loopRunBlock->getStartIndex(), _loopRunBlock->getLoopPeriod())) {
         return false;
     }
@@ -184,7 +184,7 @@ bool StaticGliderHangDetector::analyzeTransitionSequence() {
     runSummary.runBlockAt(runSummary.getNumRunBlocks() - metaPeriod)->getStartIndex();
     int endIndex = _loopRunBlock->getStartIndex();
 
-    if (!_transitionSequence.analyseSequence(interpretedProgram, runSummary,
+    if (!_transitionSequence.analyzeSequence(interpretedProgram, runSummary,
                                              startIndex, endIndex - startIndex)) {
         return false;
     }

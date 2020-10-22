@@ -74,7 +74,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
     SECTION( "StationarySingleChangeIncByOne" ) {
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 1);
+        la.analyzeLoop(loopBlock, 1);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -86,7 +86,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
     SECTION( "StationarySingleChangeDecByThree" ) {
         loopBlock[0].finalize(INC, -3, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 1);
+        la.analyzeLoop(loopBlock, 1);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -100,7 +100,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, 3, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -117,7 +117,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -4, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -134,7 +134,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 4, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -153,7 +153,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 6, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -4, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -171,7 +171,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 2); // DEC 2
         loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC 2
 
-        la.analyseLoop(loopBlock, 3);
+        la.analyzeLoop(loopBlock, 3);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -190,7 +190,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[1].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 2); // SHL
         loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC
 
-        la.analyseLoop(loopBlock, 3);
+        la.analyzeLoop(loopBlock, 3);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -211,7 +211,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[1].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 2); // SHL
         loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC
 
-        la.analyseLoop(loopBlock, 3);
+        la.analyzeLoop(loopBlock, 3);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 1);
@@ -231,7 +231,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[2].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 3); // DEC 2
         loopBlock[3].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 0); // SHL
 
-        la.analyseLoop(loopBlock, 4);
+        la.analyzeLoop(loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 2);
@@ -251,7 +251,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 0);
@@ -266,7 +266,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);  // INC
         loopBlock[1].finalize(INC, -1, dummySteps, loopBlock + 0, &exitBlock); // DEC   # Expects 0
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 0);
@@ -282,7 +282,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
         loopBlock[0].finalize(INC, 1, dummySteps, loopBlock + 1, &exitBlock);  // INC   # Expects 0
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0); // DEC
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
         REQUIRE(la.numDataDeltas() == 0);
@@ -309,7 +309,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
     SECTION( "TravellingConstant" ) {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 1);
+        la.analyzeLoop(loopBlock, 1);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
@@ -322,7 +322,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[0].finalize(MOV, 5, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(MOV, -4, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
         REQUIRE(la.numBootstrapCycles() == 4);
 
         REQUIRE(la.dataPointerDelta() == 1);
@@ -339,7 +339,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[1].finalize(MOV, -5, dummySteps, &exitBlock, loopBlock + 2);
         loopBlock[2].finalize(MOV, 3, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 3);
+        la.analyzeLoop(loopBlock, 3);
 
         REQUIRE(la.numBootstrapCycles() == 3);
 
@@ -359,7 +359,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[0].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
@@ -376,7 +376,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0);
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
@@ -391,7 +391,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[0].finalize(MOV, 1, dummySteps, loopBlock + 1, &exitBlock); // SHR   # Expects 0
         loopBlock[1].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0); // INC
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
 
         REQUIRE(la.numBootstrapCycles() == 0);
 
@@ -408,7 +408,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1); // INC
         loopBlock[1].finalize(MOV, 1, dummySteps, loopBlock + 0, &exitBlock); // SHR   # Expects 0
 
-        la.analyseLoop(loopBlock, 2);
+        la.analyzeLoop(loopBlock, 2);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.dataPointerDelta() == 1);
@@ -433,7 +433,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[4].finalize(MOV, -2, dummySteps, &exitBlock, loopBlock + 5); // SHL 2   (5)
         loopBlock[5].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);  // INC     (6)
 
-        la.analyseLoop(loopBlock, 6);
+        la.analyzeLoop(loopBlock, 6);
 
         REQUIRE(la.dataPointerDelta() == 1);
         REQUIRE(la.numDataDeltas() == 1);
@@ -462,7 +462,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[4].finalize(MOV, 2, dummySteps, &exitBlock, loopBlock + 5);  // SHR 2   (5)
         loopBlock[5].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);  // INC     (6)
 
-        la.analyseLoop(loopBlock, 6);
+        la.analyzeLoop(loopBlock, 6);
 
         REQUIRE(la.dataPointerDelta() == -1);
         REQUIRE(la.numDataDeltas() == 1);
@@ -492,7 +492,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[4].finalize(MOV, -4, dummySteps, &exitBlock, loopBlock + 5); // SHL 4   (1)
         loopBlock[5].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);  // INC     (2)
 
-        la.analyseLoop(loopBlock, 6);
+        la.analyzeLoop(loopBlock, 6);
 
         REQUIRE(la.dataPointerDelta() == -1);
         REQUIRE(la.numDataDeltas() == 1);
@@ -517,7 +517,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[2].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 3);  // SHR
         loopBlock[3].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);  // INC
 
-        la.analyseLoop(loopBlock, 4);
+        la.analyzeLoop(loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 2);
         REQUIRE(la.numDataDeltas() == 2);
@@ -541,7 +541,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[3].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 4);  // INC
         loopBlock[4].finalize(MOV, 2, dummySteps, &exitBlock, loopBlock + 0);  // SHR 2
 
-        la.analyseLoop(loopBlock, 5);
+        la.analyzeLoop(loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 3);
         REQUIRE(la.numDataDeltas() == 2);
@@ -564,7 +564,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[2].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 3); // SHL
         loopBlock[3].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);  // INC
 
-        la.analyseLoop(loopBlock, 4);
+        la.analyzeLoop(loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 1);
         REQUIRE(la.numDataDeltas() == 0);
@@ -588,7 +588,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[3].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 4);  // INC
         loopBlock[4].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);  // SHR
 
-        la.analyseLoop(loopBlock, 5);
+        la.analyzeLoop(loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 3);
         REQUIRE(la.numDataDeltas() == 0);
@@ -617,7 +617,7 @@ TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]"
         loopBlock[3].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 4);  // INC
         loopBlock[4].finalize(INC, -3, dummySteps, &exitBlock, loopBlock + 0); // DEC 3
 
-        la.analyseLoop(loopBlock, 5);
+        la.analyzeLoop(loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 1);
         REQUIRE(la.numDataDeltas() == 0);

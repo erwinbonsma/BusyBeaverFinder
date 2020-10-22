@@ -56,6 +56,8 @@
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
 		AABDCBB0253B197B0009516B /* StaticSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */; };
 		AABDCBB1253B197B0009516B /* StaticSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */; };
+		AACC27242541FFB2007E83C3 /* DataDeltas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AACC27222541FFB2007E83C3 /* DataDeltas.cpp */; };
+		AACC27252541FFB2007E83C3 /* DataDeltas.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AACC27222541FFB2007E83C3 /* DataDeltas.cpp */; };
 		AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
@@ -143,6 +145,8 @@
 		AA90A5892201052900242D3D /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
 		AABDCBAE253B197B0009516B /* StaticSweepHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StaticSweepHangDetector.cpp; sourceTree = "<group>"; };
 		AABDCBAF253B197B0009516B /* StaticSweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StaticSweepHangDetector.h; sourceTree = "<group>"; };
+		AACC27222541FFB2007E83C3 /* DataDeltas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DataDeltas.cpp; sourceTree = "<group>"; };
+		AACC27232541FFB2007E83C3 /* DataDeltas.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DataDeltas.h; sourceTree = "<group>"; };
 		AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SearchOrchestration.cpp; sourceTree = "<group>"; };
 		AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestration.h; sourceTree = "<group>"; };
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
@@ -263,6 +267,8 @@
 				AA28C0AE220CCE2A00F7EC25 /* DataTracker.h */,
 				AA4F45112259E88B0069FF36 /* RunSummary.cpp */,
 				AA4F45122259E88B0069FF36 /* RunSummary.h */,
+				AACC27222541FFB2007E83C3 /* DataDeltas.cpp */,
+				AACC27232541FFB2007E83C3 /* DataDeltas.h */,
 				AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */,
 				AAF43BD123EC76AC00D1EB33 /* SequenceAnalysis.h */,
 				AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */,
@@ -351,6 +357,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AACC27242541FFB2007E83C3 /* DataDeltas.cpp in Sources */,
 				AA4F4507224967A00069FF36 /* ProgramBlock.cpp in Sources */,
 				AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */,
 				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
@@ -385,6 +392,7 @@
 				AA37E6CC2295D62200117A85 /* FastExecutor.cpp in Sources */,
 				AAF43BD323EC8B0100D1EB33 /* SequenceAnalysis.cpp in Sources */,
 				AA28C0A122073A1500F7EC25 /* Program.cpp in Sources */,
+				AACC27252541FFB2007E83C3 /* DataDeltas.cpp in Sources */,
 				AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */,
 				AA2865B823CE044B00F738ED /* LoopAnalysisTests.cpp in Sources */,
 				AA28C0B0220CCE2A00F7EC25 /* DataTracker.cpp in Sources */,

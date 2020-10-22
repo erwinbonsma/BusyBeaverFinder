@@ -15,129 +15,74 @@
 #include "ProgramBlock.h"
 #include "RunSummary.h"
 
-SequenceAnalysis::SequenceAnalysis() {
+SequenceAnalysis::SequenceAnalysis() : _effectiveResult(32) {
     _dpDelta = 0;
-    _numDataDeltas = 0;
 }
 
-int SequenceAnalysis::deltaAt(int dpOffset) {
-    int deltaIndex = 0;
-
-    // Find existing delta record, if any
-    while (deltaIndex < _numDataDeltas && _dataDelta[deltaIndex].dpOffset() != dpOffset) {
-        deltaIndex++;
-    }
-
-    return (deltaIndex == _numDataDeltas) ? 0 : _dataDelta[deltaIndex].delta();
-}
-
-int SequenceAnalysis::updateDelta(int dpOffset, int delta, int index) {
-    int deltaIndex = 0;
-
-    // Find existing delta record, if any
-    while (deltaIndex < _numDataDeltas && _dataDelta[deltaIndex].dpOffset() != dpOffset) {
-        deltaIndex++;
-    }
-
-    if (deltaIndex == _numDataDeltas) {
-        // An existing record was not found, so create one.
-        assert(_numDataDeltas < maxDataDeltasPerSequence);
-        _dataDelta[_numDataDeltas++].init(dpOffset);
-    } else {
-        // Record the effective result that this masks
-        _effectiveResult[_dataDelta[deltaIndex]._lastUpdatedByIndex]._maskedByIndex = index;
-    }
-
-    if (_dataDelta[deltaIndex].changeDelta(delta)) {
-        // This change cancelled out previous changes. Remove the entry to reflect this
-        if (deltaIndex != --_numDataDeltas) {
-            _dataDelta[deltaIndex] = _dataDelta[_numDataDeltas];
-        }
-
-        return 0;
-    } else {
-        _dataDelta[deltaIndex]._lastUpdatedByIndex = index;
-
-        return _dataDelta[deltaIndex].delta();
-    }
-}
-
-void SequenceAnalysis::analyseSequence() {
+void SequenceAnalysis::analyzeSequence() {
     _dpDelta = 0;
-    _numDataDeltas = 0;
-
-    int i = 0;
+    _dataDeltas.clear();
+    _effectiveResult.clear();
 
     // Determine the intermediate results and final results of a single loop iteration
     _minDp = _programBlocks[0]->isDelta() ? 0 : _programBlocks[0]->getInstructionAmount();
     _maxDp = _minDp;
 
-    while (i < _numBlocks) {
-        ProgramBlock* programBlock = _programBlocks[i];
-
+    for (ProgramBlock* programBlock : _programBlocks) {
+        int amount = programBlock->getInstructionAmount();
         if (programBlock->isDelta()) {
-            int effectiveDelta = updateDelta(_dpDelta, programBlock->getInstructionAmount(), i);
+            int effectiveDelta = _dataDeltas.updateDelta(_dpDelta, amount);
 
-            _effectiveResult[i].init(_dpDelta);
-            _effectiveResult[i].changeDelta(effectiveDelta);
-            _effectiveResult[i]._maskedByIndex = maxSequenceSize; // Not yet masked
+            _effectiveResult.push_back(DataDelta(_dpDelta, effectiveDelta));
         } else {
-            _dpDelta += programBlock->getInstructionAmount();
+            _dpDelta += amount;
             _minDp = std::min(_minDp, _dpDelta);
             _maxDp = std::max(_maxDp, _dpDelta);
 
-            _effectiveResult[i].init(_dpDelta);
-            _effectiveResult[i].changeDelta(deltaAt(_dpDelta));
+            _effectiveResult.push_back(DataDelta(_dpDelta, _dataDeltas.deltaAt(_dpDelta)));
         }
-
-        i++;
     }
 }
 
-bool SequenceAnalysis::analyseSequence(ProgramBlock* entryBlock, int numBlocks) {
-    if (numBlocks > maxSequenceSize) {
-        // This sequence is too large to analyse
-        return false;
+bool SequenceAnalysis::analyzeSequence(ProgramBlock* entryBlock, int numBlocks) {
+    _programBlocks.clear();
+    for (int i = 0; i < numBlocks; ++i) {
+        _programBlocks.push_back(entryBlock + i);
     }
 
-    _numBlocks = numBlocks;
-    for (int i = _numBlocks; --i >= 0; ) {
-        _programBlocks[i] = entryBlock + i;
-    }
-
-    analyseSequence();
+    analyzeSequence();
 
     return true;
 }
 
-bool SequenceAnalysis::analyseSequence(InterpretedProgram& program, RunSummary& runSummary,
+bool SequenceAnalysis::analyzeSequence(InterpretedProgram& program, RunSummary& runSummary,
                                        int startIndex, int length) {
-    if (length > maxSequenceSize) {
-        // This sequence is too large to analyse
-        return false;
+    _programBlocks.clear();
+    for (int i = 0; i < length; ++i) {
+        _programBlocks.push_back(program.getEntryBlock()
+                                 + runSummary.programBlockIndexAt(startIndex + i));
     }
 
-    _numBlocks = length;
-    for (int i = _numBlocks; --i >= 0; ) {
-        _programBlocks[i] = program.getEntryBlock() + runSummary.programBlockIndexAt(startIndex+i);
-    }
-
-    analyseSequence();
+    analyzeSequence();
 
     return true;
 }
 
+DataDeltas anyDeltasWorkArray;
 bool SequenceAnalysis::anyDataDeltasUpUntil(int index) const {
-    for (int i = 0; i <= index; i++) {
-        if (
-            _effectiveResult[i].maskedIndex() > index &&
-            _effectiveResult[i].delta() != 0
-        ) {
-            return true;
+    anyDeltasWorkArray.clear();
+
+    int dpDelta = 0;
+    for (ProgramBlock* programBlock : _programBlocks) {
+        int amount = programBlock->getInstructionAmount();
+        if (programBlock->isDelta()) {
+            anyDeltasWorkArray.updateDelta(dpDelta, amount);
+        } else {
+            dpDelta += amount;
         }
     }
 
-    return false;
+    return anyDeltasWorkArray.numDeltas() > 0;
 }
 
 std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {

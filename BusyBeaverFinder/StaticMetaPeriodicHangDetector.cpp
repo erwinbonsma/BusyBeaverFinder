@@ -61,7 +61,7 @@ bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
                   + runSummary.getRunBlockLength(endRunBlockIndex);
     int loopPeriod = loopEnd - _loopStart;
 
-    return _loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
+    return _loop.analyzeLoop(_searcher.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
 }
 
 Trilian StaticMetaPeriodicHangDetector::proofHang() {

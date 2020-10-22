@@ -27,7 +27,7 @@ bool SweepLoopAnalysis::isExitValue(int value) {
 }
 
 bool SweepLoopAnalysis::analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
-    if (!analyseLoop(searcher.getInterpretedProgram(),
+    if (!analyzeLoop(searcher.getInterpretedProgram(),
                      searcher.getRunSummary(),
                      runBlock->getStartIndex(),
                      runBlock->getLoopPeriod())) {
@@ -96,7 +96,7 @@ bool SweepTransitionAnalysis::analyzeSweepTransition(RunBlock* runBlock, bool at
     int startIndex = runBlock->getStartIndex();
     int len = (runBlock + 1)->getStartIndex() - startIndex;
 
-    if (!analyseSequence(interpretedProgram, runSummary, startIndex, len)) {
+    if (!analyzeSequence(interpretedProgram, runSummary, startIndex, len)) {
         return failed(searcher);
     }
 

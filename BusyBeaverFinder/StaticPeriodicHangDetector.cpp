@@ -22,7 +22,7 @@ bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
     RunBlock* loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();
-    return _loop.analyseLoop(_searcher.getInterpretedProgram(), runSummary,
+    return _loop.analyzeLoop(_searcher.getInterpretedProgram(), runSummary,
                              _loopStart, loopRunBlock->getLoopPeriod());
 }
 

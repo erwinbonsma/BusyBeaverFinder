@@ -90,51 +90,34 @@ LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
 
 bool LoopAnalysis::exitsOnZero(int index) {
     ProgramBlock* curBlock = _programBlocks[index];
-    ProgramBlock* nxtBlock = _programBlocks[(index + 1) % _numBlocks];
+    ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
 
     return curBlock->nonZeroBlock() == nxtBlock;
 }
 
+int LoopAnalysis::numDataDeltas() const {
+    return (_dpDelta != 0 ? _squashedDeltas : _dataDeltas).numDeltas();
+}
+
+const DataDelta& LoopAnalysis::dataDeltaAt(int idx) const {
+    return (_dpDelta != 0 ? _squashedDeltas : _dataDeltas).dataDelta(idx);
+}
+
 void LoopAnalysis::squashDeltas() {
-    int i = 0;
-    while (i < _numDataDeltas) {
-        int dpOffsetMod = _dataDelta[i]._dpOffset % _dpDelta;
+    _squashedDeltas.clear();
+
+    for (const DataDelta& dd : _dataDeltas) {
+        int dpOffsetMod = dd.dpOffset() % _dpDelta;
         if (dpOffsetMod * _dpDelta < 0) {
             // Ensure modulus is canonical and sign matches that of delta DP
             dpOffsetMod += _dpDelta;
         }
-
-        int j = _numDataDeltas;
-        while (--j > i) {
-            int dpOffsetMod2 = _dataDelta[j]._dpOffset % _dpDelta;
-            if (dpOffsetMod2 * _dpDelta < 0) {
-                dpOffsetMod2 += _dpDelta;
-            }
-            if (dpOffsetMod == dpOffsetMod2) {
-                // Squash it
-                _dataDelta[i]._delta += _dataDelta[j]._delta;
-
-                if (j != --_numDataDeltas) {
-                    _dataDelta[j] = _dataDelta[_numDataDeltas];
-                }
-            }
-        }
-
-        if (_dataDelta[i]._delta == 0) {
-            // The result is no change. Remove this entry as well.
-            if (i != --_numDataDeltas) {
-                _dataDelta[i] = _dataDelta[_numDataDeltas];
-            }
-        } else {
-            _dataDelta[i]._dpOffset = dpOffsetMod;
-        }
-
-        i++;
+        _squashedDeltas.updateDelta(dpOffsetMod, dd.delta());
     }
 }
 
 void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
-    for (int i = _numBlocks; --i >= 0; ) {
+    for (int i = loopSize(); --i >= 0; ) {
         if (!exitsOnZero(i)) {
             // After this instruction executed successfully and the loop continues the value will
             // be zero. This makes it possible to verify if the instructions that follow it that
@@ -142,7 +125,7 @@ void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
 
             int dpOffset = _effectiveResult[i].dpOffset();
 
-            for (int j = i + 1; j < _numBlocks; j++) {
+            for (int j = i + 1; j < loopSize(); ++j) {
                 if (
                     dpOffset == _effectiveResult[j].dpOffset() &&
                     !_loopExit[j].exitCondition.isTrueForValue(
@@ -159,11 +142,11 @@ void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
 void LoopAnalysis::setExitConditionsForStationaryLoop() {
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
 
-    for (int i = 0; i < _numBlocks; i++) {
+    for (int i = 0; i < loopSize(); i++) {
         LoopExit& loopExit = _loopExit[i];
         int dp = _effectiveResult[i].dpOffset();
         int currentDelta = _effectiveResult[i].delta();
-        int finalDelta = deltaAt(dp);
+        int finalDelta = _dataDeltas.deltaAt(dp);
 
         if (finalDelta == 0) {
             Operator  op = exitsOnZero(i) ? Operator::EQUALS : Operator::UNEQUAL;
@@ -185,7 +168,7 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
 
 // Identify bootstrap-only exits (and exits that can never be reached).
 void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
-    for (int i = _numBlocks; --i >= 0; ) {
+    for (int i = loopSize(); --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
 
         if (loopExit.exitWindow != ExitWindow::ANYTIME) {
@@ -208,7 +191,7 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
 
                     if (delta != delta2) {
                         // The masked condition can only occur during bootstrap
-                        bool deltaIsPositive = deltaAt(dp) > 0;
+                        bool deltaIsPositive = _dataDeltas.deltaAt(dp) > 0;
                         int k = (deltaIsPositive == (delta2 > delta)) ? i : j;
 
                         int numBootstrapCycles = abs((delta2 - delta) / mc);
@@ -229,7 +212,7 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
     }
 
     // Final bookkeeping
-    for (int i = _numBlocks; --i >= 0; ) {
+    for (int i = loopSize(); --i >= 0; ) {
         LoopExit& loopExit = _loopExit[i];
         loopExit.firstForValue = (loopExit.exitWindow == ExitWindow::ANYTIME);
     }
@@ -254,7 +237,7 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     // condition, thereby fixing the entry value required for the loop to spin up.
     static std::array<int, maxLoopSize> fixedExitValue;
 
-    for (int i = _numBlocks; --i >= 0; ) {
+    for (int i = loopSize(); --i >= 0; ) {
         indices[i] = i;
     }
 
@@ -268,12 +251,12 @@ void LoopAnalysis::initExitsForTravellingLoop() {
         return diff == 0 ? (a < b) : (diff < 0);
     };
 
-    std::sort(indices.begin(), indices.begin() + _numBlocks, _dpDelta > 0 ? compareUp : compareDn);
+    std::sort(indices.begin(), indices.begin() + loopSize(), _dpDelta > 0 ? compareUp : compareDn);
 
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
 
     // Establish the exit condition for each instruction
-    for (int ii = 0 ; ii < _numBlocks; ii++ ) {
+    for (int ii = 0 ; ii < loopSize(); ii++ ) {
         int i = indices[ii];
 
         int dp_i = _effectiveResult[i].dpOffset();
@@ -350,8 +333,8 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     }
 }
 
-void LoopAnalysis::analyseSequence() {
-    SequenceAnalysis::analyseSequence();
+void LoopAnalysis::analyzeSequence() {
+    SequenceAnalysis::analyzeSequence();
 
     // Collapse the results considering multiple loop iterations (only for non-stationary loops)
     if (_dpDelta != 0) {
@@ -362,23 +345,24 @@ void LoopAnalysis::analyseSequence() {
     }
 }
 
-bool LoopAnalysis::analyseLoop(ProgramBlock* entryBlock, int numBlocks) {
-    return SequenceAnalysis::analyseSequence(entryBlock, numBlocks);
+bool LoopAnalysis::analyzeLoop(ProgramBlock* entryBlock, int numBlocks) {
+    return SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
 }
 
-bool LoopAnalysis::analyseLoop(InterpretedProgram& program, RunSummary& runSummary,
+bool LoopAnalysis::analyzeLoop(InterpretedProgram& program, RunSummary& runSummary,
                                int startIndex, int period) {
     if (period > maxLoopSize) {
         // This loop is too large to analyse
         return false;
     }
 
-    _numBlocks = period;
-    for (int i = _numBlocks; --i >= 0; ) {
-        _programBlocks[i] = program.getEntryBlock() + runSummary.programBlockIndexAt(startIndex+i);
+    _programBlocks.clear();
+    for (int i = 0; i < period; ++i) {
+        _programBlocks.push_back(program.getEntryBlock()
+                                 + runSummary.programBlockIndexAt(startIndex + i));
     }
 
-    analyseSequence();
+    analyzeSequence();
 
     return true;
 }
