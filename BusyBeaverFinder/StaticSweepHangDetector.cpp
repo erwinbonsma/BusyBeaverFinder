@@ -26,7 +26,7 @@ bool SweepLoopAnalysis::isExitValue(int value) {
     return std::find(_exitValues.begin(), _exitValues.end(), value) != _exitValues.end();
 }
 
-bool SweepLoopAnalysis::analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
+bool SweepLoopAnalysis::analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
     if (!analyseLoop(searcher.getInterpretedProgram(),
                      searcher.getRunSummary(),
                      runBlock->getStartIndex(),
@@ -87,7 +87,7 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionAnalysis::analyseSweepTransition(RunBlock* runBlock, bool atRight,
+bool SweepTransitionAnalysis::analyzeSweepTransition(RunBlock* runBlock, bool atRight,
                                                      ExhaustiveSearcher& searcher) {
     RunSummary& runSummary = searcher.getRunSummary();
     InterpretedProgram& interpretedProgram = searcher.getInterpretedProgram();
@@ -123,15 +123,21 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionGroup::analyseLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
+bool SweepTransitionGroup::analyzeLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
     _loopRunBlock = runBlock;
 
-    if (!_loop.analyseSweepLoop(_loopRunBlock, searcher)) {
+    if (!_loop.analyzeSweepLoop(_loopRunBlock, searcher)) {
         return false;
     }
 
     _locatedAtRight = _loop.dataPointerDelta() > 0;
     _transitions.clear();
+
+    return true;
+}
+
+bool SweepTransitionGroup::analyzeGroup() {
+    // TODO
 
     return true;
 }
@@ -154,16 +160,16 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
 StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
     : StaticHangDetector(searcher) {}
 
-bool StaticSweepHangDetector::analyseLoops() {
+bool StaticSweepHangDetector::analyzeLoops() {
     // Assume that the loop which just finished is one of the sweep loops
     RunSummary& runSummary = _searcher.getRunSummary();
     SweepTransitionGroup *group = _transitionGroup;
 
     RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
-    if (!group[1].analyseLoop(loop1RunBlock, _searcher)) {
+    if (!group[1].analyzeLoop(loop1RunBlock, _searcher)) {
         return false;
     }
-    if (!group[0].analyseLoop(loop1RunBlock - 2, _searcher)) {
+    if (!group[0].analyzeLoop(loop1RunBlock - 2, _searcher)) {
         return false;
     }
 
@@ -181,7 +187,7 @@ bool StaticSweepHangDetector::analyseLoops() {
     return true;
 }
 
-bool StaticSweepHangDetector::analyseTransitions() {
+bool StaticSweepHangDetector::analyzeTransitions() {
     RunSummary& runSummary = _searcher.getRunSummary();
     int i = runSummary.getNumRunBlocks() - 2;
     int numTransitions = 0, numUniqueTransitions = 0;
@@ -208,7 +214,7 @@ bool StaticSweepHangDetector::analyseTransitions() {
             assert(numUniqueTransitions < MAX_UNIQUE_TRANSITIONS_PER_SWEEP);
             SweepTransitionAnalysis *sa = &_transitionPool[numUniqueTransitions++];
 
-            if (!sa->analyseSweepTransition(transitionBlock, tg.locatedAtRight(), _searcher)) {
+            if (!sa->analyzeSweepTransition(transitionBlock, tg.locatedAtRight(), _searcher)) {
                 return false;
             }
 
@@ -227,9 +233,9 @@ bool StaticSweepHangDetector::analyseTransitions() {
     return true;
 }
 
-bool StaticSweepHangDetector::analyseTransitionGroups() {
+bool StaticSweepHangDetector::analyzeTransitionGroups() {
     for (SweepTransitionGroup &tg : _transitionGroup) {
-        if (!tg.analyseGroup()) {
+        if (!tg.analyzeGroup()) {
             return false;
         }
     }
@@ -301,11 +307,11 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-    if (!analyseLoops()) {
+    if (!analyzeLoops()) {
         return false;
     }
 
-    if (!analyseTransitions()) {
+    if (!analyzeTransitions()) {
         return false;
     }
 

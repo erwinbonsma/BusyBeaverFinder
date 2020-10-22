@@ -30,7 +30,7 @@ public:
     int deltaSign() const { return _deltaSign; }
     bool isExitValue(int value);
 
-    bool analyseSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
@@ -40,7 +40,7 @@ class SweepTransitionAnalysis : public SequenceAnalysis {
 public:
     bool extendsSweep() const { return _extendsSweep; }
 
-    bool analyseSweepTransition(RunBlock* runBlock, bool atRight, ExhaustiveSearcher& searcher);
+    bool analyzeSweepTransition(RunBlock* runBlock, bool atRight, ExhaustiveSearcher& searcher);
 
     void dump() const;
 };
@@ -71,8 +71,8 @@ public:
         _transitions[instructionIndex] = sta;
     }
 
-    bool analyseLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
-    bool analyseGroup();
+    bool analyzeLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyzeGroup();
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
@@ -86,9 +86,9 @@ class StaticSweepHangDetector : public StaticHangDetector {
     int _sweepDeltaSign;
 
     // Analysis
-    bool analyseLoops();
-    bool analyseTransitions();
-    bool analyseTransitionGroups();
+    bool analyzeLoops();
+    bool analyzeTransitions();
+    bool analyzeTransitionGroups();
 
     /* Dynamic checks */
     // Find the other end of the sequence. Updates dp accordingly. When deltaSign is non-zero, it
