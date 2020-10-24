@@ -81,6 +81,18 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
 
         REQUIRE(tracker.getTotalSuccess() == 1);
     }
+    SECTION( "FakeSweeper" ) {
+        // Program that is wrongly reported as hanging by the new Sweep Hang detector
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalSuccess() == 1);
+    }
 }
 
 TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {

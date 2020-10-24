@@ -40,10 +40,10 @@ bool SweepLoopAnalysis::analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher&
         return failed(searcher);
     }
 
-    if (abs(dataPointerDelta()) != 1) {
-        // TODO: Support loops that move more than one cell per iteration
-        return failed(searcher);
-    }
+//    if (abs(dataPointerDelta()) != 1) {
+//        // TODO: Support loops that move more than one cell per iteration
+//        return failed(searcher);
+//    }
 
 //    if (numBootstrapCycles() > 0) {
 //        // TODO: Support loops with bootstrap
@@ -306,7 +306,12 @@ bool StaticSweepHangDetector::analyzeTransitionGroups() {
 
 bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop) {
     Data& data = _searcher.getData();
-    int delta = sweepLoop.dataPointerDelta();
+
+    // For now, scan all values as the values that are skipped now may be expected during a next
+    // sweep.
+    // TODO: Make analysis smarter.
+    int delta = sign(sweepLoop.dataPointerDelta());
+
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
     SweepLoopAnalysis &loop0 = _transitionGroups[0].loop(), &loop1 = _transitionGroups[1].loop();
 
