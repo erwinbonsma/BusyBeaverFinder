@@ -636,4 +636,3 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
 }
-

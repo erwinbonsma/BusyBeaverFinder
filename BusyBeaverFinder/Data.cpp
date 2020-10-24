@@ -18,11 +18,12 @@
 const int undoStackSentinelCapacity = 64;
 
 Data::Data(int size) {
-    _data = new int[size];
+    _size = size;
+    _data = new int[_size];
 
-    _midDataP = &_data[size / 2];
+    _midDataP = &_data[_size / 2];
     _minDataP = &_data[0]; // Inclusive
-    _maxDataP = &_data[size - 1]; // Inclusive
+    _maxDataP = &_data[_size - 1]; // Inclusive
 
     reset();
 }
@@ -36,7 +37,7 @@ Data::~Data() {
 }
 
 void Data::reset() {
-    for (int i = 0; i < (_maxDataP - _minDataP + 1); i++) {
+    for (int i = _size; --i >= 0; ) {
         _data[i] = 0;
     }
 
@@ -84,6 +85,12 @@ void Data::updateBounds() {
     }
 
     assert((*_minBoundP && *_maxBoundP) || (_maxBoundP < _minBoundP));
+}
+
+int Data::valueAt(DataPointer dp, int dpOffset) {
+    int index = (int)(dp - _minBoundP) + dpOffset;
+
+    return (index >= 0 && index < _size) ? *(_minDataP + index) : 0;
 }
 
 void Data::inc() {

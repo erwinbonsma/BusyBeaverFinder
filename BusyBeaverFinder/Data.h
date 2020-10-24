@@ -17,6 +17,7 @@
 class Data {
     DataPointer _dataP;
     DataPointer _minDataP, _midDataP, _maxDataP;
+    int _size;
 
     // Delimits the data cells that have been visisted (since the last snapshot was taken)
     DataPointer _minVisitedP, _maxVisitedP;
@@ -48,7 +49,7 @@ public:
 
     void setStackSize(int size);
 
-    int getSize() { return (int)(_maxDataP - _minDataP + 1); }
+    int getSize() const { return _size; }
 
     void resetHangDetection();
 
@@ -69,6 +70,9 @@ public:
 
     DataPointer getDataPointer() { return _dataP; }
     int val() { return *_dataP; }
+
+    // Relatively slow but safe when dp+dpOffset might be out of bounds.
+    int valueAt(DataPointer dp, int dpOffset);
 
     void inc();
     void dec();

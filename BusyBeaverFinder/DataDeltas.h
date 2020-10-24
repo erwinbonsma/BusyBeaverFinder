@@ -46,8 +46,12 @@ public:
     // Updates and returns the effective delta at the specified data position.
     int updateDelta(int dpOffset, int delta);
 
-    const_iterator begin() { return _dataDeltas.cbegin(); }
-    const_iterator end() { return _dataDeltas.cend(); }
+    // Adds the given delta. It should only be used when it was first checked that no delta exists
+    // yet for this offset (using deltaAt). It is then more efficient than using updateDelta.
+    void addDelta(int dpOffset, int delta);
+
+    const_iterator begin() const { return _dataDeltas.cbegin(); }
+    const_iterator end() const { return _dataDeltas.cend(); }
 };
 
 #endif /* DataDeltas_h */

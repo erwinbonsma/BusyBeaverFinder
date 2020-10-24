@@ -44,6 +44,8 @@ public:
 
     int dataPointerDelta() const { return _dpDelta; }
 
+    const DataDeltas& dataDeltas() const { return _dataDeltas; }
+
     virtual int numDataDeltas() const { return _dataDeltas.numDeltas(); }
     virtual const DataDelta& dataDeltaAt(int index) const { return _dataDeltas.dataDelta(index); }
 

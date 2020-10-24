@@ -15,9 +15,15 @@ int numFailed = 0;
 bool failed(ExhaustiveSearcher& searcher) {
     numFailed++;
 //    searcher.dumpHangDetection();
-//    searcher.getInterpretedProgram().dump();
+//    searcher.getProgram().dumpWeb();
+//    //searcher.getInterpretedProgram().dump();
 //    searcher.getRunSummary().dump();
 //    searcher.getMetaRunSummary().dump();
+    return false;
+}
+
+bool failed(SweepTransitionGroup& tg) {
+//    std::cout << tg << std::endl;
     return false;
 }
 
@@ -39,10 +45,10 @@ bool SweepLoopAnalysis::analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher&
         return failed(searcher);
     }
 
-    if (numBootstrapCycles() > 0) {
-        // TODO: Support loops with bootstrap
-        return failed(searcher);
-    }
+//    if (numBootstrapCycles() > 0) {
+//        // TODO: Support loops with bootstrap
+//        return failed(searcher);
+//    }
 
     _deltaSign = 0;
     for (int i = numDataDeltas(); --i >= 0; ) {
@@ -126,6 +132,10 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
 bool SweepTransitionGroup::analyzeLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
     _loopRunBlock = runBlock;
 
+    if (!runBlock->isLoop()) {
+        return false;
+    }
+
     if (!_loop.analyzeSweepLoop(_loopRunBlock, searcher)) {
         return false;
     }
@@ -137,7 +147,67 @@ bool SweepTransitionGroup::analyzeLoop(RunBlock* runBlock, ExhaustiveSearcher& s
 }
 
 bool SweepTransitionGroup::analyzeGroup() {
-    // TODO
+//    // Check there is a transition for each anytime-exit
+//    for (int i = _loop.loopSize(); --i >= 0; ) {
+//        if (_loop.exit(i).exitWindow == ExitWindow::ANYTIME) {
+//            if (_transitions.find(i) == _transitions.end()) {
+//                // TODO: Proof that this exit can never be triggered
+//                // This requires proving that the exit value can never be added to the sweep body
+//                // nor to the transition appendix.
+//                return failed(*this);
+//            }
+//        }
+//    }
+
+    _positionIsFixed = true;
+    _sweepDeltaSign = _loop.deltaSign();
+    // Check how the value that caused loop exit can be changed by any of the transition.
+    for (auto kv : _transitions) {
+        const SweepTransitionAnalysis *transition = kv.second;
+        int finalValue = transition->dataDeltas().deltaAt(0);
+
+        if (!_loop.isExitValue(finalValue)) {
+            _positionIsFixed = false;
+
+//            int sgn = sign(finalValue);
+//            if (_sweepDeltaSign != 0 && sgn != _sweepDeltaSign) {
+//                return false;
+//            }
+//            _sweepDeltaSign = sgn;
+        }
+    }
+
+    _outsideDeltas.clear();
+    for (auto kv : _transitions) {
+        const SweepTransitionAnalysis *transition = kv.second;
+
+        for (const DataDelta& dd : transition->dataDeltas()) {
+            if (dd.dpOffset() != 0) {
+                bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
+                if (insideSweep) {
+                    int sgn = sign(dd.delta());
+                    if (_sweepDeltaSign != 0 && sgn != _sweepDeltaSign) {
+                        return failed(*this);
+                    }
+                    _sweepDeltaSign = sgn;
+                } else {
+                    if (_positionIsFixed) {
+                        // Check all deltas at specific offset have same sign
+                        int delta = _outsideDeltas.deltaAt(dd.dpOffset());
+                        if (delta == 0) {
+                            _outsideDeltas.addDelta(dd.dpOffset(), sign(dd.delta()));
+                        } else if (delta * dd.delta() < 0) {
+                            return failed(*this);
+                        }
+                    } else {
+                        // TODO: Support bigger extension of sweep and/or appendix
+                        // Should check that there are no discontinuities (possible exits)
+                        return failed(*this);
+                    }
+                }
+            }
+        }
+    }
 
     return true;
 }
@@ -163,7 +233,7 @@ StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
 bool StaticSweepHangDetector::analyzeLoops() {
     // Assume that the loop which just finished is one of the sweep loops
     RunSummary& runSummary = _searcher.getRunSummary();
-    SweepTransitionGroup *group = _transitionGroup;
+    SweepTransitionGroup *group = _transitionGroups;
 
     RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
     if (!group[1].analyzeLoop(loop1RunBlock, _searcher)) {
@@ -178,12 +248,6 @@ bool StaticSweepHangDetector::analyzeLoops() {
         return failed(_searcher);
     }
 
-    if (group[0].loop().deltaSign() * group[1].loop().deltaSign() == -1) {
-        // TODO?: Support loops that makes changes to the sequence in opposite directions
-        return failed(_searcher);
-    }
-    _sweepDeltaSign = group[(int)(group[0].loop().deltaSign() == 0)].loop().deltaSign();
-
     return true;
 }
 
@@ -196,7 +260,7 @@ bool StaticSweepHangDetector::analyzeTransitions() {
         RunBlock* transitionBlock = runSummary.runBlockAt(i);
         RunBlock* loopBlock = runSummary.runBlockAt(i - 1);
         int j = numTransitions % 2;
-        SweepTransitionGroup &tg = _transitionGroup[j];
+        SweepTransitionGroup &tg = _transitionGroups[j];
 
         if (
             !loopBlock->isLoop() ||
@@ -234,11 +298,18 @@ bool StaticSweepHangDetector::analyzeTransitions() {
 }
 
 bool StaticSweepHangDetector::analyzeTransitionGroups() {
-    for (SweepTransitionGroup &tg : _transitionGroup) {
+    for (SweepTransitionGroup &tg : _transitionGroups) {
         if (!tg.analyzeGroup()) {
             return false;
         }
     }
+
+    SweepTransitionGroup *groups = _transitionGroups;
+    if (groups[0].sweepDeltaSign() * groups[1].sweepDeltaSign() == -1) {
+        // TODO?: Support loops that makes changes to the sequence in opposite directions
+        return failed(_searcher);
+    }
+    _sweepDeltaSign = groups[(int)(groups[0].sweepDeltaSign() == 0)].sweepDeltaSign();
 
     return true;
 }
@@ -247,7 +318,7 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
     Data& data = _searcher.getData();
     int delta = sweepLoop.dataPointerDelta();
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
-    SweepLoopAnalysis &loop0 = _transitionGroup[0].loop(), &loop1 = _transitionGroup[1].loop();
+    SweepLoopAnalysis &loop0 = _transitionGroups[0].loop(), &loop1 = _transitionGroups[1].loop();
 
     // DP is at the other side of the sweep. Find the other end of the sweep.
     dp += delta;
@@ -259,7 +330,6 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
 
         if (_sweepDeltaSign * sign(*dp) < 0) {
             // The sweep makes changes to the sequence that move some values towards zero
-            data.dump();
             return failed(_searcher);
         }
 
@@ -276,7 +346,6 @@ bool StaticSweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
     int delta = atRight ? 1 : -1;
     DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
 
-    assert(!*dp);
     while (true) {
         if (*dp) {
             return failed(_searcher);
@@ -315,7 +384,9 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-    dump();
+    if (!analyzeTransitionGroups()) {
+        return failed(_searcher);
+    }
 
     return true;
 }
@@ -325,13 +396,26 @@ Trilian StaticSweepHangDetector::proofHang() {
     DataPointer dp1 = data.getDataPointer();
     DataPointer dp0 = dp1; // Initial value
 
-    if (!scanSweepSequence(dp0, _transitionGroup[0].loop())) {
+    if (!scanSweepSequence(dp0, _transitionGroups[0].loop())) {
         return Trilian::MAYBE;
     }
 
-    for (SweepTransitionGroup &tg : _transitionGroup) {
-        if (!tg.positionIsFixed() && !onlyZeroesAhead(dp0, tg.locatedAtRight())) {
-            return Trilian::MAYBE;
+    for (int i = 0; i < 2; ++i) {
+        SweepTransitionGroup &tg = _transitionGroups[i];
+        DataPointer dp = (i == 0) ? dp0 : dp1;
+
+        if (tg.positionIsFixed()) {
+            // Check all outside deltas move values away from zero
+            for (const DataDelta &dd : tg.outsideDeltas()) {
+                if (dd.delta() * data.valueAt(dp, dd.dpOffset()) < 0) {
+                    return Trilian::MAYBE;
+                }
+            }
+        } else {
+            // Check all outside values are zero
+            if (!onlyZeroesAhead(dp, tg.locatedAtRight())) {
+                return Trilian::MAYBE;
+            }
         }
     }
 
@@ -344,10 +428,10 @@ void StaticSweepHangDetector::dump() const {
 
 std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector) {
     os << "Loop #0" << std::endl;
-    os << detector._transitionGroup[0] << std::endl;
+    os << detector._transitionGroups[0] << std::endl;
 
     os << "Loop #1" << std::endl;
-    os << detector._transitionGroup[1] << std::endl;
+    os << detector._transitionGroups[1] << std::endl;
 
     return os;
 }

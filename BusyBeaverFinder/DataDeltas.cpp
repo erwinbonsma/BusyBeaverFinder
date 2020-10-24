@@ -44,3 +44,7 @@ int DataDeltas::updateDelta(int dpOffset, int delta) {
         return iter->delta();
     }
 }
+
+void DataDeltas::addDelta(int dpOffset, int delta) {
+    _dataDeltas.push_back(DataDelta(dpOffset, delta));
+}
