@@ -106,15 +106,6 @@ bool SweepTransitionAnalysis::analyzeSweepTransition(RunBlock* runBlock, bool at
         return failed(searcher);
     }
 
-    _extendsSweep = false; // Default
-    for (int i = numDataDeltas(); --i >= 0; ) {
-        const DataDelta &dd = dataDeltaAt(i);
-
-        if (dd.dpOffset() == 0) {
-            _extendsSweep = true;
-        }
-    }
-
     return true;
 }
 
@@ -124,7 +115,6 @@ void SweepTransitionAnalysis::dump() const {
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     os << (const SequenceAnalysis&)sta;
-    os << ", extends = " << sta.extendsSweep();
 
     return os;
 }

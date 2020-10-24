@@ -35,11 +35,9 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 
+// TODO: Remove if not needed anymore
 class SweepTransitionAnalysis : public SequenceAnalysis {
-    bool _extendsSweep;
 public:
-    bool extendsSweep() const { return _extendsSweep; }
-
     bool analyzeSweepTransition(RunBlock* runBlock, bool atRight, ExhaustiveSearcher& searcher);
 
     void dump() const;
