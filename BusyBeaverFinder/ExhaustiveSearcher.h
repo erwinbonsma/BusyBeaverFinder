@@ -9,22 +9,19 @@
 #ifndef ExhaustiveSearcher_h
 #define ExhaustiveSearcher_h
 
-#include <stdio.h>
+#include "ProgramExecutor.h"
 
-#include "Data.h"
 #include "Program.h"
 
 #include "InterpretedProgram.h"
 #include "FastExecutor.h"
 
-#include "DataTracker.h"
 #include "ProgressTracker.h"
-#include "RunSummary.h"
 
 #include "ExitFinder.h"
 
+
 class HangDetector;
-class SweepHangDetector;
 class StaticHangDetector;
 
 enum class SearchMode : char {
@@ -43,12 +40,11 @@ struct SearchSettings {
     bool disableNoExitHangDetection;
 };
 
-class ExhaustiveSearcher {
+class ExhaustiveSearcher : public ProgramExecutor {
     SearchSettings _settings;
 
     Program _program;
     Data _data;
-    DataTracker _dataTracker;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
@@ -77,19 +73,13 @@ class ExhaustiveSearcher {
 
     FastExecutor _fastExecutor;
 
-    int _numHangDetectAttempts;
-
-    SweepHangDetector* _sweepHangDetector;
     StaticHangDetector* _staticHangDetector[4];
     ExitFinder _exitFinder;
-
-    int _waitBeforeRetryingHangChecks;
 
     ProgressTracker* _tracker;
 
     void initInstructionStack(int size);
 
-    HangDetector* initiateNewHangCheck();
     bool periodicHangDetected();
     bool sweepHangDetected();
     bool isSweepDiverging();
@@ -119,15 +109,13 @@ public:
     void setProgressTracker(ProgressTracker* tracker);
 
     Program& getProgram() { return _program; }
-    Data& getData() { return _data; }
+    const Data& getData() const override { return _data; }
     InterpretedProgram& getInterpretedProgram() { return _interpretedProgram; }
 
-    DataTracker& getDataTracker() { return _dataTracker; }
-    RunSummary& getRunSummary() { return _runSummary[0]; }
-    RunSummary& getMetaRunSummary() { return _runSummary[1]; }
+    const RunSummary& getRunSummary() const override { return _runSummary[0]; }
+    const RunSummary& getMetaRunSummary() const override { return _runSummary[1]; }
 
     int getNumSteps() { return _numSteps; }
-    int getNumHangDetectAttempts() { return _numHangDetectAttempts; }
 
     ProgramBlock* getProgramBlock() { return _block; }
 

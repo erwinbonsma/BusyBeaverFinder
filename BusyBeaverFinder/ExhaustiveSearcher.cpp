@@ -13,8 +13,6 @@
 
 #include "Utils.h"
 
-#include "SweepHangDetector.h"
-
 #include "StaticGliderHangDetector.h"
 #include "StaticMetaPeriodicHangDetector.h"
 #include "StaticSweepHangDetector.h"
@@ -22,8 +20,9 @@
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
-    Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-    Ins::NOOP, Ins::TURN, Ins::UNSET
+    // 5x5 InfSeqExtendingBothWays2
+    Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+    Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
 };
 
 const ProgramPointer backtrackProgramPointer =
@@ -33,13 +32,10 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
     _runSummary(),
-    _dataTracker(_data),
     _exitFinder(_program, _interpretedProgram),
     _fastExecutor(dataSize)
 {
     initInstructionStack(width * height);
-
-    _sweepHangDetector = new SweepHangDetector(*this);
 
     _staticHangDetector[0] = new StaticPeriodicHangDetector(*this);
     _staticHangDetector[1] = new StaticMetaPeriodicHangDetector(*this);
@@ -63,7 +59,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
-    delete _sweepHangDetector;
 
     for (auto hangDetector : _staticHangDetector) {
         delete hangDetector;
@@ -131,7 +126,6 @@ void ExhaustiveSearcher::dumpSettings() {
 void ExhaustiveSearcher::dumpHangDetection() {
     std::cout << "Num steps: " << _numSteps << std::endl;
     _data.dump();
-    _dataTracker.dump();
 
     std::cout << "Run summary: ";
     _runSummary[0].dump();
@@ -150,33 +144,6 @@ void ExhaustiveSearcher::dump() {
 void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
     _tracker = tracker;
     _fastExecutor.setProgressTracker(tracker);
-}
-
-HangDetector* ExhaustiveSearcher::initiateNewHangCheck() {
-//    std::cout << "Initiating new hang check @ " << _numSteps << std::endl;
-//    dumpHangDetection();
-
-    if (_numHangDetectAttempts == _settings.maxHangDetectAttempts) {
-        // Signal end of all checks
-        _numHangDetectAttempts = -1;
-        return nullptr;
-    }
-
-    HangDetector* newCheck = nullptr;
-
-    if (_runSummary[0].getNumProgramBlocks() < _waitBeforeRetryingHangChecks) {
-        // Wait before initiating a new hang check. Too quickly trying the same hang checks
-        // in succession could just be a waste of CPU cycles.
-        return nullptr;
-    }
-    _waitBeforeRetryingHangChecks =
-        _runSummary[0].getNumProgramBlocks() + _settings.minWaitBeforeRetryingHangChecks;
-    newCheck = _sweepHangDetector;
-
-    assert(newCheck != nullptr);
-    _numHangDetectAttempts++;
-
-    return newCheck;
 }
 
 void ExhaustiveSearcher::branch(int depth) {
@@ -285,12 +252,8 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
 //    _program.dump();
 //    _interpretedProgram.dump();
 
-    HangDetectionResult result = HangDetectionResult::ONGOING;
-    HangDetector* hangCheck = nullptr;
     ProgramBlock* entryBlock = _interpretedProgram.getEntryBlock();
 
-    _data.resetHangDetection();
-    _dataTracker.reset();
     _runSummary[0].reset();
     _runSummary[1].reset();
 
@@ -298,61 +261,22 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
         hangDetector->reset();
     }
 
-    // Wait a bit before the initial check, so that there is at least a bit of program block
-    // history available. Otherwise it can take unnecessarily long for a simple periodic hang to be
-    // detected.
-    _waitBeforeRetryingHangChecks = 4;
-
-    _numHangDetectAttempts = 0;
-
     while (_block->isFinalized()) {
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
         if (true) {
-            // Only track execution while hang detection is still active
-            bool wasInLoop = _runSummary[0].isInsideLoop();
+            // Track execution while hang detection is still active
             int numRunBlocks = _runSummary[0].getNumRunBlocks();
 
             if (_runSummary[0].recordProgramBlock((int)(_block - entryBlock))) {
                 for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
-                    RunBlock* runBlock = _runSummary[0].runBlockAt(i);
+                    const RunBlock* runBlock = _runSummary[0].runBlockAt(i);
                     _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
                 }
 
                 if (!_runSummary[0].hasSpaceRemaining()) {
                     // Disable hang detection as history buffer is full
                     return executeCompiledBlocksWithBacktracking();
-                }
-            }
-
-            if (hangCheck != nullptr) {
-                if (wasInLoop) {
-                    if (!_runSummary[0].isInsideLoop()) {
-                        result = hangCheck->signalLoopExit();
-                    }
-                    else if (_runSummary[0].isAtEndOfLoop()) {
-                        result = hangCheck->signalLoopIteration();
-                    }
-                } else {
-                    if (_runSummary[0].isInsideLoop()) {
-                        result = hangCheck->signalLoopStartDetected();
-                    }
-                }
-            } else if (_numHangDetectAttempts >= 0) {
-                //hangCheck = initiateNewHangCheck();
-                hangCheck = nullptr;
-                if (hangCheck != nullptr) {
-                    result = hangCheck->start();
-                }
-            }
-
-            if (result == HangDetectionResult::FAILED) {
-                hangCheck = nullptr;
-            }
-            else if (result == HangDetectionResult::HANGING) {
-                _tracker->reportDetectedHang(hangCheck->hangType());
-                if (!_settings.testHangDetection) {
-                    return backtrackProgramPointer;
                 }
             }
         }

@@ -21,7 +21,7 @@ class StaticGliderHangDetector : public StaticHangDetector {
 
     SequenceAnalysis _transitionSequence;
     LoopAnalysis _loop;
-    RunBlock* _loopRunBlock;
+    const RunBlock* _loopRunBlock;
     int _aheadDelta[maxAheadOffset];
 
     int _curCounterDpOffset, _curCounterDelta;

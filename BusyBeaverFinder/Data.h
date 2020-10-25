@@ -19,9 +19,6 @@ class Data {
     DataPointer _minDataP, _midDataP, _maxDataP;
     int _size;
 
-    // Delimits the data cells that have been visisted (since the last snapshot was taken)
-    DataPointer _minVisitedP, _maxVisitedP;
-
     // Delimits the data cells that are non-zero.
     DataPointer _minBoundP, _maxBoundP;
 
@@ -34,8 +31,6 @@ class Data {
     DataOp *_maxUndoP = nullptr;
     // Undo-stack for data operations
     DataOp *_undoStack = nullptr;
-
-    bool _significantValueChange;
 
     void updateBounds();
 
@@ -51,42 +46,32 @@ public:
 
     int getSize() const { return _size; }
 
-    void resetHangDetection();
-
-    void resetVisitedBounds();
-    DataPointer getMinVisitedP() { return _minVisitedP; }
-    DataPointer getMaxVisitedP() { return _maxVisitedP; }
-
     int* getDataBuffer() { return _data; }
-    DataPointer getMinDataP() { return _minDataP; }
-    DataPointer getMaxDataP() { return _maxDataP; }
+    DataPointer getMinDataP() const { return _minDataP; }
+    DataPointer getMaxDataP() const { return _maxDataP; }
 
-    DataPointer getMinBoundP() { return _minBoundP; }
-    DataPointer getMaxBoundP() { return _maxBoundP; }
+    DataPointer getMinBoundP() const { return _minBoundP; }
+    DataPointer getMaxBoundP() const { return _maxBoundP; }
 
-    /* True if one or more values since last snapshot became zero, or moved away from zero.
-     */
-    bool significantValueChange() { return _significantValueChange; }
-
-    DataPointer getDataPointer() { return _dataP; }
-    int val() { return *_dataP; }
+    DataPointer getDataPointer() const { return _dataP; }
+    int val() const { return *_dataP; }
 
     // Relatively slow but safe when dp+dpOffset might be out of bounds.
-    int valueAt(DataPointer dp, int dpOffset);
+    int valueAt(DataPointer dp, int dpOffset) const;
 
     void inc();
     void dec();
     bool shr();
     bool shl();
 
-    bool hasUndoCapacity() { return _undoP < _maxUndoP; }
-    int getUndoStackSize() { return (int)(_undoP - _undoStack); }
-    DataOp* getUndoStackPointer() { return _undoP; }
+    bool hasUndoCapacity() const { return _undoP < _maxUndoP; }
+    int getUndoStackSize() const { return (int)(_undoP - _undoStack); }
+    DataOp* getUndoStackPointer() const { return _undoP; }
     void undo(DataOp* _targetUndoP);
 
-    void dump();
-    void dumpStack();
-    void dumpHangInfo();
+    void dump() const;
+    void dumpStack() const;
+    void dumpHangInfo() const;
 };
 
 #endif /* Data_h */

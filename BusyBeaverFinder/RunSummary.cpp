@@ -160,9 +160,9 @@ bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
     return newRunBlocks;
 }
 
-int RunSummary::getRunBlockLength(int index) {
+int RunSummary::getRunBlockLength(int index) const {
     bool isLast = index == (getNumRunBlocks() - 1);
-    RunBlock* runBlockP = _runBlockHistory + index;
+    const RunBlock* runBlockP = _runBlockHistory + index;
     int startIndex = runBlockP->getStartIndex();
 
     if (isLast) {
@@ -177,7 +177,7 @@ int RunSummary::getRunBlockLength(int index) {
     }
 }
 
-int RunSummary::getLoopIteration() {
+int RunSummary::getLoopIteration() const {
     assert(_loopP != nullptr);
 
     int startIndex = (_runBlockHistoryP - 1)->getStartIndex();
@@ -186,7 +186,7 @@ int RunSummary::getLoopIteration() {
     return loopLength / getLoopPeriod();
 }
 
-bool RunSummary::isAtEndOfLoop() {
+bool RunSummary::isAtEndOfLoop() const {
     assert(_loopP != nullptr);
     assert(_programBlockPendingP == nullptr);
 
@@ -196,7 +196,7 @@ bool RunSummary::isAtEndOfLoop() {
     return (loopLength % getLoopPeriod() == 0);
 }
 
-void RunSummary::dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level) {
+void RunSummary::dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const {
     for (int i = 0; i < level; i++) {
         std::cout << "  ";
     }
@@ -214,13 +214,13 @@ void RunSummary::dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level)
     }
 }
 
-void RunSummary::dumpSequenceTree() {
+void RunSummary::dumpSequenceTree() const {
     dumpRunBlockSequenceNode(_sequenceBlock, 0);
 }
 
-void RunSummary::dumpCondensed() {
+void RunSummary::dumpCondensed() const {
     for (int i = 0; i < getNumRunBlocks(); i++) {
-        RunBlock* runBlock = runBlockAt(i);
+        const RunBlock* runBlock = runBlockAt(i);
         int sequenceIndex = runBlock->getSequenceIndex();
 
         if (i > 0) {
@@ -243,7 +243,7 @@ void RunSummary::dumpCondensed() {
 
     std::cout << "with:" << std::endl;
     for (int i = 0; i < getNumRunBlocks(); i++) {
-        RunBlock* runBlock = runBlockAt(i);
+        const RunBlock* runBlock = runBlockAt(i);
         int sequenceIndex = runBlock->getSequenceIndex();
 
         int j = 0;
@@ -274,9 +274,9 @@ void RunSummary::dumpCondensed() {
     }
 }
 
-void RunSummary::dump() {
+void RunSummary::dump() const {
     ProgramBlockIndex* programBlockP = _programBlockHistory;
-    RunBlock* runBlockP = _runBlockHistory;
+    const RunBlock* runBlockP = _runBlockHistory;
     int numPendingBlocks = 0;
     bool isLoop = false;
 

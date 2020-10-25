@@ -87,7 +87,7 @@ void Data::updateBounds() {
     assert((*_minBoundP && *_maxBoundP) || (_maxBoundP < _minBoundP));
 }
 
-int Data::valueAt(DataPointer dp, int dpOffset) {
+int Data::valueAt(DataPointer dp, int dpOffset) const {
     int index = (int)(dp - _minBoundP) + dpOffset;
 
     return (index >= 0 && index < _size) ? *(_minDataP + index) : 0;
@@ -101,10 +101,6 @@ void Data::inc() {
     }
 
     updateBounds();
-
-    if (*_dataP == 0 || *_dataP == 1) {
-        _significantValueChange = true;
-    }
 }
 
 void Data::dec() {
@@ -115,10 +111,6 @@ void Data::dec() {
     }
 
     updateBounds();
-
-    if (*_dataP == 0 || *_dataP == -1) {
-        _significantValueChange = true;
-    }
 }
 
 bool Data::shr() {
@@ -126,10 +118,6 @@ bool Data::shr() {
 
     if (_undoEnabled) {
         *(_undoP++) = DataOp::SHR;
-    }
-
-    if (_dataP > _maxVisitedP) {
-        _maxVisitedP = _dataP;
     }
 
     return _dataP < _maxDataP;
@@ -140,10 +128,6 @@ bool Data::shl() {
 
     if (_undoEnabled) {
         *(_undoP++) = DataOp::SHL;
-    }
-
-    if (_dataP < _minVisitedP) {
-        _minVisitedP = _dataP;
     }
 
     return _dataP > _minDataP;
@@ -161,18 +145,7 @@ void Data::undo(DataOp* _targetUndoP) {
     }
 }
 
-void Data::resetHangDetection() {
-    resetVisitedBounds();
-
-    _significantValueChange = false;
-}
-
-void Data::resetVisitedBounds() {
-    _minVisitedP = _dataP;
-    _maxVisitedP = _dataP;
-}
-
-void Data::dump() {
+void Data::dump() const {
     // Find end
     int *max = _maxDataP - 1;
     while (max > _dataP && *max == 0) {
@@ -207,7 +180,7 @@ void Data::dump() {
     std::cout << std::endl;
 }
 
-void Data::dumpStack() {
+void Data::dumpStack() const {
     DataOp *p = &_undoStack[0];
     while (p < _undoP) {
         if (p != &_undoStack[0]) {
@@ -218,7 +191,7 @@ void Data::dumpStack() {
     }
 }
 
-void Data::dumpHangInfo() {
+void Data::dumpHangInfo() const {
     std::cout << "DATA: min = " << (_minBoundP - _data)
     << ", p = " << (_dataP - _data)
     << ", max = " << (_maxBoundP - _data)

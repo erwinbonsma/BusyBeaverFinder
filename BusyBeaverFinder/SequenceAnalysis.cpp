@@ -28,7 +28,7 @@ void SequenceAnalysis::analyzeSequence() {
     _minDp = _programBlocks[0]->isDelta() ? 0 : _programBlocks[0]->getInstructionAmount();
     _maxDp = _minDp;
 
-    for (ProgramBlock* programBlock : _programBlocks) {
+    for (const ProgramBlock* programBlock : _programBlocks) {
         int amount = programBlock->getInstructionAmount();
         if (programBlock->isDelta()) {
             int effectiveDelta = _dataDeltas.updateDelta(_dpDelta, amount);
@@ -44,7 +44,7 @@ void SequenceAnalysis::analyzeSequence() {
     }
 }
 
-bool SequenceAnalysis::analyzeSequence(ProgramBlock* entryBlock, int numBlocks) {
+bool SequenceAnalysis::analyzeSequence(const ProgramBlock* entryBlock, int numBlocks) {
     _programBlocks.clear();
     for (int i = 0; i < numBlocks; ++i) {
         _programBlocks.push_back(entryBlock + i);
@@ -55,7 +55,7 @@ bool SequenceAnalysis::analyzeSequence(ProgramBlock* entryBlock, int numBlocks) 
     return true;
 }
 
-bool SequenceAnalysis::analyzeSequence(InterpretedProgram& program, RunSummary& runSummary,
+bool SequenceAnalysis::analyzeSequence(InterpretedProgram& program, const RunSummary& runSummary,
                                        int startIndex, int length) {
     _programBlocks.clear();
     for (int i = 0; i < length; ++i) {
@@ -73,7 +73,7 @@ bool SequenceAnalysis::anyDataDeltasUpUntil(int index) const {
     anyDeltasWorkArray.clear();
 
     int dpDelta = 0;
-    for (ProgramBlock* programBlock : _programBlocks) {
+    for (const ProgramBlock* programBlock : _programBlocks) {
         int amount = programBlock->getInstructionAmount();
         if (programBlock->isDelta()) {
             anyDeltasWorkArray.updateDelta(dpDelta, amount);

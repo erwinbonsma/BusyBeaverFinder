@@ -139,12 +139,6 @@ void ProgressTracker::reportDetectedHang(HangType hangType) {
 //        _searcher.dumpInstructionStack();
 //        _searcher.getProgram().dumpWeb();
     }
-    if (_searcher.getNumHangDetectAttempts() > _maxHangDetectAttempts) {
-        _maxHangDetectAttempts = _searcher.getNumHangDetectAttempts();
-//        std::cout << "New attempt limit: ";
-//        _searcher.dumpInstructionStack();
-//        _searcher.getProgram().dumpWeb();
-    }
 
     if (_searcher.getHangDetectionTestMode()) {
         // Only signal it. The run continues so it can be verified if it was correctly signalled.

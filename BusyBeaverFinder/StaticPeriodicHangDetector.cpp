@@ -18,8 +18,8 @@ bool StaticPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
 }
 
 bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
-    RunSummary& runSummary = _searcher.getRunSummary();
-    RunBlock* loopRunBlock = runSummary.getLastRunBlock();
+    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunBlock* loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();
     return _loop.analyzeLoop(_searcher.getInterpretedProgram(), runSummary,
@@ -27,7 +27,7 @@ bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
 }
 
 bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
-    Data &data = _searcher.getData();
+    const Data &data = _searcher.getData();
 
     for (int i = _loop.loopSize(); --i >= 0; ) {
         if (_loop.exit(i).firstForValue) {
@@ -74,7 +74,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase1() {
         for (int i = _loop.loopSize(); --i >= 0; ) {
             const LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
-                Data &data = _searcher.getData();
+                const Data &data = _searcher.getData();
                 int value = *(data.getDataPointer() + exit.exitCondition.dpOffset());
                 if (exit.exitCondition.isTrueForValue(value)) {
                     return Trilian::NO;

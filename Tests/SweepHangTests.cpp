@@ -1,5 +1,5 @@
 //
-//  HangTests.cpp
+//  SweepHangTests.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 03/02/19.

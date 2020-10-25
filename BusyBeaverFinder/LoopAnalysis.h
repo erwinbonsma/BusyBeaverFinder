@@ -135,8 +135,8 @@ public:
     const LoopExit& exit(int index) const { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
-    bool analyzeLoop(ProgramBlock* entryBlock, int numBlocks);
-    bool analyzeLoop(InterpretedProgram& program, RunSummary& runSummary,
+    bool analyzeLoop(const ProgramBlock* entryBlock, int numBlocks);
+    bool analyzeLoop(InterpretedProgram& program, const RunSummary& runSummary,
                      int startIndex, int period);
 
     void dump() const;

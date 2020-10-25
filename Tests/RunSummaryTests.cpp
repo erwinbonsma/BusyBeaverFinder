@@ -30,7 +30,7 @@ bool checkRunSummary(RunSummary& runSummary, int* expected) {
         int expectedSequenceIndex = *expectedP++; // Normalized
         int expectedSequenceLength = *expectedP++;
 
-        RunBlock* runBlock = runSummary.runBlockAt(runBlockIndex);
+        const RunBlock* runBlock = runSummary.runBlockAt(runBlockIndex);
 
         if (expectedSequenceIndex == numSequences) {
             // Expect a new sequence. Check that the sequence was indeed not yet encountered.

@@ -36,7 +36,7 @@ class RunBlockSequenceNode {
 
     void init(ProgramBlockIndex programBlockIndex);
 
-    ProgramBlockIndex getProgramBlockIndex() { return _programBlockIndex; }
+    ProgramBlockIndex getProgramBlockIndex() const { return _programBlockIndex; }
 };
 
 class RunBlock {
@@ -49,17 +49,17 @@ class RunBlock {
     void init(int startIndex, int sequenceIndex, int loopPeriod);
 
 public:
-    bool isLoop() { return _loopPeriod != 0; }
-    int getLoopPeriod() { return _loopPeriod; }
+    bool isLoop() const { return _loopPeriod != 0; }
+    int getLoopPeriod() const { return _loopPeriod; }
 
     // Returns the index into program block stack of the run summary where this run block started.
-    int getStartIndex() { return _startIndex; }
+    int getStartIndex() const { return _startIndex; }
 
     // Returns a unique identifier for this (type of) run block. Different run blocks have the same
     // index when:
     // - their execution sequences match exactly, or
     // - they represent the same loop. In this case, the number of loop iterations may differ
-    int getSequenceIndex() { return _sequenceIndex; }
+    int getSequenceIndex() const { return _sequenceIndex; }
 };
 
 class RunSummary {
@@ -106,7 +106,7 @@ class RunSummary {
     // Creates a run block for the programs blocks from startP (inclusive) to endP (exclusive)
     void createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, int loopPeriod);
 
-    void dumpRunBlockSequenceNode(RunBlockSequenceNode* node, int level);
+    void dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const;
 
 public:
     ~RunSummary();
@@ -119,32 +119,32 @@ public:
     // Returns true if this resulted in the creation of one or more RunBlocks
     bool recordProgramBlock(ProgramBlockIndex blockIndex);
 
-    bool isInsideLoop() { return _loopP != nullptr; }
-    int getLoopPeriod() { return (int)(_programBlockHistoryP - _loopP); }
-    int getLoopIteration();
+    bool isInsideLoop() const { return _loopP != nullptr; }
+    int getLoopPeriod() const { return (int)(_programBlockHistoryP - _loopP); }
+    int getLoopIteration() const;
 
     // Returns true when the loop just completed an iteration
-    bool isAtEndOfLoop();
+    bool isAtEndOfLoop() const;
 
     // Returns true when the loop will start a next iteration
-    bool isAtStartOfLoop(ProgramBlockIndex nextBlockIndex) {
+    bool isAtStartOfLoop(ProgramBlockIndex nextBlockIndex) const {
         return isAtEndOfLoop() && *_loopP == nextBlockIndex;
     }
 
-    bool loopContinues(ProgramBlockIndex nextBlockIndex) {
+    bool loopContinues(ProgramBlockIndex nextBlockIndex) const {
         return *_loopP == nextBlockIndex;
     }
 
-    bool hasSpaceRemaining() { return _runBlockHistoryP < _runBlockHistoryThresholdP; }
+    bool hasSpaceRemaining() const { return _runBlockHistoryP < _runBlockHistoryThresholdP; }
 
-    int getNumProgramBlocks() { return (int)(_programBlockHistoryP - _programBlockHistory); }
-    int getNumRunBlocks() { return (int)(_runBlockHistoryP - _runBlockHistory); }
+    int getNumProgramBlocks() const { return (int)(_programBlockHistoryP - _programBlockHistory); }
+    int getNumRunBlocks() const { return (int)(_runBlockHistoryP - _runBlockHistory); }
 
-    ProgramBlockIndex programBlockIndexAt(int index) { return _programBlockHistory[index]; }
-    ProgramBlockIndex getLastProgramBlockIndex() { return *(_programBlockHistoryP - 1); }
+    ProgramBlockIndex programBlockIndexAt(int index) const { return _programBlockHistory[index]; }
+    ProgramBlockIndex getLastProgramBlockIndex() const { return *(_programBlockHistoryP - 1); }
 
-    RunBlock* runBlockAt(int index) { return _runBlockHistory + index; }
-    RunBlock* getLastRunBlock() { return (_runBlockHistoryP - 1); }
+    const RunBlock* runBlockAt(int index) const { return _runBlockHistory + index; }
+    const RunBlock* getLastRunBlock() const { return (_runBlockHistoryP - 1); }
 
     // Returns the length in program blocks of the given run block.
     //
@@ -155,11 +155,11 @@ public:
     // E.g.
     // Seq = A B C (where A, B and C are Program Blocks)
     // => A B C A B C A B X => length = 8, where X is the program block that breaks the loop
-    int getRunBlockLength(int index);
+    int getRunBlockLength(int index) const;
 
-    void dumpSequenceTree();
-    void dumpCondensed();
-    void dump();
+    void dumpSequenceTree() const;
+    void dumpCondensed() const;
+    void dump() const;
 };
 
 #endif /* RunSummary_h */

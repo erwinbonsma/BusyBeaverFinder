@@ -30,7 +30,7 @@ public:
     int deltaSign() const { return _deltaSign; }
     bool isExitValue(int value);
 
-    bool analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyzeSweepLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher);
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
@@ -38,7 +38,8 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 // TODO: Remove if not needed anymore
 class SweepTransitionAnalysis : public SequenceAnalysis {
 public:
-    bool analyzeSweepTransition(RunBlock* runBlock, bool atRight, ExhaustiveSearcher& searcher);
+    bool analyzeSweepTransition(const RunBlock* runBlock, bool atRight,
+                                ExhaustiveSearcher& searcher);
 
     void dump() const;
 };
@@ -49,7 +50,7 @@ class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
     SweepLoopAnalysis _loop;
-    RunBlock* _loopRunBlock;
+    const RunBlock* _loopRunBlock;
 
     std::map<int, SweepTransitionAnalysis*> _transitions;
     bool _positionIsFixed;
@@ -72,7 +73,7 @@ public:
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
 
     SweepLoopAnalysis& loop() { return _loop; }
-    RunBlock* loopRunBlock() { return _loopRunBlock; }
+    const RunBlock* loopRunBlock() { return _loopRunBlock; }
 
     bool hasTransitionForExit(int instructionIndex) {
         return _transitions.find(instructionIndex) != _transitions.end();
@@ -81,7 +82,7 @@ public:
         _transitions[instructionIndex] = sta;
     }
 
-    bool analyzeLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyzeLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher);
     bool analyzeGroup();
 };
 

@@ -22,7 +22,7 @@ bool StaticGliderHangDetector::shouldCheckNow(bool loopContinues) {
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
 bool StaticGliderHangDetector::identifyLoopCounter() {
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
     InterpretedProgram& interpretedProgram = _searcher.getInterpretedProgram();
 
     ProgramBlockIndex pbIndex = runSummary.getLastProgramBlockIndex();
@@ -75,7 +75,7 @@ bool StaticGliderHangDetector::isGliderLoop() {
 
 bool StaticGliderHangDetector::analyzeLoop() {
     // Assume that the loop which just finished is the glider-loop
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
 
     _loopRunBlock = runSummary.getLastRunBlock();
 
@@ -169,11 +169,11 @@ bool StaticGliderHangDetector::checkTransitionDeltas() {
 }
 
 bool StaticGliderHangDetector::analyzeTransitionSequence() {
-    RunSummary& runSummary = _searcher.getRunSummary();
-    RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
     InterpretedProgram& interpretedProgram = _searcher.getInterpretedProgram();
 
-    RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
+    const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
     // Note: The meta-period will be two for most gliders as these consist of a Loop and a simple
     // transition sequence. However, a transition sequence can contain a fixed loop, in which it
@@ -215,7 +215,7 @@ bool StaticGliderHangDetector::analyzeHangBehaviour() {
 }
 
 bool StaticGliderHangDetector::isBootstrapping() {
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
 
     return (runSummary.getLoopIteration() < _numBootstrapCycles);
 }
@@ -223,9 +223,9 @@ bool StaticGliderHangDetector::isBootstrapping() {
 // Checks that the transition sequence is identical each time. I.e. if it contains loops, their
 // iteration count is always fixed. This in turn means that it always does the same thing.
 bool StaticGliderHangDetector::transitionSequenceIsFixed() {
-    RunSummary& runSummary = _searcher.getRunSummary();
-    RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
-    RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
+    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& metaRunSummary = _searcher.getMetaRunSummary();
+    const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
 
     // Iterate over all run-blocks that comprise this meta-loop
@@ -248,7 +248,7 @@ bool StaticGliderHangDetector::transitionSequenceIsFixed() {
 // Verify that the values ahead of the next counter match those made by the (accumulated) effect of
 // the transition sequence and are zero everywhere else.
 bool StaticGliderHangDetector::onlyZeroesAhead() {
-    Data& data = _searcher.getData();
+    const Data& data = _searcher.getData();
     int shift = _nxtCounterDpOffset - _curCounterDpOffset;
     int delta = (shift > 0) ? 1 : -1;
     DataPointer dpStart = data.getDataPointer() + shift;

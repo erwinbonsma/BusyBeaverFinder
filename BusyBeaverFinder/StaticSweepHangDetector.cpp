@@ -32,7 +32,7 @@ bool SweepLoopAnalysis::isExitValue(int value) {
     return std::find(_exitValues.begin(), _exitValues.end(), value) != _exitValues.end();
 }
 
-bool SweepLoopAnalysis::analyzeSweepLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
+bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher) {
     if (!analyzeLoop(searcher.getInterpretedProgram(),
                      searcher.getRunSummary(),
                      runBlock->getStartIndex(),
@@ -93,9 +93,9 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionAnalysis::analyzeSweepTransition(RunBlock* runBlock, bool atRight,
+bool SweepTransitionAnalysis::analyzeSweepTransition(const RunBlock* runBlock, bool atRight,
                                                      ExhaustiveSearcher& searcher) {
-    RunSummary& runSummary = searcher.getRunSummary();
+    const RunSummary& runSummary = searcher.getRunSummary();
     InterpretedProgram& interpretedProgram = searcher.getInterpretedProgram();
 
     // The instructions comprising the (last) transition sequence
@@ -119,7 +119,7 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionGroup::analyzeLoop(RunBlock* runBlock, ExhaustiveSearcher& searcher) {
+bool SweepTransitionGroup::analyzeLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher) {
     _loopRunBlock = runBlock;
 
     if (!runBlock->isLoop()) {
@@ -222,10 +222,10 @@ StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
 
 bool StaticSweepHangDetector::analyzeLoops() {
     // Assume that the loop which just finished is one of the sweep loops
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
     SweepTransitionGroup *group = _transitionGroups;
 
-    RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
+    const RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
     if (!group[1].analyzeLoop(loop1RunBlock, _searcher)) {
         return false;
     }
@@ -242,13 +242,13 @@ bool StaticSweepHangDetector::analyzeLoops() {
 }
 
 bool StaticSweepHangDetector::analyzeTransitions() {
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
     int i = runSummary.getNumRunBlocks() - 2;
     int numTransitions = 0, numUniqueTransitions = 0;
 
     while (i > 0) {
-        RunBlock* transitionBlock = runSummary.runBlockAt(i);
-        RunBlock* loopBlock = runSummary.runBlockAt(i - 1);
+        const RunBlock* transitionBlock = runSummary.runBlockAt(i);
+        const RunBlock* loopBlock = runSummary.runBlockAt(i - 1);
         int j = numTransitions % 2;
         SweepTransitionGroup &tg = _transitionGroups[j];
 
@@ -305,7 +305,7 @@ bool StaticSweepHangDetector::analyzeTransitionGroups() {
 }
 
 bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop) {
-    Data& data = _searcher.getData();
+    const Data& data = _searcher.getData();
 
     // For now, scan all values as the values that are skipped now may be expected during a next
     // sweep.
@@ -337,7 +337,7 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
 }
 
 bool StaticSweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
-    Data& data = _searcher.getData();
+    const Data& data = _searcher.getData();
     int delta = atRight ? 1 : -1;
     DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
 
@@ -362,7 +362,7 @@ bool StaticSweepHangDetector::shouldCheckNow(bool loopContinues) {
 }
 
 bool StaticSweepHangDetector::analyzeHangBehaviour() {
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
 
     if (runSummary.getNumRunBlocks() <= 8) {
         // The run should contain two full sweeps preceded by a loop: L1 (T1 L0 T0 L1) (T1 L0 T0 L1)
@@ -387,7 +387,7 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
 }
 
 Trilian StaticSweepHangDetector::proofHang() {
-    Data& data = _searcher.getData();
+    const Data& data = _searcher.getData();
     DataPointer dp1 = data.getDataPointer();
     DataPointer dp0 = dp1; // Initial value
 
@@ -413,6 +413,12 @@ Trilian StaticSweepHangDetector::proofHang() {
             }
         }
     }
+
+//    _searcher.getRunSummary().dump();
+//    _searcher.getMetaRunSummary().dump();
+//    dump();
+//    _searcher.getData().dump();
+//    _searcher.getInterpretedProgram().dump();
 
     return Trilian::YES;
 }

@@ -19,7 +19,7 @@ class RunSummary;
 class SequenceAnalysis {
 
 protected:
-    std::vector<ProgramBlock*> _programBlocks;
+    std::vector<const ProgramBlock*> _programBlocks;
 
     int _dpDelta, _minDp, _maxDp;
 
@@ -55,8 +55,8 @@ public:
     // up until (inclusive) the specified instruction.
     bool anyDataDeltasUpUntil(int index) const;
 
-    bool analyzeSequence(ProgramBlock* entryBlock, int numBlocks);
-    bool analyzeSequence(InterpretedProgram& program, RunSummary& runSummary,
+    bool analyzeSequence(const ProgramBlock* entryBlock, int numBlocks);
+    bool analyzeSequence(InterpretedProgram& program, const RunSummary& runSummary,
                          int startIndex, int length);
 };
 

@@ -89,8 +89,8 @@ LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
 }
 
 bool LoopAnalysis::exitsOnZero(int index) {
-    ProgramBlock* curBlock = _programBlocks[index];
-    ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
+    const ProgramBlock* curBlock = _programBlocks[index];
+    const ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
 
     return curBlock->nonZeroBlock() == nxtBlock;
 }
@@ -345,11 +345,11 @@ void LoopAnalysis::analyzeSequence() {
     }
 }
 
-bool LoopAnalysis::analyzeLoop(ProgramBlock* entryBlock, int numBlocks) {
+bool LoopAnalysis::analyzeLoop(const ProgramBlock* entryBlock, int numBlocks) {
     return SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
 }
 
-bool LoopAnalysis::analyzeLoop(InterpretedProgram& program, RunSummary& runSummary,
+bool LoopAnalysis::analyzeLoop(InterpretedProgram& program, const RunSummary& runSummary,
                                int startIndex, int period) {
     if (period > maxLoopSize) {
         // This loop is too large to analyse

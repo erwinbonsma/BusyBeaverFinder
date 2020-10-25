@@ -19,7 +19,7 @@ bool StaticMetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
 }
 
 bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
-    RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _searcher.getRunSummary();
 
     // Points to the last run-block that is part of the meta-loop. Although it is not yet finalized,
     // as it is a loop which will not continue, we know it will.
