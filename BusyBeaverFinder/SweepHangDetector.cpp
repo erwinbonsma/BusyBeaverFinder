@@ -1,12 +1,12 @@
 //
-//  StaticSweepHangDetector.cpp
+//  SweepHangDetector.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 17/10/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "StaticSweepHangDetector.h"
+#include "SweepHangDetector.h"
 
 #include <iostream>
 #include "Utils.h"
@@ -214,10 +214,10 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
     return os;
 }
 
-StaticSweepHangDetector::StaticSweepHangDetector(const ProgramExecutor& executor)
-    : StaticHangDetector(executor) {}
+SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
+    : HangDetector(executor) {}
 
-bool StaticSweepHangDetector::analyzeLoops() {
+bool SweepHangDetector::analyzeLoops() {
     // Assume that the loop which just finished is one of the sweep loops
     const RunSummary& runSummary = _executor.getRunSummary();
     SweepTransitionGroup *group = _transitionGroups;
@@ -238,7 +238,7 @@ bool StaticSweepHangDetector::analyzeLoops() {
     return true;
 }
 
-bool StaticSweepHangDetector::analyzeTransitions() {
+bool SweepHangDetector::analyzeTransitions() {
     const RunSummary& runSummary = _executor.getRunSummary();
     int i = runSummary.getNumRunBlocks() - 2;
     int numTransitions = 0, numUniqueTransitions = 0;
@@ -284,7 +284,7 @@ bool StaticSweepHangDetector::analyzeTransitions() {
     return true;
 }
 
-bool StaticSweepHangDetector::analyzeTransitionGroups() {
+bool SweepHangDetector::analyzeTransitionGroups() {
     for (SweepTransitionGroup &tg : _transitionGroups) {
         if (!tg.analyzeGroup()) {
             return false;
@@ -301,7 +301,7 @@ bool StaticSweepHangDetector::analyzeTransitionGroups() {
     return true;
 }
 
-bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop) {
+bool SweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop) {
     const Data& data = _executor.getData();
 
     // For now, scan all values as the values that are skipped now may be expected during a next
@@ -333,7 +333,7 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
     return true;
 }
 
-bool StaticSweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
+bool SweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
     const Data& data = _executor.getData();
     int delta = atRight ? 1 : -1;
     DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
@@ -353,12 +353,12 @@ bool StaticSweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
     return true;
 }
 
-bool StaticSweepHangDetector::shouldCheckNow(bool loopContinues) {
+bool SweepHangDetector::shouldCheckNow(bool loopContinues) {
     // Should wait for the sweep-loop to finish
     return !loopContinues;
 }
 
-bool StaticSweepHangDetector::analyzeHangBehaviour() {
+bool SweepHangDetector::analyzeHangBehaviour() {
     const RunSummary& runSummary = _executor.getRunSummary();
 
     if (runSummary.getNumRunBlocks() <= 8) {
@@ -383,7 +383,7 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
     return true;
 }
 
-Trilian StaticSweepHangDetector::proofHang() {
+Trilian SweepHangDetector::proofHang() {
     const Data& data = _executor.getData();
     DataPointer dp1 = data.getDataPointer();
     DataPointer dp0 = dp1; // Initial value
@@ -420,11 +420,11 @@ Trilian StaticSweepHangDetector::proofHang() {
     return Trilian::YES;
 }
 
-void StaticSweepHangDetector::dump() const {
+void SweepHangDetector::dump() const {
     std::cout << *this << std::endl;
 }
 
-std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector) {
+std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
     os << "Loop #0" << std::endl;
     os << detector._transitionGroups[0] << std::endl;
 

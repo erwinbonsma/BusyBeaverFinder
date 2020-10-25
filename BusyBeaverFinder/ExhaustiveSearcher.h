@@ -22,7 +22,7 @@
 
 
 class HangDetector;
-class StaticHangDetector;
+class HangDetector;
 
 enum class SearchMode : char {
     FULL_TREE = 0,
@@ -73,7 +73,7 @@ class ExhaustiveSearcher : public ProgramExecutor {
 
     FastExecutor _fastExecutor;
 
-    StaticHangDetector* _staticHangDetector[4];
+    HangDetector* _hangDetectors[4];
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;

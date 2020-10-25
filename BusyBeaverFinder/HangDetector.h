@@ -1,13 +1,13 @@
 //
-//  StaticHangDetector.h
+//  HangDetector.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#ifndef StaticHangDetector_h
-#define StaticHangDetector_h
+#ifndef HangDetector_h
+#define HangDetector_h
 
 #include "Types.h"
 #include "ExhaustiveSearcher.h"
@@ -56,4 +56,4 @@ public:
     bool detectHang(bool loopContinues);
 };
 
-#endif /* StaticHangDetector_h */
+#endif /* HangDetector_h */

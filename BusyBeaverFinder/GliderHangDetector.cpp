@@ -1,27 +1,27 @@
 //
-//  StaticGliderHangDetector.cpp
+//  GliderHangDetector.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 06/02/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "StaticGliderHangDetector.h"
+#include "GliderHangDetector.h"
 
 #include <iostream>
 
 #include "InterpretedProgram.h"
 
-StaticGliderHangDetector::StaticGliderHangDetector(const ProgramExecutor& executor)
-    : StaticHangDetector(executor) {}
+GliderHangDetector::GliderHangDetector(const ProgramExecutor& executor)
+    : HangDetector(executor) {}
 
-bool StaticGliderHangDetector::shouldCheckNow(bool loopContinues) {
+bool GliderHangDetector::shouldCheckNow(bool loopContinues) {
     // Should wait for the glider-loop to finish
     return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
 }
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
-bool StaticGliderHangDetector::identifyLoopCounter() {
+bool GliderHangDetector::identifyLoopCounter() {
     const RunSummary& runSummary = _executor.getRunSummary();
     const InterpretedProgram& interpretedProgram = _executor.getInterpretedProgram();
 
@@ -44,7 +44,7 @@ bool StaticGliderHangDetector::identifyLoopCounter() {
 
 // Checks that loop changes two counters, the current loop counter (CC) which moves towards zero,
 // and the next counter (NC) which moves away from zero by a higher amount.
-bool StaticGliderHangDetector::isGliderLoop() {
+bool GliderHangDetector::isGliderLoop() {
     if (_loop.dataPointerDelta() != 0) {
         // The glider loop should be stationary
 
@@ -73,7 +73,7 @@ bool StaticGliderHangDetector::isGliderLoop() {
     return abs(_curCounterDelta) <= abs(_nxtCounterDelta);
 }
 
-bool StaticGliderHangDetector::analyzeLoop() {
+bool GliderHangDetector::analyzeLoop() {
     // Assume that the loop which just finished is the glider-loop
     const RunSummary& runSummary = _executor.getRunSummary();
 
@@ -95,7 +95,7 @@ bool StaticGliderHangDetector::analyzeLoop() {
     return true;
 }
 
-bool StaticGliderHangDetector::checkTransitionDeltas() {
+bool GliderHangDetector::checkTransitionDeltas() {
     int totalNxtDelta = 0;
     int totalNxtNxtDelta = 0;
     int minDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
@@ -168,7 +168,7 @@ bool StaticGliderHangDetector::checkTransitionDeltas() {
     return (_curCounterDpOffset + _transitionSequence.dataPointerDelta()) == shift;
 }
 
-bool StaticGliderHangDetector::analyzeTransitionSequence() {
+bool GliderHangDetector::analyzeTransitionSequence() {
     const RunSummary& runSummary = _executor.getRunSummary();
     const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
     const InterpretedProgram& interpretedProgram = _executor.getInterpretedProgram();
@@ -198,7 +198,7 @@ bool StaticGliderHangDetector::analyzeTransitionSequence() {
 
 
 
-bool StaticGliderHangDetector::analyzeHangBehaviour() {
+bool GliderHangDetector::analyzeHangBehaviour() {
     //std::cout <<  "Analysing" << std::endl;
     //_executor.getInterpretedProgram().dump();
     //_executor.dumpHangDetection();
@@ -214,7 +214,7 @@ bool StaticGliderHangDetector::analyzeHangBehaviour() {
     return true;
 }
 
-bool StaticGliderHangDetector::isBootstrapping() {
+bool GliderHangDetector::isBootstrapping() {
     const RunSummary& runSummary = _executor.getRunSummary();
 
     return (runSummary.getLoopIteration() < _numBootstrapCycles);
@@ -222,7 +222,7 @@ bool StaticGliderHangDetector::isBootstrapping() {
 
 // Checks that the transition sequence is identical each time. I.e. if it contains loops, their
 // iteration count is always fixed. This in turn means that it always does the same thing.
-bool StaticGliderHangDetector::transitionSequenceIsFixed() {
+bool GliderHangDetector::transitionSequenceIsFixed() {
     const RunSummary& runSummary = _executor.getRunSummary();
     const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
@@ -247,7 +247,7 @@ bool StaticGliderHangDetector::transitionSequenceIsFixed() {
 
 // Verify that the values ahead of the next counter match those made by the (accumulated) effect of
 // the transition sequence and are zero everywhere else.
-bool StaticGliderHangDetector::onlyZeroesAhead() {
+bool GliderHangDetector::onlyZeroesAhead() {
     const Data& data = _executor.getData();
     int shift = _nxtCounterDpOffset - _curCounterDpOffset;
     int delta = (shift > 0) ? 1 : -1;
@@ -283,7 +283,7 @@ bool StaticGliderHangDetector::onlyZeroesAhead() {
     return true;
 }
 
-Trilian StaticGliderHangDetector::proofHang() {
+Trilian GliderHangDetector::proofHang() {
     if (isBootstrapping()) {
         return Trilian::MAYBE;
     }

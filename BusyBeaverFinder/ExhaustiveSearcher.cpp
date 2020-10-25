@@ -13,9 +13,9 @@
 
 #include "Utils.h"
 
-#include "StaticGliderHangDetector.h"
-#include "StaticMetaPeriodicHangDetector.h"
-#include "StaticSweepHangDetector.h"
+#include "GliderHangDetector.h"
+#include "MetaPeriodicHangDetector.h"
+#include "SweepHangDetector.h"
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
@@ -37,10 +37,10 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 {
     initInstructionStack(width * height);
 
-    _staticHangDetector[0] = new StaticPeriodicHangDetector(*this);
-    _staticHangDetector[1] = new StaticMetaPeriodicHangDetector(*this);
-    _staticHangDetector[2] = new StaticGliderHangDetector(*this);
-    _staticHangDetector[3] = new StaticSweepHangDetector(*this);
+    _hangDetectors[0] = new PeriodicHangDetector(*this);
+    _hangDetectors[1] = new MetaPeriodicHangDetector(*this);
+    _hangDetectors[2] = new GliderHangDetector(*this);
+    _hangDetectors[3] = new SweepHangDetector(*this);
 
     _zArrayHelperBuf = nullptr;
 
@@ -60,7 +60,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
 
-    for (auto hangDetector : _staticHangDetector) {
+    for (auto hangDetector : _hangDetectors) {
         delete hangDetector;
     }
 
@@ -249,7 +249,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
     _runSummary[0].reset();
     _runSummary[1].reset();
 
-    for (auto hangDetector : _staticHangDetector) {
+    for (auto hangDetector : _hangDetectors) {
         hangDetector->reset();
     }
 
@@ -279,7 +279,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
 
         if (_runSummary[0].isInsideLoop()) {
             bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
-            for (auto hangDetector : _staticHangDetector) {
+            for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
                     _tracker->reportDetectedHang(hangDetector->hangType());
                     if (!_settings.testHangDetection) {

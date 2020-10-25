@@ -1,21 +1,21 @@
 //
-//  StaticPeriodicHangDetector.h
+//  PeriodicHangDetector.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#ifndef StaticPeriodicHangDetector_h
-#define StaticPeriodicHangDetector_h
+#ifndef PeriodicHangDetector_h
+#define PeriodicHangDetector_h
 
-#include "StaticHangDetector.h"
+#include "HangDetector.h"
 
 #include "ExhaustiveSearcher.h"
 #include "RunSummary.h"
 #include "LoopAnalysis.h"
 
-class StaticPeriodicHangDetector : public StaticHangDetector {
+class PeriodicHangDetector : public HangDetector {
 
     bool allValuesToBeConsumedAreBeZero();
 
@@ -39,11 +39,11 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticPeriodicHangDetector(const ProgramExecutor& executor);
+    PeriodicHangDetector(const ProgramExecutor& executor);
 
     HangType hangType() { return HangType::PERIODIC; }
 
     void reset();
 };
 
-#endif /* StaticPeriodicHangDetector_h */
+#endif /* PeriodicHangDetector_h */

@@ -1,24 +1,24 @@
 //
-//  StaticMetaPeriodicHangDetector.cpp
+//  MetaPeriodicHangDetector.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 18/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "StaticMetaPeriodicHangDetector.h"
+#include "MetaPeriodicHangDetector.h"
 
 #include <iostream>
 
-StaticMetaPeriodicHangDetector::StaticMetaPeriodicHangDetector(const ProgramExecutor& executor)
-    : StaticPeriodicHangDetector(executor) {}
+MetaPeriodicHangDetector::MetaPeriodicHangDetector(const ProgramExecutor& executor)
+    : PeriodicHangDetector(executor) {}
 
-bool StaticMetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
+bool MetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
     // Should wait for the inner-loop to finish
     return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
 }
 
-bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
+bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
     const RunSummary& runSummary = _executor.getRunSummary();
 
     // Points to the last run-block that is part of the meta-loop. Although it is not yet finalized,
@@ -64,7 +64,7 @@ bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
     return _loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
 }
 
-Trilian StaticMetaPeriodicHangDetector::proofHang() {
+Trilian MetaPeriodicHangDetector::proofHang() {
     int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
 
     if (loopLen % _loop.loopSize() != 0) {
@@ -73,11 +73,11 @@ Trilian StaticMetaPeriodicHangDetector::proofHang() {
         return Trilian::MAYBE;
     }
 
-    return StaticPeriodicHangDetector::proofHang();
+    return PeriodicHangDetector::proofHang();
 }
 
-void StaticMetaPeriodicHangDetector::reset() {
-    StaticPeriodicHangDetector::reset();
+void MetaPeriodicHangDetector::reset() {
+    PeriodicHangDetector::reset();
 
     _metaLoopStart = -1;
 }

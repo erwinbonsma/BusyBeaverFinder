@@ -1,28 +1,28 @@
 //
-//  StaticHangDetector.cpp
+//  HangDetector.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "StaticHangDetector.h"
+#include "HangDetector.h"
 
 #include <cassert>
 #include <iostream>
 
-StaticHangDetector::StaticHangDetector(const ProgramExecutor& executor) :
+HangDetector::HangDetector(const ProgramExecutor& executor) :
     _executor(executor)
 {
     reset();
 }
 
-void StaticHangDetector::reset() {
+void HangDetector::reset() {
     _lastCheckPoint = -1;
     _analysisCheckPoint = -1;
 }
 
-bool StaticHangDetector::detectHang(bool loopContinues) {
+bool HangDetector::detectHang(bool loopContinues) {
     if (!shouldCheckNow(loopContinues)) {
         return false;
     }

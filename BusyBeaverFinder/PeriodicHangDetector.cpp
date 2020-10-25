@@ -1,23 +1,23 @@
 //
-//  StaticPeriodicHangDetector.cpp
+//  PeriodicHangDetector.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "StaticPeriodicHangDetector.h"
+#include "PeriodicHangDetector.h"
 
 #include <iostream>
 
-StaticPeriodicHangDetector::StaticPeriodicHangDetector(const ProgramExecutor& executor)
-    : StaticHangDetector(executor) {}
+PeriodicHangDetector::PeriodicHangDetector(const ProgramExecutor& executor)
+    : HangDetector(executor) {}
 
-bool StaticPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
+bool PeriodicHangDetector::shouldCheckNow(bool loopContinues) {
     return loopContinues && _executor.getRunSummary().isAtEndOfLoop();
 }
 
-bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
+bool PeriodicHangDetector::analyzeHangBehaviour() {
     const RunSummary& runSummary = _executor.getRunSummary();
     const RunBlock* loopRunBlock = runSummary.getLastRunBlock();
 
@@ -26,7 +26,7 @@ bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
                              _loopStart, loopRunBlock->getLoopPeriod());
 }
 
-bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
+bool PeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
     const Data &data = _executor.getData();
 
     for (int i = _loop.loopSize(); --i >= 0; ) {
@@ -55,7 +55,7 @@ bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
     return true;
 }
 
-Trilian StaticPeriodicHangDetector::proofHangPhase1() {
+Trilian PeriodicHangDetector::proofHangPhase1() {
     int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
@@ -114,7 +114,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase1() {
     }
 }
 
-Trilian StaticPeriodicHangDetector::proofHangPhase2() {
+Trilian PeriodicHangDetector::proofHangPhase2() {
     int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
 
     if (loopLen >= _targetLoopLen) {
@@ -126,7 +126,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase2() {
     }
 }
 
-Trilian StaticPeriodicHangDetector::proofHang() {
+Trilian PeriodicHangDetector::proofHang() {
     if (_loopStart != _loopStartLastProof) {
         // Reset proof state
 
@@ -137,8 +137,8 @@ Trilian StaticPeriodicHangDetector::proofHang() {
     return _proofPhase == 1 ? proofHangPhase1() : proofHangPhase2();
 }
 
-void StaticPeriodicHangDetector::reset() {
-    StaticHangDetector::reset();
+void PeriodicHangDetector::reset() {
+    HangDetector::reset();
 
     _loopStartLastProof = -1;
 }

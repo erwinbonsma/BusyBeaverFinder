@@ -1,21 +1,21 @@
 //
-//  StaticGliderHangDetector.h
+//  GliderHangDetector.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 06/02/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#ifndef StaticGliderHangDetector_h
-#define StaticGliderHangDetector_h
+#ifndef GliderHangDetector_h
+#define GliderHangDetector_h
 
-#include "StaticHangDetector.h"
+#include "HangDetector.h"
 
 #include "LoopAnalysis.h"
 
 const int maxAheadOffset = 4;
 
-class StaticGliderHangDetector : public StaticHangDetector {
+class GliderHangDetector : public HangDetector {
 
     SequenceAnalysis _transitionSequence;
     LoopAnalysis _loop;
@@ -48,9 +48,9 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticGliderHangDetector(const ProgramExecutor& executor);
+    GliderHangDetector(const ProgramExecutor& executor);
 
     virtual HangType hangType() { return HangType::APERIODIC_GLIDER; }
 };
 
-#endif /* StaticGliderHangDetector_h */
+#endif /* GliderHangDetector_h */

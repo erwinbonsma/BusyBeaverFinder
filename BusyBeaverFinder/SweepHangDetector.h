@@ -1,15 +1,15 @@
 //
-//  StaticSweepHangDetector.h
+//  SweepHangDetector.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 17/10/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#ifndef StaticSweepHangDetector_h
-#define StaticSweepHangDetector_h
+#ifndef SweepHangDetector_h
+#define SweepHangDetector_h
 
-#include "StaticHangDetector.h"
+#include "HangDetector.h"
 
 #include "LoopAnalysis.h"
 #include <vector>
@@ -88,8 +88,8 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
 
-class StaticSweepHangDetector : public StaticHangDetector {
-    friend std::ostream &operator<<(std::ostream&, const StaticSweepHangDetector&);
+class SweepHangDetector : public HangDetector {
+    friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
     SweepTransitionAnalysis _transitionPool[MAX_UNIQUE_TRANSITIONS_PER_SWEEP];
     SweepTransitionGroup _transitionGroups[2];
@@ -115,13 +115,13 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticSweepHangDetector(const ProgramExecutor& executor);
+    SweepHangDetector(const ProgramExecutor& executor);
 
     virtual HangType hangType() { return HangType::REGULAR_SWEEP; }
 
     void dump() const;
 };
 
-std::ostream &operator<<(std::ostream &os, const StaticSweepHangDetector &detector);
+std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector);
 
-#endif /* StaticSweepHangDetector_h */
+#endif /* SweepHangDetector_h */
