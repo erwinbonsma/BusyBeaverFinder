@@ -12,6 +12,10 @@ void InterpretedProgram::dumpBlock(const ProgramBlock* block, std::ostream &os) 
     os << indexOf(block) << " (" << block->getStartIndex() << "): ";
     os << *block;
 
+    if (!block->isFinalized()) {
+        return;
+    }
+
     os << " => ";
 
     if (block->constZeroBlock() != nullptr) {

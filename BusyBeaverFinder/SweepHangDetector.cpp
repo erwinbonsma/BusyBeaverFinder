@@ -20,11 +20,12 @@ bool failed(const ProgramExecutor& executor) {
 
 bool failed(SweepTransitionGroup& tg) {
 //    std::cout << tg << std::endl;
+    numFailed++;
     return false;
 }
 
 
-bool SweepLoopAnalysis::isExitValue(int value) {
+bool SweepLoopAnalysis::isExitValue(int value) const {
     return std::find(_exitValues.begin(), _exitValues.end(), value) != _exitValues.end();
 }
 
@@ -133,6 +134,43 @@ bool SweepTransitionGroup::analyzeLoop(const RunBlock* runBlock, const ProgramEx
     return true;
 }
 
+SweepEndType SweepTransitionGroup::determineSweepEndType() {
+    bool exitToExit = false;
+    bool exitToNonExit = false;
+    bool nonExitToExit = false;
+
+    for (auto kv : _transitions) {
+        const SweepTransitionAnalysis *transition = kv.second;
+        int finalValue = transition->dataDeltas().deltaAt(0);
+
+        if (_loop.isExitValue(finalValue)) {
+            exitToExit = true;
+        } else {
+            exitToNonExit = true;
+
+            if (finalValue * _loop.deltaSign() < 0) {
+                // TODO? Also consider delta of other loop?
+                nonExitToExit = true;
+            }
+        }
+    }
+
+    if (!exitToExit && exitToNonExit && !nonExitToExit) {
+        return SweepEndType::STEADY_GROWTH;
+    }
+    if (exitToExit && !exitToNonExit) {
+        return SweepEndType::FIXED_POINT;
+    }
+    if (exitToExit && exitToNonExit && !nonExitToExit) {
+        return SweepEndType::IRREGULAR_GROWTH;
+    }
+    if (exitToNonExit && nonExitToExit) {
+        return SweepEndType::FIXED_GROWING;
+    }
+
+    return SweepEndType::UNSUPPORTED;
+}
+
 bool SweepTransitionGroup::analyzeGroup() {
 //    // Check there is a transition for each anytime-exit
 //    for (int i = _loop.loopSize(); --i >= 0; ) {
@@ -146,24 +184,12 @@ bool SweepTransitionGroup::analyzeGroup() {
 //        }
 //    }
 
-    _positionIsFixed = true;
-    _sweepDeltaSign = _loop.deltaSign();
-    // Check how the value that caused loop exit can be changed by any of the transition.
-    for (auto kv : _transitions) {
-        const SweepTransitionAnalysis *transition = kv.second;
-        int finalValue = transition->dataDeltas().deltaAt(0);
-
-        if (!_loop.isExitValue(finalValue)) {
-            _positionIsFixed = false;
-
-//            int sgn = sign(finalValue);
-//            if (_sweepDeltaSign != 0 && sgn != _sweepDeltaSign) {
-//                return false;
-//            }
-//            _sweepDeltaSign = sgn;
-        }
+    _sweepEndType = determineSweepEndType();
+    if (_sweepEndType == SweepEndType::UNSUPPORTED) {
+        return false;
     }
 
+    _sweepDeltaSign = _loop.deltaSign();
     _outsideDeltas.clear();
     for (auto kv : _transitions) {
         const SweepTransitionAnalysis *transition = kv.second;
@@ -171,25 +197,36 @@ bool SweepTransitionGroup::analyzeGroup() {
         for (const DataDelta& dd : transition->dataDeltas()) {
             if (dd.dpOffset() != 0) {
                 bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
+                int sgn = sign(dd.delta());
                 if (insideSweep) {
-                    int sgn = sign(dd.delta());
                     if (_sweepDeltaSign != 0 && sgn != _sweepDeltaSign) {
                         return failed(*this);
                     }
                     _sweepDeltaSign = sgn;
                 } else {
-                    if (_positionIsFixed) {
-                        // Check all deltas at specific offset have same sign
-                        int delta = _outsideDeltas.deltaAt(dd.dpOffset());
-                        if (delta == 0) {
-                            _outsideDeltas.addDelta(dd.dpOffset(), sign(dd.delta()));
-                        } else if (delta * dd.delta() < 0) {
-                            return failed(*this);
+                    switch (_sweepEndType) {
+                        case SweepEndType::FIXED_POINT: {
+                            // Check all deltas at specific offset have same sign
+                            int delta = _outsideDeltas.deltaAt(dd.dpOffset());
+                            if (delta == 0) {
+                                _outsideDeltas.addDelta(dd.dpOffset(), sgn);
+                            } else if (delta != sgn) {
+                                return failed(*this);
+                            }
+
+                            break;
                         }
-                    } else {
-                        // TODO: Support bigger extension of sweep and/or appendix
-                        // Should check that there are no discontinuities (possible exits)
-                        return failed(*this);
+                        case SweepEndType::FIXED_GROWING:
+                            if (!_loop.isExitValue(dd.delta())) {
+                                return failed(*this);
+                            }
+                            break;
+                        case SweepEndType::STEADY_GROWTH:
+                        case SweepEndType::IRREGULAR_GROWTH:
+                            // For now, assume only transition point extends the sweep sequence
+                            return failed(*this);
+                        case SweepEndType::UNSUPPORTED:
+                            assert(false);
                     }
                 }
             }
@@ -197,6 +234,40 @@ bool SweepTransitionGroup::analyzeGroup() {
     }
 
     return true;
+}
+
+Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
+    switch (_sweepEndType) {
+        case SweepEndType::FIXED_POINT:
+            // Check all outside deltas move values away from zero
+            for (const DataDelta &dd : _outsideDeltas) {
+                if (dd.delta() * data.valueAt(dp, dd.dpOffset()) < 0) {
+                    return Trilian::MAYBE;
+                }
+            }
+            break;
+        case SweepEndType::FIXED_GROWING: {
+            int delta = locatedAtRight() ? 1 : -1;
+            // Skip all appendix values
+            while (true) {
+                int val = data.valueAt(dp, delta);
+                if (val == 0 || !_loop.isExitValue(val)) {
+                    break;
+                }
+                dp += delta;
+            }
+        }
+            // Fall through
+        case SweepEndType::STEADY_GROWTH:
+        case SweepEndType::IRREGULAR_GROWTH:
+            if (!data.onlyZerosAhead(dp, locatedAtRight())) {
+                return Trilian::MAYBE;
+            }
+            break;
+        case SweepEndType::UNSUPPORTED:
+            assert(false);
+    }
+    return Trilian::YES;
 }
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
@@ -208,8 +279,14 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
         ++iter;
     }
 
-    os << "at right = " << group.locatedAtRight()
-    << ", is fixed = " << group.positionIsFixed();
+    os << "Type = ";
+    switch (group.endType()) {
+        case SweepEndType::STEADY_GROWTH: os << "Steady growth"; break;
+        case SweepEndType::IRREGULAR_GROWTH: os << "Irregular growth"; break;
+        case SweepEndType::FIXED_POINT: os << "Fixed point"; break;
+        case SweepEndType::FIXED_GROWING: os << "Fixed growing"; break;
+        case SweepEndType::UNSUPPORTED: os << "Unsupported"; break;
+    }
 
     return os;
 }
@@ -301,18 +378,35 @@ bool SweepHangDetector::analyzeTransitionGroups() {
     return true;
 }
 
-bool SweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop) {
+DataPointer SweepHangDetector::findAppendixStart(DataPointer dp,
+                                                 const SweepTransitionGroup &group) {
+    const Data& data = _executor.getData();
+    int delta = group.locatedAtRight() ? -1 : 1;
+
+    while (true) {
+        int val = data.valueAt(dp, delta);
+        if (val == 0 || !group.loop().isExitValue(val)) {
+            break;
+        }
+        dp += delta;
+    }
+
+    return dp;
+}
+
+bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     const Data& data = _executor.getData();
 
     // For now, scan all values as the values that are skipped now may be expected during a next
     // sweep.
-    // TODO: Make analysis smarter.
-    int delta = sign(sweepLoop.dataPointerDelta());
+    // TODO?: Make analysis smarter.
+    int delta = atRight ? -1 : 1;
 
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
-    SweepLoopAnalysis &loop0 = _transitionGroups[0].loop(), &loop1 = _transitionGroups[1].loop();
+    const SweepLoopAnalysis &loop0 = _transitionGroups[0].loop();
+    const SweepLoopAnalysis &loop1 = _transitionGroups[1].loop();
 
-    // DP is at the other side of the sweep. Find the other end of the sweep.
+    // DP is at one side of the sweep. Find the other end of the sweep.
     dp += delta;
     while (*dp) {
         if (loop0.isExitValue(*dp) || loop1.isExitValue(*dp)) {
@@ -326,26 +420,6 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sw
         }
 
         assert(dp != dpEnd); // Assumes abs(dataPointerDelta) == 1
-
-        dp += delta;
-    }
-
-    return true;
-}
-
-bool SweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
-    const Data& data = _executor.getData();
-    int delta = atRight ? 1 : -1;
-    DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
-
-    while (true) {
-        if (*dp) {
-            return failed(_executor);
-        }
-
-        if (dp == dpEnd) {
-            break;
-        }
 
         dp += delta;
     }
@@ -380,34 +454,35 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return failed(_executor);
     }
 
+//    _executor.getInterpretedProgram().dump();
+//    _executor.dumpExecutionState();
+//    dump();
+
     return true;
 }
 
 Trilian SweepHangDetector::proofHang() {
     const Data& data = _executor.getData();
     DataPointer dp1 = data.getDataPointer();
-    DataPointer dp0 = dp1; // Initial value
 
-    if (!scanSweepSequence(dp0, _transitionGroups[0].loop())) {
-        return Trilian::MAYBE;
+    data.dump();
+
+    DataPointer dp0 = dp1; // Initial value
+    if (_transitionGroups[1].endType() == SweepEndType::FIXED_GROWING) {
+        dp0 = findAppendixStart(dp0, _transitionGroups[1]);
     }
 
-    for (int i = 0; i < 2; ++i) {
-        SweepTransitionGroup &tg = _transitionGroups[i];
-        DataPointer dp = (i == 0) ? dp0 : dp1;
+    if (!scanSweepSequence(dp0, _transitionGroups[1].locatedAtRight())) {
+        return Trilian::MAYBE;
+    }
+    assert(dp0 != dp1);
 
-        if (tg.positionIsFixed()) {
-            // Check all outside deltas move values away from zero
-            for (const DataDelta &dd : tg.outsideDeltas()) {
-                if (dd.delta() * data.valueAt(dp, dd.dpOffset()) < 0) {
-                    return Trilian::MAYBE;
-                }
-            }
-        } else {
-            // Check all outside values are zero
-            if (!onlyZeroesAhead(dp, tg.locatedAtRight())) {
-                return Trilian::MAYBE;
-            }
+    for (int i = 0; i < 2; ++i) {
+        DataPointer dp = (i == 0) ? dp0 : dp1;
+        Trilian result = _transitionGroups[i].proofHang(dp, data);
+
+        if (result != Trilian::YES) {
+            return result;
         }
     }
 
@@ -426,10 +501,10 @@ void SweepHangDetector::dump() const {
 
 std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
     os << "Loop #0" << std::endl;
-    os << detector._transitionGroups[0] << std::endl;
+    os << detector._transitionGroups[0] << std::endl << std::endl;
 
     os << "Loop #1" << std::endl;
-    os << detector._transitionGroups[1] << std::endl;
+    os << detector._transitionGroups[1] << std::endl << std::endl;
 
     return os;
 }

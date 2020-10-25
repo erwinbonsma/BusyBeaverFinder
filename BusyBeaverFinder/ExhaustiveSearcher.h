@@ -20,8 +20,6 @@
 
 #include "ExitFinder.h"
 
-
-class HangDetector;
 class HangDetector;
 
 enum class SearchMode : char {
