@@ -9,8 +9,6 @@
 #ifndef StaticMetaPeriodicHangDetector_h
 #define StaticMetaPeriodicHangDetector_h
 
-#include <stdio.h>
-
 #include "StaticPeriodicHangDetector.h"
 
 class StaticMetaPeriodicHangDetector : public StaticPeriodicHangDetector {
@@ -22,7 +20,7 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticMetaPeriodicHangDetector(ExhaustiveSearcher& searcher);
+    StaticMetaPeriodicHangDetector(const ProgramExecutor& executor);
 
     void reset();
 };

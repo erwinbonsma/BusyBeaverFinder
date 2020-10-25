@@ -32,7 +32,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _program(width, height),
     _data(dataSize),
     _runSummary(),
-    _exitFinder(_program, _interpretedProgram),
+    _exitFinder(_program, _interpretedProgramBuilder),
     _fastExecutor(dataSize)
 {
     initInstructionStack(width * height);
@@ -123,17 +123,9 @@ void ExhaustiveSearcher::dumpSettings() {
     << std::endl;
 }
 
-void ExhaustiveSearcher::dumpHangDetection() {
+void ExhaustiveSearcher::dumpExecutionState() const {
     std::cout << "Num steps: " << _numSteps << std::endl;
-    _data.dump();
-
-    std::cout << "Run summary: ";
-    _runSummary[0].dump();
-    _runSummary[0].dumpCondensed();
-
-    std::cout << "Meta-run summary: ";
-    _runSummary[1].dump();
-    _runSummary[1].dumpCondensed();
+    ProgramExecutor::dumpExecutionState();
 }
 
 void ExhaustiveSearcher::dump() {
@@ -228,7 +220,7 @@ bool ExhaustiveSearcher::executeCurrentBlock() {
     }
 
     if (!_data.hasUndoCapacity()) {
-        _fastExecutor.execute(_interpretedProgram.getEntryBlock(), _settings.maxSteps);
+        _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(), _settings.maxSteps);
         return true;
     }
 
@@ -244,15 +236,15 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithBacktracking() {
         }
     }
 
-    _interpretedProgram.enterBlock(_block);
-    return _interpretedProgram.getStartProgramPointer(_block, _program);
+    _interpretedProgramBuilder.enterBlock(_block);
+    return _interpretedProgramBuilder.getStartProgramPointer(_block, _program);
 }
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
 //    _program.dump();
-//    _interpretedProgram.dump();
+//    _interpretedProgramBuilder.dump();
 
-    ProgramBlock* entryBlock = _interpretedProgram.getEntryBlock();
+    ProgramBlock* entryBlock = _interpretedProgramBuilder.getEntryBlock();
 
     _runSummary[0].reset();
     _runSummary[1].reset();
@@ -302,13 +294,13 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
         }
     }
 
-    _interpretedProgram.enterBlock(_block);
-    return _interpretedProgram.getStartProgramPointer(_block, _program);
+    _interpretedProgramBuilder.enterBlock(_block);
+    return _interpretedProgramBuilder.getStartProgramPointer(_block, _program);
 }
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     if (!_data.hasUndoCapacity()) {
-        _fastExecutor.execute(_interpretedProgram.getEntryBlock(), _settings.maxSteps);
+        _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(), _settings.maxSteps);
         return backtrackProgramPointer;
     }
 
@@ -323,7 +315,7 @@ void ExhaustiveSearcher::run(int depth) {
     DataOp* initialDataUndoP = _data.getUndoStackPointer();
     int initialSteps = _numSteps;
 
-    _interpretedProgram.push();
+    _interpretedProgramBuilder.push();
 
 //    _program.dump();
 //    std::cout << std::endl;
@@ -345,29 +337,29 @@ processInstruction:
                 switch (_pp.dir) {
                     case Dir::UP:
                         _data.inc();
-                        _interpretedProgram.setInstruction(true);
-                        _interpretedProgram.incAmount();
+                        _interpretedProgramBuilder.setInstruction(true);
+                        _interpretedProgramBuilder.incAmount();
                         break;
                     case Dir::DOWN:
                         _data.dec();
-                        _interpretedProgram.setInstruction(true);
-                        _interpretedProgram.decAmount();
+                        _interpretedProgramBuilder.setInstruction(true);
+                        _interpretedProgramBuilder.decAmount();
                         break;
                     case Dir::RIGHT:
                         if (! _data.shr()) {
                             _tracker->reportError();
                             goto backtrack;
                         }
-                        _interpretedProgram.setInstruction(false);
-                        _interpretedProgram.incAmount();
+                        _interpretedProgramBuilder.setInstruction(false);
+                        _interpretedProgramBuilder.incAmount();
                         break;
                     case Dir::LEFT:
                         if (! _data.shl()) {
                             _tracker->reportError();
                             goto backtrack;
                         }
-                        _interpretedProgram.setInstruction(false);
-                        _interpretedProgram.decAmount();
+                        _interpretedProgramBuilder.setInstruction(false);
+                        _interpretedProgramBuilder.decAmount();
                         break;
                 }
                 break;
@@ -377,8 +369,8 @@ processInstruction:
                 } else {
                     _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
                 }
-                if (_interpretedProgram.isInstructionSet()) {
-                    _block = _interpretedProgram.finalizeBlock(_pp.p);
+                if (_interpretedProgramBuilder.isInstructionSet()) {
+                    _block = _interpretedProgramBuilder.finalizeBlock(_pp.p);
 
                     // Check if it is possible to exit
                     if (
@@ -392,7 +384,7 @@ processInstruction:
                         }
                     }
 
-                    _block = _interpretedProgram.enterBlock(
+                    _block = _interpretedProgramBuilder.enterBlock(
                         _pp.p,
                         _data.val()==0 ? TurnDirection::COUNTERCLOCKWISE : TurnDirection::CLOCKWISE
                     );
@@ -407,7 +399,7 @@ processInstruction:
                 goto processInstruction;
         }
 
-        if (_interpretedProgram.incSteps() > 64) {
+        if (_interpretedProgramBuilder.incSteps() > 64) {
             _tracker->reportDetectedHang(HangType::NO_DATA_LOOP);
             if (!_settings.testHangDetection) {
                 goto backtrack;
@@ -428,7 +420,7 @@ processInstruction:
 backtrack:
     _data.undo(initialDataUndoP);
     _numSteps = initialSteps;
-    _interpretedProgram.pop();
+    _interpretedProgramBuilder.pop();
 }
 
 void ExhaustiveSearcher::search() {

@@ -9,8 +9,6 @@
 #ifndef StaticPeriodicHangDetector_h
 #define StaticPeriodicHangDetector_h
 
-#include <stdio.h>
-
 #include "StaticHangDetector.h"
 
 #include "ExhaustiveSearcher.h"
@@ -41,7 +39,7 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticPeriodicHangDetector(ExhaustiveSearcher& searcher);
+    StaticPeriodicHangDetector(const ProgramExecutor& executor);
 
     HangType hangType() { return HangType::PERIODIC; }
 

@@ -16,9 +16,9 @@
 // infinite recursion without explicitly checking if it has entered a loop.
 const int maxBacktrackDepth = 4;
 
-ExitFinder::ExitFinder(Program& program, InterpretedProgram& interpretedProgram) :
+ExitFinder::ExitFinder(Program& program, InterpretedProgramBuilder& interpretedProgramBuilder) :
     _program(program),
-    _interpretedProgram(interpretedProgram)
+    _interpretedProgramBuilder(interpretedProgramBuilder)
 {
     for (int i = 0; i < maxProgramBlocks; i++) {
         _visited[i] = false;
@@ -93,13 +93,13 @@ bool ExitFinder::isReachable(ProgramBlock* block) {
 }
 
 bool ExitFinder::finalizeBlock(ProgramBlock* block) {
-    _interpretedProgram.enterBlock(block);
+    _interpretedProgramBuilder.enterBlock(block);
 
-    ProgramPointer pp = _interpretedProgram.getStartProgramPointer(block, _program);
+    ProgramPointer pp = _interpretedProgramBuilder.getStartProgramPointer(block, _program);
     int steps = 0;
 
     // Rotation delta
-    int delta = (_interpretedProgram.startTurnDirectionForBlock(block) == TurnDirection::CLOCKWISE)
+    int delta = (_interpretedProgramBuilder.startTurnDirectionForBlock(block) == TurnDirection::CLOCKWISE)
         ? 1 : 3;
 
     while (1) {
@@ -110,20 +110,20 @@ processInstruction:
             case Ins::DATA:
                 switch (pp.dir) {
                     case Dir::UP:
-                        _interpretedProgram.setInstruction(true);
-                        _interpretedProgram.incAmount();
+                        _interpretedProgramBuilder.setInstruction(true);
+                        _interpretedProgramBuilder.incAmount();
                         break;
                     case Dir::DOWN:
-                        _interpretedProgram.setInstruction(true);
-                        _interpretedProgram.decAmount();
+                        _interpretedProgramBuilder.setInstruction(true);
+                        _interpretedProgramBuilder.decAmount();
                         break;
                     case Dir::RIGHT:
-                        _interpretedProgram.setInstruction(false);
-                        _interpretedProgram.incAmount();
+                        _interpretedProgramBuilder.setInstruction(false);
+                        _interpretedProgramBuilder.incAmount();
                         break;
                     case Dir::LEFT:
-                        _interpretedProgram.setInstruction(false);
-                        _interpretedProgram.decAmount();
+                        _interpretedProgramBuilder.setInstruction(false);
+                        _interpretedProgramBuilder.decAmount();
                         break;
                 }
                 break;
@@ -134,8 +134,8 @@ processInstruction:
                 // Escaped from loop. So cannot conclude that program hangs
                 return false;
             case Ins::TURN:
-                if (_interpretedProgram.isInstructionSet()) {
-                    _interpretedProgram.finalizeBlock(pp.p);
+                if (_interpretedProgramBuilder.isInstructionSet()) {
+                    _interpretedProgramBuilder.finalizeBlock(pp.p);
                     return true;
                 } else {
                     pp.dir = (Dir)(((int)pp.dir + delta) % 4);
@@ -151,9 +151,9 @@ processInstruction:
             //
             // Note, setting an instruction so that the next TURN will finalize the block. This
             // ensures that the block is finalized at a TURN, as it should.
-            _interpretedProgram.setInstruction(true);
+            _interpretedProgramBuilder.setInstruction(true);
         }
-        _interpretedProgram.incSteps();
+        _interpretedProgramBuilder.incSteps();
         pp.p = insP;
     }
 }

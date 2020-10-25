@@ -10,21 +10,21 @@
 
 #include <iostream>
 
-StaticMetaPeriodicHangDetector::StaticMetaPeriodicHangDetector(ExhaustiveSearcher& searcher)
-    : StaticPeriodicHangDetector(searcher) {}
+StaticMetaPeriodicHangDetector::StaticMetaPeriodicHangDetector(const ProgramExecutor& executor)
+    : StaticPeriodicHangDetector(executor) {}
 
 bool StaticMetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
     // Should wait for the inner-loop to finish
-    return !loopContinues && _searcher.getMetaRunSummary().isInsideLoop();
+    return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
 }
 
 bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
-    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _executor.getRunSummary();
 
     // Points to the last run-block that is part of the meta-loop. Although it is not yet finalized,
     // as it is a loop which will not continue, we know it will.
     int endIndex = runSummary.getNumRunBlocks() - 1;
-    int metaLoopPeriod = _searcher.getMetaRunSummary().getLoopPeriod();
+    int metaLoopPeriod = _executor.getMetaRunSummary().getLoopPeriod();
 
     // Determine how many of the last iterations of the meta-loop were exactly the same (i.e. all
     // inner-loops ran for the same duration).
@@ -61,11 +61,11 @@ bool StaticMetaPeriodicHangDetector::analyzeHangBehaviour() {
                   + runSummary.getRunBlockLength(endRunBlockIndex);
     int loopPeriod = loopEnd - _loopStart;
 
-    return _loop.analyzeLoop(_searcher.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
+    return _loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
 }
 
 Trilian StaticMetaPeriodicHangDetector::proofHang() {
-    int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
+    int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
 
     if (loopLen % _loop.loopSize() != 0) {
         // The meta loop may contain multiple loops, which may trigger an invocation of proofHang

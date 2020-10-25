@@ -11,8 +11,8 @@
 #include <cassert>
 #include <iostream>
 
-StaticHangDetector::StaticHangDetector(ExhaustiveSearcher& searcher) :
-    _searcher(searcher)
+StaticHangDetector::StaticHangDetector(const ProgramExecutor& executor) :
+    _executor(executor)
 {
     reset();
 }

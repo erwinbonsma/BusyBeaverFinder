@@ -11,20 +11,21 @@
 
 #include "Data.h"
 #include "RunSummary.h"
-#include "ProgramBlock.h"
+#include "InterpretedProgram.h"
 
 /* Abstract data type. Interface to hang detectors
  */
 class ProgramExecutor {
 
 public:
+    virtual const InterpretedProgram& getInterpretedProgram() const = 0;
+
     virtual const Data& getData() const = 0;
 
     virtual const RunSummary& getRunSummary() const = 0;
     virtual const RunSummary& getMetaRunSummary() const = 0;
 
-//    virtual ProgramBlock* getProgramBlock(int index) const = 0;
-//    virtual int numProgramBlocks() const = 0;
+    virtual void dumpExecutionState() const;
 };
 
 #endif /* ProgramExecutor_h */

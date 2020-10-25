@@ -9,8 +9,6 @@
 #ifndef StaticHangDetector_h
 #define StaticHangDetector_h
 
-#include <stdio.h>
-
 #include "Types.h"
 #include "ExhaustiveSearcher.h"
 
@@ -22,14 +20,14 @@ class StaticHangDetector {
     int _analysisCheckPoint;
 
 protected:
-    ExhaustiveSearcher& _searcher;
+    const ProgramExecutor& _executor;
 
     // Returns the current check point, typically the program-block or run-block of either the run
     // summary or meta-run summary. Once the detector checked for a hang (and this checked failed)
     // it will only check again after the check point has changed. So the checkpoint should only
     // change when the next check might pass. What a suitable checkpoint is depends on the type of
     // hang that is being detected.
-    int currentCheckPoint() { return _searcher.getRunSummary().getNumRunBlocks(); }
+    int currentCheckPoint() { return _executor.getRunSummary().getNumRunBlocks(); }
 
     virtual bool shouldCheckNow(bool loopContinues) = 0;
 
@@ -43,7 +41,7 @@ protected:
     virtual Trilian proofHang() = 0;
 
 public:
-    StaticHangDetector(ExhaustiveSearcher& searcher);
+    StaticHangDetector(const ProgramExecutor& executor);
     virtual ~StaticHangDetector() {}
 
     virtual HangType hangType() = 0;

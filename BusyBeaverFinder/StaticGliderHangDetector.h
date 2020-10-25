@@ -9,8 +9,6 @@
 #ifndef StaticGliderHangDetector_h
 #define StaticGliderHangDetector_h
 
-#include <stdio.h>
-
 #include "StaticHangDetector.h"
 
 #include "LoopAnalysis.h"
@@ -50,7 +48,7 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticGliderHangDetector(ExhaustiveSearcher& searcher);
+    StaticGliderHangDetector(const ProgramExecutor& executor);
 
     virtual HangType hangType() { return HangType::APERIODIC_GLIDER; }
 };

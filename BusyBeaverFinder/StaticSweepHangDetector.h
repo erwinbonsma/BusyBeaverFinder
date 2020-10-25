@@ -30,7 +30,7 @@ public:
     int deltaSign() const { return _deltaSign; }
     bool isExitValue(int value);
 
-    bool analyzeSweepLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyzeSweepLoop(const RunBlock* runBlock, const ProgramExecutor& executor);
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
@@ -39,7 +39,7 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 class SweepTransitionAnalysis : public SequenceAnalysis {
 public:
     bool analyzeSweepTransition(const RunBlock* runBlock, bool atRight,
-                                ExhaustiveSearcher& searcher);
+                                const ProgramExecutor& executor);
 
     void dump() const;
 };
@@ -82,7 +82,7 @@ public:
         _transitions[instructionIndex] = sta;
     }
 
-    bool analyzeLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher);
+    bool analyzeLoop(const RunBlock* runBlock, const ProgramExecutor& executor);
     bool analyzeGroup();
 };
 
@@ -115,7 +115,7 @@ protected:
     Trilian proofHang();
 
 public:
-    StaticSweepHangDetector(ExhaustiveSearcher& searcher);
+    StaticSweepHangDetector(const ProgramExecutor& executor);
 
     virtual HangType hangType() { return HangType::REGULAR_SWEEP; }
 

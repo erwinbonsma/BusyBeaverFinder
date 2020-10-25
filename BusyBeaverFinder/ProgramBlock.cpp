@@ -53,11 +53,16 @@ void ProgramBlock::dump() const {
 }
 
 std::ostream &operator<<(std::ostream &os, const ProgramBlock &pb) {
-    if (pb.getInstructionAmount() >= 0) {
-        os << (pb.isDelta() ? "INC " : "SHR ") << pb.getInstructionAmount();
+    if (!pb.isFinalized()) {
+        os << "-";
     } else {
-        os << (pb.isDelta() ? "DEC " : "SHL ") << -pb.getInstructionAmount();
+        if (pb.getInstructionAmount() >= 0) {
+            os << (pb.isDelta() ? "INC " : "SHR ") << pb.getInstructionAmount();
+        } else {
+            os << (pb.isDelta() ? "DEC " : "SHL ") << -pb.getInstructionAmount();
+        }
     }
 
     return os;
 }
+

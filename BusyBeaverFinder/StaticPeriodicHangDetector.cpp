@@ -10,24 +10,24 @@
 
 #include <iostream>
 
-StaticPeriodicHangDetector::StaticPeriodicHangDetector(ExhaustiveSearcher& searcher)
-    : StaticHangDetector(searcher) {}
+StaticPeriodicHangDetector::StaticPeriodicHangDetector(const ProgramExecutor& executor)
+    : StaticHangDetector(executor) {}
 
 bool StaticPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
-    return loopContinues && _searcher.getRunSummary().isAtEndOfLoop();
+    return loopContinues && _executor.getRunSummary().isAtEndOfLoop();
 }
 
 bool StaticPeriodicHangDetector::analyzeHangBehaviour() {
-    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _executor.getRunSummary();
     const RunBlock* loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();
-    return _loop.analyzeLoop(_searcher.getInterpretedProgram(), runSummary,
+    return _loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary,
                              _loopStart, loopRunBlock->getLoopPeriod());
 }
 
 bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
-    const Data &data = _searcher.getData();
+    const Data &data = _executor.getData();
 
     for (int i = _loop.loopSize(); --i >= 0; ) {
         if (_loop.exit(i).firstForValue) {
@@ -44,8 +44,7 @@ bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
                 p += _loop.dataPointerDelta();
                 count++;
                 if (count > 32) {
-                    _searcher.getInterpretedProgram().dump();
-                    _searcher.dumpHangDetection();
+                    _executor.dumpExecutionState();
                     _loop.dump();
                     assert(false);
                 }
@@ -57,7 +56,7 @@ bool StaticPeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
 }
 
 Trilian StaticPeriodicHangDetector::proofHangPhase1() {
-    int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
+    int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
         return Trilian::MAYBE;
@@ -74,7 +73,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase1() {
         for (int i = _loop.loopSize(); --i >= 0; ) {
             const LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
-                const Data &data = _searcher.getData();
+                const Data &data = _executor.getData();
                 int value = *(data.getDataPointer() + exit.exitCondition.dpOffset());
                 if (exit.exitCondition.isTrueForValue(value)) {
                     return Trilian::NO;
@@ -116,7 +115,7 @@ Trilian StaticPeriodicHangDetector::proofHangPhase1() {
 }
 
 Trilian StaticPeriodicHangDetector::proofHangPhase2() {
-    int loopLen = _searcher.getRunSummary().getNumProgramBlocks() - _loopStart;
+    int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
 
     if (loopLen >= _targetLoopLen) {
         // The loop ran the required number of extra iterations without exiting. This means it

@@ -12,13 +12,9 @@
 #include "Utils.h"
 
 int numFailed = 0;
-bool failed(ExhaustiveSearcher& searcher) {
+bool failed(const ProgramExecutor& executor) {
     numFailed++;
-//    searcher.dumpHangDetection();
-//    searcher.getProgram().dumpWeb();
-//    //searcher.getInterpretedProgram().dump();
-//    searcher.getRunSummary().dump();
-//    searcher.getMetaRunSummary().dump();
+    // executor.dumpExecutionState();
     return false;
 }
 
@@ -32,22 +28,23 @@ bool SweepLoopAnalysis::isExitValue(int value) {
     return std::find(_exitValues.begin(), _exitValues.end(), value) != _exitValues.end();
 }
 
-bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher) {
-    if (!analyzeLoop(searcher.getInterpretedProgram(),
-                     searcher.getRunSummary(),
+bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
+                                         const ProgramExecutor& executor) {
+    if (!analyzeLoop(executor.getInterpretedProgram(),
+                     executor.getRunSummary(),
                      runBlock->getStartIndex(),
                      runBlock->getLoopPeriod())) {
-        return failed(searcher);
+        return failed(executor);
     }
 
 //    if (abs(dataPointerDelta()) != 1) {
 //        // TODO: Support loops that move more than one cell per iteration
-//        return failed(searcher);
+//        return failed(executor);
 //    }
 
 //    if (numBootstrapCycles() > 0) {
 //        // TODO: Support loops with bootstrap
-//        return failed(searcher);
+//        return failed(executor);
 //    }
 
     _deltaSign = 0;
@@ -56,7 +53,7 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock, ExhaustiveSea
 
         if (_deltaSign != 0 && _deltaSign != sgn) {
             // TODO?: Support sweep loops that make changes in opposite directions
-            return failed(searcher);
+            return failed(executor);
         }
         _deltaSign = sgn;
     }
@@ -68,7 +65,7 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock, ExhaustiveSea
 
             if (!exitsOnZero(i)) {
                 // TODO?: Support loops that exit on non-zero
-                return failed(searcher);
+                return failed(executor);
             }
         }
     }
@@ -94,16 +91,16 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
 }
 
 bool SweepTransitionAnalysis::analyzeSweepTransition(const RunBlock* runBlock, bool atRight,
-                                                     ExhaustiveSearcher& searcher) {
-    const RunSummary& runSummary = searcher.getRunSummary();
-    InterpretedProgram& interpretedProgram = searcher.getInterpretedProgram();
+                                                     const ProgramExecutor& executor) {
+    const RunSummary& runSummary = executor.getRunSummary();
+    const InterpretedProgram& interpretedProgram = executor.getInterpretedProgram();
 
     // The instructions comprising the (last) transition sequence
     int startIndex = runBlock->getStartIndex();
     int len = (runBlock + 1)->getStartIndex() - startIndex;
 
     if (!analyzeSequence(interpretedProgram, runSummary, startIndex, len)) {
-        return failed(searcher);
+        return failed(executor);
     }
 
     return true;
@@ -119,14 +116,14 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionGroup::analyzeLoop(const RunBlock* runBlock, ExhaustiveSearcher& searcher) {
+bool SweepTransitionGroup::analyzeLoop(const RunBlock* runBlock, const ProgramExecutor& executor) {
     _loopRunBlock = runBlock;
 
     if (!runBlock->isLoop()) {
         return false;
     }
 
-    if (!_loop.analyzeSweepLoop(_loopRunBlock, searcher)) {
+    if (!_loop.analyzeSweepLoop(_loopRunBlock, executor)) {
         return false;
     }
 
@@ -217,32 +214,32 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
     return os;
 }
 
-StaticSweepHangDetector::StaticSweepHangDetector(ExhaustiveSearcher& searcher)
-    : StaticHangDetector(searcher) {}
+StaticSweepHangDetector::StaticSweepHangDetector(const ProgramExecutor& executor)
+    : StaticHangDetector(executor) {}
 
 bool StaticSweepHangDetector::analyzeLoops() {
     // Assume that the loop which just finished is one of the sweep loops
-    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _executor.getRunSummary();
     SweepTransitionGroup *group = _transitionGroups;
 
     const RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
-    if (!group[1].analyzeLoop(loop1RunBlock, _searcher)) {
+    if (!group[1].analyzeLoop(loop1RunBlock, _executor)) {
         return false;
     }
-    if (!group[0].analyzeLoop(loop1RunBlock - 2, _searcher)) {
+    if (!group[0].analyzeLoop(loop1RunBlock - 2, _executor)) {
         return false;
     }
 
     // Both loops should move in opposite directions
     if (group[0].locatedAtRight() == group[1].locatedAtRight()) {
-        return failed(_searcher);
+        return failed(_executor);
     }
 
     return true;
 }
 
 bool StaticSweepHangDetector::analyzeTransitions() {
-    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _executor.getRunSummary();
     int i = runSummary.getNumRunBlocks() - 2;
     int numTransitions = 0, numUniqueTransitions = 0;
 
@@ -268,7 +265,7 @@ bool StaticSweepHangDetector::analyzeTransitions() {
             assert(numUniqueTransitions < MAX_UNIQUE_TRANSITIONS_PER_SWEEP);
             SweepTransitionAnalysis *sa = &_transitionPool[numUniqueTransitions++];
 
-            if (!sa->analyzeSweepTransition(transitionBlock, tg.locatedAtRight(), _searcher)) {
+            if (!sa->analyzeSweepTransition(transitionBlock, tg.locatedAtRight(), _executor)) {
                 return false;
             }
 
@@ -281,7 +278,7 @@ bool StaticSweepHangDetector::analyzeTransitions() {
 
     if (numTransitions < 4) {
         // The pattern is too short
-        return failed(_searcher);
+        return failed(_executor);
     }
 
     return true;
@@ -297,7 +294,7 @@ bool StaticSweepHangDetector::analyzeTransitionGroups() {
     SweepTransitionGroup *groups = _transitionGroups;
     if (groups[0].sweepDeltaSign() * groups[1].sweepDeltaSign() == -1) {
         // TODO?: Support loops that makes changes to the sequence in opposite directions
-        return failed(_searcher);
+        return failed(_executor);
     }
     _sweepDeltaSign = groups[(int)(groups[0].sweepDeltaSign() == 0)].sweepDeltaSign();
 
@@ -305,7 +302,7 @@ bool StaticSweepHangDetector::analyzeTransitionGroups() {
 }
 
 bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalysis &sweepLoop) {
-    const Data& data = _searcher.getData();
+    const Data& data = _executor.getData();
 
     // For now, scan all values as the values that are skipped now may be expected during a next
     // sweep.
@@ -325,7 +322,7 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
 
         if (_sweepDeltaSign * sign(*dp) < 0) {
             // The sweep makes changes to the sequence that move some values towards zero
-            return failed(_searcher);
+            return failed(_executor);
         }
 
         assert(dp != dpEnd); // Assumes abs(dataPointerDelta) == 1
@@ -337,13 +334,13 @@ bool StaticSweepHangDetector::scanSweepSequence(DataPointer &dp, SweepLoopAnalys
 }
 
 bool StaticSweepHangDetector::onlyZeroesAhead(DataPointer &dp, bool atRight) {
-    const Data& data = _searcher.getData();
+    const Data& data = _executor.getData();
     int delta = atRight ? 1 : -1;
     DataPointer dpEnd = atRight ? data.getMaxDataP() : data.getMinDataP();
 
     while (true) {
         if (*dp) {
-            return failed(_searcher);
+            return failed(_executor);
         }
 
         if (dp == dpEnd) {
@@ -362,7 +359,7 @@ bool StaticSweepHangDetector::shouldCheckNow(bool loopContinues) {
 }
 
 bool StaticSweepHangDetector::analyzeHangBehaviour() {
-    const RunSummary& runSummary = _searcher.getRunSummary();
+    const RunSummary& runSummary = _executor.getRunSummary();
 
     if (runSummary.getNumRunBlocks() <= 8) {
         // The run should contain two full sweeps preceded by a loop: L1 (T1 L0 T0 L1) (T1 L0 T0 L1)
@@ -380,14 +377,14 @@ bool StaticSweepHangDetector::analyzeHangBehaviour() {
     }
 
     if (!analyzeTransitionGroups()) {
-        return failed(_searcher);
+        return failed(_executor);
     }
 
     return true;
 }
 
 Trilian StaticSweepHangDetector::proofHang() {
-    const Data& data = _searcher.getData();
+    const Data& data = _executor.getData();
     DataPointer dp1 = data.getDataPointer();
     DataPointer dp0 = dp1; // Initial value
 
@@ -414,11 +411,11 @@ Trilian StaticSweepHangDetector::proofHang() {
         }
     }
 
-//    _searcher.getRunSummary().dump();
-//    _searcher.getMetaRunSummary().dump();
+//    _executor.getRunSummary().dump();
+//    _executor.getMetaRunSummary().dump();
 //    dump();
-//    _searcher.getData().dump();
-//    _searcher.getInterpretedProgram().dump();
+//    _executor.getData().dump();
+//    _executor.getInterpretedProgram().dump();
 
     return Trilian::YES;
 }

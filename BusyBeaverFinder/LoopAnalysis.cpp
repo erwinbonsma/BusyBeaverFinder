@@ -92,7 +92,7 @@ bool LoopAnalysis::exitsOnZero(int index) {
     const ProgramBlock* curBlock = _programBlocks[index];
     const ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
 
-    return curBlock->nonZeroBlock() == nxtBlock;
+    return curBlock->constNonZeroBlock() == nxtBlock;
 }
 
 int LoopAnalysis::numDataDeltas() const {
@@ -349,7 +349,7 @@ bool LoopAnalysis::analyzeLoop(const ProgramBlock* entryBlock, int numBlocks) {
     return SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
 }
 
-bool LoopAnalysis::analyzeLoop(InterpretedProgram& program, const RunSummary& runSummary,
+bool LoopAnalysis::analyzeLoop(const InterpretedProgram& program, const RunSummary& runSummary,
                                int startIndex, int period) {
     if (period > maxLoopSize) {
         // This loop is too large to analyse
@@ -357,9 +357,9 @@ bool LoopAnalysis::analyzeLoop(InterpretedProgram& program, const RunSummary& ru
     }
 
     _programBlocks.clear();
-    for (int i = 0; i < period; ++i) {
-        _programBlocks.push_back(program.getEntryBlock()
-                                 + runSummary.programBlockIndexAt(startIndex + i));
+    for (int i = startIndex, end = startIndex + period; i < end; ++i) {
+        int pb_index = runSummary.programBlockIndexAt(i);
+        _programBlocks.push_back(program.programBlockAt(pb_index));
     }
 
     analyzeSequence();

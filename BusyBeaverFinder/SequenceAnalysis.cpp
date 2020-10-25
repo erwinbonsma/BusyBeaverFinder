@@ -55,12 +55,12 @@ bool SequenceAnalysis::analyzeSequence(const ProgramBlock* entryBlock, int numBl
     return true;
 }
 
-bool SequenceAnalysis::analyzeSequence(InterpretedProgram& program, const RunSummary& runSummary,
-                                       int startIndex, int length) {
+bool SequenceAnalysis::analyzeSequence(const InterpretedProgram& program,
+                                       const RunSummary& runSummary, int startIndex, int length) {
     _programBlocks.clear();
-    for (int i = 0; i < length; ++i) {
-        _programBlocks.push_back(program.getEntryBlock()
-                                 + runSummary.programBlockIndexAt(startIndex + i));
+    for (int i = startIndex, end = startIndex + length; i < end; ++i) {
+        int pb_index = runSummary.programBlockIndexAt(i);
+        _programBlocks.push_back(program.programBlockAt(pb_index));
     }
 
     analyzeSequence();

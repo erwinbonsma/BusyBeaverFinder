@@ -13,7 +13,7 @@
 
 #include "Program.h"
 
-#include "InterpretedProgram.h"
+#include "InterpretedProgramBuilder.h"
 #include "FastExecutor.h"
 
 #include "ProgressTracker.h"
@@ -69,7 +69,7 @@ class ExhaustiveSearcher : public ProgramExecutor {
     Ins* _instructionStack;
 
     // An interpreted representation of the program
-    InterpretedProgram _interpretedProgram;
+    InterpretedProgramBuilder _interpretedProgramBuilder;
 
     FastExecutor _fastExecutor;
 
@@ -109,11 +109,22 @@ public:
     void setProgressTracker(ProgressTracker* tracker);
 
     Program& getProgram() { return _program; }
+
+    //----------------------------------------------------------------------------------------------
+    // Implement ProgramExecutor interface
+
+    const InterpretedProgram& getInterpretedProgram() const override {
+        return _interpretedProgramBuilder;
+    }
+
     const Data& getData() const override { return _data; }
-    InterpretedProgram& getInterpretedProgram() { return _interpretedProgram; }
 
     const RunSummary& getRunSummary() const override { return _runSummary[0]; }
     const RunSummary& getMetaRunSummary() const override { return _runSummary[1]; }
+
+    void dumpExecutionState() const override;
+
+    //----------------------------------------------------------------------------------------------
 
     int getNumSteps() { return _numSteps; }
 
@@ -133,7 +144,6 @@ public:
     bool instructionStackEquals(Ins* reference);
 
     void dumpSettings();
-    void dumpHangDetection();
     void dump();
 };
 

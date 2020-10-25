@@ -56,10 +56,13 @@ public:
     ProgramBlock* popEntry() { return _entries[--_numEntries]; }
 
     int numEntryBlocks() const { return _numEntries; }
-    ProgramBlock* entryBlock(int index) { return _entries[index]; }
+    const ProgramBlock* constEntryBlock(int index) const { return _entries[index]; }
+    const ProgramBlock* constZeroBlock() const { return _zeroBlock; }
+    const ProgramBlock* constNonZeroBlock() const { return _nonZeroBlock; }
 
-    ProgramBlock* zeroBlock() const { return _zeroBlock; }
-    ProgramBlock* nonZeroBlock() const { return _nonZeroBlock; }
+    ProgramBlock* entryBlock(int index) { return _entries[index]; }
+    ProgramBlock* zeroBlock() { return _zeroBlock; }
+    ProgramBlock* nonZeroBlock() { return _nonZeroBlock; }
 
     void dump() const;
 };
