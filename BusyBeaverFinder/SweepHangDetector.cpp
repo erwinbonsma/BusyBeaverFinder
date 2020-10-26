@@ -26,7 +26,11 @@ bool failed(SweepTransitionGroup& tg) {
 
 
 bool SweepLoopAnalysis::isExitValue(int value) const {
-    return std::find(_exitValues.begin(), _exitValues.end(), value) != _exitValues.end();
+    return _exitMap.find(value) != _exitMap.end();
+}
+
+int SweepLoopAnalysis::numberOfExitsForValue(int value) const {
+    return (int)_exitMap.count(value);
 }
 
 bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
@@ -59,10 +63,10 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
         _deltaSign = sgn;
     }
 
-    _exitValues.clear();
+    _exitMap.clear();
     for (int i = loopSize(); --i >= 0; ) {
         if (exit(i).exitWindow == ExitWindow::ANYTIME) {
-            _exitValues.push_back(exit(i).exitCondition.value());
+            _exitMap.insert({exit(i).exitCondition.value(), i});
 
             if (!exitsOnZero(i)) {
                 // TODO?: Support loops that exit on non-zero
@@ -78,13 +82,13 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
     os << (const LoopAnalysis&)sta;
     os << "Exit values: ";
     bool isFirst = true;
-    for (int value : sta._exitValues) {
+    for (auto pair : sta._exitMap) {
         if (isFirst) {
             isFirst = false;
         } else {
             os << ", ";
         }
-        os << value;
+        os << pair.first << "@" << pair.second;
     }
     os << std::endl;
 
@@ -134,7 +138,20 @@ bool SweepTransitionGroup::analyzeLoop(const RunBlock* runBlock, const ProgramEx
     return true;
 }
 
-SweepEndType SweepTransitionGroup::determineSweepEndType() {
+int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) {
+    int count = 0;
+
+    for (auto kv : _transitions) {
+        int exitInstruction = kv.first;
+        if (_loop.exit(exitInstruction).exitCondition.isTrueForValue(value)) {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
+bool SweepTransitionGroup::determineSweepEndType() {
     bool exitToExit = false;
     bool exitToNonExit = false;
     bool nonExitToExit = false;
@@ -142,11 +159,32 @@ SweepEndType SweepTransitionGroup::determineSweepEndType() {
     for (auto kv : _transitions) {
         const SweepTransitionAnalysis *transition = kv.second;
         int finalValue = transition->dataDeltas().deltaAt(0);
+        int exitCount = _loop.numberOfExitsForValue(finalValue);
 
-        if (_loop.isExitValue(finalValue)) {
+        if (exitCount > 0) {
+            // The value that caused the loop to exit and continue at the given transition, is
+            // converted (by the transition) to another value that causes a loop exit (in a later
+            // sweep).
             exitToExit = true;
+
+            int numTransitions = numberOfTransitionsForExitValue(finalValue);
+            if (numTransitions != exitCount) {
+                // Not all possible exits are (yet) followed by a transition that continues the
+                // sweep. We can therefore not yet conclude this is a hang.
+                return failed(*this);
+            }
         } else {
+            // This transition extends the sequence. It results in a value that does not cause the
+            // loop to exit in a future sweep.
             exitToNonExit = true;
+
+            // Also verify that it cannot cause the loop sweeping in the other direction to exit.
+            // Note: although it was followed by a successful execution of the loop at least once
+            // already, this does not proof it cannot cause that loop to exit. It could be that the
+            // value was not yet seen by the instruction whose exit it can cause.
+            if (_sibling->loop().isExitValue(finalValue)) {
+                return failed(*this);
+            }
 
             if (finalValue * _loop.deltaSign() < 0) {
                 // TODO? Also consider delta of other loop?
@@ -155,20 +193,36 @@ SweepEndType SweepTransitionGroup::determineSweepEndType() {
         }
     }
 
+    // When abs(delta DP) > 1, not only change at DP is relevant. See e.g. FakeSweep.
+    // TODO: Extend recognition accordingly.
+
     if (!exitToExit && exitToNonExit && !nonExitToExit) {
-        return SweepEndType::STEADY_GROWTH;
-    }
-    if (exitToExit && !exitToNonExit) {
-        return SweepEndType::FIXED_POINT;
-    }
-    if (exitToExit && exitToNonExit && !nonExitToExit) {
-        return SweepEndType::IRREGULAR_GROWTH;
-    }
-    if (exitToNonExit && nonExitToExit) {
-        return SweepEndType::FIXED_GROWING;
+        _sweepEndType = SweepEndType::STEADY_GROWTH;
+    } else if (exitToExit && !exitToNonExit) {
+        _sweepEndType = SweepEndType::FIXED_POINT;
+    } else if (exitToExit && exitToNonExit && !nonExitToExit) {
+        _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+    } else if (exitToNonExit && nonExitToExit) {
+        _sweepEndType = SweepEndType::FIXED_GROWING;
+    } else {
+        // Unsupported sweep end type
+        return false;
     }
 
-    return SweepEndType::UNSUPPORTED;
+    bool zeroValueShouldContinueSweep = (
+        _sweepEndType == SweepEndType::STEADY_GROWTH ||
+        _sweepEndType == SweepEndType::IRREGULAR_GROWTH ||
+        _sweepEndType == SweepEndType::FIXED_GROWING
+    );
+    if (zeroValueShouldContinueSweep) {
+        // A zero value should always ensure a reversal of the sweep. Check if this is so.
+        int numZeroExits = _loop.numberOfExitsForValue(0);
+        if (numZeroExits == 0 || numberOfTransitionsForExitValue(0) != numZeroExits) {
+            return failed(*this);
+        }
+    }
+
+    return true;
 }
 
 bool SweepTransitionGroup::analyzeGroup() {
@@ -184,8 +238,7 @@ bool SweepTransitionGroup::analyzeGroup() {
 //        }
 //    }
 
-    _sweepEndType = determineSweepEndType();
-    if (_sweepEndType == SweepEndType::UNSUPPORTED) {
+    if (!determineSweepEndType()) {
         return false;
     }
 
@@ -225,8 +278,6 @@ bool SweepTransitionGroup::analyzeGroup() {
                         case SweepEndType::IRREGULAR_GROWTH:
                             // For now, assume only transition point extends the sweep sequence
                             return failed(*this);
-                        case SweepEndType::UNSUPPORTED:
-                            assert(false);
                     }
                 }
             }
@@ -264,8 +315,6 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
                 return Trilian::MAYBE;
             }
             break;
-        case SweepEndType::UNSUPPORTED:
-            assert(false);
     }
     return Trilian::YES;
 }
@@ -285,14 +334,15 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
         case SweepEndType::IRREGULAR_GROWTH: os << "Irregular growth"; break;
         case SweepEndType::FIXED_POINT: os << "Fixed point"; break;
         case SweepEndType::FIXED_GROWING: os << "Fixed growing"; break;
-        case SweepEndType::UNSUPPORTED: os << "Unsupported"; break;
     }
 
     return os;
 }
 
 SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
-    : HangDetector(executor) {}
+: HangDetector(executor) {
+    _transitionGroups[0].initSibling(&_transitionGroups[1]);
+    _transitionGroups[1].initSibling(&_transitionGroups[0]);}
 
 bool SweepHangDetector::analyzeLoops() {
     // Assume that the loop which just finished is one of the sweep loops
@@ -335,7 +385,7 @@ bool SweepHangDetector::analyzeTransitions() {
         }
 
         int loopLen = runSummary.getRunBlockLength(i - 1);
-        int exitInstruction = loopLen % loopBlock->getLoopPeriod();
+        int exitInstruction = (loopLen - 1) % loopBlock->getLoopPeriod();
 
         if (!tg.hasTransitionForExit(exitInstruction)) {
             // This is the first transition that follows the given loop exit
@@ -446,9 +496,14 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
+//    _executor.getInterpretedProgram().dump();
+//    _executor.dumpExecutionState();
+
     if (!analyzeTransitions()) {
         return false;
     }
+
+    //((const ExhaustiveSearcher &)_executor).getProgram().dumpWeb();
 
     if (!analyzeTransitionGroups()) {
         return failed(_executor);
@@ -465,7 +520,7 @@ Trilian SweepHangDetector::proofHang() {
     const Data& data = _executor.getData();
     DataPointer dp1 = data.getDataPointer();
 
-    data.dump();
+//    data.dump();
 
     DataPointer dp0 = dp1; // Initial value
     if (_transitionGroups[1].endType() == SweepEndType::FIXED_GROWING) {

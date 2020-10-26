@@ -82,7 +82,8 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
         REQUIRE(tracker.getTotalSuccess() == 1);
     }
     SECTION( "FakeSweeper" ) {
-        // Program that is wrongly reported as hanging by the new Sweep Hang detector
+        // Program that was wrongly reported as hanging by an earlier version of the Sweep Hang
+        // detector
         Ins resumeFrom[] = {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,

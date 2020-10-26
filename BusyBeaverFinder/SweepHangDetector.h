@@ -42,9 +42,7 @@ enum class SweepEndType : int {
      * the next time. The appendix can also grow over time. However, the side of the appendix that
      * is attached to the body of the sweep has a fixed position.
      */
-    FIXED_GROWING,
-
-    UNSUPPORTED,
+    FIXED_GROWING
 };
 
 class SweepLoopAnalysis : public LoopAnalysis {
@@ -54,11 +52,16 @@ class SweepLoopAnalysis : public LoopAnalysis {
     // the sign of all deltas match.
     int _deltaSign;
 
-    std::vector<int> _exitValues;
+    // Map from exit value to the instruction in the loop that can cause this exit. Only anytime
+    // exits are considered. Nevertheless, there may be more than one possible exit for a given
+    // value. This is the case when the loop moves more than one cell each iteration, i.e.
+    // abs(dataPointerDelta()) > 1.
+    std::multimap<int, int> _exitMap;
 
 public:
     int deltaSign() const { return _deltaSign; }
     bool isExitValue(int value) const;
+    int numberOfExitsForValue(int value) const;
 
     bool analyzeSweepLoop(const RunBlock* runBlock, const ProgramExecutor& executor);
 };
@@ -79,9 +82,12 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
 class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
+    const SweepTransitionGroup *_sibling;
+
     SweepLoopAnalysis _loop;
     const RunBlock* _loopRunBlock;
 
+    // Map from index of loop exit instruction to transition that follows it
     std::map<int, SweepTransitionAnalysis*> _transitions;
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
@@ -89,9 +95,12 @@ class SweepTransitionGroup {
 
     DataDeltas _outsideDeltas;
 
-    SweepEndType determineSweepEndType();
+    int numberOfTransitionsForExitValue(int value);
+    bool determineSweepEndType();
 
 public:
+    void initSibling(const SweepTransitionGroup *sibling) { _sibling = sibling; }
+
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
 
