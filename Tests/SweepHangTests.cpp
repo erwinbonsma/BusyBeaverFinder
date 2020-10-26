@@ -635,4 +635,23 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
+    SECTION( "6x6-SweepWithTwoFixedTurningPoints") {
+        // Sweep with two fixed turning points. One sweep loops moves two data cells each iteration.
+        // Its starting position on the data tape (modulus two) determines at which of these two
+        // fixed points the sweep ends.
+        //
+        //     * * *
+        //   * _ o o *
+        //   _ _ _ *
+        // * o o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
 }
