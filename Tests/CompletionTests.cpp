@@ -106,6 +106,7 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {
     SearchSettings settings = searcher.getSettings();
     settings.maxHangDetectionSteps = 1000000;
     settings.maxSteps = settings.maxHangDetectionSteps;
+    settings.undoCapacity = settings.maxSteps;
     searcher.configure(settings);
 
     SECTION( "BB 7x7 #117273" ) {
@@ -273,8 +274,9 @@ void twoShotSearch(ExhaustiveSearcher& searcher, Ins* resumeStack, int numExpect
     searcher.findOne(resumeStack);
 
     if (tracker->getTotalLateEscapes() == 1) {
+        assert(false); // Flawed test design? Somehow never triggered
         SearchSettings settings = searcher.getSettings();
-        settings.maxHangDetectionSteps = settings.maxSteps; // Disable hang detection
+        settings.maxHangDetectionSteps = 0; // Disable hang detection
         searcher.configure(settings);
 
         searcher.findOne(resumeStack);
@@ -291,7 +293,8 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 1000000;
+    settings.maxHangDetectionSteps = 100000;
+    settings.undoCapacity = settings.maxHangDetectionSteps;
     settings.maxSteps = 10000000;
     searcher.configure(settings);
 
