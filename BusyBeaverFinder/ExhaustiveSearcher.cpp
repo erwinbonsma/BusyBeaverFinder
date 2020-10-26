@@ -224,7 +224,6 @@ bool ExhaustiveSearcher::executeCurrentBlock() {
         return true;
     }
 
-
     _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
     return false;
 }

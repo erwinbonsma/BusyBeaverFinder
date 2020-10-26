@@ -37,7 +37,7 @@ void ProgressTracker::report() {
 //    _searcher.getProgram().dump();
 //    _searcher.getInterpretedProgram().dump();
 //    _searcher.getProgram().dumpWeb();
-//    _searcher.dumpHangDetection();
+//    _searcher.dumpExecutionState();
 
 //    if (_searcher.atTargetProgram()) {
 //        std::cout << "Target program generated" << std::endl;
@@ -198,8 +198,7 @@ void ProgressTracker::dumpStats() {
     << ", Hangs=" << getTotalDetectedHangs() << "/" << getTotalHangs()
     << ", Fast execs=" << getTotalLateEscapes() << "/" << getTotalFastExecutions()
     << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
-    << ", Hang detection limits=" << _maxHangDetectAttempts << " attempts/"
-    << _maxStepsUntilHangDetection << " steps"
+    << ", Max steps until hang detected=" << _maxStepsUntilHangDetection << " steps"
     << std::endl;
 }
 

@@ -43,7 +43,6 @@ class ProgressTracker {
     Program _bestProgram;
 
     // Stats on hang-detection speed and effectiveness
-    int _maxHangDetectAttempts = 0;
     int _maxStepsUntilHangDetection = 0;
 
     void report();
