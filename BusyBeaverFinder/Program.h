@@ -25,29 +25,31 @@ class Program {
     // Instruction array
     Ins _instructions[programStorageSize];
 
-    InstructionPointer getInstructionP(int col, int row) {
+    InstructionPointer getInstructionP(int col, int row) const {
         return InstructionPointer { .col = col, .row = row };
     }
-    Ins getInstruction(int col, int row);
+    Ins getInstruction(int col, int row) const;
 
 public:
     Program(int width, int height);
 
-    void clone(Program& dest);
+    void clone(Program& dest) const;
 
-    int getWidth() { return _width; }
-    int getHeight() { return _height; }
+    int getWidth() const { return _width; }
+    int getHeight() const { return _height; }
 
+    const Ins* getInstructionBuffer() const { return _instructions; }
     Ins* getInstructionBuffer() { return _instructions; }
+
     InstructionPointer getStartProgramPointer() {
         return InstructionPointer { .col = 0, .row = -1 };
     }
 
-    int indexFor(InstructionPointer insP);
+    int indexFor(InstructionPointer insP) const;
 
     void setInstruction(InstructionPointer insP, Ins ins) { _instructions[indexFor(insP)] = ins; }
     void clearInstruction(InstructionPointer insP) { _instructions[indexFor(insP)] = Ins::UNSET; }
-    Ins getInstruction(InstructionPointer insP) { return _instructions[indexFor(insP)]; }
+    Ins getInstruction(InstructionPointer insP) const { return _instructions[indexFor(insP)]; }
 
     /* Returns the number of possible programs in the search space that this program represents.
      * The summed total over all programs visited can be used to get an indication of the search
@@ -65,9 +67,9 @@ public:
      */
     ulonglong getEquivalenceNumber();
 
-    void dump();
-    void dumpWeb();
-    void dump(InstructionPointer insP);
+    void dump() const;
+    void dumpWeb() const;
+    void dump(InstructionPointer insP) const;
 };
 
 #endif /* Program_h */

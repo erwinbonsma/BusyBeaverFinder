@@ -34,16 +34,16 @@ Program::Program(int width, int height) {
     }
 }
 
-int Program::indexFor(InstructionPointer insP) {
+int Program::indexFor(InstructionPointer insP) const {
     return (insP.col + 1) + (insP.row + 1) * (maxWidth + 1);
 }
 
-Ins Program::getInstruction(int col, int row) {
+Ins Program::getInstruction(int col, int row) const {
     return _instructions[(col + 1) + (row + 1) * (maxWidth + 1)];
 }
 
-void Program::clone(Program& dest) {
-    Ins* ppSrc = getInstructionBuffer();
+void Program::clone(Program& dest) const {
+    const Ins* ppSrc = getInstructionBuffer();
     Ins* ppDst = dest.getInstructionBuffer();
     for (int i = programStorageSize; --i >= 0; ) {
         *ppDst++ = *ppSrc++;
@@ -80,7 +80,7 @@ ulonglong Program::getEquivalenceNumber() {
     return num;
 }
 
-void Program::dump() {
+void Program::dump() const {
     for (int y = _height; --y >= 0; ) {
         for (int x = 0; x < _width; x++) {
             std::cout << " " << ins_chars[(int)getInstruction(x, y)];
@@ -89,7 +89,7 @@ void Program::dump() {
     }
 }
 
-void Program::dumpWeb() {
+void Program::dumpWeb() const {
     for (int y = _height; --y >= 0; ) {
         for (int x = 0; x < _width; x++) {
             std::cout << web_chars[(int)getInstruction(x, y)];
@@ -99,7 +99,7 @@ void Program::dumpWeb() {
 }
 
 
-void Program::dump(InstructionPointer insP) {
+void Program::dump(InstructionPointer insP) const {
     char sepChar = ' ';
     for (int row = _height; --row >= 0; ) {
         for (int col = 0; col < _width; col++) {

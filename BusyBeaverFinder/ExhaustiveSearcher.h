@@ -106,7 +106,7 @@ public:
     ProgressTracker* getProgressTracker() { return _tracker; }
     void setProgressTracker(ProgressTracker* tracker);
 
-    Program& getProgram() { return _program; }
+    const Program& getProgram() const { return _program; }
 
     //----------------------------------------------------------------------------------------------
     // Implement ProgramExecutor interface

@@ -79,7 +79,7 @@ void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile
     }
 
     Ins* resumeStack = nullptr;
-    Program& program = searcher.getProgram();
+    const Program& program = searcher.getProgram();
     int maxSize = program.getWidth() * program.getHeight();
 
     std::string line;
