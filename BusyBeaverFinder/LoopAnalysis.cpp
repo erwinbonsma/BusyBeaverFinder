@@ -92,7 +92,7 @@ bool LoopAnalysis::exitsOnZero(int index) {
     const ProgramBlock* curBlock = _programBlocks[index];
     const ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
 
-    return curBlock->constNonZeroBlock() == nxtBlock;
+    return curBlock->nonZeroBlock() == nxtBlock;
 }
 
 int LoopAnalysis::numDataDeltas() const {
