@@ -186,8 +186,11 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 return failed(*this);
             }
 
-            if (finalValue * _loop.deltaSign() < 0) {
-                // TODO? Also consider delta of other loop?
+            int sgn = sign(finalValue);
+            if (sgn != 0 && (sgn == -_loop.deltaSign() || sgn == -_sibling->_loop.deltaSign())) {
+                // Although it cannot directly cause the loop to exit, it is modified by the sweeps
+                // towards zero, which will likely cause it to exit the loop again.
+                // TODO: Refine this check
                 nonExitToExit = true;
             }
         }
