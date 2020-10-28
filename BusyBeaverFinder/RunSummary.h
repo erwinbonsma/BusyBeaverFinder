@@ -138,11 +138,10 @@ public:
     bool hasSpaceRemaining() const { return _runBlockHistoryP < _runBlockHistoryThresholdP; }
 
     int getNumProgramBlocks() const { return (int)(_programBlockHistoryP - _programBlockHistory); }
-    int getNumRunBlocks() const { return (int)(_runBlockHistoryP - _runBlockHistory); }
-
     ProgramBlockIndex programBlockIndexAt(int index) const { return _programBlockHistory[index]; }
     ProgramBlockIndex getLastProgramBlockIndex() const { return *(_programBlockHistoryP - 1); }
 
+    int getNumRunBlocks() const { return (int)(_runBlockHistoryP - _runBlockHistory); }
     const RunBlock* runBlockAt(int index) const { return _runBlockHistory + index; }
     const RunBlock* getLastRunBlock() const { return (_runBlockHistoryP - 1); }
 

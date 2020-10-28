@@ -68,11 +68,12 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 
-// TODO: Remove if not needed anymore
 class SweepTransitionAnalysis : public SequenceAnalysis {
 public:
-    bool analyzeSweepTransition(const RunBlock* runBlock, bool atRight,
-                                const ProgramExecutor& executor);
+    // The indexes are run block indices. The end index is exclusive.
+    bool analyzeSweepTransition(int startIndex, int endIndex, const ProgramExecutor& executor);
+
+    bool transitionEquals(int startIndex, int endIndex, const ProgramExecutor& executor) const;
 
     void dump() const;
 };
@@ -116,14 +117,18 @@ public:
     const SweepLoopAnalysis& loop() const { return _loop; }
     const RunBlock* loopRunBlock() { return _loopRunBlock; }
 
-    bool hasTransitionForExit(int instructionIndex) {
+    bool hasTransitionForExit(int instructionIndex) const {
         return _transitions.find(instructionIndex) != _transitions.end();
+    }
+    const SweepTransitionAnalysis* transitionForExit(int instructionIndex) const {
+        auto result = _transitions.find(instructionIndex);
+        return (result != _transitions.end()) ? result->second : nullptr;
     }
     void addTransitionForExit(SweepTransitionAnalysis *sta, int instructionIndex) {
         _transitions[instructionIndex] = sta;
     }
 
-    bool analyzeLoop(const RunBlock* runBlock, const ProgramExecutor& executor);
+    bool analyzeLoop(int runBlockIndex, const ProgramExecutor& executor);
     bool analyzeGroup();
 
     Trilian proofHang(DataPointer dp, const Data& data);
@@ -139,7 +144,11 @@ class SweepHangDetector : public HangDetector {
 
     int _sweepDeltaSign;
 
-    // Analysis
+    /* Analysis */
+    // Returns run block index of the transition that precedes the given sweep loop. If there is
+    // no transition between subsequent sweep loops, it returns sweepLoopRunBlockIndex.
+    int findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const;
+
     bool analyzeLoops();
     bool analyzeTransitions();
     bool analyzeTransitionGroups();

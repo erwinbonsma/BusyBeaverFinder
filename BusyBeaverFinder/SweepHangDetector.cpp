@@ -11,6 +11,9 @@
 #include <iostream>
 #include "Utils.h"
 
+const int MAX_ITERATIONS_TRANSITION_LOOPS = 3;
+const int MIN_ITERATIONS_LAST_SWEEP_LOOP = 5;
+
 int numFailed = 0;
 bool failed(const ProgramExecutor& executor) {
     numFailed++;
@@ -95,17 +98,39 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionAnalysis::analyzeSweepTransition(const RunBlock* runBlock, bool atRight,
+bool SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
                                                      const ProgramExecutor& executor) {
     const RunSummary& runSummary = executor.getRunSummary();
     const InterpretedProgram& interpretedProgram = executor.getInterpretedProgram();
 
-    // The instructions comprising the (last) transition sequence
-    int startIndex = runBlock->getStartIndex();
-    int len = (runBlock + 1)->getStartIndex() - startIndex;
+    // The instructions comprising the transition sequence
+    int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
+    int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
 
-    if (!analyzeSequence(interpretedProgram, runSummary, startIndex, len)) {
+    if (!analyzeSequence(interpretedProgram, runSummary, pbStart, numProgramBlocks)) {
         return failed(executor);
+    }
+
+    return true;
+}
+
+bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
+                                               const ProgramExecutor& executor) const {
+    const RunSummary& runSummary = executor.getRunSummary();
+    const InterpretedProgram& program = executor.getInterpretedProgram();
+
+    // The instructions comprising the transition sequence
+    int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
+    int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
+
+    if (numProgramBlocks != sequenceSize()) {
+        return false;
+    }
+
+    for (int i = numProgramBlocks; --i >= 0; ) {
+        if (program.indexOf(programBlockAt(i)) != runSummary.programBlockIndexAt(pbStart + i)) {
+            return false;
+        }
     }
 
     return true;
@@ -121,12 +146,8 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionGroup::analyzeLoop(const RunBlock* runBlock, const ProgramExecutor& executor) {
-    _loopRunBlock = runBlock;
-
-    if (!runBlock->isLoop()) {
-        return false;
-    }
+bool SweepTransitionGroup::analyzeLoop(int runBlockIndex, const ProgramExecutor& executor) {
+    _loopRunBlock = executor.getRunSummary().runBlockAt(runBlockIndex);
 
     if (!_loop.analyzeSweepLoop(_loopRunBlock, executor)) {
         return false;
@@ -347,16 +368,48 @@ SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
     _transitionGroups[0].initSibling(&_transitionGroups[1]);
     _transitionGroups[1].initSibling(&_transitionGroups[0]);}
 
+int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {
+    const RunSummary& runSummary = _executor.getRunSummary();
+    int startIndex = sweepLoopRunBlockIndex;
+
+    while (startIndex > 0) {
+        int nextIndex = startIndex - 1;
+        const RunBlock* runBlock = runSummary.runBlockAt(nextIndex);
+        if (runBlock->isLoop()) {
+            int iterations = runSummary.getRunBlockLength(nextIndex) / runBlock->getLoopPeriod();
+
+            if (iterations > MAX_ITERATIONS_TRANSITION_LOOPS) {
+                // This loop is too big to be included in the transition
+                break;
+            }
+        }
+
+        startIndex = nextIndex;
+    }
+
+    return startIndex;
+}
+
 bool SweepHangDetector::analyzeLoops() {
-    // Assume that the loop which just finished is one of the sweep loops
     const RunSummary& runSummary = _executor.getRunSummary();
     SweepTransitionGroup *group = _transitionGroups;
 
-    const RunBlock *loop1RunBlock = runSummary.getLastRunBlock();
-    if (!group[1].analyzeLoop(loop1RunBlock, _executor)) {
+    // Assume that the loop which just finished is one of the sweep loops
+    if (runSummary.getLoopIteration() < MIN_ITERATIONS_LAST_SWEEP_LOOP) {
+        return failed(_executor);
+    }
+    int runBlockIndexLoop1 = runSummary.getNumRunBlocks() - 1;
+    if (!group[1].analyzeLoop(runBlockIndexLoop1, _executor)) {
         return false;
     }
-    if (!group[0].analyzeLoop(loop1RunBlock - 2, _executor)) {
+
+    int runBlockIndexTransition0 = findPrecedingTransitionStart(runBlockIndexLoop1);
+    if (runBlockIndexTransition0 == 0) {
+        // There is no sweep loop preceding the transition
+        return failed(_executor);
+    }
+    int runBlockIndexLoop0 = runBlockIndexTransition0 - 1;
+    if (!group[0].analyzeLoop(runBlockIndexLoop0, _executor)) {
         return false;
     }
 
@@ -370,43 +423,54 @@ bool SweepHangDetector::analyzeLoops() {
 
 bool SweepHangDetector::analyzeTransitions() {
     const RunSummary& runSummary = _executor.getRunSummary();
-    int i = runSummary.getNumRunBlocks() - 2;
-    int numTransitions = 0, numUniqueTransitions = 0;
+    int prevLoopIndex = runSummary.getNumRunBlocks() - 1;
+    int numSweeps = 0, numUniqueTransitions = 0;
 
-    while (i > 0) {
-        const RunBlock* transitionBlock = runSummary.runBlockAt(i);
-        const RunBlock* loopBlock = runSummary.runBlockAt(i - 1);
-        int j = numTransitions % 2;
-        SweepTransitionGroup &tg = _transitionGroups[j];
-
-        if (
-            !loopBlock->isLoop() ||
-            loopBlock->getSequenceIndex() != tg.loopRunBlock()->getSequenceIndex()
-        ) {
-            // Loops do not follow expected sweep pattern
+    while (prevLoopIndex > 0) {
+        int transitionStartIndex = findPrecedingTransitionStart(prevLoopIndex);
+        if (transitionStartIndex == 0) {
+            // No more run blocks remain
             break;
         }
 
-        int loopLen = runSummary.getRunBlockLength(i - 1);
-        int exitInstruction = (loopLen - 1) % loopBlock->getLoopPeriod();
+        int loopIndex = transitionStartIndex - 1;
+        const RunBlock* loopBlock = runSummary.runBlockAt(loopIndex);
+        assert(loopBlock->isLoop());
 
-        if (!tg.hasTransitionForExit(exitInstruction)) {
+        int j = numSweeps % 2;
+        SweepTransitionGroup &tg = _transitionGroups[j];
+
+        if (loopBlock->getSequenceIndex() != tg.loopRunBlock()->getSequenceIndex()) {
+            // Sequence does not follow expected sweep pattern anymore
+            break;
+        }
+
+        int loopLen = runSummary.getRunBlockLength(loopIndex);
+        int exitInstruction = (loopLen - 1) % loopBlock->getLoopPeriod();
+        const SweepTransitionAnalysis* sta = tg.transitionForExit(exitInstruction);
+        if (sta != nullptr) {
+            // Check that the transition is identical
+            if (!sta->transitionEquals(transitionStartIndex, prevLoopIndex, _executor)) {
+                // TODO: Or should we break here, to cope with start-up effects?
+                return false;
+            }
+        } else {
             // This is the first transition that follows the given loop exit
             assert(numUniqueTransitions < MAX_UNIQUE_TRANSITIONS_PER_SWEEP);
             SweepTransitionAnalysis *sa = &_transitionPool[numUniqueTransitions++];
 
-            if (!sa->analyzeSweepTransition(transitionBlock, tg.locatedAtRight(), _executor)) {
+            if (!sa->analyzeSweepTransition(transitionStartIndex, prevLoopIndex, _executor)) {
                 return false;
             }
 
             tg.addTransitionForExit(sa, exitInstruction);
         }
 
-        i -= 2;
-        numTransitions++;
+        prevLoopIndex = loopIndex;
+        numSweeps++;
     }
 
-    if (numTransitions < 4) {
+    if (numSweeps < 4) {
         // The pattern is too short
         return failed(_executor);
     }
