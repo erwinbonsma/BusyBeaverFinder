@@ -142,9 +142,9 @@ void ExhaustiveSearcher::branch(int depth) {
     ProgramPointer pp0 = _pp;
     InstructionPointer insP = nextInstructionPointer(_pp);
     bool resuming = *_resumeFrom != Ins::UNSET;
-    bool backtracking = (
-        _searchMode != SearchMode::FIND_ONE &&
-        (_searchMode != SearchMode::SUB_TREE || !resuming)
+    bool backtracking = !(
+        _searchMode == SearchMode::FIND_ONE ||
+        (_searchMode == SearchMode::SUB_TREE && resuming)
     );
     _data.setEnableUndo(backtracking);
 
