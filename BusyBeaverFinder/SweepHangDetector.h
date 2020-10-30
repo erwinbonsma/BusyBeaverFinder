@@ -45,12 +45,31 @@ enum class SweepEndType : int {
     FIXED_GROWING
 };
 
+enum class SweepValueChangeType : int {
+    // The sweep loop does not change values
+    NO_CHANGE,
+
+    // Each value is changed by the same amount
+    UNIFORM_CHANGE,
+
+    // There are multiple changes, of different amounts, but all with the same sign
+    MULTIPLE_ALIGNED_CHANGES,
+
+    // There are multiple changes, of different amounts, and with different signs
+    MULTIPLE_OPPOSING_CHANGES,
+};
+
 class SweepLoopAnalysis : public LoopAnalysis {
     friend std::ostream &operator<<(std::ostream&, const SweepLoopAnalysis&);
 
-    // If the loop makes any changes, this gives the sign of the delta. For now it is assumed that
-    // the sign of all deltas match.
-    int _deltaSign;
+    SweepValueChangeType _sweepValueChangeType;
+
+    // If the loop makes any changes, this represents it.
+    // - UNIFORM_CHANGE: This is the exact (and only) change
+    // - MULTIPLE_ALIGNED_CHANGES: This is one of the changes. Other changes have the same sign
+    // - MULTIPLE_OPPOSING_CHANGES: This is one of the changes (but its value is not useful for
+    //   further analysis)
+    int _sweepValueChange;
 
     // Map from exit value to the instruction in the loop that can cause this exit. Only anytime
     // exits are considered. Nevertheless, there may be more than one possible exit for a given
@@ -58,10 +77,16 @@ class SweepLoopAnalysis : public LoopAnalysis {
     // abs(dataPointerDelta()) > 1.
     std::multimap<int, int> _exitMap;
 
+    bool _requiresFixedInput;
+
 public:
-    int deltaSign() const { return _deltaSign; }
+    SweepValueChangeType sweepValueChangeType() const { return _sweepValueChangeType; }
+    int sweepValueChange() const { return _sweepValueChange; }
+
     bool isExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
+
+    bool requiresFixedInput() const { return _requiresFixedInput; }
 
     bool analyzeSweepLoop(const RunBlock* runBlock, const ProgramExecutor& executor);
 };

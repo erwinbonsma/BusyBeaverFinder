@@ -25,7 +25,9 @@ void SequenceAnalysis::analyzeSequence() {
     _effectiveResult.clear();
 
     // Determine the intermediate results and final results of a single loop iteration
-    _minDp = _programBlocks[0]->isDelta() ? 0 : _programBlocks[0]->getInstructionAmount();
+    _minDp =
+        (sequenceSize() == 0 || _programBlocks[0]->isDelta())
+        ? 0 : _programBlocks[0]->getInstructionAmount();
     _maxDp = _minDp;
 
     for (const ProgramBlock* programBlock : _programBlocks) {

@@ -11,7 +11,7 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
+TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]" ) {
     ExhaustiveSearcher searcher(5, 5, 64);
     ProgressTracker tracker(searcher);
 
@@ -67,7 +67,7 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][5x5]" ) {
     }
 }
 
-TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
+TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
     ExhaustiveSearcher searcher(6, 6, 256);
     ProgressTracker tracker(searcher);
 

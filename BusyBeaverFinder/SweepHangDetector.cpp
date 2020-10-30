@@ -55,25 +55,40 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
 //        return failed(executor);
 //    }
 
-    _deltaSign = 0;
+    _sweepValueChangeType = SweepValueChangeType::NO_CHANGE; // Initial value
+    _sweepValueChange = 0;
     for (int i = numDataDeltas(); --i >= 0; ) {
-        int sgn = sign(dataDeltaAt(i).delta());
-
-        if (_deltaSign != 0 && _deltaSign != sgn) {
-            // TODO?: Support sweep loops that make changes in opposite directions
-            return failed(executor);
+        int delta = dataDeltaAt(i).delta();
+        switch (_sweepValueChangeType) {
+            case SweepValueChangeType::NO_CHANGE:
+                _sweepValueChangeType = SweepValueChangeType::UNIFORM_CHANGE;
+                _sweepValueChange = delta;
+                break;
+            case SweepValueChangeType::UNIFORM_CHANGE:
+            case SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES:
+                if (_sweepValueChange != delta) {
+                    _sweepValueChangeType =
+                        sign(delta) == sign(_sweepValueChange)
+                        ? SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES
+                        : SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES;
+                }
+                break;
+            case SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES:
+                // void
+                break;
         }
-        _deltaSign = sgn;
     }
 
     _exitMap.clear();
+    _requiresFixedInput = false;
     for (int i = loopSize(); --i >= 0; ) {
         if (exit(i).exitWindow == ExitWindow::ANYTIME) {
-            _exitMap.insert({exit(i).exitCondition.value(), i});
-
-            if (!exitsOnZero(i)) {
-                // TODO?: Support loops that exit on non-zero
-                return failed(executor);
+            if (exitsOnZero(i)) {
+                _exitMap.insert({exit(i).exitCondition.value(), i});
+            } else {
+                // The loop exits on a non-zero value. This means that the loop only loops when it
+                // consumes a specific value.
+                _requiresFixedInput = true;
             }
         }
     }
@@ -94,6 +109,9 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
         os << pair.first << "@" << pair.second;
     }
     os << std::endl;
+    if (sta._requiresFixedInput) {
+        os << "Requires fixed input!" << std::endl;
+    }
 
     return os;
 }
@@ -153,6 +171,11 @@ bool SweepTransitionGroup::analyzeLoop(int runBlockIndex, const ProgramExecutor&
         return false;
     }
 
+    if (_loop.sweepValueChangeType() == SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES) {
+        // Not (yet?) supported
+        return failed(*this);
+    }
+
     _locatedAtRight = _loop.dataPointerDelta() > 0;
     _transitions.clear();
 
@@ -208,7 +231,12 @@ bool SweepTransitionGroup::determineSweepEndType() {
             }
 
             int sgn = sign(finalValue);
-            if (sgn != 0 && (sgn == -_loop.deltaSign() || sgn == -_sibling->_loop.deltaSign())) {
+            if (
+                sgn != 0 && (
+                    sgn == -sign( _loop.sweepValueChange() ) ||
+                    sgn == -sign( _sibling->_loop.sweepValueChange() )
+                )
+            ) {
                 // Although it cannot directly cause the loop to exit, it is modified by the sweeps
                 // towards zero, which will likely cause it to exit the loop again.
                 // TODO: Refine this check
@@ -266,7 +294,9 @@ bool SweepTransitionGroup::analyzeGroup() {
         return false;
     }
 
-    _sweepDeltaSign = _loop.deltaSign();
+//    std::cout << *this << std::endl;
+
+    _sweepDeltaSign = sign(_loop.sweepValueChange());
     _outsideDeltas.clear();
     for (auto kv : _transitions) {
         const SweepTransitionAnalysis *transition = kv.second;
@@ -416,6 +446,29 @@ bool SweepHangDetector::analyzeLoops() {
     // Both loops should move in opposite directions
     if (group[0].locatedAtRight() == group[1].locatedAtRight()) {
         return failed(_executor);
+    }
+
+    if (group[0].loop().requiresFixedInput() || group[1].loop().requiresFixedInput()) {
+        // If both loops make changes, these should cancel each other out.
+
+        auto changeType = group[0].loop().sweepValueChangeType();
+        if (changeType != group[1].loop().sweepValueChangeType()) {
+            // Both loops change the sweep values differently
+            return failed(_executor);
+        }
+
+        if (
+            changeType == SweepValueChangeType::UNIFORM_CHANGE &&
+            group[0].loop().sweepValueChange() != -group[1].loop().sweepValueChange()
+        ) {
+            // Both loops make a different change
+            return failed(_executor);
+        }
+
+        if (changeType == SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES) {
+            // Although these could cancel each other out, assume (for now) that they don't
+            return failed(_executor);
+        }
     }
 
     return true;
