@@ -409,11 +409,11 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
-    SECTION( "6x6-ComplexSweep" ) {
+    SECTION( "6x6-DualHeadedSweepHangWithFastGrowingHead" ) {
         // Program with a complex sweep. The sequence consists of both positive and negative values.
         // During the sweep, the sign of some values oscillate (1 => DEC 2 => -1 => INC 2 => 1).
-        // Finally, the turn at the left side is complex. It extends the sequence with three values
-        // each visit.
+        // Finally, the transition at the right side is complex. It extends the sequence with three
+        // values each visit.
         //
         //       *
         //   * * o _ *
