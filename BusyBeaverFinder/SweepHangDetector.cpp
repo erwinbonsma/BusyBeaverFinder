@@ -452,10 +452,10 @@ bool SweepHangDetector::analyzeLoops() {
     auto loop0 = group[0].loop(), loop1 = group[1].loop();
 
     int sgn0 = sign(loop0.sweepValueChange()), sgn1 = sign(loop1.sweepValueChange());
-    if (sgn0 == 0) {
-        _sweepDeltaSign = sgn1;
-    } else if (sgn1 == 0) {
+    if (sgn1 == 0 || sgn0 == sgn1) {
         _sweepDeltaSign = sgn0;
+    } else if (sgn0 == 0) {
+        _sweepDeltaSign = sgn1;
     } else if (
         loop0.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
         loop1.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&

@@ -37,7 +37,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     ExhaustiveSearcher searcher(6, 6, 4096);
     ProgressTracker tracker(searcher);
 
-//    tracker.setDumpUndetectedHangs(true);
+    tracker.setDumpUndetectedHangs(true);
     tracker.setDumpStatsPeriod(10000000);
     tracker.setDumpStackPeriod(10000000);
     searcher.setProgressTracker(&tracker);
@@ -56,5 +56,5 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     REQUIRE(tracker.getTotalSuccess() == 6475715);
     REQUIRE(tracker.getTotalHangs() == 1546939);
     REQUIRE(tracker.getTotalErrors() == 0);
-    REQUIRE(tracker.getTotalDetectedHangs() == 1546441);
+    REQUIRE(tracker.getTotalDetectedHangs() == 1546517);
 }
