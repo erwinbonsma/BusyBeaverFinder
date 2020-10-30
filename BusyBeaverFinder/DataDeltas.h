@@ -40,6 +40,8 @@ public:
 
     int numDeltas() const { return (int)_dataDeltas.size(); }
     const DataDelta& dataDelta(int index) const { return _dataDeltas[index]; }
+    int minDpOffset() const;
+    int maxDpOffset() const;
 
     int deltaAt(int dpOffset) const;
 

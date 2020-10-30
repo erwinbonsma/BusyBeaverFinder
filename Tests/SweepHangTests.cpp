@@ -869,4 +869,65 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
+    SECTION( "6x6-SweepHangComplexFixedTransition3" ) {
+        // Sweep hang with a complex fixed end point. The two left-most values of the sequence are
+        // 1 and 2, and remain fixed. However, the transition briefly oscillates the neighbouring
+        // zero to -2 and back to zero. Furthermore, it increases the value to the right of the
+        // 2 by two, whereas the sweep increases the remainder of the sequence only by one.
+        //
+        //       *
+        //     * o _ *
+        // * _ o o *
+        //   _ o o o *
+        // * * _ _ _ *
+        // o _ o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHangConstructingDualHeadedPalindrome" ) {
+        // Sweep hang that constructs a palindrome that extends at both sides. The sequence consists
+        // of negative values with increasingly larger (absolute) values towards its center.
+        //
+        //     * * *
+        //   * o o _ *
+        // * _ o o *
+        //   _ * _ _
+        // * o _ o _ *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHangConstructingDualHeadedPalindrome2" ) {
+        // Similar in behaviour to the previous, but this program actually creates a perfect
+        // palindrome. The program and path traversed by PP is also pretty.
+        //
+        //       *
+        // * o _ o _ *
+        // * _ * o _
+        // o _ _ o *
+        // _ * _ _
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
 }

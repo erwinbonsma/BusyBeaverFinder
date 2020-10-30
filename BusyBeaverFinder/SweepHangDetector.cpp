@@ -288,7 +288,10 @@ bool SweepTransitionGroup::analyzeGroup() {
     for (auto kv : _transitions) {
         const SweepTransitionAnalysis *transition = kv.second;
 
-        int numOutside = 0, maxAbsOutsideDp = 0;
+        int numOutside = 0;
+        int maxOutsideDp = _locatedAtRight
+            ? transition->dataDeltas().maxDpOffset()
+            : transition->dataDeltas().minDpOffset();
         for (const DataDelta& dd : transition->dataDeltas()) {
             if (dd.dpOffset() != 0) {
                 bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
@@ -318,13 +321,12 @@ bool SweepTransitionGroup::analyzeGroup() {
                             }
                             break;
                         case SweepEndType::STEADY_GROWTH:
-                            if (_loop.isExitValue(dd.delta())) {
+                            if (dd.dpOffset() != maxOutsideDp && _loop.isExitValue(dd.delta())) {
                                 // The next sweep does not pass this value, which it should if the
                                 // sequence is steadily growing
                                 return failed(*this);
                             }
                             ++numOutside;
-                            maxAbsOutsideDp = std::max(maxAbsOutsideDp, abs(dd.dpOffset()));
                             break;
                         case SweepEndType::IRREGULAR_GROWTH:
                             // Do not support this (yet?)
@@ -334,7 +336,7 @@ bool SweepTransitionGroup::analyzeGroup() {
             }
         }
 
-        if (numOutside != maxAbsOutsideDp) {
+        if (_sweepEndType == SweepEndType::STEADY_GROWTH && numOutside != abs(maxOutsideDp)) {
             // Multiple values are added beyond the DP outside the sequence, but they do not form
             // a continuous region. I.e. one or more zeroes are introduces in the sequence.
             return failed(*this);

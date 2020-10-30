@@ -8,6 +8,22 @@
 
 #include "DataDeltas.h"
 
+int DataDeltas::minDpOffset() const {
+    int min = 0;
+    for (const DataDelta &dd : _dataDeltas) {
+        min = std::min(min, dd.dpOffset());
+    }
+    return min;
+}
+
+int DataDeltas::maxDpOffset() const {
+    int max = 0;
+    for (const DataDelta &dd : _dataDeltas) {
+        max = std::max(max, dd.dpOffset());
+    }
+    return max;
+}
+
 int DataDeltas::deltaAt(int dpOffset) const {
     // Find existing delta record, if any
     for (const DataDelta &dd : _dataDeltas) {
