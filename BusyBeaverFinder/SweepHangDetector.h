@@ -117,7 +117,6 @@ class SweepTransitionGroup {
     std::map<int, SweepTransitionAnalysis*> _transitions;
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
-    int _sweepDeltaSign;
 
     DataDeltas _outsideDeltas;
 
@@ -129,13 +128,6 @@ public:
 
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
-
-    // The direction (away from zero) that the loop and/or transitions change values that are part
-    // of the sweep.
-    //
-    // For now it is assumed that for hangs all deltas should have the same sign. More complex
-    // hangs could violate this assumption.
-    int sweepDeltaSign() const { return _sweepDeltaSign; }
 
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
 
@@ -167,6 +159,8 @@ class SweepHangDetector : public HangDetector {
     SweepTransitionAnalysis _transitionPool[MAX_UNIQUE_TRANSITIONS_PER_SWEEP];
     SweepTransitionGroup _transitionGroups[2];
 
+    // The direction (away from zero) that both loops together change values in the sweep. If both
+    // loops make exactly opposite changes, it returns zero.
     int _sweepDeltaSign;
 
     /* Analysis */

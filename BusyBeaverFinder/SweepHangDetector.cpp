@@ -296,7 +296,7 @@ bool SweepTransitionGroup::analyzeGroup() {
 
 //    std::cout << *this << std::endl;
 
-    _sweepDeltaSign = sign(_loop.sweepValueChange());
+    int sweepDeltaSign = sign(_loop.sweepValueChange());
     _outsideDeltas.clear();
     for (auto kv : _transitions) {
         const SweepTransitionAnalysis *transition = kv.second;
@@ -306,10 +306,11 @@ bool SweepTransitionGroup::analyzeGroup() {
                 bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
                 int sgn = sign(dd.delta());
                 if (insideSweep) {
-                    if (_sweepDeltaSign != 0 && sgn != _sweepDeltaSign) {
+                    if (sweepDeltaSign != 0 && sgn != sweepDeltaSign) {
+                        // TODO: Refine or remove this check
                         return failed(*this);
                     }
-                    _sweepDeltaSign = sgn;
+                    sweepDeltaSign = sgn;
                 } else {
                     switch (_sweepEndType) {
                         case SweepEndType::FIXED_POINT: {
@@ -448,27 +449,31 @@ bool SweepHangDetector::analyzeLoops() {
         return failed(_executor);
     }
 
-    if (group[0].loop().requiresFixedInput() || group[1].loop().requiresFixedInput()) {
-        // If both loops make changes, these should cancel each other out.
+    auto loop0 = group[0].loop(), loop1 = group[1].loop();
 
-        auto changeType = group[0].loop().sweepValueChangeType();
-        if (changeType != group[1].loop().sweepValueChangeType()) {
-            // Both loops change the sweep values differently
+    int sgn0 = sign(loop0.sweepValueChange()), sgn1 = sign(loop1.sweepValueChange());
+    if (sgn0 == 0) {
+        _sweepDeltaSign = sgn1;
+    } else if (sgn1 == 0) {
+        _sweepDeltaSign = sgn0;
+    } else if (
+        loop0.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
+        loop1.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
+        loop0.sweepValueChange() == -loop1.sweepValueChange()
+    ) {
+        _sweepDeltaSign = 0;
+    } else {
+        // Both loops make opposite changes that do not fully cancel out. This is not supported yet
+        return failed(_executor);
+    }
+
+
+    if (loop0.requiresFixedInput() || loop1.requiresFixedInput()) {
+        // The changes of both loops, if any, should cancel each other out.
+        if (_sweepDeltaSign != 0) {
             return failed(_executor);
         }
 
-        if (
-            changeType == SweepValueChangeType::UNIFORM_CHANGE &&
-            group[0].loop().sweepValueChange() != -group[1].loop().sweepValueChange()
-        ) {
-            // Both loops make a different change
-            return failed(_executor);
-        }
-
-        if (changeType == SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES) {
-            // Although these could cancel each other out, assume (for now) that they don't
-            return failed(_executor);
-        }
     }
 
     return true;
@@ -540,13 +545,6 @@ bool SweepHangDetector::analyzeTransitionGroups() {
             return false;
         }
     }
-
-    SweepTransitionGroup *groups = _transitionGroups;
-    if (groups[0].sweepDeltaSign() * groups[1].sweepDeltaSign() == -1) {
-        // TODO?: Support loops that makes changes to the sequence in opposite directions
-        return failed(_executor);
-    }
-    _sweepDeltaSign = groups[(int)(groups[0].sweepDeltaSign() == 0)].sweepDeltaSign();
 
     return true;
 }
