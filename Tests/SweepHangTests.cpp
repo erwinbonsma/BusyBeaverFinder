@@ -654,4 +654,30 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][6x6]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
+    SECTION( "6x6-LateSweepWithMidsweepPoint") {
+        // Program runs for 142 steps before it enters sweep hang.
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-LateSweepWithOscillatingSweepValues") {
+        // Sweep hang eventually sweeps across entire sequence (which contains both positive and
+        // negative values). It takes about 100 steps before it enters the sweep hang. One sweep
+        // includes a DEC 2 and INC 2 statement, which cancel each other out, but do cause values
+        // to oscillate around zero.
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
 }

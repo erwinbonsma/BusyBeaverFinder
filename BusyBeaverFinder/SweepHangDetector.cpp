@@ -451,8 +451,9 @@ bool SweepHangDetector::analyzeTransitions() {
         if (sta != nullptr) {
             // Check that the transition is identical
             if (!sta->transitionEquals(transitionStartIndex, prevLoopIndex, _executor)) {
-                // TODO: Or should we break here, to cope with start-up effects?
-                return false;
+                // Transition does not match. This may be due to start-up effects. This could still
+                // be a hang.
+                break;
             }
         } else {
             // This is the first transition that follows the given loop exit
@@ -460,7 +461,7 @@ bool SweepHangDetector::analyzeTransitions() {
             SweepTransitionAnalysis *sa = &_transitionPool[numUniqueTransitions++];
 
             if (!sa->analyzeSweepTransition(transitionStartIndex, prevLoopIndex, _executor)) {
-                return false;
+                return failed(_executor);
             }
 
             tg.addTransitionForExit(sa, exitInstruction);
