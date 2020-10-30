@@ -423,12 +423,14 @@ bool SweepHangDetector::analyzeLoops() {
 
 bool SweepHangDetector::analyzeTransitions() {
     const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
+    int metaLoopStartIndex = metaRunSummary.getLastRunBlock()->getStartIndex();
     int prevLoopIndex = runSummary.getNumRunBlocks() - 1;
     int numSweeps = 0, numUniqueTransitions = 0;
 
-    while (prevLoopIndex > 0) {
+    while (prevLoopIndex > metaLoopStartIndex) {
         int transitionStartIndex = findPrecedingTransitionStart(prevLoopIndex);
-        if (transitionStartIndex == 0) {
+        if (transitionStartIndex < metaLoopStartIndex) {
             // No more run blocks remain
             break;
         }
@@ -547,7 +549,7 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
 
 bool SweepHangDetector::shouldCheckNow(bool loopContinues) {
     // Should wait for the sweep-loop to finish
-    return !loopContinues;
+    return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
 }
 
 bool SweepHangDetector::analyzeHangBehaviour() {
