@@ -765,6 +765,19 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
+    SECTION( "6x6-LateDualHeadedSweepWithFastGrowingHead" ) {
+        // Sweep that requires about 200 iterations to start. It then creates a dual-headed
+        // sequence, with the right side growing with three values each iteration.
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
     SECTION( "6x6-SweepHangWithSweepDeltasBothWays" ) {
         // A single-headed sweep, where both sweeps decrease the sweep values by one.
         //
@@ -810,6 +823,47 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHangComplexFixedTransition" ) {
+        // Hang featuring a complex fixed turn at the right side of the sequence. The sweep loop
+        // ends on value 1 (with it becoming zero). The transition changes this value to 2, and the
+        // left-sweeping loop finally restores it to 1.
+        //
+        // *     *
+        // o _ * o _ *
+        // _ _ * o o
+        // _ o _ o *
+        // _ * _ o _ *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHangComplexFixedTransition2" ) {
+        // Similar to the previous hang, but this time the fixed turn is at the left side. The
+        // sweep loop ends on -1, on exit it is 0, the transition does not change it, but the
+        // right-sweeping loop restores it to -1.
+        //
+        //     *
+        // * o o o _ *
+        // * _ * o _
+        // o _ o o *
+        // o * _ o
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

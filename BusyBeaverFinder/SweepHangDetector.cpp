@@ -261,19 +261,6 @@ bool SweepTransitionGroup::determineSweepEndType() {
         return false;
     }
 
-    bool zeroValueShouldContinueSweep = (
-        _sweepEndType == SweepEndType::STEADY_GROWTH ||
-        _sweepEndType == SweepEndType::IRREGULAR_GROWTH ||
-        _sweepEndType == SweepEndType::FIXED_GROWING
-    );
-    if (zeroValueShouldContinueSweep) {
-        // A zero value should always ensure a reversal of the sweep. Check if this is so.
-        int numZeroExits = _loop.numberOfExitsForValue(0);
-        if (numZeroExits == 0 || numberOfTransitionsForExitValue(0) != numZeroExits) {
-            return failed(*this);
-        }
-    }
-
     return true;
 }
 
@@ -337,7 +324,7 @@ bool SweepTransitionGroup::analyzeGroup() {
                                 return failed(*this);
                             }
                             ++numOutside;
-                            maxAbsOutsideDp = std::max(maxAbsOutsideDp, dd.dpOffset());
+                            maxAbsOutsideDp = std::max(maxAbsOutsideDp, abs(dd.dpOffset()));
                             break;
                         case SweepEndType::IRREGULAR_GROWTH:
                             // Do not support this (yet?)
