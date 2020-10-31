@@ -504,7 +504,10 @@ bool SweepHangDetector::analyzeTransitions() {
         int j = numSweeps % 2;
         SweepTransitionGroup &tg = _transitionGroups[j];
 
-        if (loopBlock->getSequenceIndex() != tg.loopRunBlock()->getSequenceIndex()) {
+        if (
+            loopBlock->getSequenceIndex() != tg.loopRunBlock()->getSequenceIndex() &&
+            !runSummary.areLoopsRotationEqual(loopBlock, tg.loopRunBlock())
+        ) {
             // Sequence does not follow expected sweep pattern anymore
             break;
         }

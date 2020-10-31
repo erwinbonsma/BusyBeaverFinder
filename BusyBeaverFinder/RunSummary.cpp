@@ -56,6 +56,8 @@ void RunSummary::reset() {
 
     _sequenceBlock[0].init(0);
     _numSequenceBlocks = 1;
+
+    _rotationEqualityCache.clear();
 }
 
 RunBlockSequenceNode* RunSummary::getChildNode(
@@ -194,6 +196,51 @@ bool RunSummary::isAtEndOfLoop() const {
     int loopLength = (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
 
     return (loopLength % getLoopPeriod() == 0);
+}
+
+bool RunSummary::determineRotationEquivalence(int index1, int index2, int len) const {
+    // TODO: Implement using Booth's algorithm
+
+    return false;
+}
+
+
+int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2) const {
+    int index1 = block1->getSequenceIndex();
+    int index2 = block2->getSequenceIndex();
+    if (index1 == index2) {
+        // Blocks are equal, even without rotating
+        return true;
+    }
+
+    // Require that run blocks are loop. This avoids modular arithmetic when executing Booth's
+    // algorithm.
+    assert(block1->isLoop());
+    assert(block2->isLoop());
+
+    int len = block1->getLoopPeriod();
+    if (len != block2->getLoopPeriod()) {
+        return false;
+    }
+
+    int minIndex = std::min(index1, index2);
+    int maxIndex = std::max(index1, index2);
+
+    auto map = _rotationEqualityCache;
+    auto key = std::make_pair(minIndex, maxIndex);
+    auto cachedResult = map.find(key);
+    if (cachedResult != map.end()) {
+        // Return previously calculated result
+        return cachedResult->second;
+    }
+
+    bool result = determineRotationEquivalence(block1->getStartIndex(),
+                                               block2->getStartIndex(),
+                                               len);
+    // Cache result
+    map[key] = result;
+
+    return result;
 }
 
 void RunSummary::dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const {

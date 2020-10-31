@@ -9,7 +9,7 @@
 #ifndef RunSummary_h
 #define RunSummary_h
 
-#include <stdio.h>
+#include <map>
 
 class ProgramBlock;
 
@@ -94,6 +94,8 @@ class RunSummary {
     RunBlockSequenceNode _sequenceBlock[maxNumSequenceBlocks];
     int _numSequenceBlocks;
 
+    mutable std::map<std::pair<int, int>, bool> _rotationEqualityCache;
+
     // Helper array required by findRepeatedSequence utility function
     // Note: It is not owned by this class (and should therefore not be freed by it)
     int* _helperBuf;
@@ -107,6 +109,8 @@ class RunSummary {
     void createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, int loopPeriod);
 
     void dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const;
+
+    bool determineRotationEquivalence(int index1, int index2, int len) const;
 
 public:
     ~RunSummary();
@@ -155,6 +159,13 @@ public:
     // Seq = A B C (where A, B and C are Program Blocks)
     // => A B C A B C A B X => length = 8, where X is the program block that breaks the loop
     int getRunBlockLength(int index) const;
+    int getRunBlockLength(const RunBlock* block) const {
+        return getRunBlockLength((int)(block - _runBlockHistory));
+    }
+
+    // Returns "true" if both loop run blocks are equal when rotations are allowed. E.g. it returns
+    // true when comparing "A B C" and "B C A".
+    int areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2) const;
 
     void dumpSequenceTree() const;
     void dumpCondensed() const;
