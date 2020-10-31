@@ -9,6 +9,7 @@
 #include "RunSummary.h"
 
 #include <iostream>
+#include <vector>
 
 #include "ProgramBlock.h"
 #include "Utils.h"
@@ -198,10 +199,48 @@ bool RunSummary::isAtEndOfLoop() const {
     return (loopLength % getLoopPeriod() == 0);
 }
 
-bool RunSummary::determineRotationEquivalence(int index1, int index2, int len) const {
-    // TODO: Implement using Booth's algorithm
+// Implements Booth's algorithm
+// See: https://en.wikipedia.org/wiki/Lexicographically_minimal_string_rotation#Booth's_Algorithm
+int RunSummary::calculateCanonicalLoopIndex(int startIndex, int len) const {
+    // Initialize failure function
+    std::vector<int> f(len, -1);
 
-    return false;
+    int k = 0; // Least rotation of sequence found so far
+
+    for (int j = 1; j < len; ++j) {
+        int sj = programBlockIndexAt(startIndex + j);
+        int i = f[j - k - 1];
+        while (i != -1 && sj != programBlockIndexAt(startIndex + k + i + 1)) {
+            if (sj < programBlockIndexAt(startIndex + k + i + 1)) {
+                k = j - i - 1;
+            }
+            i = f[i];
+        }
+        if (sj != programBlockIndexAt(startIndex + k + i + 1)) {
+            assert(i == -1);
+            if (sj < programBlockIndexAt(startIndex + k)) { // k + i + 1 == k
+                k = j;
+            }
+            f[j - k] = -1;
+        } else {
+            f[j - k] = i + 1;
+        }
+    }
+
+    return startIndex + k;
+}
+
+bool RunSummary::determineRotationEquivalence(int index1, int index2, int len) const {
+    int ci1 = calculateCanonicalLoopIndex(index1, len);
+    int ci2 = calculateCanonicalLoopIndex(index2, len);
+
+    for (int i = len; --i >= 0; ) {
+        if (programBlockIndexAt(ci1 + i) != programBlockIndexAt(ci2 + i)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 

@@ -110,6 +110,7 @@ class RunSummary {
 
     void dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const;
 
+    int calculateCanonicalLoopIndex(int startIndex, int len) const;
     bool determineRotationEquivalence(int index1, int index2, int len) const;
 
 public:

@@ -478,10 +478,12 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
-    SECTION( "6x6-SweepExceedingBoundaries" ) {
-        // When reversing the sweep at the left side, DP performs another shift, visiting another
-        // zero value. This used to break the assumption that the next turn cannot be further than
-        // the previous sweep end point.
+    SECTION( "6x6-SweepWithVaryingLoopStarts" ) {
+        // The hang has two possible transitions when reversing the sweep at the left side. It
+        // depends on the last value, which is either -1 or 0. Depending on the transition, the
+        // right-sweeping loop starts at a different instruction. In order to detect that the loop
+        // is still the same in both cases, the hang detection needs to detect equivalence under
+        // rotation.
         //
         //       *
         // * o _ o _ *
