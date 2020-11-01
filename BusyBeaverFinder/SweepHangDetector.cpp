@@ -228,8 +228,10 @@ bool SweepTransitionGroup::determineSweepEndType() {
 
     for (auto kv : _transitions) {
         const SweepTransition transition = kv.second;
-        int valueAfterTransition = transition.transition->dataDeltas().deltaAt(0);
-        int finalValue = valueAfterTransition; // TODO: Also take into account delta by loop.
+        const SweepTransitionAnalysis *sta = transition.transition;
+        int valueAfterTransition = sta->dataDeltas().deltaAt(0);
+        int finalValue = (valueAfterTransition +
+                          transition.nextLoop->deltaAt( -sta->dataPointerDelta() ));
         int exitCount = numberOfExitsForValue(finalValue);
 
         if (exitCount > 0) {

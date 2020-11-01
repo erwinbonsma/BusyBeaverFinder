@@ -131,6 +131,9 @@ public:
     int numDataDeltas() const override;
     const DataDelta& dataDeltaAt(int idx) const override;
 
+    // The delta realized by the loop at the given offset, assuming the loop runs endlessly.
+    int deltaAt(int dpOffset) const;
+
     // Returns the loop exit for the specified loop instruction
     const LoopExit& exit(int index) const { return _loopExit[index]; }
 

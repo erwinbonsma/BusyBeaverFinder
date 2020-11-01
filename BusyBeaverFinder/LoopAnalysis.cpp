@@ -103,6 +103,25 @@ const DataDelta& LoopAnalysis::dataDeltaAt(int idx) const {
     return (_dpDelta != 0 ? _squashedDeltas : _dataDeltas).dataDelta(idx);
 }
 
+int LoopAnalysis::deltaAt(int dpOffset) const {
+    int delta = 0;
+    int mod = normalizedMod(dpOffset, _dpDelta);
+
+    for (auto dd : _dataDeltas) {
+        if (
+            dd.dpOffset() == dpOffset ||
+            (
+                mod == normalizedMod(dd.dpOffset(), _dpDelta) &&
+                sign(dpOffset - dd.dpOffset()) == sign(_dpDelta)
+            )
+        ) {
+            delta += dd.delta();
+        }
+    }
+
+    return delta;
+}
+
 void LoopAnalysis::squashDeltas() {
     _squashedDeltas.clear();
 
