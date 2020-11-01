@@ -27,6 +27,11 @@ bool failed(SweepTransitionGroup& tg) {
     return false;
 }
 
+namespace std {
+size_t hash<SweepLoopExit>::operator()(const SweepLoopExit& sle) const {
+    return (sle.loop->loopRunBlock()->getSequenceIndex() << 8) ^ sle.exitInstructionIndex;
+}
+}
 
 bool SweepLoopAnalysis::isExitValue(int value) const {
     return _exitMap.find(value) != _exitMap.end();
@@ -38,6 +43,8 @@ int SweepLoopAnalysis::numberOfExitsForValue(int value) const {
 
 bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
                                          const ProgramExecutor& executor) {
+    _loopRunBlock = runBlock;
+
     if (!analyzeLoop(executor.getInterpretedProgram(),
                      executor.getRunSummary(),
                      runBlock->getStartIndex(),
@@ -164,32 +171,51 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-bool SweepTransitionGroup::analyzeLoop(int runBlockIndex, const ProgramExecutor& executor) {
-    _loopRunBlock = executor.getRunSummary().runBlockAt(runBlockIndex);
+void SweepTransitionGroup::clear() {
+    _loops.clear();
+    _transitions.clear();
+}
 
-    if (!_loop.analyzeSweepLoop(_loopRunBlock, executor)) {
+bool SweepTransitionGroup::analyzeLoop(SweepLoopAnalysis* loopAnalysis, int runBlockIndex,
+                                       const ProgramExecutor& executor) {
+    const RunBlock *loopRunBlock = executor.getRunSummary().runBlockAt(runBlockIndex);
+
+    if (!loopAnalysis->analyzeSweepLoop(loopRunBlock, executor)) {
         return false;
     }
 
-    if (_loop.sweepValueChangeType() == SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES) {
+    if (loopAnalysis->sweepValueChangeType() == SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES) {
         // Not (yet?) supported
         return failed(*this);
     }
 
-    _locatedAtRight = _loop.dataPointerDelta() > 0;
-    _transitions.clear();
+    _locatedAtRight = loopAnalysis->dataPointerDelta() > 0;
+    _loops[loopRunBlock->getSequenceIndex()] = loopAnalysis;
 
     return true;
 }
 
-int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) {
+int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
     int count = 0;
 
     for (auto kv : _transitions) {
-        int exitInstruction = kv.first;
-        if (_loop.exit(exitInstruction).exitCondition.isTrueForValue(value)) {
+        SweepLoopExit sweepLoopExit = kv.first;
+        const LoopExit &loopExit = sweepLoopExit.loop->exit(sweepLoopExit.exitInstructionIndex);
+
+        if (loopExit.exitCondition.isTrueForValue(value)) {
             ++count;
         }
+    }
+
+    return count;
+}
+
+int SweepTransitionGroup::numberOfExitsForValue(int value) const {
+    int count = 0;
+
+    for (auto kv : _loops) {
+        const SweepLoopAnalysis *loop = kv.second;
+        count += loop->numberOfExitsForValue(value);
     }
 
     return count;
@@ -201,9 +227,10 @@ bool SweepTransitionGroup::determineSweepEndType() {
     bool nonExitToExit = false;
 
     for (auto kv : _transitions) {
-        const SweepTransitionAnalysis *transition = kv.second;
-        int finalValue = transition->dataDeltas().deltaAt(0);
-        int exitCount = _loop.numberOfExitsForValue(finalValue);
+        const SweepTransition transition = kv.second;
+        int valueAfterTransition = transition.transition->dataDeltas().deltaAt(0);
+        int finalValue = valueAfterTransition; // TODO: Also take into account delta by loop.
+        int exitCount = numberOfExitsForValue(finalValue);
 
         if (exitCount > 0) {
             // The value that caused the loop to exit and continue at the given transition, is
@@ -226,15 +253,15 @@ bool SweepTransitionGroup::determineSweepEndType() {
             // Note: although it was followed by a successful execution of the loop at least once
             // already, this does not proof it cannot cause that loop to exit. It could be that the
             // value was not yet seen by the instruction whose exit it can cause.
-            if (_sibling->loop().isExitValue(finalValue)) {
+            if (_sibling->loop()->isExitValue(finalValue)) {
                 return failed(*this);
             }
 
             int sgn = sign(finalValue);
             if (
                 sgn != 0 && (
-                    sgn == -sign( _loop.sweepValueChange() ) ||
-                    sgn == -sign( _sibling->_loop.sweepValueChange() )
+                    sgn == -sign( loop()->sweepValueChange() ) ||
+                    sgn == -sign( _sibling->loop()->sweepValueChange() )
                 )
             ) {
                 // Although it cannot directly cause the loop to exit, it is modified by the sweeps
@@ -283,16 +310,17 @@ bool SweepTransitionGroup::analyzeGroup() {
 
 //    std::cout << *this << std::endl;
 
-    int sweepDeltaSign = sign(_loop.sweepValueChange());
+    int sweepDeltaSign = sign(loop()->sweepValueChange());
     _outsideDeltas.clear();
     for (auto kv : _transitions) {
-        const SweepTransitionAnalysis *transition = kv.second;
+        const SweepTransition transition = kv.second;
+        const SweepTransitionAnalysis *analysis = transition.transition;
 
         int numOutside = 0;
         int maxOutsideDp = _locatedAtRight
-            ? transition->dataDeltas().maxDpOffset()
-            : transition->dataDeltas().minDpOffset();
-        for (const DataDelta& dd : transition->dataDeltas()) {
+            ? analysis->dataDeltas().maxDpOffset()
+            : analysis->dataDeltas().minDpOffset();
+        for (const DataDelta& dd : analysis->dataDeltas()) {
             if (dd.dpOffset() != 0) {
                 bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
                 int sgn = sign(dd.delta());
@@ -316,12 +344,12 @@ bool SweepTransitionGroup::analyzeGroup() {
                             break;
                         }
                         case SweepEndType::FIXED_GROWING:
-                            if (!_loop.isExitValue(dd.delta())) {
+                            if (!loop()->isExitValue(dd.delta())) {
                                 return failed(*this);
                             }
                             break;
                         case SweepEndType::STEADY_GROWTH:
-                            if (dd.dpOffset() != maxOutsideDp && _loop.isExitValue(dd.delta())) {
+                            if (dd.dpOffset() != maxOutsideDp && loop()->isExitValue(dd.delta())) {
                                 // The next sweep does not pass this value, which it should if the
                                 // sequence is steadily growing
                                 return failed(*this);
@@ -361,7 +389,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
             // Skip all appendix values
             while (true) {
                 int val = data.valueAt(dp, delta);
-                if (val == 0 || !_loop.isExitValue(val)) {
+                if (val == 0 || !loop()->isExitValue(val)) {
                     break;
                 }
                 dp += delta;
@@ -379,11 +407,22 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
 }
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
-    os << group._loop;
+    for (auto kv : group._loops) {
+        int sequenceIndex = kv.first;
+        const SweepLoopAnalysis *loopAnalysis = kv.second;
+
+        os << "Loop #" << sequenceIndex << std::endl;
+        os << *loopAnalysis;
+    }
 
     auto iter = group._transitions.begin();
     while (iter != group._transitions.end()) {
-        os << "  Exit at " << iter->first << ": " << *(iter->second) << std::endl;
+        SweepLoopExit loopExit = iter->first;
+        SweepTransition transition = iter->second;
+        os << "  Exit from Loop" << loopExit.loop->loopRunBlock()->getSequenceIndex();
+        os << "@" << loopExit.exitInstructionIndex;
+        os << ": " << *(transition.transition);
+        os << " => Loop#" << transition.nextLoop->loopRunBlock()->getSequenceIndex() << std::endl;
         ++iter;
     }
 
@@ -401,7 +440,8 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
 SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
 : HangDetector(executor) {
     _transitionGroups[0].initSibling(&_transitionGroups[1]);
-    _transitionGroups[1].initSibling(&_transitionGroups[0]);}
+    _transitionGroups[1].initSibling(&_transitionGroups[0]);
+}
 
 int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {
     const RunSummary& runSummary = _executor.getRunSummary();
@@ -434,7 +474,7 @@ bool SweepHangDetector::analyzeLoops() {
         return failed(_executor);
     }
     int runBlockIndexLoop1 = runSummary.getNumRunBlocks() - 1;
-    if (!group[1].analyzeLoop(runBlockIndexLoop1, _executor)) {
+    if (!group[1].analyzeLoop(&_loopAnalysisPool[1], runBlockIndexLoop1, _executor)) {
         return false;
     }
 
@@ -444,7 +484,7 @@ bool SweepHangDetector::analyzeLoops() {
         return failed(_executor);
     }
     int runBlockIndexLoop0 = runBlockIndexTransition0 - 1;
-    if (!group[0].analyzeLoop(runBlockIndexLoop0, _executor)) {
+    if (!group[0].analyzeLoop(&_loopAnalysisPool[0], runBlockIndexLoop0, _executor)) {
         return false;
     }
 
@@ -455,15 +495,15 @@ bool SweepHangDetector::analyzeLoops() {
 
     auto loop0 = group[0].loop(), loop1 = group[1].loop();
 
-    int sgn0 = sign(loop0.sweepValueChange()), sgn1 = sign(loop1.sweepValueChange());
+    int sgn0 = sign(loop0->sweepValueChange()), sgn1 = sign(loop1->sweepValueChange());
     if (sgn1 == 0 || sgn0 == sgn1) {
         _sweepDeltaSign = sgn0;
     } else if (sgn0 == 0) {
         _sweepDeltaSign = sgn1;
     } else if (
-        loop0.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
-        loop1.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
-        loop0.sweepValueChange() == -loop1.sweepValueChange()
+        loop0->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
+        loop1->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
+        loop0->sweepValueChange() == -loop1->sweepValueChange()
     ) {
         _sweepDeltaSign = 0;
     } else {
@@ -472,12 +512,11 @@ bool SweepHangDetector::analyzeLoops() {
     }
 
 
-    if (loop0.requiresFixedInput() || loop1.requiresFixedInput()) {
+    if (loop0->requiresFixedInput() || loop1->requiresFixedInput()) {
         // The changes of both loops, if any, should cancel each other out.
         if (_sweepDeltaSign != 0) {
             return failed(_executor);
         }
-
     }
 
     return true;
@@ -488,11 +527,12 @@ bool SweepHangDetector::analyzeTransitions() {
     const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
     int metaLoopStartIndex = metaRunSummary.getLastRunBlock()->getStartIndex();
     int prevLoopIndex = runSummary.getNumRunBlocks() - 1;
-    int numSweeps = 0, numUniqueTransitions = 0;
+    const SweepLoopAnalysis *prevLoopAnalysis = _transitionGroups[1].loop();
+    int numSweeps = 0, numUniqueTransitions = 0, numUniqueLoops = 2;
 
     while (prevLoopIndex > metaLoopStartIndex) {
         int transitionStartIndex = findPrecedingTransitionStart(prevLoopIndex);
-        if (transitionStartIndex < metaLoopStartIndex) {
+        if (transitionStartIndex <= metaLoopStartIndex) {
             // No more run blocks remain
             break;
         }
@@ -503,38 +543,50 @@ bool SweepHangDetector::analyzeTransitions() {
 
         int j = numSweeps % 2;
         SweepTransitionGroup &tg = _transitionGroups[j];
-
-        if (
-            loopBlock->getSequenceIndex() != tg.loopRunBlock()->getSequenceIndex() &&
-            !runSummary.areLoopsRotationEqual(loopBlock, tg.loopRunBlock())
+        const RunBlock* existingLoopBlock = tg.loop()->loopRunBlock();
+        if (loopBlock->getSequenceIndex() != existingLoopBlock->getSequenceIndex() &&
+            !runSummary.areLoopsRotationEqual(loopBlock, existingLoopBlock)
         ) {
             // Sequence does not follow expected sweep pattern anymore
             break;
         }
 
+        const SweepLoopAnalysis* sla = tg.analysisForLoop(loopBlock);
+        if (sla == nullptr) {
+            // This loop was entered differently than the one(s) encountered already. Analyse it
+            assert(numUniqueLoops < MAX_SWEEP_LOOP_ANALYSIS);
+            SweepLoopAnalysis* newAnalysis = &_loopAnalysisPool[numUniqueLoops++];
+
+            assert(tg.analyzeLoop(newAnalysis, loopIndex, _executor));
+            sla = newAnalysis;
+        }
+
         int loopLen = runSummary.getRunBlockLength(loopIndex);
         int exitInstruction = (loopLen - 1) % loopBlock->getLoopPeriod();
-        const SweepTransitionAnalysis* sta = tg.transitionForExit(exitInstruction);
-        if (sta != nullptr) {
+        SweepLoopExit loopExit(sla, exitInstruction);
+        const SweepTransition* st = tg.transitionForExit(loopExit);
+        if (st != nullptr) {
             // Check that the transition is identical
-            if (!sta->transitionEquals(transitionStartIndex, prevLoopIndex, _executor)) {
+            if (!st->transition->transitionEquals(transitionStartIndex, prevLoopIndex, _executor)) {
                 // Transition does not match. This may be due to start-up effects. This could still
                 // be a hang.
                 break;
             }
         } else {
             // This is the first transition that follows the given loop exit
-            assert(numUniqueTransitions < MAX_UNIQUE_TRANSITIONS_PER_SWEEP);
-            SweepTransitionAnalysis *sa = &_transitionPool[numUniqueTransitions++];
+            assert(numUniqueTransitions < MAX_SWEEP_TRANSITION_ANALYSIS);
+            SweepTransitionAnalysis *sta = &_transitionAnalysisPool[numUniqueTransitions++];
 
-            if (!sa->analyzeSweepTransition(transitionStartIndex, prevLoopIndex, _executor)) {
+            if (!sta->analyzeSweepTransition(transitionStartIndex, prevLoopIndex, _executor)) {
                 return failed(_executor);
             }
 
-            tg.addTransitionForExit(sa, exitInstruction);
+            SweepTransition newTransition(sta, prevLoopAnalysis);
+            tg.addTransitionForExit(loopExit, newTransition);
         }
 
         prevLoopIndex = loopIndex;
+        prevLoopAnalysis = sla;
         numSweeps++;
     }
 
@@ -563,7 +615,7 @@ DataPointer SweepHangDetector::findAppendixStart(DataPointer dp,
 
     while (true) {
         int val = data.valueAt(dp, delta);
-        if (val == 0 || !group.loop().isExitValue(val)) {
+        if (val == 0 || !group.loop()->isExitValue(val)) {
             break;
         }
         dp += delta;
@@ -581,13 +633,13 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     int delta = atRight ? -1 : 1;
 
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
-    const SweepLoopAnalysis &loop0 = _transitionGroups[0].loop();
-    const SweepLoopAnalysis &loop1 = _transitionGroups[1].loop();
+    const SweepLoopAnalysis *loop0 = _transitionGroups[0].loop();
+    const SweepLoopAnalysis *loop1 = _transitionGroups[1].loop();
 
     // DP is at one side of the sweep. Find the other end of the sweep.
     dp += delta;
     while (*dp) {
-        if (loop0.isExitValue(*dp) || loop1.isExitValue(*dp)) {
+        if (loop0->isExitValue(*dp) || loop1->isExitValue(*dp)) {
             // Found end of sweep at other end
             break;
         }
@@ -619,6 +671,13 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         // of that loop).
         return false;
     }
+
+    for (SweepTransitionGroup &tg : _transitionGroups) {
+        tg.clear();
+    }
+
+//    _executor.getInterpretedProgram().dump();
+//    _executor.dumpExecutionState();
 
     if (!analyzeLoops()) {
         return false;

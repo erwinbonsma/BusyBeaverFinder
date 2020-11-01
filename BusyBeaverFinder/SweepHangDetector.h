@@ -15,7 +15,8 @@
 #include <vector>
 #include <map>
 
-const int MAX_UNIQUE_TRANSITIONS_PER_SWEEP = 8;
+const int MAX_SWEEP_LOOP_ANALYSIS = 8;
+const int MAX_SWEEP_TRANSITION_ANALYSIS = 8;
 
 /* Different types of behaviour at one end of the sweep. These are determined during analysis and
  * require different checks to proof that the program is indeed hanging.
@@ -62,6 +63,8 @@ enum class SweepValueChangeType : int {
 class SweepLoopAnalysis : public LoopAnalysis {
     friend std::ostream &operator<<(std::ostream&, const SweepLoopAnalysis&);
 
+    const RunBlock* _loopRunBlock;
+
     SweepValueChangeType _sweepValueChangeType;
 
     // If the loop makes any changes, this represents it.
@@ -80,6 +83,8 @@ class SweepLoopAnalysis : public LoopAnalysis {
     bool _requiresFixedInput;
 
 public:
+    const RunBlock* loopRunBlock() const { return _loopRunBlock; }
+
     SweepValueChangeType sweepValueChangeType() const { return _sweepValueChangeType; }
     int sweepValueChange() const { return _sweepValueChange; }
 
@@ -105,22 +110,59 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
 
+struct SweepLoopExit {
+    const SweepLoopAnalysis *loop;
+    int exitInstructionIndex;
+
+    SweepLoopExit(const SweepLoopAnalysis *sla, int index)
+    : loop(sla), exitInstructionIndex(index) {}
+
+    bool operator==(const SweepLoopExit& rhs) {
+        return loop == rhs.loop && exitInstructionIndex == rhs.exitInstructionIndex;
+    }
+    friend bool operator<(const SweepLoopExit& lhs, const SweepLoopExit& rhs) {
+        return (std::tie(lhs.loop, lhs.exitInstructionIndex) <
+                std::tie(rhs.loop, rhs.exitInstructionIndex));
+    }
+};
+
+namespace std {
+template <> struct hash<SweepLoopExit> {
+    typedef size_t result_type;
+    typedef SweepLoopExit argument_type;
+    size_t operator()(const SweepLoopExit& sle) const;
+};
+}
+
+struct SweepTransition {
+    const SweepTransitionAnalysis *transition;
+    const SweepLoopAnalysis *nextLoop;
+
+    SweepTransition() : transition(nullptr), nextLoop(nullptr) {}
+    SweepTransition(const SweepTransitionAnalysis *sta, const SweepLoopAnalysis *sla)
+    : transition(sta), nextLoop(sla) {}
+};
+
 class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
     const SweepTransitionGroup *_sibling;
 
-    SweepLoopAnalysis _loop;
-    const RunBlock* _loopRunBlock;
+    // The loops that can start this transition. This is a vector so that we can distinguish
+    // different versions of the same loop, only differing by the entry instruction. The key is
+    // the loop's sequence index.
+    std::map<int, const SweepLoopAnalysis*> _loops;
 
-    // Map from index of loop exit instruction to transition that follows it
-    std::map<int, SweepTransitionAnalysis*> _transitions;
+    // Map from a given loop exit to transition that follows it.
+    std::map<SweepLoopExit, SweepTransition> _transitions;
+
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
 
     DataDeltas _outsideDeltas;
 
-    int numberOfTransitionsForExitValue(int value);
+    int numberOfTransitionsForExitValue(int value) const;
+    int numberOfExitsForValue(int value) const;
     bool determineSweepEndType();
 
 public:
@@ -131,21 +173,31 @@ public:
 
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
 
-    const SweepLoopAnalysis& loop() const { return _loop; }
-    const RunBlock* loopRunBlock() { return _loopRunBlock; }
+    // Returns a loop analysis representing the exiting loops for this transition group. Due to
+    // rotational-equivalence, there can be multiple loops analysis. An arbitrary analysis is
+    // returned. This analysis should only be used to inspect values that are the same for all
+    // analysis.
+    const SweepLoopAnalysis* loop() const { return _loops.begin()->second; }
 
-    bool hasTransitionForExit(int instructionIndex) const {
-        return _transitions.find(instructionIndex) != _transitions.end();
-    }
-    const SweepTransitionAnalysis* transitionForExit(int instructionIndex) const {
-        auto result = _transitions.find(instructionIndex);
-        return (result != _transitions.end()) ? result->second : nullptr;
-    }
-    void addTransitionForExit(SweepTransitionAnalysis *sta, int instructionIndex) {
-        _transitions[instructionIndex] = sta;
+    const SweepLoopAnalysis* analysisForLoop(const RunBlock* loopRunBlock) const {
+        auto result = _loops.find(loopRunBlock->getSequenceIndex());
+        return (result != _loops.end()) ? result->second : nullptr;
     }
 
-    bool analyzeLoop(int runBlockIndex, const ProgramExecutor& executor);
+    bool hasTransitionForExit(const SweepLoopExit& loopExit) const {
+        return _transitions.find(loopExit) != _transitions.end();
+    }
+    const SweepTransition* transitionForExit(const SweepLoopExit& loopExit) const {
+        auto result = _transitions.find(loopExit);
+        return (result != _transitions.end()) ? &(result->second) : nullptr;
+    }
+    void addTransitionForExit(const SweepLoopExit& loopExit, SweepTransition st) {
+        _transitions[loopExit] = st;
+    }
+    int numTransitions() const { return (int)_transitions.size(); }
+
+    void clear();
+    bool analyzeLoop(SweepLoopAnalysis* loop, int runBlockIndex, const ProgramExecutor& executor);
     bool analyzeGroup();
 
     Trilian proofHang(DataPointer dp, const Data& data);
@@ -156,7 +208,8 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
 class SweepHangDetector : public HangDetector {
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
-    SweepTransitionAnalysis _transitionPool[MAX_UNIQUE_TRANSITIONS_PER_SWEEP];
+    SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
+    SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
     SweepTransitionGroup _transitionGroups[2];
 
     // The direction (away from zero) that both loops together change values in the sweep. If both
@@ -167,6 +220,10 @@ class SweepHangDetector : public HangDetector {
     // Returns run block index of the transition that precedes the given sweep loop. If there is
     // no transition between subsequent sweep loops, it returns sweepLoopRunBlockIndex.
     int findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const;
+
+    int numTransitions() const {
+        return _transitionGroups[0].numTransitions() + _transitionGroups[1].numTransitions();
+    }
 
     bool analyzeLoops();
     bool analyzeTransitions();
