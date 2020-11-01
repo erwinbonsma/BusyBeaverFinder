@@ -251,14 +251,6 @@ bool SweepTransitionGroup::determineSweepEndType() {
             // loop to exit in a future sweep.
             exitToNonExit = true;
 
-            // Also verify that it cannot cause the loop sweeping in the other direction to exit.
-            // Note: although it was followed by a successful execution of the loop at least once
-            // already, this does not proof it cannot cause that loop to exit. It could be that the
-            // value was not yet seen by the instruction whose exit it can cause.
-            if (_sibling->loop()->isExitValue(finalValue)) {
-                return failed(*this);
-            }
-
             int sgn = sign(finalValue);
             if (
                 sgn != 0 && (

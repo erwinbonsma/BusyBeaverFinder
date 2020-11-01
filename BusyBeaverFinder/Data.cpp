@@ -93,26 +93,27 @@ int Data::valueAt(DataPointer dp, int dpOffset) const {
     return (index >= 0 && index < _size) ? *(_minDataP + index) : 0;
 }
 
+// Note: Analysis skips the value at DP. It only considers the values beyond that.
 bool Data::onlyZerosAhead(DataPointer dp, bool atRight) const {
     if (atRight) {
-        if (dp > _maxBoundP) {
+        if (dp >= _maxBoundP) {
             return true;
         }
 
         while (true) {
+            dp++;
             if (*dp) { return false; }
             if (dp == _maxBoundP) { break; }
-            dp++;
         }
     } else {
-        if (dp < _minBoundP) {
+        if (dp <= _minBoundP) {
             return true;
         }
 
         while (true) {
+            dp--;
             if (*dp) { return false; }
             if (dp == _minBoundP) { break; }
-            dp--;
         }
     }
 

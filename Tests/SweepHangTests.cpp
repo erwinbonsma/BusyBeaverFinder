@@ -995,4 +995,25 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
+    SECTION( "6x6-SweepHangWithSkippedLoopExit" ) {
+        // The right-sweep exits when it encounters value 1, which happens to be the value of the
+        // fixed end-point at the left. This, however, does not stop the sweep, as the transition
+        // skips passed this before the right-sweep loop starts.
+        //
+        //         *
+        //   * _ _ _
+        //   o _ * _
+        // * o o _ o *
+        // * * * _ o
+        // o _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
 }
