@@ -64,14 +64,20 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
 
     _sweepValueChangeType = SweepValueChangeType::NO_CHANGE; // Initial value
     _sweepValueChange = 0;
+    int numUniformChanges = 0;
     for (int i = numDataDeltas(); --i >= 0; ) {
         int delta = dataDeltaAt(i).delta();
         switch (_sweepValueChangeType) {
             case SweepValueChangeType::NO_CHANGE:
                 _sweepValueChangeType = SweepValueChangeType::UNIFORM_CHANGE;
                 _sweepValueChange = delta;
+                numUniformChanges = 1;
                 break;
             case SweepValueChangeType::UNIFORM_CHANGE:
+                if (_sweepValueChange == delta) {
+                    ++numUniformChanges;
+                }
+                // Fall through
             case SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES:
                 if (_sweepValueChange != delta) {
                     _sweepValueChangeType =
@@ -84,6 +90,13 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
                 // void
                 break;
         }
+    }
+    if (
+        _sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE &&
+        numUniformChanges != abs(dataPointerDelta())
+    ) {
+        // Not all values change, so the change is not actually uniform.
+        _sweepValueChangeType = SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES;
     }
 
     _exitMap.clear();
@@ -169,6 +182,12 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     os << (const SequenceAnalysis&)sta;
 
     return os;
+}
+
+void SweepTransitionGroup::init(const SweepHangDetector *parent,
+                                const SweepTransitionGroup *sibling) {
+    _parent = parent;
+    _sibling = sibling;
 }
 
 void SweepTransitionGroup::clear() {
@@ -304,7 +323,7 @@ bool SweepTransitionGroup::analyzeGroup() {
 
 //    std::cout << *this << std::endl;
 
-    int sweepDeltaSign = sign(loop()->sweepValueChange());
+    _insideSweepTransitionDeltaSign = 0;
     _outsideDeltas.clear();
     for (auto kv : _transitions) {
         const SweepTransition transition = kv.second;
@@ -319,11 +338,31 @@ bool SweepTransitionGroup::analyzeGroup() {
                 bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
                 int sgn = sign(dd.delta());
                 if (insideSweep) {
-                    if (sweepDeltaSign != 0 && sgn != sweepDeltaSign) {
-                        // TODO: Refine or remove this check
+                    // A transition may change values inside the sweep, but only under certain
+                    // conditions. Check if these hold.
+                    int sweepDeltaChange = _parent->combinedSweepValueChange();
+
+                    if (sweepDeltaChange == 0) {
+                        // The loop does not make any changes.
+                        if (_insideSweepTransitionDeltaSign != 0 &&
+                            sgn != sign(_insideSweepTransitionDeltaSign)) {
+                            // Changes are in opposite directions. Do not allow this (for now?).
+                            // There could be strange interactions.
+                            return failed(*this);
+                        }
+                        // Change are in the same direction. That's okay.
+                        _insideSweepTransitionDeltaSign = sgn;
+                    } else if (sgn == sign(sweepDeltaChange)) {
+                        // The transition amplifies the changes made by the sweeps. That's okay.
+                    } else if (_parent->combinedSweepValueChangeType()
+                               == SweepValueChangeType::UNIFORM_CHANGE
+                               && abs(dd.delta()) <= abs(sweepDeltaChange)) {
+                        // The transition dampens changes made by the sweep, but does not change
+                        // the direction of the delta. That's okay.
+                    } else {
+                        // All other changes could (eventually) cause the sweep hang to be aborted
                         return failed(*this);
                     }
-                    sweepDeltaSign = sgn;
                 } else {
                     switch (_sweepEndType) {
                         case SweepEndType::FIXED_POINT: {
@@ -433,8 +472,8 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
 
 SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
 : HangDetector(executor) {
-    _transitionGroups[0].initSibling(&_transitionGroups[1]);
-    _transitionGroups[1].initSibling(&_transitionGroups[0]);
+    _transitionGroups[0].init(this, &_transitionGroups[1]);
+    _transitionGroups[1].init(this, &_transitionGroups[0]);
 }
 
 int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {
@@ -457,6 +496,50 @@ int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) 
     }
 
     return startIndex;
+}
+
+bool SweepHangDetector::determineCombinedSweepValueChange() {
+    SweepTransitionGroup *group = _transitionGroups;
+    auto loop0 = group[0].loop(), loop1 = group[1].loop();
+
+    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
+    if (type0 == SweepValueChangeType::NO_CHANGE) {
+        _sweepValueChangeType = type1;
+        _sweepValueChange = loop1->sweepValueChange();
+    } else if (type1 == SweepValueChangeType::NO_CHANGE) {
+        _sweepValueChangeType = type0;
+        _sweepValueChange = loop0->sweepValueChange();
+    } else if (
+        type0 == SweepValueChangeType::UNIFORM_CHANGE &&
+        type1 == SweepValueChangeType::UNIFORM_CHANGE
+    ) {
+        _sweepValueChange = loop0->sweepValueChange() + loop1->sweepValueChange();
+        _sweepValueChangeType = (_sweepValueChange
+                                 ? SweepValueChangeType::UNIFORM_CHANGE
+                                 : SweepValueChangeType::NO_CHANGE);
+    } else if (
+        type0 != SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES &&
+        type1 != SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES &&
+        sign(loop0->sweepValueChange()) == sign(loop1->sweepValueChange())
+    ) {
+        _sweepValueChangeType = SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES;
+        // Only the sign matters, so addition is not needed, but makes it nicely symmetrical
+        _sweepValueChange = loop0->sweepValueChange() + loop1->sweepValueChange();
+    } else {
+        // Both loops make opposite changes that do not fully cancel out. We cannot (yet?) detect
+        // hangs of this type.
+        return failed(_executor);
+    }
+
+    if (
+        (loop0->requiresFixedInput() || loop1->requiresFixedInput()) &&
+        _sweepValueChangeType != SweepValueChangeType::NO_CHANGE
+    ) {
+        // The changes of both loops, if any, should cancel each other out. They don't
+        return failed(_executor);
+    }
+
+    return true;
 }
 
 bool SweepHangDetector::analyzeLoops() {
@@ -487,30 +570,8 @@ bool SweepHangDetector::analyzeLoops() {
         return failed(_executor);
     }
 
-    auto loop0 = group[0].loop(), loop1 = group[1].loop();
+    if (!determineCombinedSweepValueChange()) {
 
-    int sgn0 = sign(loop0->sweepValueChange()), sgn1 = sign(loop1->sweepValueChange());
-    if (sgn1 == 0 || sgn0 == sgn1) {
-        _sweepDeltaSign = sgn0;
-    } else if (sgn0 == 0) {
-        _sweepDeltaSign = sgn1;
-    } else if (
-        loop0->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
-        loop1->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE &&
-        loop0->sweepValueChange() == -loop1->sweepValueChange()
-    ) {
-        _sweepDeltaSign = 0;
-    } else {
-        // Both loops make opposite changes that do not fully cancel out. This is not supported yet
-        return failed(_executor);
-    }
-
-
-    if (loop0->requiresFixedInput() || loop1->requiresFixedInput()) {
-        // The changes of both loops, if any, should cancel each other out.
-        if (_sweepDeltaSign != 0) {
-            return failed(_executor);
-        }
     }
 
     return true;
@@ -625,6 +686,7 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     // sweep.
     // TODO?: Make analysis smarter.
     int delta = atRight ? -1 : 1;
+    int sweepDeltaSign = sign(_sweepValueChange);
 
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
     const SweepLoopAnalysis *loop0 = _transitionGroups[0].loop();
@@ -638,7 +700,7 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
             break;
         }
 
-        if (_sweepDeltaSign * sign(*dp) < 0) {
+        if (sweepDeltaSign && sweepDeltaSign != sign(*dp)) {
             // The sweep makes changes to the sequence that move some values towards zero
             return failed(_executor);
         }

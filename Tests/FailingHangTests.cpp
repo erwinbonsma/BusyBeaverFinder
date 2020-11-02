@@ -11,7 +11,7 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
+TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][.fail]" ) {
     ExhaustiveSearcher searcher(6, 6, 256);
     ProgressTracker tracker(searcher);
 
@@ -38,6 +38,60 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][6x6][.fail]" ) {
             Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
             Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHangWithTwoIncreasingFixedEndPoints") {
+        // A loop with two different end points at its left. The left-sweep moves two spots, so
+        // the end-point it encounters varies each iteration.
+        //
+        //     * * *
+        //   * _ _ o *
+        //   * o o *
+        // * o _ _ _ *
+        // * o * o _
+        // o o *   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHang-Pillar" ) {
+        // Fairly basic sweep hang, but not yet detected.
+        //
+        //       *
+        //       o _ *
+        //     * o _
+        // * _ _ o *
+        // * * _ o
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "6x6-SweepHang-UnbalancedGrowth" ) {
+        //       *
+        //     * o _ *
+        //   * * o _
+        //   _ o _ *
+        // * _ _ o _ *
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

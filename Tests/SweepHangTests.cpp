@@ -656,7 +656,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepWithTwoFixedTurningPoints") {
         // Sweep with two fixed turning points. One sweep loops moves two data cells each iteration.
@@ -675,7 +675,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-LateSweepWithMidsweepPoint") {
         // Program runs for 142 steps before it enters sweep hang.
@@ -687,7 +687,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-LateSweepWithOscillatingSweepValues") {
         // Sweep hang eventually sweeps across entire sequence (which contains both positive and
@@ -701,7 +701,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-LateFullSweepWithDecreasingSweepValues") {
         // Sweep hang starts after about 170 steps. It sweeps all values and one of the sweep loops
@@ -714,7 +714,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-RegularSweepWithOnlyLoops") {
         // A regular sweep which only consists of two sweep loops. When switching from one loop to
@@ -734,7 +734,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepLoopWithTransitionUndoingLoopExitChange") {
         // A single-headed sweep. The fixed point has value 1, which is changed to zero when the
@@ -747,7 +747,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangWithInterestingPPPath") {
         // Fairly basic sweep loop, somewhat interesting because of the path PP traces in the 2D
@@ -767,7 +767,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-DualHeadedSweepHang") {
         // Dual-headed sweep hang which extends sweep with 3's at its left, and 2's at its right.
@@ -786,7 +786,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-LateDualHeadedSweepWithFastGrowingHead" ) {
         // Sweep that requires about 200 iterations to start. It then creates a dual-headed
@@ -799,7 +799,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangWithSweepDeltasBothWays" ) {
         // A single-headed sweep, where both sweeps decrease the sweep values by one.
@@ -818,7 +818,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangWithSweepDeltasBothWays2" ) {
         // Similar in behaviour to the previous program. It generates a cleaner sequence though.
@@ -838,7 +838,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangWithSweepDeltasBothWays3" ) {
         Ins resumeFrom[] = {
@@ -849,7 +849,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangComplexFixedTransition" ) {
         // Hang featuring a complex fixed turn at the right side of the sequence. The sweep loop
@@ -870,7 +870,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangComplexFixedTransition2" ) {
         // Similar to the previous hang, but this time the fixed turn is at the left side. The
@@ -890,7 +890,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangComplexFixedTransition3" ) {
         // Sweep hang with a complex fixed end point. The two left-most values of the sequence are
@@ -912,7 +912,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangComplexFixedTransition4" ) {
         // The right-sweep exits on a fixed point, with value one. When the loop exits, it is zero.
@@ -933,7 +933,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangComplexFixedTransition5" ) {
         // Similar in behavior to the previous program, but this time the mid-sweep turn is at the
@@ -954,7 +954,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangConstructingDualHeadedPalindrome" ) {
         // Sweep hang that constructs a palindrome that extends at both sides. The sequence consists
@@ -974,7 +974,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangConstructingDualHeadedPalindrome2" ) {
         // Similar in behaviour to the previous, but this program actually creates a perfect
@@ -993,7 +993,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
     SECTION( "6x6-SweepHangWithSkippedLoopExit" ) {
         // The right-sweep exits when it encounters value 1, which happens to be the value of the
@@ -1014,6 +1014,27 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+    }
+    SECTION( "6x6-SweepHangWhereTransitionUndoesSweepLoopChange" ) {
+        // The left sweep decreases all values in the sweep sequence by one. The transition at the
+        // left, however, undoes this change for one of the changes in the sequence. This prevented
+        // an earlier, more strict, version of the hang detector to detect the hang.
+        //
+        //   *     *
+        //   _ _ * o *
+        // * _ _ o o *
+        // * o o _ o *
+        // * * * _ _
+        // o _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
     }
 }

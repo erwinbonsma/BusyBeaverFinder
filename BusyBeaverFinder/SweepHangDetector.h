@@ -67,8 +67,8 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
     SweepValueChangeType _sweepValueChangeType;
 
-    // If the loop makes any changes, this represents it.
-    // - UNIFORM_CHANGE: This is the exact (and only) change
+    // If the sweep makes any changes, this represents it.
+    // - UNIFORM_CHANGE: All values in the sequence are changed by this amount
     // - MULTIPLE_ALIGNED_CHANGES: This is one of the changes. Other changes have the same sign
     // - MULTIPLE_OPPOSING_CHANGES: This is one of the changes (but its value is not useful for
     //   further analysis)
@@ -143,9 +143,11 @@ struct SweepTransition {
     : transition(sta), nextLoop(sla) {}
 };
 
+class SweepHangDetector;
 class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
+    const SweepHangDetector *_parent;
     const SweepTransitionGroup *_sibling;
 
     // The loops that can start this transition. This is a vector so that we can distinguish
@@ -161,17 +163,23 @@ class SweepTransitionGroup {
 
     DataDeltas _outsideDeltas;
 
+    // The direction of changes inside the sweep made by the transitions. It is only set when the
+    // sweep loops themselves do not make any combined change (as otherwise the latter is leading).
+    int _insideSweepTransitionDeltaSign;
+
     int numberOfTransitionsForExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
+
     bool determineSweepEndType();
 
 public:
-    void initSibling(const SweepTransitionGroup *sibling) { _sibling = sibling; }
+    void init(const SweepHangDetector *parent, const SweepTransitionGroup *sibling);
 
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
 
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
+    int insideSweepTransitionDeltaSign() const { return _insideSweepTransitionDeltaSign; }
 
     // Returns a loop analysis representing the exiting loops for this transition group. Due to
     // rotational-equivalence, there can be multiple loops analysis. An arbitrary analysis is
@@ -206,15 +214,15 @@ public:
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
 
 class SweepHangDetector : public HangDetector {
+    friend SweepTransitionGroup;
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
     SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
     SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
     SweepTransitionGroup _transitionGroups[2];
 
-    // The direction (away from zero) that both loops together change values in the sweep. If both
-    // loops make exactly opposite changes, it returns zero.
-    int _sweepDeltaSign;
+    SweepValueChangeType _sweepValueChangeType;
+    int _sweepValueChange;
 
     /* Analysis */
     // Returns run block index of the transition that precedes the given sweep loop. If there is
@@ -224,6 +232,11 @@ class SweepHangDetector : public HangDetector {
     int numTransitions() const {
         return _transitionGroups[0].numTransitions() + _transitionGroups[1].numTransitions();
     }
+
+    // The combined change to the sequence made by both the sweep-loops
+    bool determineCombinedSweepValueChange();
+    SweepValueChangeType combinedSweepValueChangeType() const { return _sweepValueChangeType; }
+    int combinedSweepValueChange() const { return _sweepValueChange; }
 
     bool analyzeLoops();
     bool analyzeTransitions();
