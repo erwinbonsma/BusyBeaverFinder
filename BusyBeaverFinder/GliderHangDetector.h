@@ -50,7 +50,7 @@ protected:
 public:
     GliderHangDetector(const ProgramExecutor& executor);
 
-    virtual HangType hangType() { return HangType::APERIODIC_GLIDER; }
+    virtual HangType hangType() const { return HangType::APERIODIC_GLIDER; }
 };
 
 #endif /* GliderHangDetector_h */

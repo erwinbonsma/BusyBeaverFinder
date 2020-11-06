@@ -44,7 +44,7 @@ public:
     HangDetector(const ProgramExecutor& executor);
     virtual ~HangDetector() {}
 
-    virtual HangType hangType() = 0;
+    virtual HangType hangType() const = 0;
 
     virtual void reset();
 

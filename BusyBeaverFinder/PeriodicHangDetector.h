@@ -41,7 +41,7 @@ protected:
 public:
     PeriodicHangDetector(const ProgramExecutor& executor);
 
-    HangType hangType() { return HangType::PERIODIC; }
+    HangType hangType() const { return HangType::PERIODIC; }
 
     void reset();
 };

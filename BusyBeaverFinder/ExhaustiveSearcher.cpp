@@ -280,7 +280,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
-                    _tracker->reportDetectedHang(hangDetector->hangType());
+                    _tracker->reportDetectedHang(hangDetector);
                     if (!_settings.testHangDetection) {
                         return backtrackProgramPointer;
                     }

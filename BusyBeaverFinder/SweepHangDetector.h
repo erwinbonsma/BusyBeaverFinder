@@ -259,7 +259,9 @@ protected:
 public:
     SweepHangDetector(const ProgramExecutor& executor);
 
-    virtual HangType hangType() { return HangType::REGULAR_SWEEP; }
+    virtual HangType hangType() const { return HangType::REGULAR_SWEEP; }
+
+    const SweepTransitionGroup& transitionGroup(bool atRight) const;
 
     void dump() const;
 };

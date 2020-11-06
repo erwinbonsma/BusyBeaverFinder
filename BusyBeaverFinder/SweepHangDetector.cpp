@@ -793,6 +793,10 @@ Trilian SweepHangDetector::proofHang() {
     return Trilian::YES;
 }
 
+const SweepTransitionGroup& SweepHangDetector::transitionGroup(bool atRight) const {
+    return _transitionGroups[(int) (_transitionGroups[1].locatedAtRight() == atRight)];
+}
+
 void SweepHangDetector::dump() const {
     std::cout << *this << std::endl;
 }

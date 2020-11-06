@@ -11,6 +11,8 @@
 #include <iostream>
 
 #include "ExhaustiveSearcher.h"
+#include "HangDetector.h"
+#include "SweepHangDetector.h"
 #include "Program.h"
 
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
@@ -23,6 +25,8 @@ ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
         _totalHangsByType[i] = 0;
         _totalErrorsByType[i] = 0;
     }
+
+    _lastDetectedHang = nullptr;
 }
 
 void ProgressTracker::report() {
@@ -36,8 +40,11 @@ void ProgressTracker::report() {
 //    _searcher.dumpInstructionStack();
 //    _searcher.getProgram().dump();
 //    _searcher.getInterpretedProgram().dump();
-//    _searcher.getProgram().dumpWeb();
 //    _searcher.dumpExecutionState();
+//    if (_lastDetectedHang && _lastDetectedHang->hangType()==HangType::REGULAR_SWEEP) {
+//        ((const SweepHangDetector *)_lastDetectedHang)->dump();
+//    }
+//    _searcher.getProgram().dumpWeb();
 
 //    if (_searcher.atTargetProgram()) {
 //        std::cout << "Target program generated" << std::endl;
@@ -156,7 +163,13 @@ void ProgressTracker::reportDetectedHang(HangType hangType) {
     report();
 }
 
-long ProgressTracker::getTotalDetectedErrors() {
+void ProgressTracker::reportDetectedHang(const HangDetector* hangDetector) {
+    _lastDetectedHang = hangDetector;
+
+    reportDetectedHang(hangDetector->hangType());
+}
+
+long ProgressTracker::getTotalDetectedErrors() const {
     long total = 0;
     for (int i = 0; i < numDetectedHangTypes; i++) {
         total += _totalErrorsByType[i];
@@ -164,7 +177,7 @@ long ProgressTracker::getTotalDetectedErrors() {
     return total;
 }
 
-long ProgressTracker::getTotalDetectedHangs() {
+long ProgressTracker::getTotalDetectedHangs() const {
     long total = 0;
     for (int i = 0; i < numDetectedHangTypes; i++) {
         total += _totalHangsByType[i];
@@ -172,11 +185,11 @@ long ProgressTracker::getTotalDetectedHangs() {
     return total;
 }
 
-long ProgressTracker::getTotalErrors() {
+long ProgressTracker::getTotalErrors() const {
     return getTotalDetectedErrors() + _totalErrorsByType[(int)HangType::UNDETECTED];
 }
 
-long ProgressTracker::getTotalHangs() {
+long ProgressTracker::getTotalHangs() const {
     return getTotalDetectedHangs() + _totalHangsByType[(int)HangType::UNDETECTED];
 }
 

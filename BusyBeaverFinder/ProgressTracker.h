@@ -15,6 +15,7 @@
 #include "Program.h"
 
 class ExhaustiveSearcher;
+class HangDetector;
 
 class ProgressTracker {
     int _dumpStatsPeriod = 100000;
@@ -42,6 +43,10 @@ class ProgressTracker {
     int _maxStepsSofar = 0;
     Program _bestProgram;
 
+    // Hang detector with details of the last detected specialized hang (i.e. hang that was
+    // detected by a HangDetector).
+    const HangDetector *_lastDetectedHang;
+
     // Stats on hang-detection speed and effectiveness
     int _maxStepsUntilHangDetection = 0;
 
@@ -55,21 +60,24 @@ public:
     void setDumpUndetectedHangs(bool flag) { _dumpUndetectedHangs = flag; }
     void setDumpBestSofarLimit(int minSteps) { _dumpBestSofarLimit = minSteps; }
 
-    long getTotalSuccess() { return _totalSuccess; }
-    long getTotalErrors();
-    long getTotalHangs();
-    long getTotalFastExecutions() { return _totalFastExecutions; }
-    long getTotalLateEscapes() { return _totalLateEscapes; }
-    long getTotalDetectedErrors();
-    long getTotalErrors(HangType hangType) { return _totalErrorsByType[(int)hangType]; }
-    long getTotalDetectedHangs();
-    long getTotalHangs(HangType hangType) { return _totalHangsByType[(int)hangType]; }
+    long getTotalSuccess() const { return _totalSuccess; }
+    long getTotalErrors() const;
+    long getTotalHangs() const;
+    long getTotalFastExecutions() const { return _totalFastExecutions; }
+    long getTotalLateEscapes() const { return _totalLateEscapes; }
+    long getTotalDetectedErrors() const;
+    long getTotalErrors(HangType hangType) const { return _totalErrorsByType[(int)hangType]; }
+    long getTotalDetectedHangs() const;
+    long getTotalHangs(HangType hangType) const { return _totalHangsByType[(int)hangType]; }
 
-    int getMaxStepsFound() { return _maxStepsSofar; }
+    const HangDetector* getLastDetectedHang() const { return _lastDetectedHang; }
+
+    int getMaxStepsFound() const { return _maxStepsSofar; }
 
     void reportDone(int totalSteps);
     void reportError();
     void reportDetectedHang(HangType hangType);
+    void reportDetectedHang(const HangDetector* hangDetector);
     void reportAssumedHang();
 
     void reportFastExecution() { _totalFastExecutions++; }
