@@ -184,6 +184,10 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
+bool SweepLoopExit::exitsOnZero() const {
+    return loopExit().exitCondition.getOperator() == Operator::EQUALS;
+}
+
 void SweepTransitionGroup::init(const SweepHangDetector *parent,
                                 const SweepTransitionGroup *sibling) {
     _parent = parent;
@@ -244,61 +248,99 @@ bool SweepTransitionGroup::determineSweepEndType() {
     bool exitToExit = false;
     bool exitToNonExit = false;
     bool nonExitToExit = false;
+    int numPositiveDeltas = 0, numNegativeDeltas = 0;
+    int numNonZeroExits = 0;
 
     for (auto kv : _transitions) {
-        const SweepTransition transition = kv.second;
+        const SweepLoopExit &sweepLoopExit = kv.first;
+        const SweepTransition &transition = kv.second;
         const SweepTransitionAnalysis *sta = transition.transition;
-        int valueAfterTransition = sta->dataDeltas().deltaAt(0);
-        int finalValue = (valueAfterTransition +
-                          transition.nextLoop->deltaAt( -sta->dataPointerDelta() ));
-        int exitCount = numberOfExitsForValue(finalValue);
 
-        if (exitCount > 0) {
-            // The value that caused the loop to exit and continue at the given transition, is
-            // converted (by the transition) to another value that causes a loop exit (in a later
-            // sweep).
-            exitToExit = true;
+        // Determine delta after exit. For zero-exits, this is the final value
+        int delta = sta->dataDeltas().deltaAt(0);
+        delta += transition.nextLoop->deltaAt( -sta->dataPointerDelta() );
 
-            int numTransitions = numberOfTransitionsForExitValue(finalValue);
-            if (numTransitions != exitCount) {
-                // Not all possible exits are (yet) followed by a transition that continues the
-                // sweep. We can therefore not yet conclude this is a hang.
-                return failed(*this);
+        // Determine how much the value changes compared to its initial value.
+        int totalDelta = delta - sweepLoopExit.loopExit().exitCondition.value();
+
+        if (totalDelta > 0) {
+            ++numPositiveDeltas;
+        } else if (totalDelta < 0) {
+            ++numNegativeDeltas;
+        }
+
+        if (sweepLoopExit.exitsOnZero()) {
+            int exitCount = numberOfExitsForValue(delta);
+
+            if (exitCount > 0) {
+                // The value that caused the loop to exit and continue at the given transition, is
+                // converted (by the transition) to another value that causes a loop exit (in a later
+                // sweep).
+                exitToExit = true;
+
+                int numTransitions = numberOfTransitionsForExitValue(delta);
+                if (numTransitions != exitCount) {
+                    // Not all possible exits are (yet) followed by a transition that continues the
+                    // sweep. We can therefore not yet conclude this is a hang.
+                    return failed(*this);
+                }
+            } else {
+                // This transition extends the sequence. It results in a value that does not cause
+                // the loop to exit in a future sweep.
+                exitToNonExit = true;
+
+                int sgn = sign(delta);
+                if (sgn != 0 && sgn == -sign(_parent->combinedSweepValueChange()) ) {
+                    // Although it cannot directly cause the loop to exit, it is modified by the
+                    // sweeps towards zero, which will likely cause it to exit the loop again.
+                    // TODO: Refine this check
+                    nonExitToExit = true;
+                }
             }
         } else {
-            // This transition extends the sequence. It results in a value that does not cause the
-            // loop to exit in a future sweep.
-            exitToNonExit = true;
-
-            int sgn = sign(finalValue);
-            if (
-                sgn != 0 && (
-                    sgn == -sign( loop()->sweepValueChange() ) ||
-                    sgn == -sign( _sibling->loop()->sweepValueChange() )
-                )
-            ) {
-                // Although it cannot directly cause the loop to exit, it is modified by the sweeps
-                // towards zero, which will likely cause it to exit the loop again.
-                // TODO: Refine this check
-                nonExitToExit = true;
-            }
+            // Loop exits on a non-zero value. The unusual case
+            ++numNonZeroExits;
         }
     }
 
     // When abs(delta DP) > 1, not only change at DP is relevant. See e.g. FakeSweep.
     // TODO: Extend recognition accordingly.
 
-    if (!exitToExit && exitToNonExit && !nonExitToExit) {
-        _sweepEndType = SweepEndType::STEADY_GROWTH;
-    } else if (exitToExit && !exitToNonExit) {
-        _sweepEndType = SweepEndType::FIXED_POINT;
-    } else if (exitToExit && exitToNonExit && !nonExitToExit) {
-        _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
-    } else if (exitToNonExit && nonExitToExit) {
-        _sweepEndType = SweepEndType::FIXED_GROWING;
+    if (numNonZeroExits > 0) {
+        if (numNonZeroExits < _transitions.size()) {
+            // To facilitate analysis, when one exit is on a non-zero value, require that all are
+            // TODO: Extend analysis when needed
+            return failed(*this);
+        }
+        if (numNegativeDeltas > 0 && numPositiveDeltas > 0) {
+            // To facilitate analysis, require that deltas are not in opposite directions.
+            // TODO: Extend analysis when needed
+            return failed(*this);
+        }
+        if (numPositiveDeltas > 0) {
+            _sweepEndType = SweepEndType::FIXED_POINT_INCREASING_VALUE;
+        } else if (numNegativeDeltas > 0) {
+            _sweepEndType = SweepEndType::FIXED_POINT_DECREASING_VALUE;
+        } else {
+            _sweepEndType = SweepEndType::FIXED_POINT_CONSTANT_VALUE;
+        }
     } else {
-        // Unsupported sweep end type
-        return false;
+        if (!exitToExit && exitToNonExit && !nonExitToExit) {
+            _sweepEndType = SweepEndType::STEADY_GROWTH;
+        } else if (exitToExit && !exitToNonExit) {
+            if (numPositiveDeltas > 0 || numNegativeDeltas > 0) {
+                _sweepEndType = SweepEndType::FIXED_POINT_MULTIPLE_VALUES;
+            } else {
+                _sweepEndType = SweepEndType::FIXED_POINT_CONSTANT_VALUE;
+            }
+        } else if (exitToExit && exitToNonExit && !nonExitToExit) {
+            _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+        } else if (exitToNonExit && nonExitToExit) {
+            _sweepEndType = SweepEndType::FIXED_GROWING;
+        } else {
+            // Unsupported sweep end type
+            return false;
+        }
     }
 
     return true;
@@ -365,7 +407,10 @@ bool SweepTransitionGroup::analyzeGroup() {
                     }
                 } else {
                     switch (_sweepEndType) {
-                        case SweepEndType::FIXED_POINT: {
+                        case SweepEndType::FIXED_POINT_CONSTANT_VALUE:
+                        case SweepEndType::FIXED_POINT_MULTIPLE_VALUES:
+                        case SweepEndType::FIXED_POINT_INCREASING_VALUE:
+                        case SweepEndType::FIXED_POINT_DECREASING_VALUE: {
                             // Check all deltas at specific offset have same sign
                             int delta = _outsideDeltas.deltaAt(dd.dpOffset());
                             if (delta == 0) {
@@ -407,14 +452,32 @@ bool SweepTransitionGroup::analyzeGroup() {
     return true;
 }
 
+bool SweepTransitionGroup::allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const {
+    for (const DataDelta &dd : _outsideDeltas) {
+        if (sign(dd.delta()) != sign(data.valueAt(dp, dd.dpOffset()))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
     switch (_sweepEndType) {
-        case SweepEndType::FIXED_POINT:
-            // Check all outside deltas move values away from zero
-            for (const DataDelta &dd : _outsideDeltas) {
-                if (dd.delta() * data.valueAt(dp, dd.dpOffset()) < 0) {
-                    return Trilian::MAYBE;
-                }
+        case SweepEndType::FIXED_POINT_INCREASING_VALUE:
+            if (*dp < 0 || !allOutsideDeltasMoveAwayFromZero(dp, data)) {
+                return Trilian::MAYBE;
+            }
+            break;
+        case SweepEndType::FIXED_POINT_DECREASING_VALUE:
+            if (*dp > 0 || !allOutsideDeltasMoveAwayFromZero(dp, data)) {
+                return Trilian::MAYBE;
+            }
+            break;
+        case SweepEndType::FIXED_POINT_CONSTANT_VALUE:
+        case SweepEndType::FIXED_POINT_MULTIPLE_VALUES:
+            if (!allOutsideDeltasMoveAwayFromZero(dp, data)) {
+                return Trilian::MAYBE;
             }
             break;
         case SweepEndType::FIXED_GROWING: {
@@ -463,7 +526,10 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
     switch (group.endType()) {
         case SweepEndType::STEADY_GROWTH: os << "Steady growth"; break;
         case SweepEndType::IRREGULAR_GROWTH: os << "Irregular growth"; break;
-        case SweepEndType::FIXED_POINT: os << "Fixed point"; break;
+        case SweepEndType::FIXED_POINT_CONSTANT_VALUE: os << "Fixed point, constant value"; break;
+        case SweepEndType::FIXED_POINT_MULTIPLE_VALUES: os << "Fixed point, multiple values"; break;
+        case SweepEndType::FIXED_POINT_INCREASING_VALUE: os << "Fixed point, increasing value"; break;
+        case SweepEndType::FIXED_POINT_DECREASING_VALUE: os << "Fixed point, decreasing value"; break;
         case SweepEndType::FIXED_GROWING: os << "Fixed growing"; break;
     }
 
@@ -571,7 +637,7 @@ bool SweepHangDetector::analyzeLoops() {
     }
 
     if (!determineCombinedSweepValueChange()) {
-
+        return false;
     }
 
     return true;

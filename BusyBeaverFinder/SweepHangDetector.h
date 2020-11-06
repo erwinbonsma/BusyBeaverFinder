@@ -25,7 +25,7 @@ enum class SweepEndType : int {
     /* The sequence is growing each sweep. Each iteration it adds one (or more) non-exit values
      * to the sweep body.
      */
-    STEADY_GROWTH,
+    STEADY_GROWTH = 1,
 
     /* The sequence is growing, but not each sweep. This end value of the sequence can take two
      * (or more) different exit values. For at least one value, the sweep will change it into
@@ -34,9 +34,23 @@ enum class SweepEndType : int {
      */
     IRREGULAR_GROWTH,
 
-    /* The sweep always ends at the same fixed data point.
+    /* The sweep ends at a fixed position, with a constant value.
+     *
+     * Note: Value changes during a transition are ignored. Only the final value matters.
      */
-    FIXED_POINT,
+    FIXED_POINT_CONSTANT_VALUE,
+
+    /* The sweep ends at a fixed position, which can take multiple but a fixed number of values.
+     */
+    FIXED_POINT_MULTIPLE_VALUES,
+
+    /* The sweep ends at a fixed position with an increasing value.
+     */
+    FIXED_POINT_INCREASING_VALUE,
+
+    /* The sweep ends at a fixed position with a decreasing value.
+     */
+    FIXED_POINT_DECREASING_VALUE,
 
     /* The sweep always ends in an "appendix" sequence. This appendix consists of two (or more)
      * different exit values. These values can change each sweep, impacting where the sweep ends
@@ -116,6 +130,9 @@ struct SweepLoopExit {
 
     SweepLoopExit(const SweepLoopAnalysis *sla, int index)
     : loop(sla), exitInstructionIndex(index) {}
+
+    const LoopExit& loopExit() const { return loop->exit(exitInstructionIndex); }
+    bool exitsOnZero() const;
 
     bool operator==(const SweepLoopExit& rhs) {
         return loop == rhs.loop && exitInstructionIndex == rhs.exitInstructionIndex;
@@ -208,6 +225,7 @@ public:
     bool analyzeLoop(SweepLoopAnalysis* loop, int runBlockIndex, const ProgramExecutor& executor);
     bool analyzeGroup();
 
+    bool allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const;
     Trilian proofHang(DataPointer dp, const Data& data);
 };
 
