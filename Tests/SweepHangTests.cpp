@@ -1339,4 +1339,51 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithSignMismatchForExtensionAndCombinedSweepValueChange" ) {
+        // Dual-headed sweep. At the right, the sweep is extended with value 1. This has a
+        // different sign than the combined sweep value change, which is -2. However, this is okay,
+        // as it is realized in one instruction, and therefore does not cause a zero-based exit.
+        //
+        // *     *
+        // o _ * o _ *
+        // _ _ _ o *
+        // _ o _ o *
+        // _ * _ o _ *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepWithSignMismatchForExtensionAndCombinedSweepValueChange2" ) {
+        // Similar in behaviour to the previous program, but this time a the extension at the left
+        // (value -1) has a different sign than the combined sweep hang change (2).
+        //
+        //       * *
+        // * o _ o _ *
+        // o _ _ o _ *
+        // o * * o _
+        // o * _ o *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
 }

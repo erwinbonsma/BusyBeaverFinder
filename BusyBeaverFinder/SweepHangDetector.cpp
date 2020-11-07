@@ -392,7 +392,10 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 if (sgn != 0 && sgn == -sgnCombinedSweepChange) {
                     // Although it cannot directly cause the loop to exit, it is modified by the
                     // sweeps towards zero, which will likely cause it to exit the loop again.
-                    nonExitToExit = true;
+                    int singleSweepChange = _parent->singleSweepValueChange();
+                    if (abs(singleSweepChange) < abs(delta)) {
+                        nonExitToExit = true;
+                    }
                 } else if (sgnCombinedSweepChange == 0 && hasIndirectExitsForValue(delta)) {
                     // Although the combined sweep does not result in value changes, loop exits
                     // still can change this value into one that causes an exit in a later sweep.
@@ -440,10 +443,10 @@ bool SweepTransitionGroup::determineSweepEndType() {
         } else if (exitToNonExit && nonExitToExit) {
             _sweepEndType = SweepEndType::FIXED_GROWING;
             // Unsupported for regular sweeps
-            return false;
+            return failed(*this);
         } else {
             // Unsupported sweep end type
-            return false;
+            return failed(*this);
         }
     }
 
@@ -667,10 +670,9 @@ int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) 
 }
 
 bool SweepHangDetector::determineCombinedSweepValueChange() {
-    SweepTransitionGroup *group = _transitionGroups;
-    auto loop0 = group[0].loop(), loop1 = group[1].loop();
-
+    auto loop0 = _transitionGroups[0].loop(), loop1 =_transitionGroups[1].loop();
     auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
+
     if (type0 == SweepValueChangeType::NO_CHANGE) {
         _sweepValueChangeType = type1;
         _sweepValueChange = loop1->sweepValueChange();
@@ -708,6 +710,22 @@ bool SweepHangDetector::determineCombinedSweepValueChange() {
     }
 
     return true;
+}
+
+// If both sweeps only make a single change, returns that. Otherwise returns 0.
+int SweepHangDetector::singleSweepValueChange() const {
+    auto loop0 = _transitionGroups[0].loop(), loop1 =_transitionGroups[1].loop();
+    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
+
+    if (type0 == SweepValueChangeType::NO_CHANGE && type1 == SweepValueChangeType::UNIFORM_CHANGE) {
+        return loop1->sweepValueChange();
+    }
+
+    if (type1 == SweepValueChangeType::NO_CHANGE && type0 == SweepValueChangeType::UNIFORM_CHANGE) {
+        return loop0->sweepValueChange();
+    }
+
+    return 0;
 }
 
 bool SweepHangDetector::analyzeLoops() {

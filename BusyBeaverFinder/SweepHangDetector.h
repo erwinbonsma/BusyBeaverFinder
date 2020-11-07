@@ -265,6 +265,10 @@ class SweepHangDetector : public HangDetector {
     SweepValueChangeType combinedSweepValueChangeType() const { return _sweepValueChangeType; }
     int combinedSweepValueChange() const { return _sweepValueChange; }
 
+    // If only one of the sweeps makes a uniform change and the other loop makes no change, returns
+    // the value of this change. Returns 0 otherwise
+    int singleSweepValueChange() const;
+
     bool analyzeLoops();
     bool analyzeTransitions();
     bool analyzeTransitionGroups();
