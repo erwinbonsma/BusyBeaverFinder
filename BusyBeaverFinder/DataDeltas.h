@@ -10,6 +10,7 @@
 #define DataDeltas_h
 
 #include <vector>
+#include <iostream>
 
 class DataDelta {
     int _dpOffset;
@@ -55,5 +56,7 @@ public:
     const_iterator begin() const { return _dataDeltas.cbegin(); }
     const_iterator end() const { return _dataDeltas.cend(); }
 };
+
+std::ostream &operator<<(std::ostream &os, const DataDeltas& dataDeltas);
 
 #endif /* DataDeltas_h */

@@ -10,7 +10,11 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][.fail]" ) {
+// Eventually the irregular hangs should be correctly detected. That can only happened when this
+// is supported by a hang detector. That is not yet the case. Until then, let these test pass as
+// long as they do not detect a hang. This guards against false positives in the current regular
+// sweep hang detector.
+TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
     ExhaustiveSearcher searcher(6, 6, 256);
     ProgressTracker tracker(searcher);
 
@@ -42,7 +46,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][.fai
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
     SECTION( "6x6-IrregularSweep5") {
         // Quite similar to 6x6-IrregularSweep3. However, the negative values in the data sequence
@@ -63,7 +67,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][.fai
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
     SECTION( "6x6-SweepWithBinaryCounter") {
         // Sweep with binary counter at its left side. When the binary counter overflows, it adds
@@ -82,7 +86,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][.fai
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
     SECTION( "6x6-SweepWithBinaryCounter2") {
         // Another sweep with a binary-like counter.
@@ -101,7 +105,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][.fai
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
     SECTION( "6x6-SweepWithBinaryCounter3") {
         // Very similar to previous hang. However, it has an interesting feature that next to the
@@ -122,6 +126,6 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][.fai
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
 }

@@ -43,6 +43,8 @@ public:
     const ProgramBlock* programBlockAt(int index) const { return _programBlocks[index]; }
 
     int dataPointerDelta() const { return _dpDelta; }
+    int minDp() const { return _minDp; }
+    int maxDp() const { return _maxDp; }
 
     const DataDeltas& dataDeltas() const { return _dataDeltas; }
 

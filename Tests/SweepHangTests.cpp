@@ -944,6 +944,30 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithDecreasingInSweepValue" ) {
+        // Both the leftward and rightward sweep change the sequence value, but these cancel each
+        // other out. The leftmost value, however, is only impacted by one of the sweeps, as the
+        // transition at the left shifts DP so that the rightward sweep does not undo this change.
+        //
+        //   *     *
+        //   _ _ * _
+        // * _ _ _ o *
+        // * o o o _ *
+        // * * * _ _
+        // o o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
     SECTION( "6x6-SweepWithTwoInSequenceOscillatingValues" ) {
         // Another sweep with a mid-sequence reversal that takes 21 steps to execute. As this
         // reversal sequence contains a small loop (with fixed number of iteration) it requires the
@@ -1039,29 +1063,6 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_INCREASING_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-SweepWithDecreasingMidSweepPoint" ) {
-        // Similar to the previous programs, but with a fixed point with a continuously decreasing
-        // value.
-        //
-        //   *     *
-        //   _ _ * _
-        // * _ _ _ o *
-        // * o o o _ *
-        // * * * _ _
-        // o o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_DECREASING_VALUE);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-    }
     SECTION( "6x6-SweepWithTwoFixedConstantValueTurningPoints" ) {
         // Sweep with two fixed turning points. One sweep loops moves two data cells each iteration.
         // Its starting position on the data tape (modulus two) determines at which of these two
@@ -1103,6 +1104,28 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         searcher.findOne(resumeFrom);
 
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_INCREASING_VALUE);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepWithTwoFixedIncreasingValueTurningPoints2") {
+        // Program very similar in structure and behavior to the previous.
+        //
+        //     * * *
+        //   * _ _ o *
+        //   * o o *
+        // * o _ _ _ *
+        // * o * o _
+        // o o *   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_INCREASING_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);

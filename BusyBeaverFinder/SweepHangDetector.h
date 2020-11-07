@@ -22,6 +22,8 @@ const int MAX_SWEEP_TRANSITION_ANALYSIS = 8;
  * require different checks to proof that the program is indeed hanging.
  */
 enum class SweepEndType : int {
+    UNKNOWN = 0,
+
     /* The sequence is growing each sweep. Each iteration it adds one (or more) non-exit values
      * to the sweep body.
      */
@@ -60,6 +62,8 @@ enum class SweepEndType : int {
     FIXED_GROWING
 };
 
+std::ostream &operator<<(std::ostream &os, SweepEndType sweepEndType);
+
 enum class SweepValueChangeType : int {
     // The sweep loop does not change values
     NO_CHANGE,
@@ -81,7 +85,8 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
     SweepValueChangeType _sweepValueChangeType;
 
-    // If the sweep makes any changes, this represents it.
+    // If the sweep makes any changes, this represents it:
+    // - NO_CHANGE: Value is zero
     // - UNIFORM_CHANGE: All values in the sequence are changed by this amount
     // - MULTIPLE_ALIGNED_CHANGES: This is one of the changes. Other changes have the same sign
     // - MULTIPLE_OPPOSING_CHANGES: This is one of the changes (but its value is not useful for
@@ -96,6 +101,8 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
     bool _requiresFixedInput;
 
+    bool hasIndirectExitsForValueAfterExit(int value, int exitInstruction) const;
+
 public:
     const RunBlock* loopRunBlock() const { return _loopRunBlock; }
 
@@ -104,6 +111,7 @@ public:
 
     bool isExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
+    bool hasIndirectExitsForValue(int value) const;
 
     bool requiresFixedInput() const { return _requiresFixedInput; }
 
@@ -186,6 +194,7 @@ class SweepTransitionGroup {
 
     int numberOfTransitionsForExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
+    bool hasIndirectExitsForValue(int value) const;
 
     bool determineSweepEndType();
 

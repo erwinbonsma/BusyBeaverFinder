@@ -43,26 +43,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
-    SECTION( "6x6-SweepHangWithTwoIncreasingFixedEndPoints") {
-        // A loop with two different end points at its left. The left-sweep moves two spots, so
-        // the end-point it encounters varies each iteration.
-        //
-        //     * * *
-        //   * _ _ o *
-        //   * o o *
-        // * o _ _ _ *
-        // * o * o _
-        // o o *   *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-    }
     SECTION( "6x6-SweepHang-Pillar" ) {
         // Fairly basic sweep hang, but not yet detected.
         //

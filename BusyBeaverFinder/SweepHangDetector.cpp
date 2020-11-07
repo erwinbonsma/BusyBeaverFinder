@@ -27,6 +27,21 @@ bool failed(SweepTransitionGroup& tg) {
     return false;
 }
 
+std::ostream &operator<<(std::ostream &os, SweepEndType endType) {
+    switch (endType) {
+        case SweepEndType::STEADY_GROWTH: os << "Steady growth"; break;
+        case SweepEndType::IRREGULAR_GROWTH: os << "Irregular growth"; break;
+        case SweepEndType::FIXED_POINT_CONSTANT_VALUE: os << "Fixed point, constant value"; break;
+        case SweepEndType::FIXED_POINT_MULTIPLE_VALUES: os << "Fixed point, multiple values"; break;
+        case SweepEndType::FIXED_POINT_INCREASING_VALUE: os << "Fixed point, increasing value"; break;
+        case SweepEndType::FIXED_POINT_DECREASING_VALUE: os << "Fixed point, decreasing value"; break;
+        case SweepEndType::FIXED_GROWING: os << "Fixed growing"; break;
+        case SweepEndType::UNKNOWN: break;
+    }
+
+    return os;
+}
+
 namespace std {
 size_t hash<SweepLoopExit>::operator()(const SweepLoopExit& sle) const {
     return (sle.loop->loopRunBlock()->getSequenceIndex() << 8) ^ sle.exitInstructionIndex;
@@ -39,6 +54,72 @@ bool SweepLoopAnalysis::isExitValue(int value) const {
 
 int SweepLoopAnalysis::numberOfExitsForValue(int value) const {
     return (int)_exitMap.count(value);
+}
+
+DataDeltas tmpDataDeltasIndirectExits;
+bool SweepLoopAnalysis::hasIndirectExitsForValueAfterExit(int value, int exitInstruction) const {
+    DataDeltas &dataDeltas = tmpDataDeltasIndirectExits;
+    int dpDelta = 0;
+
+    dataDeltas.clear();
+    // Fully bootstrap the loop
+    int maxIteration = numBootstrapCycles();
+    for (int iteration = 0; iteration <= maxIteration; iteration++) {
+        // Execute the last iteration until (inclusive) the exit instruction
+        for (int instruction = 0; instruction < loopSize(); instruction++) {
+            const ProgramBlock *pb = programBlockAt(instruction);
+
+            if (pb->isDelta()) {
+                dataDeltas.updateDelta(dpDelta, pb->getInstructionAmount());
+            } else {
+                dpDelta += pb->getInstructionAmount();
+            }
+
+//            if (instruction == exitInstruction) {
+//                std::cout << "Iteration " << iteration
+//                    << " dpOffset = " << dpDelta
+//                    << ": " << dataDeltas << std::endl;
+//            }
+
+            if (instruction == exitInstruction && iteration == maxIteration) {
+                int dpDeltaStartIteration = dpDelta - effectiveResultAt(exitInstruction).dpOffset();
+                int dpMin = dpDeltaStartIteration + minDp();
+                int dpMax = dpDeltaStartIteration + maxDp();
+                for (DataDelta dd : dataDeltas) {
+                    bool insideSweep = sign(dpDelta - dd.dpOffset()) == sign(dataPointerDelta());
+                    bool isBootstrapResidu = dd.dpOffset() < dpMin || dd.dpOffset() > dpMax;
+                    int finalValue = value + dd.delta() - _sweepValueChange;
+                    if (insideSweep && !isBootstrapResidu && isExitValue(finalValue)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+    }
+
+    assert(false);
+    return false;
+}
+
+bool SweepLoopAnalysis::hasIndirectExitsForValue(int value) const {
+    // Assumption to simplify analysis.
+    assert(_sweepValueChangeType == SweepValueChangeType::NO_CHANGE ||
+           _sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE);
+
+    for (int instructionIndex = loopSize(); --instructionIndex >= 0; ) {
+        const LoopExit& loopExit = exit(instructionIndex);
+
+        if (loopExit.exitWindow == ExitWindow::ANYTIME) {
+            // Determine what all inside-sweep deltas can be when this exit is taken
+            if (hasIndirectExitsForValueAfterExit(value, instructionIndex)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
@@ -197,6 +278,7 @@ void SweepTransitionGroup::init(const SweepHangDetector *parent,
 void SweepTransitionGroup::clear() {
     _loops.clear();
     _transitions.clear();
+    _sweepEndType = SweepEndType::UNKNOWN;
 }
 
 bool SweepTransitionGroup::analyzeLoop(SweepLoopAnalysis* loopAnalysis, int runBlockIndex,
@@ -244,12 +326,27 @@ int SweepTransitionGroup::numberOfExitsForValue(int value) const {
     return count;
 }
 
+bool SweepTransitionGroup::hasIndirectExitsForValue(int value) const {
+    assert(_parent->combinedSweepValueChange() == 0);
+
+    for (auto kv : _loops) {
+        const SweepLoopAnalysis *loop = kv.second;
+        if (loop->hasIndirectExitsForValue(value)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool SweepTransitionGroup::determineSweepEndType() {
     bool exitToExit = false;
     bool exitToNonExit = false;
     bool nonExitToExit = false;
     int numPositiveDeltas = 0, numNegativeDeltas = 0;
     int numNonZeroExits = 0;
+
+//    std::cout << *this;
 
     for (auto kv : _transitions) {
         const SweepLoopExit &sweepLoopExit = kv.first;
@@ -274,8 +371,8 @@ bool SweepTransitionGroup::determineSweepEndType() {
 
             if (exitCount > 0) {
                 // The value that caused the loop to exit and continue at the given transition, is
-                // converted (by the transition) to another value that causes a loop exit (in a later
-                // sweep).
+                // converted (by the transition) to another value that causes a loop exit (in a
+                // later sweep).
                 exitToExit = true;
 
                 int numTransitions = numberOfTransitionsForExitValue(delta);
@@ -285,15 +382,20 @@ bool SweepTransitionGroup::determineSweepEndType() {
                     return failed(*this);
                 }
             } else {
-                // This transition extends the sequence. It results in a value that does not cause
-                // the loop to exit in a future sweep.
+                // This transition extends the sequence. It results in a value that does not
+                // (directly) cause the loop to exit in a future sweep.
+
                 exitToNonExit = true;
 
                 int sgn = sign(delta);
-                if (sgn != 0 && sgn == -sign(_parent->combinedSweepValueChange()) ) {
+                int sgnCombinedSweepChange = sign(_parent->combinedSweepValueChange());
+                if (sgn != 0 && sgn == -sgnCombinedSweepChange) {
                     // Although it cannot directly cause the loop to exit, it is modified by the
                     // sweeps towards zero, which will likely cause it to exit the loop again.
-                    // TODO: Refine this check
+                    nonExitToExit = true;
+                } else if (sgnCombinedSweepChange == 0 && hasIndirectExitsForValue(delta)) {
+                    // Although the combined sweep does not result in value changes, loop exits
+                    // still can change this value into one that causes an exit in a later sweep.
                     nonExitToExit = true;
                 }
             }
@@ -337,6 +439,8 @@ bool SweepTransitionGroup::determineSweepEndType() {
             _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
         } else if (exitToNonExit && nonExitToExit) {
             _sweepEndType = SweepEndType::FIXED_GROWING;
+            // Unsupported for regular sweeps
+            return false;
         } else {
             // Unsupported sweep end type
             return false;
@@ -437,6 +541,8 @@ bool SweepTransitionGroup::analyzeGroup() {
                         case SweepEndType::IRREGULAR_GROWTH:
                             // Do not support this (yet?)
                             return failed(*this);
+                        case SweepEndType::UNKNOWN:
+                            assert(false);
                     }
                 }
             }
@@ -498,6 +604,9 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
                 return Trilian::MAYBE;
             }
             break;
+
+        case SweepEndType::UNKNOWN:
+            assert(false);
     }
     return Trilian::YES;
 }
@@ -522,15 +631,8 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
         ++iter;
     }
 
-    os << "Type = ";
-    switch (group.endType()) {
-        case SweepEndType::STEADY_GROWTH: os << "Steady growth"; break;
-        case SweepEndType::IRREGULAR_GROWTH: os << "Irregular growth"; break;
-        case SweepEndType::FIXED_POINT_CONSTANT_VALUE: os << "Fixed point, constant value"; break;
-        case SweepEndType::FIXED_POINT_MULTIPLE_VALUES: os << "Fixed point, multiple values"; break;
-        case SweepEndType::FIXED_POINT_INCREASING_VALUE: os << "Fixed point, increasing value"; break;
-        case SweepEndType::FIXED_POINT_DECREASING_VALUE: os << "Fixed point, decreasing value"; break;
-        case SweepEndType::FIXED_GROWING: os << "Fixed growing"; break;
+    if (group.endType() != SweepEndType::UNKNOWN) {
+        os << "Type = " << group.endType();
     }
 
     return os;
