@@ -111,7 +111,14 @@ void ProgressTracker::reportAssumedHang() {
 //        _searcher.getProgram().dumpWeb();
 
         if (_dumpUndetectedHangs) {
-            std::cout << "Undetected hang: ";
+            std::cout << "Undetected hang";
+            if (
+                _searcher.getMetaRunSummary().isInsideLoop() &&
+                _searcher.getMetaRunSummary().getNumRunBlocks() <= 4
+            ) {
+                std::cout << " (meta-loop)";
+            }
+            std::cout << ": ";
             _searcher.dumpInstructionStack();
         }
     }
