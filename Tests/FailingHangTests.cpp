@@ -43,20 +43,4 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][.fail]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
-    SECTION( "6x6-SweepHang-UnbalancedGrowth" ) {
-        //       *
-        //     * o _ *
-        //   * * o _
-        //   _ o _ *
-        // * _ _ o _ *
-        // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-    }
 }
