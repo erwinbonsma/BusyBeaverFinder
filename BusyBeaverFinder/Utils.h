@@ -54,4 +54,29 @@ Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
 void dumpDataBuffer(int* buf, int* dataP, int size);
 void dumpInstructionStack(Ins* stack);
 
+template <class MapType>
+class MapKeyIterator {
+private:
+    MapType& map;
+public:
+    class iterator {
+    private:
+        typename MapType::const_iterator it;
+    public:
+        iterator(typename MapType::const_iterator it) : it(it) {}
+        iterator operator++() { return ++it; }
+        bool operator!=(const iterator & other) { return it != other.it; }
+        typename MapType::key_type operator*() const { return it->first; } // Return the key
+    };
+
+    MapKeyIterator(MapType& m) : map(m) {}
+    iterator begin() const { return iterator(map.begin()); }
+    iterator end() const { return iterator(map.end()); }
+};
+
+template <class MapType>
+MapKeyIterator<MapType> MapKeys(MapType& m) {
+    return MapKeyIterator<MapType>(m);
+}
+
 #endif /* Utils_h */

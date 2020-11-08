@@ -12,8 +12,10 @@
 #include "HangDetector.h"
 
 #include "LoopAnalysis.h"
-#include <vector>
+#include "Utils.h"
 #include <map>
+#include <set>
+#include <vector>
 
 const int MAX_SWEEP_LOOP_ANALYSIS = 8;
 const int MAX_SWEEP_TRANSITION_ANALYSIS = 8;
@@ -112,6 +114,9 @@ public:
     bool isExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
     bool hasIndirectExitsForValue(int value) const;
+
+    // Returns iterator over exit values
+    auto exitValues() const { return MapKeys(_exitMap); }
 
     bool requiresFixedInput() const { return _requiresFixedInput; }
 
@@ -255,6 +260,8 @@ class SweepHangDetector : public HangDetector {
     SweepValueChangeType _sweepValueChangeType;
     int _sweepValueChange;
 
+    std::set<int> _possibleSweepExitValues;
+
     /* Analysis */
     // Returns run block index of the transition that precedes the given sweep loop. If there is
     // no transition between subsequent sweep loops, it returns sweepLoopRunBlockIndex.
@@ -272,6 +279,8 @@ class SweepHangDetector : public HangDetector {
     // If only one of the sweeps makes a uniform change and the other loop makes no change, returns
     // the value of this change. Returns 0 otherwise
     int singleSweepValueChange() const;
+
+    bool determinePossibleSweepExitValues();
 
     bool analyzeLoops();
     bool analyzeTransitions();

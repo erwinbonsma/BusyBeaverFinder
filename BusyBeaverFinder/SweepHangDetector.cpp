@@ -738,6 +738,27 @@ int SweepHangDetector::singleSweepValueChange() const {
     return 0;
 }
 
+bool SweepHangDetector::determinePossibleSweepExitValues() {
+    _possibleSweepExitValues.clear();
+
+    auto loop0 = _transitionGroups[0].loop(), loop1 = _transitionGroups[1].loop();
+    for (int exitValue : loop0->exitValues() ) {
+        _possibleSweepExitValues.insert(exitValue);
+    }
+    for (int exitValue : loop1->exitValues() ) {
+        if (loop0->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE ||
+            loop0->sweepValueChangeType() == SweepValueChangeType::NO_CHANGE
+        ) {
+            _possibleSweepExitValues.insert(exitValue - loop0->sweepValueChange());
+        } else {
+            // TODO: Take into account all possible changes made by loop
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool SweepHangDetector::analyzeLoops() {
     const RunSummary& runSummary = _executor.getRunSummary();
     SweepTransitionGroup *group = _transitionGroups;
@@ -767,6 +788,10 @@ bool SweepHangDetector::analyzeLoops() {
     }
 
     if (!determineCombinedSweepValueChange()) {
+        return false;
+    }
+
+    if (!determinePossibleSweepExitValues()) {
         return false;
     }
 
@@ -885,13 +910,11 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     int sweepDeltaSign = sign(_sweepValueChange);
 
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
-    const SweepLoopAnalysis *loop0 = _transitionGroups[0].loop();
-    const SweepLoopAnalysis *loop1 = _transitionGroups[1].loop();
 
     // DP is at one side of the sweep. Find the other end of the sweep.
     dp += delta;
     while (*dp) {
-        if (loop0->isExitValue(*dp) || loop1->isExitValue(*dp)) {
+        if (_possibleSweepExitValues.find(*dp) != _possibleSweepExitValues.end()) {
             // Found end of sweep at other end
             break;
         }
