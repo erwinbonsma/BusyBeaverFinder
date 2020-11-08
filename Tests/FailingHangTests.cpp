@@ -19,7 +19,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][.fail]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1000000;
-    settings.maxHangDetectAttempts = 1024;
     searcher.configure(settings);
 
     SECTION( "6x6-IrregularGrowthFailing") {

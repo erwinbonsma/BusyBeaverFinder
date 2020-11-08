@@ -22,7 +22,6 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1000000;
-    settings.maxHangDetectAttempts = 1024;
     searcher.configure(settings);
 
     SECTION( "6x6-IrregularSweep3") {

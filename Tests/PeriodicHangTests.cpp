@@ -559,7 +559,6 @@ TEST_CASE( "7x7 Periodic Hang tests", "[hang][periodic][7x7]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxSteps = 1000000;
-    settings.maxHangDetectAttempts = 1024;
     searcher.configure(settings);
 
     SECTION( "7x7-DelayedPeriodicHang") {

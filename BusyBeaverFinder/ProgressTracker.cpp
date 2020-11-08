@@ -136,7 +136,7 @@ void ProgressTracker::reportLateEscape(int numSteps) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
 
-        std::cout << "Faulty hang, type = " << (int)_detectedHang;
+        std::cout << "Faulty hang, type = " << (int)_detectedHang << std::endl;
         _searcher.getProgram().dump();
         _searcher.dumpInstructionStack();
 
@@ -146,7 +146,7 @@ void ProgressTracker::reportLateEscape(int numSteps) {
     report();
 }
 
-void ProgressTracker::reportDetectedHang(HangType hangType) {
+void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
     if (_searcher.getNumSteps() > _maxStepsUntilHangDetection) {
         _maxStepsUntilHangDetection = _searcher.getNumSteps();
 //        std::cout << "New step limit: ";
@@ -154,8 +154,8 @@ void ProgressTracker::reportDetectedHang(HangType hangType) {
 //        _searcher.getProgram().dumpWeb();
     }
 
-    if (_searcher.getHangDetectionTestMode()) {
-        // Only signal it. The run continues so it can be verified if it was correctly signalled.
+    if (executionWillContinue) {
+        // Only signal it. Execution will continue to verify that the program indeed hangs.
         _detectedHang = hangType;
         return;
     }
@@ -170,10 +170,11 @@ void ProgressTracker::reportDetectedHang(HangType hangType) {
     report();
 }
 
-void ProgressTracker::reportDetectedHang(const HangDetector* hangDetector) {
+void ProgressTracker::reportDetectedHang(const HangDetector* hangDetector,
+                                         bool executionWillContinue) {
     _lastDetectedHang = hangDetector;
 
-    reportDetectedHang(hangDetector->hangType());
+    reportDetectedHang(hangDetector->hangType(), executionWillContinue);
 }
 
 long ProgressTracker::getTotalDetectedErrors() const {

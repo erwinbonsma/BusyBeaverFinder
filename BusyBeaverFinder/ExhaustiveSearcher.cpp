@@ -50,8 +50,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _settings.maxSteps = 1024;
     _settings.maxHangDetectionSteps = _settings.maxSteps;
     _settings.undoCapacity = 1024;
-    _settings.maxHangDetectAttempts = 128;
-    _settings.minWaitBeforeRetryingHangChecks = 16;
     _settings.testHangDetection = false;
     _settings.disableNoExitHangDetection = false;
     reconfigure();
@@ -117,8 +115,6 @@ void ExhaustiveSearcher::dumpSettings() {
     << ", DataSize = " << _data.getSize()
     << ", MaxSteps = " << _settings.maxHangDetectionSteps << "/" << _settings.maxSteps
     << ", UndoCapacity = " << _settings.undoCapacity
-    << ", MaxHangDetectAttempts = " << _settings.maxHangDetectAttempts
-    << ", MinWaitBeforeRetryingHangChecks = " << _settings.minWaitBeforeRetryingHangChecks
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }
@@ -179,6 +175,10 @@ void ExhaustiveSearcher::branch(int depth) {
     _instructionStack[depth] = Ins::UNSET;
 }
 
+void ExhaustiveSearcher::fastExecution() {
+    _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(), _settings.maxSteps);
+}
+
 // Returns "true" if the search should backtrack. This can be for several reason: the program exited
 // with an error (as it ran out of data tape), the undo buffer is full, or a hang is assumed (given
 // the amount of steps executed)
@@ -220,7 +220,7 @@ bool ExhaustiveSearcher::executeCurrentBlock() {
     }
 
     if (!_data.hasUndoCapacity()) {
-        _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(), _settings.maxSteps);
+        fastExecution();
         return true;
     }
 
@@ -240,9 +240,6 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithBacktracking() {
 }
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
-//    _program.dump();
-//    _interpretedProgramBuilder.dump();
-
     ProgramBlock* entryBlock = _interpretedProgramBuilder.getEntryBlock();
 
     _runSummary[0].reset();
@@ -280,10 +277,11 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
-                    _tracker->reportDetectedHang(hangDetector);
-                    if (!_settings.testHangDetection) {
-                        return backtrackProgramPointer;
+                    _tracker->reportDetectedHang(hangDetector, _settings.testHangDetection);
+                    if (_settings.testHangDetection) {
+                        fastExecution();
                     }
+                    return backtrackProgramPointer;
                 }
             }
         }
@@ -315,9 +313,6 @@ void ExhaustiveSearcher::run(int depth) {
     int initialSteps = _numSteps;
 
     _interpretedProgramBuilder.push();
-
-//    _program.dump();
-//    std::cout << std::endl;
 
     while (1) { // Run until branch, termination or error
 processInstruction:
@@ -377,10 +372,12 @@ processInstruction:
                         !_settings.disableNoExitHangDetection &&
                         !_exitFinder.canExitFrom(_block)
                     ) {
-                        _tracker->reportDetectedHang(HangType::NO_EXIT);
-                        if (!_settings.testHangDetection) {
-                            goto backtrack;
+                        _tracker->reportDetectedHang(HangType::NO_EXIT,
+                                                     _settings.testHangDetection);
+                        if (_settings.testHangDetection) {
+                            fastExecution();
                         }
+                        goto backtrack;
                     }
 
                     _block = _interpretedProgramBuilder.enterBlock(
@@ -399,22 +396,13 @@ processInstruction:
         }
 
         if (_interpretedProgramBuilder.incSteps() > 64) {
-            _tracker->reportDetectedHang(HangType::NO_DATA_LOOP);
-            if (!_settings.testHangDetection) {
-                goto backtrack;
-            }
+            // Never test hang detection for this trivial hang
+            _tracker->reportDetectedHang(HangType::NO_DATA_LOOP, false);
+            goto backtrack;
         }
 
         _pp.p = insP;
         _numSteps++;
-
-        // Needed when hang detection is tested. TODO: Find out why.
-        if (_numSteps >= _settings.maxSteps) {
-            _tracker->reportAssumedHang();
-            goto backtrack;
-        }
-
-//        std::cout << "steps = " << steps << ", depth = " << depth << std::endl;
     }
 backtrack:
     _data.undo(initialDataUndoP);

@@ -31,8 +31,6 @@ enum class SearchMode : char {
 struct SearchSettings {
     int maxHangDetectionSteps;
     int maxSteps;
-    int maxHangDetectAttempts;
-    int minWaitBeforeRetryingHangChecks;
     int undoCapacity;
     bool testHangDetection;
     bool disableNoExitHangDetection;
@@ -85,6 +83,10 @@ class ExhaustiveSearcher : public ProgramExecutor {
     void reconfigure();
 
     bool executeCurrentBlock();
+
+    // Executes current program (from start) until the maximum number of steps is reached (an
+    // assumed hang), or it escapes the current program.
+    void fastExecution();
 
     ProgramPointer executeCompiledBlocksWithBacktracking();
     ProgramPointer executeCompiledBlocksWithHangDetection();

@@ -17,12 +17,12 @@
 const int sentinelSize = 8;
 
 FastExecutor::FastExecutor(int dataSize) {
-    int bufSize = dataSize + 2 * sentinelSize;
-    _data = new int[bufSize];
+    _dataBufSize = dataSize + 2 * sentinelSize;
+    _data = new int[_dataBufSize];
 
     _minDataP = &_data[sentinelSize]; // Inclusive
     _maxDataP = _minDataP + dataSize; // Exclusive
-    _midDataP = &_data[bufSize / 2];
+    _midDataP = &_data[_dataBufSize / 2];
 }
 
 FastExecutor::~FastExecutor() {
@@ -35,7 +35,7 @@ void FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
     _tracker->reportFastExecution();
 
     // Clear data
-    memset(_data, 0, (_maxDataP - _minDataP) * sizeof(int));
+    memset(_data, 0, _dataBufSize * sizeof(int));
 
     _dataP = _midDataP;
 

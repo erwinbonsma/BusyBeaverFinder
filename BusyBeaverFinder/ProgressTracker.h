@@ -76,8 +76,8 @@ public:
 
     void reportDone(int totalSteps);
     void reportError();
-    void reportDetectedHang(HangType hangType);
-    void reportDetectedHang(const HangDetector* hangDetector);
+    void reportDetectedHang(HangType hangType, bool executionWillContinue);
+    void reportDetectedHang(const HangDetector* hangDetector, bool executionWillContinue);
     void reportAssumedHang();
 
     void reportFastExecution() { _totalFastExecutions++; }

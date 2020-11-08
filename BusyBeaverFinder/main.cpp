@@ -73,10 +73,6 @@ void init(int argc, char * argv[]) {
         settings.maxSteps = settings.maxHangDetectionSteps;
     }
 
-    if (result.count("max-hang-attempts")) {
-        settings.maxHangDetectAttempts = result["max-hang-attempts"].as<int>();
-    }
-
     if (result.count("undo-capacity")) {
         settings.undoCapacity = result["undo-capacity"].as<int>();
     }

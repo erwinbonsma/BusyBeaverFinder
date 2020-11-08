@@ -16,6 +16,7 @@ class ProgressTracker;
 
 class FastExecutor {
     int* _data;
+    int _dataBufSize;
 
     int* _minDataP;
     int* _midDataP;

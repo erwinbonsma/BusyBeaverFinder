@@ -288,7 +288,6 @@ TEST_CASE( "7x7 Glider Hang tests", "[hang][glider][7x7]" ) {
     SearchSettings settings = searcher.getSettings();
     settings.maxHangDetectionSteps = 1000000;
     settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.maxHangDetectAttempts = 1024;
     searcher.configure(settings);
 
     SECTION( "7x7-GliderWithLargeRunBlocks") {
