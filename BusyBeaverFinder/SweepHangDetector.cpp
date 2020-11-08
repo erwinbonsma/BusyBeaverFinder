@@ -14,10 +14,12 @@
 const int MAX_ITERATIONS_TRANSITION_LOOPS = 3;
 const int MIN_ITERATIONS_LAST_SWEEP_LOOP = 5;
 
+//#define SWEEP_DEBUG_TRACE
+
 int numFailed = 0;
 bool failed(const ProgramExecutor& executor) {
+//    executor.dumpExecutionState();
     numFailed++;
-    // executor.dumpExecutionState();
     return false;
 }
 
@@ -63,7 +65,7 @@ bool SweepLoopAnalysis::hasIndirectExitsForValueAfterExit(int value, int exitIns
 
     dataDeltas.clear();
     // Fully bootstrap the loop
-    int maxIteration = numBootstrapCycles();
+    int maxIteration = numBootstrapCycles() + 1;
     for (int iteration = 0; iteration <= maxIteration; iteration++) {
         // Execute the last iteration until (inclusive) the exit instruction
         for (int instruction = 0; instruction < loopSize(); instruction++) {
@@ -75,11 +77,13 @@ bool SweepLoopAnalysis::hasIndirectExitsForValueAfterExit(int value, int exitIns
                 dpDelta += pb->getInstructionAmount();
             }
 
-//            if (instruction == exitInstruction) {
-//                std::cout << "Iteration " << iteration
-//                    << " dpOffset = " << dpDelta
-//                    << ": " << dataDeltas << std::endl;
-//            }
+#ifdef SWEEP_DEBUG_TRACE
+            if (instruction == exitInstruction) {
+                std::cout << "Iteration " << iteration
+                    << " dpOffset = " << dpDelta
+                    << ": " << dataDeltas << std::endl;
+            }
+#endif
 
             if (instruction == exitInstruction && iteration == maxIteration) {
                 int dpDeltaStartIteration = dpDelta - effectiveResultAt(exitInstruction).dpOffset();
@@ -326,8 +330,11 @@ int SweepTransitionGroup::numberOfExitsForValue(int value) const {
     return count;
 }
 
-bool SweepTransitionGroup::hasIndirectExitsForValue(int value) const {
+bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) const {
     assert(_parent->combinedSweepValueChange() == 0);
+
+    // TODO: When needed, extend to take bootstrap-changes of outgoing sweep into account
+    // For that reason, passing dpOffset
 
     for (auto kv : _loops) {
         const SweepLoopAnalysis *loop = kv.second;
@@ -346,7 +353,9 @@ bool SweepTransitionGroup::determineSweepEndType() {
     int numPositiveDeltas = 0, numNegativeDeltas = 0;
     int numNonZeroExits = 0;
 
-//    std::cout << *this;
+#ifdef SWEEP_DEBUG_TRACE
+    std::cout << *this;
+#endif
 
     for (auto kv : _transitions) {
         const SweepLoopExit &sweepLoopExit = kv.first;
@@ -396,7 +405,8 @@ bool SweepTransitionGroup::determineSweepEndType() {
                     if (abs(singleSweepChange) < abs(delta)) {
                         nonExitToExit = true;
                     }
-                } else if (sgnCombinedSweepChange == 0 && hasIndirectExitsForValue(delta)) {
+                } else if (sgnCombinedSweepChange == 0 &&
+                           hasIndirectExitsForValue(delta, sta->dataPointerDelta())) {
                     // Although the combined sweep does not result in value changes, loop exits
                     // still can change this value into one that causes an exit in a later sweep.
                     nonExitToExit = true;

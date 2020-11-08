@@ -194,7 +194,11 @@ class SweepTransitionGroup {
 
     int numberOfTransitionsForExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
-    bool hasIndirectExitsForValue(int value) const;
+
+    // Checks if the given value can be modified by the next sweep loop to result in an exit.
+    // Here value is the final value of the data cell that caused the loop exit, and dpOffset gives
+    // the offset wrt to this value where the next loop starts.
+    bool hasIndirectExitsForValue(int value, int dpOffset) const;
 
     bool determineSweepEndType();
 

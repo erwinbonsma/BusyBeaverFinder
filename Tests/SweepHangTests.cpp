@@ -1386,4 +1386,30 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithUniformChangesThatCancelEachOtherOut" ) {
+        // The sweep extends to the right with value -2. The leftward sweep decreases all values
+        // (skipping this one), and the right sweep increases all values. This means that this
+        // "non-exit" value is never converted to an exit for the right sweep, and that the
+        // sequence is growing steadily. An earlier version of the hang detector failed to detect
+        // this, because it did not correctly take into account the bootstrapping of the sweep loop.
+        //
+        //   *     *
+        //   _ _ * _
+        // * _ _ o o *
+        // * o o o _ *
+        // * * * _ o
+        // o _ o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
 }
