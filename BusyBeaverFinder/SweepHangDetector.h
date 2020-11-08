@@ -87,13 +87,14 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
     SweepValueChangeType _sweepValueChangeType;
 
-    // If the sweep makes any changes, this represents it:
+    // Representative sweep value change:
     // - NO_CHANGE: Value is zero
     // - UNIFORM_CHANGE: All values in the sequence are changed by this amount
     // - MULTIPLE_ALIGNED_CHANGES: This is one of the changes. Other changes have the same sign
     // - MULTIPLE_OPPOSING_CHANGES: This is one of the changes (but its value is not useful for
     //   further analysis)
     int _sweepValueChange;
+    std::set<int> _sweepValueChanges;
 
     // Map from exit value to the instruction in the loop that can cause this exit. Only anytime
     // exits are considered. Nevertheless, there may be more than one possible exit for a given
@@ -109,14 +110,18 @@ public:
     const RunBlock* loopRunBlock() const { return _loopRunBlock; }
 
     SweepValueChangeType sweepValueChangeType() const { return _sweepValueChangeType; }
+
     int sweepValueChange() const { return _sweepValueChange; }
+    auto sweepValueChanges() const { return makeProxyIterator(_sweepValueChanges); }
 
     bool isExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
     bool hasIndirectExitsForValue(int value) const;
 
     // Returns iterator over exit values
-    auto exitValues() const { return MapKeys(_exitMap); }
+    auto exitValues() const { return makeKeyIterator(_exitMap); }
+
+    bool canSweepChangeValueTowardsZero(int value) const;
 
     bool requiresFixedInput() const { return _requiresFixedInput; }
 
@@ -281,6 +286,8 @@ class SweepHangDetector : public HangDetector {
     int singleSweepValueChange() const;
 
     bool determinePossibleSweepExitValues();
+
+    bool canSweepChangeValueTowardsZero(int value) const;
 
     bool analyzeLoops();
     bool analyzeTransitions();

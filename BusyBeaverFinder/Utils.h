@@ -54,6 +54,31 @@ Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
 void dumpDataBuffer(int* buf, int* dataP, int size);
 void dumpInstructionStack(Ins* stack);
 
+template <class T>
+class ProxyIterator {
+private:
+    T& _container;
+public:
+    class iterator {
+    private:
+        typename T::const_iterator it;
+    public:
+        iterator(typename T::const_iterator it) : it(it) {}
+        iterator operator++() { return ++it; }
+        bool operator!=(const iterator & other) { return it != other.it; }
+        typename T::key_type operator*() const { return *it; }
+    };
+
+    ProxyIterator(T& container) : _container(container) {}
+    iterator begin() const { return iterator(_container.begin()); }
+    iterator end() const { return iterator(_container.end()); }
+};
+
+template <class T>
+ProxyIterator<T> makeProxyIterator(T& container) {
+    return ProxyIterator<T>(container);
+}
+
 template <class MapType>
 class MapKeyIterator {
 private:
@@ -75,7 +100,7 @@ public:
 };
 
 template <class MapType>
-MapKeyIterator<MapType> MapKeys(MapType& m) {
+MapKeyIterator<MapType> makeKeyIterator(MapType& m) {
     return MapKeyIterator<MapType>(m);
 }
 

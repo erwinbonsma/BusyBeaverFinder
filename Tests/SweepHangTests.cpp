@@ -1405,6 +1405,29 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithSignMismatchForExtensionAndCombinedSweepValueChange3") {
+        // Similar to the previous two programs, but this time the rightwards sweep moves DP two
+        // cells, which means that its -2 delta change is not uniform (as half the cells are
+        // skipped).
+        //
+        //       *
+        //   * * o _ *
+        //   _ o o *
+        //   _ _ o
+        // * _ _ o
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
     SECTION( "6x6-SweepWithUniformChangesThatCancelEachOtherOut" ) {
         // The sweep extends to the right with value -2. The leftward sweep decreases all values
         // (skipping this one), and the right sweep increases all values. This means that this
