@@ -153,6 +153,24 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {
         REQUIRE(tracker.getMaxStepsFound() == 177557);
     }
     SECTION( "BB 7x7 #422155" ) {
+        // This caries out a sweep but one that eventually terminates. Properties:
+        // - Rightwards sweep shifts one each iteration and does not change the sequence.
+        //   It ends on zero, changing it to 1, thereby extending the sequence (steady growth).
+        // - Leftwards sweep shifts two each iteration. It increments half of the values in the
+        //   sequence by one (non-uniform change). It has two possible transitions:
+        //   - It ends on -1, leaving this value unchanged, but decreasing its neighbour (inside
+        //     the sequence by three).
+        //   - It ends on zero, converting it to -2, thereby extending the sequence.
+        //
+        // The program terminates when the left-sweep encounters a -1 value that neighbours a 3.
+        // When this happens is hard to foresee, as there are multiple simple interactions that
+        // together produce a complex behavior:
+        // - The two-cell shift means that not always the same -1 value is encountered.
+        // - A fixed -1 exit can be changed into a non-exit once its left neighbour is also a -1.
+        // - This occassionally means that the left sweep does not encounter a -1 exit, but
+        //   reaches the end of the sequence. This results in a -2, which later can change into a
+        //   -1 exit.
+        //
         //       *
         //   * _ o _ _ *
         // * _ o _ * _
