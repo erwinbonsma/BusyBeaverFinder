@@ -1377,7 +1377,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
@@ -1400,7 +1400,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
@@ -1423,7 +1423,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
@@ -1449,7 +1449,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
@@ -1472,7 +1472,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
@@ -1494,7 +1494,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);

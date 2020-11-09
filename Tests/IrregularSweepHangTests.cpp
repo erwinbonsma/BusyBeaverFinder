@@ -21,6 +21,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectionSteps = 20000;
     settings.maxSteps = 1000000;
     searcher.configure(settings);
 
@@ -122,6 +123,44 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
             Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
+    }
+    SECTION( "6x6-SweepWithBinaryCounter4" ) {
+        // Irregular sweep that was incorrectly classified as a meta-periodic hang.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        //   _ o _
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
+    }
+    SECTION( "6x6-SweepWithBinaryCounter5" ) {
+        // Another irregular sweep that was incorrectly classified as a meta-periodic hang.
+        //
+        //     * * *
+        //   * o o _ *
+        //   * o _ *
+        //   o o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

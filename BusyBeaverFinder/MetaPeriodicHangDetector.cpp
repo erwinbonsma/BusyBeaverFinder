@@ -48,7 +48,7 @@ bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
     int metaLoopStart = idx1 + 1;
     if (metaLoopStart == _metaLoopStart) {
         // Nothing needs doing. We already analyzed this loop.
-        return true;
+        return _lastAnalysisResult;
     }
 
     // Ensure the loop starts so that it ends when a lower-level loop exited
@@ -61,7 +61,10 @@ bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
                   + runSummary.getRunBlockLength(endRunBlockIndex);
     int loopPeriod = loopEnd - _loopStart;
 
-    return _loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary, _loopStart, loopPeriod);
+    _lastAnalysisResult = _loop.analyzeLoop(_executor.getInterpretedProgram(),
+                                            runSummary, _loopStart, loopPeriod);
+
+    return _lastAnalysisResult;
 }
 
 Trilian MetaPeriodicHangDetector::proofHang() {

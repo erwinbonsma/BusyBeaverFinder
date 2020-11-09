@@ -91,6 +91,11 @@ void ProgressTracker::reportError() {
         _detectedHang = HangType::UNDETECTED;
     } else {
         _totalErrorsByType[(int)HangType::UNDETECTED]++;
+
+        if (_dumpUndetectedHangs) {
+            std::cout << "Error: ";
+            _searcher.dumpInstructionStack();
+        }
     }
 
     report();

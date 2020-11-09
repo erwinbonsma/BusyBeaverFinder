@@ -13,6 +13,7 @@
 
 class MetaPeriodicHangDetector : public PeriodicHangDetector {
     int _metaLoopStart;
+    bool _lastAnalysisResult;
 
 protected:
     bool shouldCheckNow(bool loopContinues);

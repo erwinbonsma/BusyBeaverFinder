@@ -43,7 +43,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 10000;
+    settings.maxHangDetectionSteps = 20000;
     settings.maxSteps = 100000;
     settings.undoCapacity = settings.maxSteps;
 //    settings.testHangDetection = true;
@@ -56,5 +56,5 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     REQUIRE(tracker.getTotalSuccess() == 6475715);
     REQUIRE(tracker.getTotalHangs() == 1546939);
     REQUIRE(tracker.getTotalErrors() == 0);
-    REQUIRE(tracker.getTotalDetectedHangs() == 1546742);
+    REQUIRE(tracker.getTotalDetectedHangs() == 1546740);
 }
