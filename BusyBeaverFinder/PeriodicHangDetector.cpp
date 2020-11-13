@@ -22,8 +22,25 @@ bool PeriodicHangDetector::analyzeHangBehaviour() {
     const RunBlock* loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();
-    return _loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary,
-                             _loopStart, loopRunBlock->getLoopPeriod());
+    if (!_loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary,
+                           _loopStart, loopRunBlock->getLoopPeriod())) {
+        return false;
+    }
+
+    if (_loop.dataPointerDelta() != 0) {
+        // A travelling loop can only hang if none of its non-bootstrap exits exit on zero.
+        // As the data tape is infinite and initialized with zeros, it will always encounter zeros.
+        for (int i = _loop.loopSize(); --i >= 0; ) {
+            const LoopExit &exit = _loop.exit(i);
+            if (exit.exitWindow == ExitWindow::ANYTIME) {
+                if (exit.exitCondition.isTrueForValue(0)) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 bool PeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
@@ -84,17 +101,6 @@ Trilian PeriodicHangDetector::proofHangPhase1() {
         return Trilian::YES;
     } else {
         // Travelling loop
-
-        // A travelling loop can only hang if none of its non-bootstrap exits exit on zero.
-        // As the data tape is infinite and initialized with zeros, it will always encounter zeros.
-        for (int i = _loop.loopSize(); --i >= 0; ) {
-            const LoopExit &exit = _loop.exit(i);
-            if (exit.exitWindow == ExitWindow::ANYTIME) {
-                if (exit.exitCondition.isTrueForValue(0)) {
-                    return Trilian::NO;
-                }
-            }
-        }
 
         // A hang requires that all data values that the loop will consume are zero. Check this.
         if (allValuesToBeConsumedAreBeZero()) {
