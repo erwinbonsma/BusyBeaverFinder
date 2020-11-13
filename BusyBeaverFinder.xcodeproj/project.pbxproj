@@ -64,6 +64,7 @@
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
 		AADF9718255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */; };
 		AADF9719255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */; };
+		AADF971F255EBCA3002BF498 /* SequenceAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */; };
 		AAF43BCE23EC068D00D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BD223EC76AC00D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
@@ -155,6 +156,7 @@
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
 		AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SweepTransitionGroup.cpp; sourceTree = "<group>"; };
 		AADF9717255E8788002BF498 /* SweepTransitionGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SweepTransitionGroup.h; sourceTree = "<group>"; };
+		AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysisTests.cpp; sourceTree = "<group>"; };
 		AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GliderHangDetector.cpp; sourceTree = "<group>"; };
 		AAF43BCD23EC068D00D1EB33 /* GliderHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GliderHangDetector.h; sourceTree = "<group>"; };
 		AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysis.cpp; sourceTree = "<group>"; };
@@ -236,8 +238,12 @@
 			children = (
 				AA28C09B2207393400F7EC25 /* catch.hpp */,
 				AA28C096220738F900F7EC25 /* main.cpp */,
-				AA28C09C2207398C00F7EC25 /* ExhaustiveSearchTests.cpp */,
-				AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */,
+				AA153A8F228371BA00F7B1DF /* InterpretationTests.cpp */,
+				AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */,
+				AA0D5ADE225D1901001909AF /* RepeatDetectionTests.cpp */,
+				AA4F4515225A44830069FF36 /* RunSummaryTests.cpp */,
+				AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */,
+				AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */,
 				AA4F44FE223E57A10069FF36 /* NoExitHangTests.cpp */,
 				AA4F4502223E77350069FF36 /* PeriodicHangTests.cpp */,
 				AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */,
@@ -245,12 +251,9 @@
 				AA0D5AE42263C488001909AF /* GliderHangTests.cpp */,
 				AA4F4500223E76BB0069FF36 /* FailingHangTests.cpp */,
 				AA28C0A52207428A00F7EC25 /* CompletionTests.cpp */,
-				AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */,
-				AA4F4515225A44830069FF36 /* RunSummaryTests.cpp */,
-				AA0D5ADE225D1901001909AF /* RepeatDetectionTests.cpp */,
-				AA153A8F228371BA00F7B1DF /* InterpretationTests.cpp */,
+				AA28C09C2207398C00F7EC25 /* ExhaustiveSearchTests.cpp */,
+				AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */,
 				AA37E6CD229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp */,
-				AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -427,6 +430,7 @@
 				AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */,
 				AA28C0A022073A0F00F7EC25 /* Data.cpp in Sources */,
 				AA28C0A422073D2A00F7EC25 /* SweepHangTests.cpp in Sources */,
+				AADF971F255EBCA3002BF498 /* SequenceAnalysisTests.cpp in Sources */,
 				AA0D5ADF225D1901001909AF /* RepeatDetectionTests.cpp in Sources */,
 				AA37E6CE229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp in Sources */,
 				AADF9719255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */,
