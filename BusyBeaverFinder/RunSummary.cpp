@@ -230,7 +230,7 @@ int RunSummary::calculateCanonicalLoopIndex(int startIndex, int len) const {
     return startIndex + k;
 }
 
-bool RunSummary::determineRotationEquivalence(int index1, int index2, int len) const {
+bool RunSummary::determineRotationEquivalence(int index1, int index2, int len, int &offset) const {
     int ci1 = calculateCanonicalLoopIndex(index1, len);
     int ci2 = calculateCanonicalLoopIndex(index2, len);
 
@@ -240,11 +240,16 @@ bool RunSummary::determineRotationEquivalence(int index1, int index2, int len) c
         }
     }
 
+    int relIndex1 = ci1 - index1;
+    int relIndex2 = ci2 - index2;
+    offset = (relIndex1 + len - relIndex2) % len;
+
     return true;
 }
 
 
-int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2) const {
+int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
+                                      int &indexOffset) const {
     int index1 = block1->getSequenceIndex();
     int index2 = block2->getSequenceIndex();
     if (index1 == index2) {
@@ -252,7 +257,7 @@ int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* bl
         return true;
     }
 
-    // Require that run blocks are loop. This avoids modular arithmetic when executing Booth's
+    // Require that run blocks are loops. This avoids modular arithmetic when executing Booth's
     // algorithm.
     assert(block1->isLoop());
     assert(block2->isLoop());
@@ -270,16 +275,17 @@ int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* bl
     auto cachedResult = map.find(key);
     if (cachedResult != map.end()) {
         // Return previously calculated result
-        return cachedResult->second;
+        indexOffset = cachedResult->second.second;
+        return cachedResult->second.first;
     }
 
-    bool result = determineRotationEquivalence(block1->getStartIndex(),
-                                               block2->getStartIndex(),
-                                               len);
+    bool areEqual = determineRotationEquivalence(block1->getStartIndex(),
+                                                block2->getStartIndex(),
+                                                len, indexOffset);
     // Cache result
-    map[key] = result;
+    map[key] = std::make_pair(areEqual, indexOffset);
 
-    return result;
+    return areEqual;
 }
 
 void RunSummary::dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const {

@@ -939,6 +939,30 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithVaryingLoopStarts3" ) {
+        // Sweep with two different reversal sequences at both sides (one resulting in a fixed
+        // point with multiple values, the other in irregular growth). Both also result in varying
+        // loop starts.
+        //
+        //   *   * *
+        // * o _ o _ *
+        // * _ * o o
+        // o _ o o *
+        // o * _ o *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
+    }
     SECTION( "6x6-TurnWithHeavilyOscillatingInSweepValue" ) {
         // The turn at the left of the sequence is caused by a zero, which is converted into a one.
         // However, during the transition an in-sequence 1 is also changed. It is changed as

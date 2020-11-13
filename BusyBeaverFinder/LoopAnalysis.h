@@ -119,6 +119,8 @@ protected:
     // Returns true if the specified loop instruction exits the loop on a zero-value
     bool exitsOnZero(int index);
 
+    const char* typeString() const override { return "LOOP"; }
+
 public:
     LoopAnalysis();
 

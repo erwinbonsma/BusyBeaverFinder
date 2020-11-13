@@ -146,7 +146,8 @@ bool SequenceAnalysis::anyDataDeltasUpUntil(int index) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {
-    os << "[SEQ] pre-conditions: ";
+    os << "[" << sa.typeString() << "]";
+    os << " pre-conditions: ";
     int lastDpOffset = INT_MAX;
     for (auto it = sa._preConditions.cbegin(), end = sa._preConditions.cend(); it != end; ++it) {
         int dpOffset = it->first;
@@ -181,6 +182,9 @@ std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {
             os << "+";
         }
         os << dd.delta();
+    }
+    if (sa.numDataDeltas() == 0) {
+        os << "none";
     }
 
     return os;

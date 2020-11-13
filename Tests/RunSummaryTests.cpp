@@ -151,10 +151,11 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
     }
 }
 
-TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence" ) {
+TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence]" ) {
     RunSummary runSummary;
     int zArrayHelperBuf[32];
     runSummary.setCapacity(64, zArrayHelperBuf);
+    int loopOffset;
 
     SECTION( "EqualThreeBlockLoops" ) {
         ProgramBlockIndex blocks[] = {1, 2,3,4,2,3,4, 1, 3,4,2,3,4,2, 1, 4,2,3,4,2,3, -1};
@@ -168,12 +169,18 @@ TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence" ) 
         REQUIRE(loop2->isLoop());
         REQUIRE(loop3->isLoop());
 
-        REQUIRE(runSummary.areLoopsRotationEqual(loop1, loop2));
-        REQUIRE(runSummary.areLoopsRotationEqual(loop1, loop3));
-        REQUIRE(runSummary.areLoopsRotationEqual(loop2, loop3));
-        REQUIRE(runSummary.areLoopsRotationEqual(loop2, loop1));
-        REQUIRE(runSummary.areLoopsRotationEqual(loop3, loop1));
-        REQUIRE(runSummary.areLoopsRotationEqual(loop3, loop2));
+        REQUIRE(runSummary.areLoopsRotationEqual(loop1, loop2, loopOffset));
+        REQUIRE(loopOffset == 1);
+        REQUIRE(runSummary.areLoopsRotationEqual(loop1, loop3, loopOffset));
+        REQUIRE(loopOffset == 2);
+        REQUIRE(runSummary.areLoopsRotationEqual(loop2, loop3, loopOffset));
+        REQUIRE(loopOffset == 1);
+        REQUIRE(runSummary.areLoopsRotationEqual(loop2, loop1, loopOffset));
+        REQUIRE(loopOffset == 2);
+        REQUIRE(runSummary.areLoopsRotationEqual(loop3, loop1, loopOffset));
+        REQUIRE(loopOffset == 1);
+        REQUIRE(runSummary.areLoopsRotationEqual(loop3, loop2, loopOffset));
+        REQUIRE(loopOffset == 2);
     }
     SECTION( "UnequalThreeBlockLoops" ) {
         ProgramBlockIndex blocks[] = {1, 2,3,4,2,3,4, 1, 3,5,2,3,5,2, 1, 4,2,6,4,2,6, -1};
@@ -187,11 +194,11 @@ TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence" ) 
         REQUIRE(loop2->isLoop());
         REQUIRE(loop3->isLoop());
 
-        REQUIRE(!runSummary.areLoopsRotationEqual(loop1, loop2));
-        REQUIRE(!runSummary.areLoopsRotationEqual(loop1, loop3));
-        REQUIRE(!runSummary.areLoopsRotationEqual(loop2, loop3));
-        REQUIRE(!runSummary.areLoopsRotationEqual(loop2, loop1));
-        REQUIRE(!runSummary.areLoopsRotationEqual(loop3, loop1));
-        REQUIRE(!runSummary.areLoopsRotationEqual(loop3, loop2));
+        REQUIRE(!runSummary.areLoopsRotationEqual(loop1, loop2, loopOffset));
+        REQUIRE(!runSummary.areLoopsRotationEqual(loop1, loop3, loopOffset));
+        REQUIRE(!runSummary.areLoopsRotationEqual(loop2, loop3, loopOffset));
+        REQUIRE(!runSummary.areLoopsRotationEqual(loop2, loop1, loopOffset));
+        REQUIRE(!runSummary.areLoopsRotationEqual(loop3, loop1, loopOffset));
+        REQUIRE(!runSummary.areLoopsRotationEqual(loop3, loop2, loopOffset));
     }
 }

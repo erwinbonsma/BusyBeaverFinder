@@ -53,30 +53,30 @@ int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) 
 
 bool SweepHangDetector::determineCombinedSweepValueChange() {
     auto loop0 = _transitionGroups[0].loop(), loop1 =_transitionGroups[1].loop();
-    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
+    auto type0 = loop0.sweepValueChangeType(), type1 = loop1.sweepValueChangeType();
 
     if (type0 == SweepValueChangeType::NO_CHANGE) {
         _sweepValueChangeType = type1;
-        _sweepValueChange = loop1->sweepValueChange();
+        _sweepValueChange = loop1.sweepValueChange();
     } else if (type1 == SweepValueChangeType::NO_CHANGE) {
         _sweepValueChangeType = type0;
-        _sweepValueChange = loop0->sweepValueChange();
+        _sweepValueChange = loop0.sweepValueChange();
     } else if (
         type0 == SweepValueChangeType::UNIFORM_CHANGE &&
         type1 == SweepValueChangeType::UNIFORM_CHANGE
     ) {
-        _sweepValueChange = loop0->sweepValueChange() + loop1->sweepValueChange();
+        _sweepValueChange = loop0.sweepValueChange() + loop1.sweepValueChange();
         _sweepValueChangeType = (_sweepValueChange
                                  ? SweepValueChangeType::UNIFORM_CHANGE
                                  : SweepValueChangeType::NO_CHANGE);
     } else if (
         type0 != SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES &&
         type1 != SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES &&
-        sign(loop0->sweepValueChange()) == sign(loop1->sweepValueChange())
+        sign(loop0.sweepValueChange()) == sign(loop1.sweepValueChange())
     ) {
         _sweepValueChangeType = SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES;
         // Only the sign matters, so addition is not needed, but makes it nicely symmetrical
-        _sweepValueChange = loop0->sweepValueChange() + loop1->sweepValueChange();
+        _sweepValueChange = loop0.sweepValueChange() + loop1.sweepValueChange();
     } else {
         // Both loops make opposite changes that do not fully cancel out. We cannot (yet?) detect
         // hangs of this type.
@@ -84,7 +84,7 @@ bool SweepHangDetector::determineCombinedSweepValueChange() {
     }
 
     if (
-        (loop0->requiresFixedInput() || loop1->requiresFixedInput()) &&
+        (loop0.requiresFixedInput() || loop1.requiresFixedInput()) &&
         _sweepValueChangeType != SweepValueChangeType::NO_CHANGE
     ) {
         // The changes of both loops, if any, should cancel each other out. They don't
@@ -97,14 +97,14 @@ bool SweepHangDetector::determineCombinedSweepValueChange() {
 // If both sweeps only make a single change, returns that. Otherwise returns 0.
 int SweepHangDetector::singleSweepValueChange() const {
     auto loop0 = _transitionGroups[0].loop(), loop1 =_transitionGroups[1].loop();
-    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
+    auto type0 = loop0.sweepValueChangeType(), type1 = loop1.sweepValueChangeType();
 
     if (type0 == SweepValueChangeType::NO_CHANGE && type1 == SweepValueChangeType::UNIFORM_CHANGE) {
-        return loop1->sweepValueChange();
+        return loop1.sweepValueChange();
     }
 
     if (type1 == SweepValueChangeType::NO_CHANGE && type0 == SweepValueChangeType::UNIFORM_CHANGE) {
-        return loop0->sweepValueChange();
+        return loop0.sweepValueChange();
     }
 
     return 0;
@@ -114,14 +114,14 @@ bool SweepHangDetector::determinePossibleSweepExitValues() {
     _possibleSweepExitValues.clear();
 
     auto loop0 = _transitionGroups[0].loop(), loop1 = _transitionGroups[1].loop();
-    for (int exitValue : loop0->exitValues() ) {
+    for (int exitValue : loop0.exitValues() ) {
         _possibleSweepExitValues.insert(exitValue);
     }
-    for (int exitValue : loop1->exitValues() ) {
-        if (loop0->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE ||
-            loop0->sweepValueChangeType() == SweepValueChangeType::NO_CHANGE
+    for (int exitValue : loop1.exitValues() ) {
+        if (loop0.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE ||
+            loop0.sweepValueChangeType() == SweepValueChangeType::NO_CHANGE
         ) {
-            _possibleSweepExitValues.insert(exitValue - loop0->sweepValueChange());
+            _possibleSweepExitValues.insert(exitValue - loop0.sweepValueChange());
         } else {
             // TODO: Take into account all possible changes made by loop
             return false;
@@ -138,8 +138,8 @@ bool SweepHangDetector::canSweepChangeValueTowardsZero(int value) const {
         return false;
     }
 
-    if (_transitionGroups[0].loop()->canSweepChangeValueTowardsZero(value) ||
-        _transitionGroups[1].loop()->canSweepChangeValueTowardsZero(value)
+    if (_transitionGroups[0].loop().canSweepChangeValueTowardsZero(value) ||
+        _transitionGroups[1].loop().canSweepChangeValueTowardsZero(value)
     ) {
         return true;
     }
@@ -156,7 +156,7 @@ bool SweepHangDetector::analyzeLoops() {
         return sweepHangFailure(_executor);
     }
     int runBlockIndexLoop1 = runSummary.getNumRunBlocks() - 1;
-    if (!group[1].analyzeLoop(&_loopAnalysisPool[1], runBlockIndexLoop1, _executor)) {
+    if (!group[1].analyzeLoop(runBlockIndexLoop1, _executor)) {
         return false;
     }
 
@@ -166,7 +166,7 @@ bool SweepHangDetector::analyzeLoops() {
         return sweepHangFailure(_executor);
     }
     int runBlockIndexLoop0 = runBlockIndexTransition0 - 1;
-    if (!group[0].analyzeLoop(&_loopAnalysisPool[0], runBlockIndexLoop0, _executor)) {
+    if (!group[0].analyzeLoop(runBlockIndexLoop0, _executor)) {
         return false;
     }
 
@@ -191,8 +191,8 @@ bool SweepHangDetector::analyzeTransitions() {
     const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
     int metaLoopStartIndex = metaRunSummary.getLastRunBlock()->getStartIndex();
     int prevLoopIndex = runSummary.getNumRunBlocks() - 1;
-    const SweepLoopAnalysis *prevLoopAnalysis = _transitionGroups[1].loop();
-    int numSweeps = 0, numUniqueTransitions = 0, numUniqueLoops = 2;
+    int prevLoopStartIndex = 0;
+    int numSweeps = 0, numUniqueTransitions = 0;
 
     while (prevLoopIndex > metaLoopStartIndex) {
         int transitionStartIndex = findPrecedingTransitionStart(prevLoopIndex);
@@ -207,28 +207,19 @@ bool SweepHangDetector::analyzeTransitions() {
 
         int j = numSweeps % 2;
         SweepTransitionGroup &tg = _transitionGroups[j];
-        const RunBlock* existingLoopBlock = tg.loop()->loopRunBlock();
+        const RunBlock* existingLoopBlock = tg.loop().loopRunBlock();
+        int rotationEquivalenceOffset = 0;
         if (loopBlock->getSequenceIndex() != existingLoopBlock->getSequenceIndex() &&
-            !runSummary.areLoopsRotationEqual(loopBlock, existingLoopBlock)
+            !runSummary.areLoopsRotationEqual(loopBlock, existingLoopBlock,
+                                              rotationEquivalenceOffset)
         ) {
             // Sequence does not follow expected sweep pattern anymore
             break;
         }
 
-        const SweepLoopAnalysis* sla = tg.analysisForLoop(loopBlock);
-        if (sla == nullptr) {
-            // This loop was entered differently than the one(s) encountered already. Analyse it
-            assert(numUniqueLoops < MAX_SWEEP_LOOP_ANALYSIS);
-            SweepLoopAnalysis* newAnalysis = &_loopAnalysisPool[numUniqueLoops++];
-
-            assert(tg.analyzeLoop(newAnalysis, loopIndex, _executor));
-            sla = newAnalysis;
-        }
-
         int loopLen = runSummary.getRunBlockLength(loopIndex);
-        int exitInstruction = (loopLen - 1) % loopBlock->getLoopPeriod();
-        SweepLoopExit loopExit(sla, exitInstruction);
-        const SweepTransition* st = tg.transitionForExit(loopExit);
+        int exitIndex = (loopLen - 1 + rotationEquivalenceOffset) % loopBlock->getLoopPeriod();
+        const SweepTransition* st = tg.transitionForExit(exitIndex);
         if (st != nullptr) {
             // Check that the transition is identical
             if (!st->transition->transitionEquals(transitionStartIndex, prevLoopIndex, _executor)) {
@@ -245,12 +236,14 @@ bool SweepHangDetector::analyzeTransitions() {
                 return sweepHangFailure(_executor);
             }
 
-            SweepTransition newTransition(sta, prevLoopAnalysis);
-            tg.addTransitionForExit(loopExit, newTransition);
+            SweepTransition newTransition(sta, prevLoopStartIndex);
+            tg.addTransitionForExit(exitIndex, newTransition);
         }
 
         prevLoopIndex = loopIndex;
-        prevLoopAnalysis = sla;
+        prevLoopStartIndex = (rotationEquivalenceOffset != 0
+                              ? loopBlock->getLoopPeriod() - rotationEquivalenceOffset
+                              : 0);
         numSweeps++;
     }
 
@@ -279,7 +272,7 @@ DataPointer SweepHangDetector::findAppendixStart(DataPointer dp,
 
     while (true) {
         int val = data.valueAt(dp, delta);
-        if (val == 0 || !group.loop()->isExitValue(val)) {
+        if (val == 0 || !group.loop().isExitValue(val)) {
             break;
         }
         dp += delta;

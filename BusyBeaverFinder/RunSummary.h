@@ -94,7 +94,10 @@ class RunSummary {
     RunBlockSequenceNode _sequenceBlock[maxNumSequenceBlocks];
     int _numSequenceBlocks;
 
-    mutable std::map<std::pair<int, int>, bool> _rotationEqualityCache;
+    // Cache for areLoopsRotationEqual method.
+    // Key: Pair of loop sequence indices (smallest first)
+    // Value: Pair of results with first the equality result, and second the offset (if applicable)
+    mutable std::map<std::pair<int, int>, std::pair<bool, int>> _rotationEqualityCache;
 
     // Helper array required by findRepeatedSequence utility function
     // Note: It is not owned by this class (and should therefore not be freed by it)
@@ -111,7 +114,7 @@ class RunSummary {
     void dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const;
 
     int calculateCanonicalLoopIndex(int startIndex, int len) const;
-    bool determineRotationEquivalence(int index1, int index2, int len) const;
+    bool determineRotationEquivalence(int index1, int index2, int len, int &offset) const;
 
 public:
     ~RunSummary();
@@ -165,8 +168,10 @@ public:
     }
 
     // Returns "true" if both loop run blocks are equal when rotations are allowed. E.g. it returns
-    // true when comparing "A B C" and "B C A".
-    int areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2) const;
+    // true when comparing "A B C" and "B C A". When this is the case, indexOffset gives the
+    // conversion of an index of loop2 to that of loop1: index1 = (index2 + indexOffset) % period
+    int areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
+                              int &indexOffset) const;
 
     void dumpSequenceTree() const;
     void dumpCondensed() const;

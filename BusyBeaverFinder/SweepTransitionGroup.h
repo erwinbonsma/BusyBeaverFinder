@@ -141,40 +141,13 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
 
-struct SweepLoopExit {
-    const SweepLoopAnalysis *loop;
-    int exitInstructionIndex;
-
-    SweepLoopExit(const SweepLoopAnalysis *sla, int index)
-    : loop(sla), exitInstructionIndex(index) {}
-
-    const LoopExit& loopExit() const { return loop->exit(exitInstructionIndex); }
-    bool exitsOnZero() const;
-
-    bool operator==(const SweepLoopExit& rhs) {
-        return loop == rhs.loop && exitInstructionIndex == rhs.exitInstructionIndex;
-    }
-    friend bool operator<(const SweepLoopExit& lhs, const SweepLoopExit& rhs) {
-        return (std::tie(lhs.loop, lhs.exitInstructionIndex) <
-                std::tie(rhs.loop, rhs.exitInstructionIndex));
-    }
-};
-
-namespace std {
-template <> struct hash<SweepLoopExit> {
-    typedef size_t result_type;
-    typedef SweepLoopExit argument_type;
-    size_t operator()(const SweepLoopExit& sle) const;
-};
-}
-
 struct SweepTransition {
     const SweepTransitionAnalysis *transition;
-    const SweepLoopAnalysis *nextLoop;
+    int nextLoopStartIndex;
 
-    SweepTransition() : transition(nullptr), nextLoop(nullptr) {}
-    SweepTransition(const SweepTransitionAnalysis *sta, const SweepLoopAnalysis *sla)
-    : transition(sta), nextLoop(sla) {}
+    SweepTransition() : transition(nullptr), nextLoopStartIndex(0) {}
+    SweepTransition(const SweepTransitionAnalysis *sta, int nextLoopStartIndex)
+    : transition(sta), nextLoopStartIndex(nextLoopStartIndex) {}
 };
 
 class SweepHangDetector;
@@ -184,13 +157,11 @@ class SweepTransitionGroup {
     const SweepHangDetector *_parent;
     const SweepTransitionGroup *_sibling;
 
-    // The loops that can start this transition. This is a vector so that we can distinguish
-    // different versions of the same loop, only differing by the entry instruction. The key is
-    // the loop's sequence index.
-    std::map<int, const SweepLoopAnalysis*> _loops;
+    // The loop that start this (group of) transition(s).
+    SweepLoopAnalysis _loop;
 
-    // Map from a given loop exit to transition that follows it.
-    std::map<SweepLoopExit, SweepTransition> _transitions;
+    // Map from a given loop exit to the transition that follows it.
+    std::map<int, SweepTransition> _transitions;
 
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
@@ -220,31 +191,23 @@ public:
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
     int insideSweepTransitionDeltaSign() const { return _insideSweepTransitionDeltaSign; }
 
-    // Returns a loop analysis representing the exiting loops for this transition group. Due to
-    // rotational-equivalence, there can be multiple loops analysis. An arbitrary analysis is
-    // returned. This analysis should only be used to inspect values that are the same for all
-    // analysis.
-    const SweepLoopAnalysis* loop() const { return _loops.begin()->second; }
+    // Return the loop analysis for the exiting loop for this transition group.
+    const SweepLoopAnalysis& loop() const { return _loop; }
 
-    const SweepLoopAnalysis* analysisForLoop(const RunBlock* loopRunBlock) const {
-        auto result = _loops.find(loopRunBlock->getSequenceIndex());
-        return (result != _loops.end()) ? result->second : nullptr;
+    bool hasTransitionForExit(int exitIndex) const {
+        return _transitions.find(exitIndex) != _transitions.end();
     }
-
-    bool hasTransitionForExit(const SweepLoopExit& loopExit) const {
-        return _transitions.find(loopExit) != _transitions.end();
-    }
-    const SweepTransition* transitionForExit(const SweepLoopExit& loopExit) const {
-        auto result = _transitions.find(loopExit);
+    const SweepTransition* transitionForExit(int exitIndex) const {
+        auto result = _transitions.find(exitIndex);
         return (result != _transitions.end()) ? &(result->second) : nullptr;
     }
-    void addTransitionForExit(const SweepLoopExit& loopExit, SweepTransition st) {
-        _transitions[loopExit] = st;
+    void addTransitionForExit(int exitIndex, SweepTransition st) {
+        _transitions[exitIndex] = st;
     }
     int numTransitions() const { return (int)_transitions.size(); }
 
     void clear();
-    bool analyzeLoop(SweepLoopAnalysis* loop, int runBlockIndex, const ProgramExecutor& executor);
+    bool analyzeLoop(int runBlockIndex, const ProgramExecutor& executor);
     bool analyzeGroup();
 
     bool allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const;

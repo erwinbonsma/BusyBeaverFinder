@@ -12,14 +12,22 @@
 #include "HangDetector.h"
 #include "SweepTransitionGroup.h"
 
-const int MAX_SWEEP_LOOP_ANALYSIS = 8;
 const int MAX_SWEEP_TRANSITION_ANALYSIS = 8;
 
+/* Detector for sweep hangs.
+ *
+ * It should identify all sweep hangs for which the following holds:
+ * - The hang results in an endless meta-run loop (i.e. the hang is regular)
+ *   It therefore does not detect loops with a FIXED_GROWING sweep end-type, which execute a kind of
+ *   binary count
+ * - A sweep in a given direction always executes the same loop (under rotation-equivalence)
+ *   Note: The rotation-equivalence allowance means that the entry instruction for this loop may
+ *   differ
+ */
 class SweepHangDetector : public HangDetector {
     friend SweepTransitionGroup;
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
-    SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
     SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
     SweepTransitionGroup _transitionGroups[2];
 

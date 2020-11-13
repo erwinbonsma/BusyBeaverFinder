@@ -61,6 +61,8 @@ protected:
 
     void addPreCondition(int dpOffset, PreCondition preCondition);
 
+    virtual const char* typeString() const { return "SEQ"; }
+
 public:
     SequenceAnalysis();
 
