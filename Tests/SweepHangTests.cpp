@@ -451,8 +451,10 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
     SECTION( "6x6-DualHeadedSweepHang") {
         // Dual-headed sweep hang which extends sweep with 3's at its left, and 2's at its right.
@@ -1623,6 +1625,41 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
             Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepHangWithComplexFastGrowingEnd" ) {
+        // This dual-headed sequence grows on the right side with two data cells each sweep. It
+        // does so with a complex transition, which features two short fixed loops. This performs
+        // the following changes:
+        // -1  2  1  1       =>
+        // -1  2  0  1 (loop exit) =>
+        // -1  2  0  2       =>
+        // -1  2  0  2  1    =>
+        // -1  2 -2  2  1    =>
+        // -1  2 -1  2  1    =>
+        // -1  2 -1  1  1    =>
+        // -1  2 -1  2  1    =>
+        // -1  2 -1  2  0    =>
+        // -1  2 -1  2  0  1 =>
+        // -1  2 -1  2  1  1
+        //
+        //     *
+        //   * o _ *
+        //   _ o * *
+        // * o o o o *
+        // * _ _ o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

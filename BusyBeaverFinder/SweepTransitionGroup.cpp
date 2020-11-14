@@ -454,9 +454,6 @@ bool SweepTransitionGroup::analyzeGroup() {
         const SweepTransition transition = kv.second;
         const SweepTransitionAnalysis *analysis = transition.transition;
 
-        int maxOutsideDp = _locatedAtRight
-            ? analysis->dataDeltas().maxDpOffset()
-            : analysis->dataDeltas().minDpOffset();
         for (const DataDelta& dd : analysis->dataDeltas()) {
             if (dd.dpOffset() != 0) {
                 bool insideSweep = (dd.dpOffset() < 0) == _locatedAtRight;
@@ -509,11 +506,7 @@ bool SweepTransitionGroup::analyzeGroup() {
                             }
                             break;
                         case SweepEndType::STEADY_GROWTH:
-                            if (dd.dpOffset() != maxOutsideDp && _loop.isExitValue(dd.delta())) {
-                                // The next sweep does not pass this value, which it should if the
-                                // sequence is steadily growing
-                                return transitionGroupFailure(*this);
-                            }
+                            // No additional checks
                             break;
                         case SweepEndType::IRREGULAR_GROWTH:
                             // Do not support this (yet?)

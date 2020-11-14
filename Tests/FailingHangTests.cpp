@@ -68,7 +68,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
-    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection" ) {
+    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection1" ) {
         // Sweep hang where the rightwards sweep features two sweep loops. The sweep is dual-headed.
         // The left side is extended with -1 values, the right side with 1's. The negative values
         // are decreased by one by the rightwards sweep, whereas the 1 values remain at one using
@@ -85,6 +85,25 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
             Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection2" ) {
+        // Simpler version of the previous program with very similar behavior.
+        //
+        //       *
+        //     * o _ *
+        //     o o *
+        // * * _ o o *
+        // o o _ * *
+        // _   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
