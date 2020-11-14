@@ -15,6 +15,10 @@
 #include "ProgramBlock.h"
 #include "RunSummary.h"
 
+bool PreCondition::holdsForValue(int value) const {
+    return (_shouldEqual == (value == _value));
+}
+
 SequenceAnalysis::SequenceAnalysis() : _effectiveResult(32) {
     _dpDelta = 0;
 }

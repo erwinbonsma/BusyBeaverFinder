@@ -183,7 +183,8 @@ class SweepTransitionGroup {
 
     bool determineSweepEndType();
 
-    bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
+protected:
+    virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 
 public:
     void init(const SweepHangDetector *parent, const SweepTransitionGroup *sibling);
@@ -221,6 +222,8 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
 
 class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
     SweepTransition _firstTransition;
+
+    bool onlyZeroesAhead(DataPointer dp, const Data& data) const override;
 
 public:
     // The first transition for this group. If the group has multiple transitions, the first

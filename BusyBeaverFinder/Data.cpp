@@ -88,7 +88,7 @@ void Data::updateBounds() {
 }
 
 int Data::valueAt(DataPointer dp, int dpOffset) const {
-    int index = (int)(dp - _minBoundP) + dpOffset;
+    int index = (int)(dp - _minDataP) + dpOffset;
 
     return (index >= 0 && index < _size) ? *(_minDataP + index) : 0;
 }

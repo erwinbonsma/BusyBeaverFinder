@@ -433,6 +433,27 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithMidSweepNonZeroFixedPointAndOutsideCounter" ) {
+        // Sweep with a mid-sequence fixed point at its left side, which at its left (outside the
+        // sweep sequence) has a counter that increases each sweep.
+        //
+        //     * * *
+        //   * _ o o *
+        //   o _ o *
+        // * _ _ o _
+        // * o o o _ *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
     SECTION( "6x6-DualHeadedSweepHang") {
         // Dual-headed sweep hang which extends sweep with 3's at its left, and 2's at its right.
         // The latter value is realized in two sweeps. The end-point at the right has value 1.
@@ -566,7 +587,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-SweepHangConstructingDualHeadedPalindrome2" ) {
+    SECTION( "6x6-SweepHangConstructingDualHeadedPalindrome" ) {
         // Similar in behaviour to the previous program, but this one actually creates a perfect
         // palindrome. The program and path traversed by PP is also pretty.
         //
@@ -1515,6 +1536,93 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
             Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
             Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit") {
+        // Dual-headed sweep with a complex transition at the right end. The right side of the
+        // sequence consists of two 1's. The left-most one terminates the sweep. It is then
+        // converted to a -1, extending the sequence body. Furthermore, it adds a new 1 value right
+        // of the other one.
+        //
+        //       *
+        //   * * o _ *
+        // * _ o o *
+        // * o _ o
+        // * * _ o
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit2") {
+        // Similar in behaviour to previous program, but with a much more complicated transition
+        // sequence. The transition extends the sequence as follows:
+        // .. -1 1 2 =>
+        // .. -2 1 2 =>
+        // .. -2 0 2 =>
+        // .. -2 0 2 2 =>
+        // .. -2 -3 2 2 =>
+        // .. -2 -2 2 2 =>
+        // .. -2 -2 0 2 =>
+        // .. -2 -1 0 2 =>
+        // .. -2 -1 1 2
+        //
+        //       *
+        //     * o _ *
+        // * _ _ o *
+        //   _ o o *
+        // * * _ o _ *
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit3" ) {
+        // The sequence extension at the right has similar complexity as that of the previous
+        // program. It also extends the sequence in eight steps:
+        // .. 2 1 1 =>
+        // .. 2 0 1 =>
+        // .. 2 1 1 =>
+        // .. 3 1 1 =>
+        // .. 3 1 0 =>
+        // .. 3 1 1 =>
+        // .. 3 2 1 =>
+        // .. 3 2 1 1
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        //   _ o _ o *
+        // * _ _ o _ *
+        // o o * * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

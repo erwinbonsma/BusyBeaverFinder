@@ -21,7 +21,7 @@ bool transitionGroupFailure(const ProgramExecutor& executor) {
     return false;
 }
 
-bool transitionGroupFailure(SweepTransitionGroup& tg) {
+bool transitionGroupFailure(const SweepTransitionGroup& tg) {
 //    std::cout << tg << std::endl;
     numTransitionGroupFailures++;
     return false;
@@ -454,7 +454,6 @@ bool SweepTransitionGroup::analyzeGroup() {
         const SweepTransition transition = kv.second;
         const SweepTransitionAnalysis *analysis = transition.transition;
 
-        int numOutside = 0;
         int maxOutsideDp = _locatedAtRight
             ? analysis->dataDeltas().maxDpOffset()
             : analysis->dataDeltas().minDpOffset();
@@ -515,7 +514,6 @@ bool SweepTransitionGroup::analyzeGroup() {
                                 // sequence is steadily growing
                                 return transitionGroupFailure(*this);
                             }
-                            ++numOutside;
                             break;
                         case SweepEndType::IRREGULAR_GROWTH:
                             // Do not support this (yet?)
@@ -525,12 +523,6 @@ bool SweepTransitionGroup::analyzeGroup() {
                     }
                 }
             }
-        }
-
-        if (_sweepEndType == SweepEndType::STEADY_GROWTH && numOutside != abs(maxOutsideDp)) {
-            // Multiple values are added beyond the DP outside the sequence, but they do not form
-            // a continuous region. I.e. one or more zeroes are introduced in the sequence.
-            return transitionGroupFailure(*this);
         }
     }
 
@@ -548,12 +540,8 @@ bool SweepTransitionGroup::allOutsideDeltasMoveAwayFromZero(DataPointer dp, cons
 }
 
 bool SweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& data) const {
-//    DataPointer dpNow = data.getDataPointer();
-
-    // TODO: Ignore any external values that are added by the transitions
-
     if (!data.onlyZerosAhead(dp, locatedAtRight())) {
-        return false;
+        return transitionGroupFailure(*this);
     }
 
     return true;
@@ -621,4 +609,45 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
     }
 
     return os;
+}
+
+bool PeriodicSweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& data) const {
+    int maxOvershoot = 0;
+    for (auto kv : _firstTransition.transition->preConditions()) {
+        int dpOffset = kv.first;
+        if (dpOffset != 0 && locatedAtRight() == (dpOffset > 0)) {
+            PreCondition preCondition = kv.second;
+
+            if (!preCondition.holdsForValue(data.valueAt(dp, dpOffset))) {
+                return transitionGroupFailure(*this);
+            }
+
+            maxOvershoot = std::max(abs(dpOffset), maxOvershoot);
+        }
+    }
+
+    if (maxOvershoot > 0) {
+        // The transition examines data cells external to the exit data cell. These do not have to
+        // be zero. Some transition sequences result in values beyond the sweep end, which move
+        // outwards as the sequence grows.
+        if (locatedAtRight()) {
+            if (data.getMaxBoundP() - maxOvershoot <= dp) {
+                return true;
+            } else {
+                dp += maxOvershoot;
+            }
+        } else {
+            if (data.getMinDataP() + maxOvershoot >= dp) {
+                return true;
+            } else {
+                dp -= maxOvershoot;
+            }
+        }
+    }
+
+    if (!SweepTransitionGroup::onlyZeroesAhead(dp, data)) {
+        return false;
+    }
+
+    return true;
 }

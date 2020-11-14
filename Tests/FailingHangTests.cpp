@@ -45,59 +45,11 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
-    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit") {
-        // Dual-headed sweep with a complex transition at the right end. The right side of the
-        // sequence consists of two 1's. The left-most one terminates the sweep. It is then
-        // converted to a -1, extending the sequence body. Furthermore, it adds a new 1 value right
-        // of the other one.
-        //
-        //       *
-        //   * * o _ *
-        // * _ o o *
-        // * o _ o
-        // * * _ o
-        // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
-    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit2") {
-        // Similar in behaviour to previous program, but with a much more complicated transition
-        // sequence. The transition extends the sequence as follows:
-        // .. -1 1 2 =>
-        // .. -2 1 2 =>
-        // .. -2 0 2 =>
-        // .. -2 0 2 2 =>
-        // .. -2 -3 2 2 =>
-        // .. -2 -2 2 2 =>
-        // .. -2 -2 0 2 =>
-        // .. -2 -1 0 2 =>
-        // .. -2 -1 1 2
-        //
-        //       *
-        //     * o _ *
-        // * _ _ o *
-        //   _ o o *
-        // * * _ o _ *
-        // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
     SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit3" ) {
+        // This dual-headed sweep has irregular growth at its left side. Two transitions alternate
+        // there. Both start the same (from the same loop exit instruction), but deviate later due
+        // to data difference at the left of the value that caused the sweep to abort.
+        //
         //     * *
         //   * o o _ *
         //   o o _ *

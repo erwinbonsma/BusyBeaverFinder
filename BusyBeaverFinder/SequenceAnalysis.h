@@ -29,6 +29,8 @@ public:
     int value() const { return _value; }
     bool shouldEqual() const { return _shouldEqual; }
 
+    bool holdsForValue(int value) const;
+
     bool operator==(const PreCondition& rhs) const {
         return _value == rhs._value && _shouldEqual == rhs._shouldEqual;
     }
