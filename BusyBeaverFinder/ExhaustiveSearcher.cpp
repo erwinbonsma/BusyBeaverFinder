@@ -89,7 +89,7 @@ void ExhaustiveSearcher::initInstructionStack(int size) {
     }
 }
 
-bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) {
+bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) const {
     Ins* p1 = _instructionStack;
     Ins* p2 = reference;
 
@@ -105,7 +105,7 @@ bool ExhaustiveSearcher::atTargetProgram() {
     return instructionStackEquals(targetStack);
 }
 
-void ExhaustiveSearcher::dumpInstructionStack() {
+void ExhaustiveSearcher::dumpInstructionStack() const {
     ::dumpInstructionStack(_instructionStack);
 }
 
@@ -121,6 +121,7 @@ void ExhaustiveSearcher::dumpSettings() {
 
 void ExhaustiveSearcher::dumpExecutionState() const {
     std::cout << "Num steps: " << _numSteps << std::endl;
+    dumpInstructionStack();
     ProgramExecutor::dumpExecutionState();
 }
 

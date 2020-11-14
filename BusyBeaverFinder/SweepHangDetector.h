@@ -29,7 +29,7 @@ class SweepHangDetector : public HangDetector {
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
     SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
-    SweepTransitionGroup _transitionGroups[2];
+    PeriodicSweepTransitionGroup _transitionGroups[2];
 
     SweepValueChangeType _sweepValueChangeType;
     int _sweepValueChange;

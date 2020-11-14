@@ -547,6 +547,18 @@ bool SweepTransitionGroup::allOutsideDeltasMoveAwayFromZero(DataPointer dp, cons
     return true;
 }
 
+bool SweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& data) const {
+//    DataPointer dpNow = data.getDataPointer();
+
+    // TODO: Ignore any external values that are added by the transitions
+
+    if (!data.onlyZerosAhead(dp, locatedAtRight())) {
+        return false;
+    }
+
+    return true;
+}
+
 Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
     switch (_sweepEndType) {
         case SweepEndType::FIXED_POINT_INCREASING_VALUE:
@@ -566,6 +578,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
             }
             break;
         case SweepEndType::FIXED_GROWING: {
+            assert(false); // Not yet used. TODO: Move elsewhere
             int delta = locatedAtRight() ? 1 : -1;
             // Skip all appendix values
             while (true) {
@@ -579,7 +592,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
             // Fall through
         case SweepEndType::STEADY_GROWTH:
         case SweepEndType::IRREGULAR_GROWTH:
-            if (!data.onlyZerosAhead(dp, locatedAtRight())) {
+            if (!onlyZeroesAhead(dp, data)) {
                 return Trilian::MAYBE;
             }
             break;
@@ -609,4 +622,3 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
 
     return os;
 }
-

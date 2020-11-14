@@ -140,8 +140,8 @@ public:
     void findOne();
     void findOne(Ins* resumeFrom);
 
-    void dumpInstructionStack();
-    bool instructionStackEquals(Ins* reference);
+    void dumpInstructionStack() const;
+    bool instructionStackEquals(Ins* reference) const;
 
     void dumpSettings();
     void dump();

@@ -151,6 +151,7 @@ struct SweepTransition {
 };
 
 class SweepHangDetector;
+
 class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
@@ -182,6 +183,8 @@ class SweepTransitionGroup {
 
     bool determineSweepEndType();
 
+    bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
+
 public:
     void init(const SweepHangDetector *parent, const SweepTransitionGroup *sibling);
 
@@ -191,7 +194,7 @@ public:
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
     int insideSweepTransitionDeltaSign() const { return _insideSweepTransitionDeltaSign; }
 
-    // Return the loop analysis for the exiting loop for this transition group.
+    // Return the loop analysis for the incoming loop for this transition group.
     const SweepLoopAnalysis& loop() const { return _loop; }
 
     bool hasTransitionForExit(int exitIndex) const {
@@ -215,5 +218,18 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
+
+class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
+    SweepTransition _firstTransition;
+
+public:
+    // The first transition for this group. If the group has multiple transitions, the first
+    // transition depends on when analysis is invoked, so is somewhat arbitrary. However, it also
+    // means that it is the first transition that will be executed next, which therefore is useful
+    // in analysing the data when trying to proof the hang.
+    SweepTransition firstTransition() const { return _firstTransition; };
+
+    void setFirstTransition(SweepTransition transition) { _firstTransition = transition; }
+};
 
 #endif /* SweepTransitionGroup_h */
