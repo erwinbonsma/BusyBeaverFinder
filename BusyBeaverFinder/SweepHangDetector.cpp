@@ -25,8 +25,8 @@ bool sweepHangFailure(const ProgramExecutor& executor) {
 
 SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
 : HangDetector(executor) {
-    _transitionGroups[0].init(this, &_transitionGroups[1]);
-    _transitionGroups[1].init(this, &_transitionGroups[0]);
+    _transitionGroups[0].init(this);
+    _transitionGroups[1].init(this);
 }
 
 int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {
@@ -52,31 +52,31 @@ int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) 
 }
 
 bool SweepHangDetector::determineCombinedSweepValueChange() {
-    auto loop0 = _transitionGroups[0].loop(), loop1 =_transitionGroups[1].loop();
-    auto type0 = loop0.sweepValueChangeType(), type1 = loop1.sweepValueChangeType();
+    auto loop0 = _transitionGroups[0].incomingLoop(), loop1 = _transitionGroups[0].outgoingLoop();
+    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
 
     if (type0 == SweepValueChangeType::NO_CHANGE) {
         _sweepValueChangeType = type1;
-        _sweepValueChange = loop1.sweepValueChange();
+        _sweepValueChange = loop1->sweepValueChange();
     } else if (type1 == SweepValueChangeType::NO_CHANGE) {
         _sweepValueChangeType = type0;
-        _sweepValueChange = loop0.sweepValueChange();
+        _sweepValueChange = loop0->sweepValueChange();
     } else if (
         type0 == SweepValueChangeType::UNIFORM_CHANGE &&
         type1 == SweepValueChangeType::UNIFORM_CHANGE
     ) {
-        _sweepValueChange = loop0.sweepValueChange() + loop1.sweepValueChange();
+        _sweepValueChange = loop0->sweepValueChange() + loop1->sweepValueChange();
         _sweepValueChangeType = (_sweepValueChange
                                  ? SweepValueChangeType::UNIFORM_CHANGE
                                  : SweepValueChangeType::NO_CHANGE);
     } else if (
         type0 != SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES &&
         type1 != SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES &&
-        sign(loop0.sweepValueChange()) == sign(loop1.sweepValueChange())
+        sign(loop0->sweepValueChange()) == sign(loop1->sweepValueChange())
     ) {
         _sweepValueChangeType = SweepValueChangeType::MULTIPLE_ALIGNED_CHANGES;
         // Only the sign matters, so addition is not needed, but makes it nicely symmetrical
-        _sweepValueChange = loop0.sweepValueChange() + loop1.sweepValueChange();
+        _sweepValueChange = loop0->sweepValueChange() + loop1->sweepValueChange();
     } else {
         // Both loops make opposite changes that do not fully cancel out. We cannot (yet?) detect
         // hangs of this type.
@@ -84,7 +84,7 @@ bool SweepHangDetector::determineCombinedSweepValueChange() {
     }
 
     if (
-        (loop0.requiresFixedInput() || loop1.requiresFixedInput()) &&
+        (loop0->requiresFixedInput() || loop1->requiresFixedInput()) &&
         _sweepValueChangeType != SweepValueChangeType::NO_CHANGE
     ) {
         // The changes of both loops, if any, should cancel each other out. They don't
@@ -96,15 +96,15 @@ bool SweepHangDetector::determineCombinedSweepValueChange() {
 
 // If both sweeps only make a single change, returns that. Otherwise returns 0.
 int SweepHangDetector::singleSweepValueChange() const {
-    auto loop0 = _transitionGroups[0].loop(), loop1 =_transitionGroups[1].loop();
-    auto type0 = loop0.sweepValueChangeType(), type1 = loop1.sweepValueChangeType();
+    auto loop0 = _transitionGroups[0].incomingLoop(), loop1 =_transitionGroups[0].outgoingLoop();
+    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
 
     if (type0 == SweepValueChangeType::NO_CHANGE && type1 == SweepValueChangeType::UNIFORM_CHANGE) {
-        return loop1.sweepValueChange();
+        return loop1->sweepValueChange();
     }
 
     if (type1 == SweepValueChangeType::NO_CHANGE && type0 == SweepValueChangeType::UNIFORM_CHANGE) {
-        return loop0.sweepValueChange();
+        return loop0->sweepValueChange();
     }
 
     return 0;
@@ -113,15 +113,15 @@ int SweepHangDetector::singleSweepValueChange() const {
 bool SweepHangDetector::determinePossibleSweepExitValues() {
     _possibleSweepExitValues.clear();
 
-    auto loop0 = _transitionGroups[0].loop(), loop1 = _transitionGroups[1].loop();
-    for (int exitValue : loop1.exitValues() ) {
+    auto loop0 = _transitionGroups[0].incomingLoop(), loop1 = _transitionGroups[1].incomingLoop();
+    for (int exitValue : loop1->exitValues() ) {
         _possibleSweepExitValues.insert(exitValue);
     }
-    for (int exitValue : loop0.exitValues() ) {
-        if (loop1.sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE ||
-            loop1.sweepValueChangeType() == SweepValueChangeType::NO_CHANGE
+    for (int exitValue : loop0->exitValues() ) {
+        if (loop1->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE ||
+            loop1->sweepValueChangeType() == SweepValueChangeType::NO_CHANGE
         ) {
-            _possibleSweepExitValues.insert(exitValue - loop1.sweepValueChange());
+            _possibleSweepExitValues.insert(exitValue - loop1->sweepValueChange());
         } else {
             // TODO: Take into account all possible changes made by loop
             return false;
@@ -138,8 +138,8 @@ bool SweepHangDetector::canSweepChangeValueTowardsZero(int value) const {
         return false;
     }
 
-    if (_transitionGroups[0].loop().canSweepChangeValueTowardsZero(value) ||
-        _transitionGroups[1].loop().canSweepChangeValueTowardsZero(value)
+    if (_transitionGroups[0].incomingLoop()->canSweepChangeValueTowardsZero(value) ||
+        _transitionGroups[0].outgoingLoop()->canSweepChangeValueTowardsZero(value)
     ) {
         return true;
     }
@@ -156,7 +156,8 @@ bool SweepHangDetector::analyzeLoops() {
         return sweepHangFailure(_executor);
     }
     int runBlockIndexLoop0 = runSummary.getNumRunBlocks() - 1;
-    if (!group[0].analyzeLoop(runBlockIndexLoop0, _executor)) {
+    auto loopRunBlock = runSummary.runBlockAt(runBlockIndexLoop0);
+    if (!_loopAnalysisPool[0].analyzeSweepLoop(loopRunBlock, _executor)) {
         return false;
     }
 
@@ -165,13 +166,19 @@ bool SweepHangDetector::analyzeLoops() {
         // There is no sweep loop preceding the transition
         return sweepHangFailure(_executor);
     }
-    int runBlockIndexLoop1 = runBlockIndexTransition1 - 1;
-    if (!group[1].analyzeLoop(runBlockIndexLoop1, _executor)) {
+    loopRunBlock = runSummary.runBlockAt(runBlockIndexTransition1 - 1);
+    if (!_loopAnalysisPool[1].analyzeSweepLoop(loopRunBlock, _executor)) {
         return false;
     }
+    group[0].setIncomingLoop(&_loopAnalysisPool[0]);
+    group[1].setIncomingLoop(&_loopAnalysisPool[1]);
+    group[0].setOutgoingLoop(&_loopAnalysisPool[1]);
+    group[1].setOutgoingLoop(&_loopAnalysisPool[0]);
 
     // Both loops should move in opposite directions
-    if (group[0].locatedAtRight() == group[1].locatedAtRight()) {
+    if ((group[0].incomingLoop()->dataPointerDelta() > 0) ==
+        (group[1].incomingLoop()->dataPointerDelta() > 0)
+    ) {
         return sweepHangFailure(_executor);
     }
 
@@ -211,7 +218,7 @@ bool SweepHangDetector::analyzeTransitions() {
 
         int j = (numSweeps + 1) % 2;
         PeriodicSweepTransitionGroup &tg = _transitionGroups[j];
-        const RunBlock* existingLoopBlock = tg.loop().loopRunBlock();
+        const RunBlock* existingLoopBlock = tg.incomingLoop()->loopRunBlock();
         int rotationEquivalenceOffset = 0;
         if (loopBlock->getSequenceIndex() != existingLoopBlock->getSequenceIndex() &&
             !runSummary.areLoopsRotationEqual(loopBlock, existingLoopBlock,
@@ -287,7 +294,7 @@ DataPointer SweepHangDetector::findAppendixStart(DataPointer dp,
 
     while (true) {
         int val = data.valueAt(dp, delta);
-        if (val == 0 || !group.loop().isExitValue(val)) {
+        if (val == 0 || !group.incomingLoop()->isExitValue(val)) {
             break;
         }
         dp += delta;
@@ -419,7 +426,8 @@ void SweepHangDetector::dump() const {
 std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
     for (int i = 0; i < 2; i++) {
         os << "Loop #" << i << " - ";
-        os << detector._transitionGroups[i].loop().loopRunBlock()->getSequenceIndex() << std::endl;
+        os << detector._transitionGroups[i].incomingLoop()->loopRunBlock()->getSequenceIndex()
+            << std::endl;
         os << detector._transitionGroups[i] << std::endl;
     }
 

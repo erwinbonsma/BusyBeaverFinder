@@ -156,10 +156,10 @@ class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
 
     const SweepHangDetector *_parent;
-    const SweepTransitionGroup *_sibling;
 
     // The loop that start this (group of) transition(s).
-    SweepLoopAnalysis _loop;
+    const SweepLoopAnalysis *_incomingLoop;
+    const SweepLoopAnalysis *_outgoingLoop;
 
     // Map from a given loop exit to the transition that follows it.
     std::map<int, SweepTransition> _transitions;
@@ -187,7 +187,7 @@ protected:
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 
 public:
-    void init(const SweepHangDetector *parent, const SweepTransitionGroup *sibling);
+    void init(const SweepHangDetector *parent);
 
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
@@ -195,8 +195,10 @@ public:
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
     int insideSweepTransitionDeltaSign() const { return _insideSweepTransitionDeltaSign; }
 
-    // Return the loop analysis for the incoming loop for this transition group.
-    const SweepLoopAnalysis& loop() const { return _loop; }
+    const SweepLoopAnalysis* incomingLoop() const { return _incomingLoop; }
+    const SweepLoopAnalysis* outgoingLoop() const { return _outgoingLoop; }
+    void setIncomingLoop(const SweepLoopAnalysis* loop) { _incomingLoop = loop; }
+    void setOutgoingLoop(const SweepLoopAnalysis* loop) { _outgoingLoop = loop; }
 
     bool hasTransitionForExit(int exitIndex) const {
         return _transitions.find(exitIndex) != _transitions.end();
@@ -211,7 +213,6 @@ public:
     int numTransitions() const { return (int)_transitions.size(); }
 
     void clear();
-    bool analyzeLoop(int runBlockIndex, const ProgramExecutor& executor);
     bool analyzeGroup();
 
     bool allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const;

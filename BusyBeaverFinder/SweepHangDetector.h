@@ -13,6 +13,7 @@
 #include "SweepTransitionGroup.h"
 
 const int MAX_SWEEP_TRANSITION_ANALYSIS = 8;
+const int MAX_SWEEP_LOOP_ANALYSIS = 4;
 
 /* Detector for sweep hangs.
  *
@@ -29,6 +30,7 @@ class SweepHangDetector : public HangDetector {
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
     SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
+    SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
     PeriodicSweepTransitionGroup _transitionGroups[2];
 
     SweepValueChangeType _sweepValueChangeType;

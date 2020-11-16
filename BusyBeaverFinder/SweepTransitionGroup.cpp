@@ -258,32 +258,15 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
-void SweepTransitionGroup::init(const SweepHangDetector *parent,
-                                const SweepTransitionGroup *sibling) {
+void SweepTransitionGroup::init(const SweepHangDetector *parent) {
     _parent = parent;
-    _sibling = sibling;
 }
 
 void SweepTransitionGroup::clear() {
     _transitions.clear();
+    _incomingLoop = nullptr;
+    _outgoingLoop = nullptr;
     _sweepEndType = SweepEndType::UNKNOWN;
-}
-
-bool SweepTransitionGroup::analyzeLoop(int runBlockIndex, const ProgramExecutor& executor) {
-    const RunBlock *loopRunBlock = executor.getRunSummary().runBlockAt(runBlockIndex);
-
-    if (!_loop.analyzeSweepLoop(loopRunBlock, executor)) {
-        return false;
-    }
-
-    if (_loop.sweepValueChangeType() == SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES) {
-        // Not (yet?) supported
-        return transitionGroupFailure(*this);
-    }
-
-    _locatedAtRight = _loop.dataPointerDelta() > 0;
-
-    return true;
 }
 
 int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
@@ -292,7 +275,7 @@ int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
     for (auto kv : _transitions) {
         int exitIndex = kv.first;
 
-        if (_loop.exit(exitIndex).exitCondition.isTrueForValue(value)) {
+        if (_incomingLoop->exit(exitIndex).exitCondition.isTrueForValue(value)) {
             ++count;
         }
     }
@@ -301,7 +284,7 @@ int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
 }
 
 int SweepTransitionGroup::numberOfExitsForValue(int value) const {
-    return _loop.numberOfExitsForValue(value);
+    return _incomingLoop->numberOfExitsForValue(value);
 }
 
 bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) const {
@@ -320,7 +303,7 @@ bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) con
         // Although the combined sweep does not result in value changes, check if loop exits
         // still can change this value into one that causes an exit in a later sweep.
 
-        if (_loop.hasIndirectExitsForValue(value)) {
+        if (_incomingLoop->hasIndirectExitsForValue(value)) {
             return true;
         }
     }
@@ -340,7 +323,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
 #endif
 
     for (auto kv : _transitions) {
-        const LoopExit &loopExit = _loop.exit(kv.first);
+        const LoopExit &loopExit = _incomingLoop->exit(kv.first);
         const SweepTransition &trans = kv.second;
         const SweepTransitionAnalysis *sta = trans.transition;
 
@@ -351,9 +334,9 @@ bool SweepTransitionGroup::determineSweepEndType() {
         int dpOffset = -sta->dataPointerDelta();
         if (trans.nextLoopStartIndex > 0) {
             // Take into account that the loop does not start at the first instruction
-            dpOffset -= _sibling->loop().effectiveResultAt(trans.nextLoopStartIndex - 1).dpOffset();
+            dpOffset -= _outgoingLoop->effectiveResultAt(trans.nextLoopStartIndex - 1).dpOffset();
         }
-        delta += _sibling->loop().deltaAt(dpOffset);
+        delta += _outgoingLoop->deltaAt(dpOffset);
 
         // Determine how much the value changes compared to its initial value.
         int totalDelta = delta - loopExit.exitCondition.value();
@@ -442,6 +425,16 @@ bool SweepTransitionGroup::determineSweepEndType() {
 }
 
 bool SweepTransitionGroup::analyzeGroup() {
+    if (_incomingLoop->sweepValueChangeType() == SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES ||
+        _outgoingLoop->sweepValueChangeType() == SweepValueChangeType::MULTIPLE_OPPOSING_CHANGES
+    ) {
+        // Not (yet?) supported
+        return transitionGroupFailure(*this);
+    }
+
+    _locatedAtRight = _incomingLoop->dataPointerDelta() > 0;
+    assert((_outgoingLoop->dataPointerDelta() < 0) == _locatedAtRight);
+
     if (!determineSweepEndType()) {
         return false;
     }
@@ -501,7 +494,7 @@ bool SweepTransitionGroup::analyzeGroup() {
                             break;
                         }
                         case SweepEndType::FIXED_GROWING:
-                            if (!_loop.isExitValue(dd.delta())) {
+                            if (!_incomingLoop->isExitValue(dd.delta())) {
                                 return transitionGroupFailure(*this);
                             }
                             break;
@@ -564,7 +557,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
             // Skip all appendix values
             while (true) {
                 int val = data.valueAt(dp, delta);
-                if (val == 0 || !_loop.isExitValue(val)) {
+                if (val == 0 || !_incomingLoop->isExitValue(val)) {
                     break;
                 }
                 dp += delta;
@@ -585,7 +578,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
 }
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
-    os << group._loop;
+    os << group._incomingLoop;
 
     auto iter = group._transitions.begin();
     while (iter != group._transitions.end()) {
