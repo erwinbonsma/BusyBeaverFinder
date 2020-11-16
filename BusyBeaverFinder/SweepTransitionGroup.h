@@ -150,12 +150,8 @@ struct SweepTransition {
     : transition(sta), nextLoopStartIndex(nextLoopStartIndex) {}
 };
 
-class SweepHangDetector;
-
 class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
-
-    const SweepHangDetector *_parent;
 
     // The loop that start this (group of) transition(s).
     const SweepLoopAnalysis *_incomingLoop;
@@ -166,6 +162,10 @@ class SweepTransitionGroup {
 
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
+
+    // Combined change made both by incoming and outgoing loop
+    SweepValueChangeType _sweepValueChangeType;
+    int _sweepValueChange;
 
     DataDeltas _outsideDeltas;
 
@@ -181,14 +181,13 @@ class SweepTransitionGroup {
     // the offset wrt to this value where the next loop starts.
     bool hasIndirectExitsForValue(int value, int dpOffset) const;
 
+    bool determineCombinedSweepValueChange();
     bool determineSweepEndType();
 
 protected:
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 
 public:
-    void init(const SweepHangDetector *parent);
-
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
 
@@ -199,6 +198,12 @@ public:
     const SweepLoopAnalysis* outgoingLoop() const { return _outgoingLoop; }
     void setIncomingLoop(const SweepLoopAnalysis* loop) { _incomingLoop = loop; }
     void setOutgoingLoop(const SweepLoopAnalysis* loop) { _outgoingLoop = loop; }
+
+    // The combined change to the sequence made by both the sweep-loops
+    SweepValueChangeType combinedSweepValueChangeType() const { return _sweepValueChangeType; }
+    int combinedSweepValueChange() const { return _sweepValueChange; }
+
+    bool canSweepChangeValueTowardsZero(int value) const;
 
     bool hasTransitionForExit(int exitIndex) const {
         return _transitions.find(exitIndex) != _transitions.end();
@@ -213,6 +218,7 @@ public:
     int numTransitions() const { return (int)_transitions.size(); }
 
     void clear();
+    bool analyzeSweeps();
     bool analyzeGroup();
 
     bool allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const;

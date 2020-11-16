@@ -33,9 +33,6 @@ class SweepHangDetector : public HangDetector {
     SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
     PeriodicSweepTransitionGroup _transitionGroups[2];
 
-    SweepValueChangeType _sweepValueChangeType;
-    int _sweepValueChange;
-
     std::set<int> _possibleSweepExitValues;
 
     /* Analysis */
@@ -47,18 +44,11 @@ class SweepHangDetector : public HangDetector {
         return _transitionGroups[0].numTransitions() + _transitionGroups[1].numTransitions();
     }
 
-    // The combined change to the sequence made by both the sweep-loops
-    bool determineCombinedSweepValueChange();
-    SweepValueChangeType combinedSweepValueChangeType() const { return _sweepValueChangeType; }
-    int combinedSweepValueChange() const { return _sweepValueChange; }
-
     // If only one of the sweeps makes a uniform change and the other loop makes no change, returns
     // the value of this change. Returns 0 otherwise
     int singleSweepValueChange() const;
 
     bool determinePossibleSweepExitValues();
-
-    bool canSweepChangeValueTowardsZero(int value) const;
 
     bool analyzeLoops();
     bool analyzeTransitions();
