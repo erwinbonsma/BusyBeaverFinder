@@ -50,6 +50,9 @@ class SweepHangDetector : public HangDetector {
 
     bool determinePossibleSweepExitValues();
 
+    bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
+                            int &rotationEquivalenceOffset) const;
+
     bool analyzeLoops();
     bool analyzeTransitions();
     bool analyzeTransitionGroups();
