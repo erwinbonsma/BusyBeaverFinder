@@ -142,6 +142,11 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
         return transitionGroupFailure(executor);
     }
 
+    if (dataPointerDelta() == 0) {
+        // A sweep loop cannot be stationary
+        return transitionGroupFailure(executor);
+    }
+
     _sweepValueChanges.clear();
     _sweepValueChange = 0;
     for (int i = numDataDeltas(); --i >= 0; ) {

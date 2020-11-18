@@ -88,30 +88,109 @@ bool SweepHangDetector::determinePossibleSweepExitValues() {
 bool SweepHangDetector::analyzeLoops() {
     const RunSummary& runSummary = _executor.getRunSummary();
     auto *group = _transitionGroups;
+    int numSweepLoops = 0;
+    int runBlockIndex = runSummary.getNumRunBlocks() - 1;
+    const RunBlock *runBlock;
 
-    // Assume that the loop which just finished is one of the sweep loops
+    // Assume that the loop which just finished is one of the sweep loops. If the sweep consists
+    // of two loops, it should be the second loop (i.e. the incoming loop for the next transition)
     if (runSummary.getLoopIteration() < MIN_ITERATIONS_LAST_SWEEP_LOOP) {
         return sweepHangFailure(_executor);
     }
-    int runBlockIndexLoop0 = runSummary.getNumRunBlocks() - 1;
-    auto loopRunBlock = runSummary.runBlockAt(runBlockIndexLoop0);
-    if (!_loopAnalysisPool[0].analyzeSweepLoop(loopRunBlock, _executor)) {
-        return false;
-    }
 
-    int runBlockIndexTransition1 = findPrecedingTransitionStart(runBlockIndexLoop0);
-    if (runBlockIndexTransition1 == 0) {
-        // There is no sweep loop preceding the transition
-        return sweepHangFailure(_executor);
-    }
-    loopRunBlock = runSummary.runBlockAt(runBlockIndexTransition1 - 1);
-    if (!_loopAnalysisPool[1].analyzeSweepLoop(loopRunBlock, _executor)) {
+//    _executor.dumpExecutionState();
+
+    runBlock = runSummary.runBlockAt(runBlockIndex);
+    if (!_loopAnalysisPool[numSweepLoops++].analyzeSweepLoop(runBlock, _executor)) {
         return false;
     }
     group[0].setIncomingLoop(&_loopAnalysisPool[0]);
-    group[1].setIncomingLoop(&_loopAnalysisPool[1]);
-    group[0].setOutgoingLoop(&_loopAnalysisPool[1]);
-    group[1].setOutgoingLoop(&_loopAnalysisPool[0]);
+
+    // Check if there's a loop directly preceding it.
+    --runBlockIndex;
+    runBlock = runSummary.runBlockAt(runBlockIndex);
+    if (runBlock->isLoop()) {
+        // There is a loop. Check if it's part of the same sweep, the sweep in the other direction
+        // or the transition that seperates them.
+        int len = runSummary.getRunBlockLength(runBlockIndex);
+        int numIterations = len / runBlock->getLoopPeriod();
+        if (numIterations > MAX_ITERATIONS_TRANSITION_LOOPS) {
+            // The loop is too big to be part of the transition. Analyze it
+            if (!_loopAnalysisPool[numSweepLoops++].analyzeSweepLoop(runBlock, _executor)) {
+                return false;
+            }
+
+            // Check its direction
+            if (_loopAnalysisPool[0].movesRightwards() == _loopAnalysisPool[1].movesRightwards()) {
+                // Both loops move in the same direction, the unusual case. This sweep apparently
+                // consists of two different loops
+                group[1].setOutgoingLoop(&_loopAnalysisPool[1]);
+            } else {
+                // It's apparently the incoming loop in the other direction (without a transition
+                // in between)
+                group[1].setIncomingLoop(&_loopAnalysisPool[1]);
+            }
+        }
+    }
+
+    if (numSweepLoops == 1) {
+        // Skip the transition
+        runBlockIndex = findPrecedingTransitionStart(runBlockIndex + 1);
+        if (runBlockIndex == 0) {
+            // There is no sweep loop preceding the transition
+            return sweepHangFailure(_executor);
+        }
+    }
+
+    if (group[1].outgoingLoop() == nullptr) {
+        group[1].setOutgoingLoop(group[0].incomingLoop());
+    }
+
+    if (group[1].incomingLoop() == nullptr) {
+        // The next loop must be the incoming loop at the other end of the sweep
+        --runBlockIndex;
+        runBlock = runSummary.runBlockAt(runBlockIndex);
+        if (!_loopAnalysisPool[numSweepLoops].analyzeSweepLoop(runBlock, _executor)) {
+            return sweepHangFailure(_executor);
+        }
+        group[1].setIncomingLoop(&_loopAnalysisPool[numSweepLoops++]);
+    }
+
+    // Check if there's a loop directly preceding it.
+    --runBlockIndex;
+    runBlock = runSummary.runBlockAt(runBlockIndex);
+    if (runBlock->isLoop()) {
+        // There is a loop. Check if it's part of the same sweep, the sweep in the other direction
+        // or the transition that seperates them.
+        int len = runSummary.getRunBlockLength(runBlockIndex);
+        int numIterations = len / runBlock->getLoopPeriod();
+        if (numIterations > MAX_ITERATIONS_TRANSITION_LOOPS) {
+            // The loop is too big to be part of the transition. Analyze it
+            if (!_loopAnalysisPool[numSweepLoops].analyzeSweepLoop(runBlock, _executor)) {
+                return sweepHangFailure(_executor);
+            }
+
+            // Check its direction
+            if (_loopAnalysisPool[numSweepLoops].movesRightwards() ==
+                _loopAnalysisPool[numSweepLoops - 1].movesRightwards()
+            ) {
+                // Both loops move in the same direction, the unusual case. This sweep apparently
+                // consists of two different loops
+                group[0].setOutgoingLoop(&_loopAnalysisPool[numSweepLoops++]);
+            }
+        }
+    }
+
+    if (group[0].outgoingLoop() == nullptr) {
+        group[0].setOutgoingLoop(group[1].incomingLoop());
+    }
+
+    // TEMP
+    if (group[0].incomingLoop() != group[1].outgoingLoop() ||
+        group[1].incomingLoop() != group[0].outgoingLoop()
+    ) {
+        return sweepHangFailure(_executor);
+    }
 
     if (!group[0].analyzeSweeps() || !group[1].analyzeSweeps()) {
         return false;

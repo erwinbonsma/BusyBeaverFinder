@@ -107,6 +107,7 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
 public:
     const RunBlock* loopRunBlock() const { return _loopRunBlock; }
+    const bool movesRightwards() const { return dataPointerDelta() > 0; }
 
     SweepValueChangeType sweepValueChangeType() const { return _sweepValueChangeType; }
 
