@@ -103,8 +103,6 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
     bool _requiresFixedInput;
 
-    bool hasIndirectExitsForValueAfterExit(int value, int exitInstruction) const;
-
 public:
     const RunBlock* loopRunBlock() const { return _loopRunBlock; }
     const bool movesRightwards() const { return dataPointerDelta() > 0; }
@@ -116,7 +114,7 @@ public:
 
     bool isExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
-    bool hasIndirectExitsForValue(int value) const;
+    void collectInsweepDeltasAfterExit(int exitInstruction, DataDeltas &dataDeltas) const;
 
     // Returns iterator over exit values
     auto exitValues() const { return makeKeyIterator(_exitMap); }

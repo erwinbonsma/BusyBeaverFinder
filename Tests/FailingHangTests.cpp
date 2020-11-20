@@ -68,29 +68,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
-    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection1" ) {
-        // Sweep hang where the rightwards sweep features two sweep loops. The sweep is dual-headed.
-        // The left side is extended with -1 values, the right side with 1's. The negative values
-        // are decreased by one by the rightwards sweep, whereas the 1 values remain at one using
-        // a more-complex variant of the loop.
-        //
-        //     * * *
-        //   * o o _ *
-        // * _ o o *
-        //   _ * o o *
-        // * o _ _ _ *
-        // o o * * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
     SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection2" ) {
         // Simpler version of the previous program with very similar behavior.
         //
@@ -104,6 +81,23 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
             Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection3" ) {
+        // This is a more complex program. The right sweep consists of two loops. The outgoing loop
+        // (#7) moves DP two cells, which impacts the transition between both loops. Half of the
+        // time the outgoing loop transfers immediately to the incoming loop (#14). The other times
+        // there is a fixed transition (#26) after which it enters incoming loop #33, which is
+        // rotation-equivalent to #14.
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

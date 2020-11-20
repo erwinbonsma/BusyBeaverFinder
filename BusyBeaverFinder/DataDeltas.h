@@ -55,6 +55,7 @@ public:
 
     const_iterator begin() const { return _dataDeltas.cbegin(); }
     const_iterator end() const { return _dataDeltas.cend(); }
+    const_iterator erase(const_iterator it) { return _dataDeltas.erase(it); }
 };
 
 std::ostream &operator<<(std::ostream &os, const DataDeltas& dataDeltas);

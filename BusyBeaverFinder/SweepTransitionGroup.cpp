@@ -50,14 +50,14 @@ int SweepLoopAnalysis::numberOfExitsForValue(int value) const {
     return (int)_exitMap.count(value);
 }
 
-DataDeltas tmpDataDeltasIndirectExits;
-bool SweepLoopAnalysis::hasIndirectExitsForValueAfterExit(int value, int exitInstruction) const {
-    DataDeltas &dataDeltas = tmpDataDeltasIndirectExits;
-    int dpDelta = 0;
+void SweepLoopAnalysis::collectInsweepDeltasAfterExit(int exitInstruction,
+                                                      DataDeltas &dataDeltas) const {
 
     dataDeltas.clear();
     // Fully bootstrap the loop
     int maxIteration = numBootstrapCycles() + 1;
+    // Set it such that on exit, dpDelta is zero
+    int dpDelta = -(maxIteration * _dpDelta + effectiveResultAt(exitInstruction).dpOffset());
     for (int iteration = 0; iteration <= maxIteration; iteration++) {
         // Execute the last iteration until (inclusive) the exit instruction
         for (int instruction = 0; instruction < loopSize(); instruction++) {
@@ -78,44 +78,28 @@ bool SweepLoopAnalysis::hasIndirectExitsForValueAfterExit(int value, int exitIns
 #endif
 
             if (instruction == exitInstruction && iteration == maxIteration) {
+                assert(dpDelta == 0);
                 int dpDeltaStartIteration = dpDelta - effectiveResultAt(exitInstruction).dpOffset();
                 int dpMin = dpDeltaStartIteration + minDp();
                 int dpMax = dpDeltaStartIteration + maxDp();
-                for (DataDelta dd : dataDeltas) {
+                auto it = dataDeltas.begin();
+                while (it != dataDeltas.end()) {
+                    DataDelta dd = *it;
                     bool insideSweep = sign(dpDelta - dd.dpOffset()) == sign(dataPointerDelta());
                     bool isBootstrapResidu = dd.dpOffset() < dpMin || dd.dpOffset() > dpMax;
-                    int finalValue = value + dd.delta() - _sweepValueChange;
-                    if (insideSweep && !isBootstrapResidu && isExitValue(finalValue)) {
-                        return true;
+                    if (!insideSweep || isBootstrapResidu) {
+                        it = dataDeltas.erase(it);
+                    } else {
+                        ++it;
                     }
                 }
 
-                return false;
+                return;
             }
         }
     }
 
     assert(false);
-    return false;
-}
-
-bool SweepLoopAnalysis::hasIndirectExitsForValue(int value) const {
-    // Assumption to simplify analysis.
-    assert(_sweepValueChangeType == SweepValueChangeType::NO_CHANGE ||
-           _sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE);
-
-    for (int instructionIndex = loopSize(); --instructionIndex >= 0; ) {
-        const LoopExit& loopExit = exit(instructionIndex);
-
-        if (loopExit.exitWindow == ExitWindow::ANYTIME) {
-            // Determine what all inside-sweep deltas can be when this exit is taken
-            if (hasIndirectExitsForValueAfterExit(value, instructionIndex)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 bool SweepLoopAnalysis::canSweepChangeValueTowardsZero(int value) const {
@@ -288,6 +272,7 @@ int SweepTransitionGroup::numberOfExitsForValue(int value) const {
     return _incomingLoop->numberOfExitsForValue(value);
 }
 
+DataDeltas tmpDataDeltasIndirectExits;
 bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) const {
     // TODO: When needed, extend to take bootstrap-changes of outgoing sweep into account
     // For that reason, passing dpOffset
@@ -303,8 +288,23 @@ bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) con
         // Although the combined sweep does not result in value changes, check if loop exits
         // still can change this value into one that causes an exit in a later sweep.
 
-        if (_incomingLoop->hasIndirectExitsForValue(value)) {
-            return true;
+        for (int instructionIndex = _incomingLoop->loopSize(); --instructionIndex >= 0; ) {
+            const LoopExit& loopExit = _incomingLoop->exit(instructionIndex);
+
+            if (loopExit.exitWindow == ExitWindow::ANYTIME) {
+                // Determine what all inside-sweep deltas can be when this exit is taken
+                auto &dataDeltas = tmpDataDeltasIndirectExits;
+                _incomingLoop->collectInsweepDeltasAfterExit(instructionIndex, dataDeltas);
+
+                for (auto dd : dataDeltas) {
+                    if (_incomingLoop->sweepValueChange() != dd.delta()) {
+                        int finalValue = value + dd.delta() - _sweepValueChange;
+                        if (_incomingLoop->isExitValue(finalValue)) {
+                            return true;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -328,7 +328,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
         const SweepTransitionAnalysis *sta = trans.transition;
 
         // Determine delta after exit. For zero-exits, this is the final value
-        int delta = sta->dataDeltas().deltaAt(0);
+        int deltaAfterExit = sta->dataDeltas().deltaAt(0);
 
         // Add any changes made by the outgoing loop
         int dpOffset = -sta->dataPointerDelta();
@@ -336,7 +336,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
             // Take into account that the loop does not start at the first instruction
             dpOffset -= _outgoingLoop->effectiveResultAt(trans.nextLoopStartIndex - 1).dpOffset();
         }
-        delta += _outgoingLoop->deltaAt(dpOffset);
+        int delta = deltaAfterExit + _outgoingLoop->deltaAt(dpOffset);
 
         // Determine how much the value changes compared to its initial value.
         int totalDelta = delta - loopExit.exitCondition.value();
@@ -646,7 +646,8 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
 }
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
-    os << group._incomingLoop;
+    os << "Incoming Loop: #" << group._incomingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
+    os << *group._incomingLoop;
 
     auto iter = group._transitions.begin();
     while (iter != group._transitions.end()) {
@@ -658,9 +659,13 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
         ++iter;
     }
 
+    os << "Outgoing Loop: #" << group._outgoingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
+    os << *group._outgoingLoop;
+
     if (group.endType() != SweepEndType::UNKNOWN) {
         os << "Type = " << group.endType();
     }
+
 
     return os;
 }

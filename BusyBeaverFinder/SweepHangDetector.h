@@ -34,6 +34,7 @@ class SweepHangDetector : public HangDetector {
     PeriodicSweepTransitionGroup _transitionGroups[2];
 
     std::set<int> _possibleSweepExitValues;
+    std::set<int> _sweepTransitionValues;
 
     /* Analysis */
     // Returns run block index of the transition that precedes the given sweep loop. If there is
@@ -70,6 +71,8 @@ protected:
     bool analyzeHangBehaviour();
 
     Trilian proofHang();
+
+    void clear();
 
 public:
     SweepHangDetector(const ProgramExecutor& executor);
