@@ -274,6 +274,8 @@ int SweepTransitionGroup::numberOfExitsForValue(int value) const {
 
 void SweepTransitionGroup::collectInsweepDeltasAfterTransition(SweepTransition st,
                                                                DataDeltas &dataDeltas) const {
+//    std::cout << "After incoming loop: " << dataDeltas << std::endl;
+
     // Add any changes made by the transition
     for (auto dd : st.transition->dataDeltas()) {
         if (dd.dpOffset() != 0 && (dd.dpOffset() < 0) == locatedAtRight()) {
@@ -293,7 +295,8 @@ void SweepTransitionGroup::collectInsweepDeltasAfterTransition(SweepTransition s
          dpOffset <= max;
          dpOffset++
     ) {
-        dataDeltas.updateDelta(dpOffset, _outgoingLoop->deltaAt(dpOffset + dpLoopOffset));
+        dataDeltas.updateDelta(dpOffset + st.transition->dataPointerDelta(),
+                               _outgoingLoop->deltaAt(dpOffset + dpLoopOffset));
     }
 //    std::cout << "After outgoing loop: " << dataDeltas << std::endl;
 }
@@ -302,7 +305,7 @@ bool SweepTransitionGroup::dataDeltasCanTransformValueToExit(int value,
                                                              const DataDeltas &dataDeltas) const {
     for (auto dd : dataDeltas) {
         if (_incomingLoop->sweepValueChange() != dd.delta()) {
-            int finalValue = value + dd.delta() - _sweepValueChange;
+            int finalValue = value + dd.delta();
             if (_incomingLoop->isExitValue(finalValue)) {
                 return true;
             }
@@ -354,18 +357,14 @@ bool SweepTransitionGroup::hasIndirectExitForValue(int value) const {
         return true;
     }
 
-    if (_sweepValueChangeType == SweepValueChangeType::NO_CHANGE) {
-        // Although the combined sweep does not result in value changes, check if loop exits
-        // still can change this value into one that causes an exit in a later sweep.
+    // Check if loop exits can change this value into one that causes an exit in a later sweep.
+    for (int instructionIndex = _incomingLoop->loopSize(); --instructionIndex >= 0; ) {
+        const LoopExit& loopExit = _incomingLoop->exit(instructionIndex);
 
-        for (int instructionIndex = _incomingLoop->loopSize(); --instructionIndex >= 0; ) {
-            const LoopExit& loopExit = _incomingLoop->exit(instructionIndex);
-
-            if (loopExit.exitWindow == ExitWindow::ANYTIME &&
-                hasIndirectExitForValueAfterExit(value, instructionIndex)
-            ) {
-                return true;
-            }
+        if (loopExit.exitWindow == ExitWindow::ANYTIME &&
+            hasIndirectExitForValueAfterExit(value, instructionIndex)
+        ) {
+            return true;
         }
     }
 
@@ -473,9 +472,15 @@ bool SweepTransitionGroup::determineSweepEndType() {
         } else if (exitToExit && exitToNonExit && !nonExitToExit) {
             _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
         } else if (exitToNonExit && nonExitToExit) {
-            _sweepEndType = SweepEndType::FIXED_GROWING;
-            // Unsupported for regular sweeps
-            return transitionGroupFailure(*this);
+            if (_sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
+                // TODO: Refine. This may also lead to FIXED_POINT_MULTIPLE_VALUES
+                // For hang detection this distinction does not (yet?) matter, so is not urgent.
+                _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+            } else {
+                _sweepEndType = SweepEndType::FIXED_GROWING;
+                // Unsupported for regular sweeps
+                return transitionGroupFailure(*this);
+            }
         } else {
             // Unsupported sweep end type
             return transitionGroupFailure(*this);
