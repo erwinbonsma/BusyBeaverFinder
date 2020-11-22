@@ -678,6 +678,101 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepIrregularGrowth3") {
+        // Sweep with irregular growth at its left side. It alternates between two reversal
+        // sequences:
+        //
+        // "... 0 0 1 1 [body]" => "... 0 1 0 3 [body]"
+        // "... 0 0 1 0 [body]" => "... 0 0 1 1 [body]"
+        //
+        // A noteworthy feature is that the leftwards-loop exits at the same instruction in both
+        // cases. The transition differs because a difference in a nearby data value.
+        //
+        //     * *
+        //   * o _ _ *
+        //   o _ o *
+        //   o o o
+        // * _ _ _ o *
+        // o o * * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH); // TODO: FIXME
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepIrregularGrowth4" ) {
+        // A sweep with irregular growth at its right side, and a fixed point with multiple values
+        // at its left. It generates a sequence of only 2's, but does so quite slowly given that it
+        // is a sweep that only adds a value once every two full sweeps.
+        //
+        //   *   * *
+        // * o _ o _ *
+        // * _ * o o
+        // o _ o o *
+        // _ * _ o *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
+    }
+    SECTION( "6x6-SweepIrregularGrowth5" ) {
+        // Similar behavior as 6x6-SweepIrregularGrowth3.
+        //
+        //       *
+        //   * * o _ *
+        //   o o _ *
+        // * o _ o _
+        // * _ _ _ o *
+        // o _ o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH); // TODO: FIXME
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+    }
+    SECTION( "6x6-SweepIrregularGrowth6" ) {
+        //   *   * *
+        // * o o _ _ *
+        //   _ o o o *
+        //   * * o o *
+        // * _ o o *
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,  Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH); // TODO: FIXME
+    }
     SECTION( "6x6-SweepLoopExceedsMidSequencePoint" ) {
         // Program where DP during its leftwards sweep briefly extends beyond the mid-sequence
         // point before initiating the turn.
@@ -1586,6 +1681,32 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit4" ) {
+        // This dual-headed sweep has irregular growth at its left side. Two transitions alternate
+        // there. Both start the same (from the same loop exit instruction), but deviate later due
+        // to data difference at the left of the value that caused the sweep to abort.
+        //
+        //     * *
+        //   * o o _ *
+        //   o o _ *
+        // * o _ o _
+        // * _ _ _ o *
+        // o o * * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+    }
+
     SECTION( "6x6-SweepHangWithComplexFastGrowingEnd" ) {
         // This dual-headed sequence grows on the right side with two data cells each sweep. It
         // does so with a complex transition, which features two short fixed loops. This performs

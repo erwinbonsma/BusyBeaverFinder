@@ -156,8 +156,11 @@ class SweepTransitionGroup {
     const SweepLoopAnalysis *_incomingLoop;
     const SweepLoopAnalysis *_outgoingLoop;
 
-    // Map from a given loop exit to the transition that follows it.
-    std::map<int, SweepTransition> _transitions;
+    // Map from a given loop exit to the transition(s) that follows it.
+    //
+    // Note: Most exits are followed by one transition. However, it is possible that there is
+    // more than one, which can happen if the transition depends on nearby data values.
+    std::multimap<int, SweepTransition> _transitions;
 
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
@@ -176,14 +179,15 @@ class SweepTransitionGroup {
     int numberOfExitsForValue(int value) const;
 
     // Checks if the given value can be modified by the next sweep loop to result in an exit.
-    // Here value is the final value of the data cell that caused the loop exit, and dpOffset gives
-    // the offset wrt to this value where the next loop starts.
-    bool hasIndirectExitsForValue(int value, int dpOffset) const;
+    // Here value is the final value of the data cell that caused the loop exit.
+    bool dataDeltasCanTransformValueToExit(int value, const DataDeltas &dataDeltas) const;
+    bool hasIndirectExitForValueAfterExit(int value, int exitInstruction) const;
+    bool hasIndirectExitForValue(int value) const;
 
     bool determineCombinedSweepValueChange();
     bool determineSweepEndType();
 
-    void collectInsweepDeltasAfterExit(int exitInstruction, DataDeltas &dataDeltas) const;
+    void collectInsweepDeltasAfterTransition(SweepTransition st, DataDeltas &dataDeltas) const;
 
 protected:
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
@@ -209,14 +213,13 @@ public:
     bool hasTransitionForExit(int exitIndex) const {
         return _transitions.find(exitIndex) != _transitions.end();
     }
-    const SweepTransition* transitionForExit(int exitIndex) const {
-        auto result = _transitions.find(exitIndex);
-        return (result != _transitions.end()) ? &(result->second) : nullptr;
-    }
     void addTransitionForExit(int exitIndex, SweepTransition st) {
-        _transitions[exitIndex] = st;
+        _transitions.insert({exitIndex, st});
     }
-    int numTransitions() const { return (int)_transitions.size(); }
+    const SweepTransition* findTransitionMatching(int exitInstruction,
+                                                  int transitionStartIndex,
+                                                  int transitionEndIndex,
+                                                  const ProgramExecutor& executor) const;
 
     void clear();
     bool analyzeSweeps();

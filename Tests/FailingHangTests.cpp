@@ -21,53 +21,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
     settings.maxSteps = 1000000;
     searcher.configure(settings);
 
-    SECTION( "6x6-IrregularGrowthFailing") {
-        // Sweep with irregular growth at its left side. It alternates between two reversal
-        // sequences:
-        //
-        // "... 0 0 1 1 [body]" => "... 0 1 0 3 [body]"
-        // "... 0 0 1 0 [body]" => "... 0 0 1 1 [body]"
-        //
-        //     * *
-        //   * o _ _ *
-        //   o _ o *
-        //   o o o
-        // * _ _ _ o *
-        // o o * * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
-    SECTION( "6x6-SteadyGrowthSweepWithInSequenceExit3" ) {
-        // This dual-headed sweep has irregular growth at its left side. Two transitions alternate
-        // there. Both start the same (from the same loop exit instruction), but deviate later due
-        // to data difference at the left of the value that caused the sweep to abort.
-        //
-        //     * *
-        //   * o o _ *
-        //   o o _ *
-        // * o _ o _
-        // * _ _ _ o *
-        // o o * * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
     SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection3" ) {
         // This is a more complex program. The right sweep consists of two loops. The outgoing loop
         // (#7) moves DP two cells, which impacts the transition between both loops. Half of the
@@ -163,6 +116,7 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
 }

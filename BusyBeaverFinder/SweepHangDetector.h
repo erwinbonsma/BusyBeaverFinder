@@ -41,10 +41,6 @@ class SweepHangDetector : public HangDetector {
     // no transition between subsequent sweep loops, it returns sweepLoopRunBlockIndex.
     int findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const;
 
-    int numTransitions() const {
-        return _transitionGroups[0].numTransitions() + _transitionGroups[1].numTransitions();
-    }
-
     // If only one of the sweeps makes a uniform change and the other loop makes no change, returns
     // the value of this change. Returns 0 otherwise
     int singleSweepValueChange() const;

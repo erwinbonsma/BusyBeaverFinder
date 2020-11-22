@@ -263,7 +263,7 @@ bool SweepHangDetector::analyzeTransitions() {
         const RunBlock *loopBlock = runSummary.runBlockAt(loopIndex);
         int rotationEquivalenceOffset = 0;
 
-        if (!loopsAreEquivalent(loopBlock, group[j].incomingLoop()->loopRunBlock(),
+        if (!loopsAreEquivalent(group[j].incomingLoop()->loopRunBlock(), loopBlock,
                                 rotationEquivalenceOffset)
         ) {
             // Sequence does not follow expected sweep pattern anymore
@@ -272,17 +272,17 @@ bool SweepHangDetector::analyzeTransitions() {
 
         int loopLen = runSummary.getRunBlockLength(loopIndex);
         int exitIndex = (loopLen - 1 + rotationEquivalenceOffset) % loopBlock->getLoopPeriod();
-        const SweepTransition* st = group[j].transitionForExit(exitIndex);
-        if (st != nullptr) {
-            // Check that the transition is identical
-            if (!st->transition->transitionEquals(transitionStartIndex, nextLoopIndex, _executor)) {
-                // Transition does not match
+        const SweepTransition* st = group[j].findTransitionMatching(exitIndex,
+                                                                    transitionStartIndex,
+                                                                    nextLoopIndex,
+                                                                    _executor);
+        if (st == nullptr) {
+            if (nextLoopIndex <= metaLoop2Index) {
+                // No new transition should be encountered after one iteration of the meta-loop
                 break;
             }
 
-            group[j].setFirstTransition(*st);
-        } else {
-            // This is the first transition that follows the given loop exit
+            // This is a new transition. Add it
             assert(numUniqueTransitions < MAX_SWEEP_TRANSITION_ANALYSIS);
             SweepTransitionAnalysis *sta = &_transitionAnalysisPool[numUniqueTransitions++];
 
@@ -294,6 +294,8 @@ bool SweepHangDetector::analyzeTransitions() {
             group[j].addTransitionForExit(exitIndex, newTransition);
 
             group[j].setFirstTransition(newTransition);
+        } else {
+            group[j].setFirstTransition(*st);
         }
 
         nextLoopIndex = loopIndex;
