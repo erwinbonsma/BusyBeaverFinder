@@ -765,53 +765,6 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-DualHeadedSweepHangWithFastGrowingHead" ) {
-        // Program with a complex sweep. The sequence consists of both positive and negative values.
-        // During the sweep, the sign of some values oscillate (1 => DEC 2 => -1 => INC 2 => 1).
-        // Finally, the transition at the right side is complex. It extends the sequence with three
-        // values each visit.
-        //
-        //       *
-        //   * * o _ *
-        //   o o o *
-        //   o   o *
-        // * _ _ o _ *
-        // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-    }
-    SECTION( "6x6-LateDualHeadedSweepWithFastGrowingHead" ) {
-        // Sweep that requires about 200 iterations to start. It then creates a dual-headed
-        // sequence, with the right side growing with three values each iteration.
-        //
-        //       *
-        //   * * o _ *
-        //   o o o *
-        //   o o o *
-        // * _ _ o _ *
-        // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-    }
     SECTION( "6x6-ComplexSweepTurn1" ) {
         // Program with a complex turn at its left side. All values in the sequence are positive,
         // except the leftmost value, which is -1. When this is visisted, the following instructions
@@ -1688,7 +1641,28 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection2" ) {
+        // Simpler version of the previous program with very similar behavior.
+        //
+        //       *
+        //     * o _ *
+        //     o o *
+        // * * _ o o *
+        // o o _ * *
+        // _   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);

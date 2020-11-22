@@ -183,6 +183,8 @@ class SweepTransitionGroup {
     bool determineCombinedSweepValueChange();
     bool determineSweepEndType();
 
+    void collectInsweepDeltasAfterExit(int exitInstruction, DataDeltas &dataDeltas) const;
+
 protected:
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 

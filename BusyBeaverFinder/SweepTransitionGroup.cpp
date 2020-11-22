@@ -272,6 +272,40 @@ int SweepTransitionGroup::numberOfExitsForValue(int value) const {
     return _incomingLoop->numberOfExitsForValue(value);
 }
 
+void SweepTransitionGroup::collectInsweepDeltasAfterExit(int exitInstruction,
+                                                         DataDeltas &dataDeltas) const {
+    // Collect in-sweep deltas made by the incoming loop
+    _incomingLoop->collectInsweepDeltasAfterExit(exitInstruction, dataDeltas);
+//    std::cout << "After incoming loop: " << dataDeltas << std::endl;
+
+    // Add any changes made by the transition
+    const SweepTransition *trans = transitionForExit(exitInstruction);
+    if (trans == nullptr) {
+        return;
+    }
+    for (auto dd : trans->transition->dataDeltas()) {
+        if (dd.dpOffset() != 0 && (dd.dpOffset() < 0) == locatedAtRight()) {
+            dataDeltas.updateDelta(dd.dpOffset(), dd.delta());
+        }
+    }
+//    std::cout << "After transition: " << dataDeltas << std::endl;
+
+    // Finally, apply changes made by the outgoing loop
+    int dpLoopOffset = 0;
+    if (trans->nextLoopStartIndex > 0) {
+        // Take into account that the loop does not start at the first instruction
+        dpLoopOffset = -_outgoingLoop->effectiveResultAt(trans->nextLoopStartIndex - 1).dpOffset();
+    }
+    for (int dpOffset = locatedAtRight() ? dataDeltas.minDpOffset() : 1,
+             max = locatedAtRight() ? -1 : dataDeltas.maxDpOffset();
+         dpOffset <= max;
+         dpOffset++
+    ) {
+        dataDeltas.updateDelta(dpOffset, _outgoingLoop->deltaAt(dpOffset + dpLoopOffset));
+    }
+//    std::cout << "After outgoing loop: " << dataDeltas << std::endl;
+}
+
 DataDeltas tmpDataDeltasIndirectExits;
 bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) const {
     // TODO: When needed, extend to take bootstrap-changes of outgoing sweep into account
@@ -294,7 +328,7 @@ bool SweepTransitionGroup::hasIndirectExitsForValue(int value, int dpOffset) con
             if (loopExit.exitWindow == ExitWindow::ANYTIME) {
                 // Determine what all inside-sweep deltas can be when this exit is taken
                 auto &dataDeltas = tmpDataDeltasIndirectExits;
-                _incomingLoop->collectInsweepDeltasAfterExit(instructionIndex, dataDeltas);
+                collectInsweepDeltasAfterExit(instructionIndex, dataDeltas);
 
                 for (auto dd : dataDeltas) {
                     if (_incomingLoop->sweepValueChange() != dd.delta()) {
