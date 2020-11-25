@@ -166,4 +166,25 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
+    SECTION( "6x6-SweepWithBinaryCounter6" ) {
+        // A truly binary counter. It actually uses ones and zeros, and also properly generates
+        // binary numbers (only with most-significant bit at the right).
+        //
+        //   *   * *
+        // * o _ _ _ *
+        // o o * o o *
+        // o   * o *
+        // _ * _ o *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::TURN, Ins::TURN,  Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
 }
