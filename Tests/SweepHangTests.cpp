@@ -1836,4 +1836,54 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchViaTransition" ) {
+        // The rightwards sweep has a mid-sweep loop switch. Both loops are even separated by a
+        // transition sequence, which shifts DP one position to the right. Analysis needs to take
+        // this delta into account, as this skips past a value that causes the incoming loop to
+        // exit.
+        //
+        //       *
+        // *   * o _ *
+        // o _ o o *
+        // _ * _ o o *
+        // _   _ * *
+        // _   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchViaTransition2" ) {
+        // This is a more complex program. The right sweep consists of two loops. The outgoing loop
+        // (#7) moves DP two cells, which impacts the transition between both loops. Half of the
+        // time the outgoing loop transfers immediately to the incoming loop (#14). The other times
+        // there is a fixed transition (#26) after which it enters incoming loop #33, which is
+        // rotation-equivalent to #14.
+        //
+        //       *
+        //   * * o _ *
+        //   _ o o *
+        //   _ _ _ o *
+        // * _ _ o _ *
+        // o o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
 }

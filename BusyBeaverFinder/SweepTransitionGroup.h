@@ -157,6 +157,9 @@ class SweepTransitionGroup {
     const SweepLoopAnalysis *_incomingLoop;
     const SweepLoopAnalysis *_outgoingLoop;
 
+    // The mid-sweep transition of the outgoing sweep, if any.
+    const SweepTransitionAnalysis *_midSweepTransition;
+
     // Map from a given loop exit to the transition(s) that follows it.
     //
     // Note: Most exits are followed by one transition. However, it is possible that there is
@@ -204,6 +207,9 @@ public:
     const SweepLoopAnalysis* outgoingLoop() const { return _outgoingLoop; }
     void setIncomingLoop(const SweepLoopAnalysis* loop) { _incomingLoop = loop; }
     void setOutgoingLoop(const SweepLoopAnalysis* loop) { _outgoingLoop = loop; }
+
+    const SweepTransitionAnalysis* midSweepTransition() const { return _midSweepTransition; }
+    void setMidSweepTransition(const SweepTransitionAnalysis* sta) { _midSweepTransition = sta; }
 
     // The combined change to the sequence made by both the sweep-loops
     SweepValueChangeType combinedSweepValueChangeType() const { return _sweepValueChangeType; }

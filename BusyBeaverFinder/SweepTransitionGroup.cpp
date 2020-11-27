@@ -254,6 +254,7 @@ void SweepTransitionGroup::clear() {
     _transitions.clear();
     _incomingLoop = nullptr;
     _outgoingLoop = nullptr;
+    _midSweepTransition = nullptr;
     _sweepEndType = SweepEndType::UNKNOWN;
 }
 
@@ -746,6 +747,9 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
 
     os << "Outgoing Loop: #" << group._outgoingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
     os << *group._outgoingLoop;
+    if (group._midSweepTransition != nullptr) {
+        os << "  Mid-sweep transition: " << *(group._midSweepTransition) << std::endl;
+    }
 
     if (group.endType() != SweepEndType::UNKNOWN) {
         os << "Type = " << group.endType();
