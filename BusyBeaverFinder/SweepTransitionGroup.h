@@ -102,6 +102,7 @@ class SweepLoopAnalysis : public LoopAnalysis {
     std::multimap<int, int> _exitMap;
 
     bool _requiresFixedInput;
+    int _requiredInput;
 
 public:
     const RunBlock* loopRunBlock() const { return _loopRunBlock; }

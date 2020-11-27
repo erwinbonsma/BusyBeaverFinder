@@ -119,27 +119,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
-    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition" ) {
-        // Detection fails during proof due to flawed only zeroes ahead check. Should not be hard
-        // to fix.
-        //
-        //       * *
-        //   * * _ o *
-        // * o o _ *
-        // o o _ o *
-        // o * o _ *
-        // o   * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::TURN,  Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
     SECTION( "6x6-SweepHangWithMidSweepLoopSwitchViaTransition" ) {
         //       *
         // *   * o _ *

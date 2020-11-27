@@ -43,7 +43,7 @@ std::ostream &operator<<(std::ostream &os, SweepEndType endType) {
 }
 
 bool SweepLoopAnalysis::isExitValue(int value) const {
-    return _exitMap.find(value) != _exitMap.end();
+    return _requiresFixedInput ? value != _requiredInput : _exitMap.find(value) != _exitMap.end();
 }
 
 int SweepLoopAnalysis::numberOfExitsForValue(int value) const {
@@ -172,6 +172,7 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
                 // The loop exits on a non-zero value. This means that the loop only loops when it
                 // consumes a specific value.
                 _requiresFixedInput = true;
+                _requiredInput = exit(i).exitCondition.value();
             }
         }
     }
@@ -179,22 +180,24 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
     return true;
 }
 
-std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta) {
-    os << (const LoopAnalysis&)sta;
+std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sla) {
+    os << (const LoopAnalysis&)sla;
     os << "Exit values: ";
-    bool isFirst = true;
-    for (auto pair : sta._exitMap) {
-        if (isFirst) {
-            isFirst = false;
-        } else {
-            os << ", ";
+
+    if (sla._requiresFixedInput) {
+        os << "not " << sla._requiredInput;
+    } else {
+        bool isFirst = true;
+        for (auto pair : sla._exitMap) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                os << ", ";
+            }
+            os << pair.first << "@" << pair.second;
         }
-        os << pair.first << "@" << pair.second;
     }
     os << std::endl;
-    if (sta._requiresFixedInput) {
-        os << "Requires fixed input!" << std::endl;
-    }
 
     return os;
 }

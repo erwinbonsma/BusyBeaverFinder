@@ -1434,7 +1434,10 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
     SECTION( "6x6-SweepHangWithSkippedLoopExit" ) {
         // The right-sweep exits when it encounters value 1, which happens to be the value of the
         // fixed end-point at the left. This, however, does not stop the sweep, as the transition
-        // skips passed this before the right-sweep loop starts.
+        // skips passed this before the right-sweep loop starts. On top of that, the right loop
+        // decreases all values by one. This causes the left-sweep scan to abort when it encounters
+        // the 1 at the end of the sweep. Even though it does not directly exit the loop, it
+        // reasons it will become a zero.
         //
         //         *
         //   * _ _ _
@@ -1742,7 +1745,29 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection1" ) {
+    SECTION( "6x6-SweepHangWithComplexFastGrowingEnd2" ) {
+        // Rightward sweep extends sequence with three values each iteration.
+        //
+        //       *
+        //   * * o _ *
+        //   _ o o *
+        //   _ o o *
+        // * _ _ o _ *
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition1" ) {
         // Sweep hang where the rightwards sweep features two sweep loops. The sweep is dual-headed.
         // The left side is extended with -1 values, the right side with 1's. The negative values
         // are decreased by one by the rightwards sweep, whereas the 1 values remain at one using
@@ -1767,7 +1792,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-SweepHangWithTwoSweepLoopsInSameDirection2" ) {
+    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition2" ) {
         // Simpler version of the previous program with very similar behavior.
         //
         //       *
@@ -1780,6 +1805,29 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
             Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition3" ) {
+        // Detection fails during proof due to flawed only zeroes ahead check. Should not be hard
+        // to fix.
+        //
+        //       * *
+        //   * * _ o *
+        // * o o _ *
+        // o o _ o *
+        // o * o _ *
+        // o   * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

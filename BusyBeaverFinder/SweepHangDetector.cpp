@@ -64,34 +64,6 @@ int SweepHangDetector::singleSweepValueChange() const {
     return 0;
 }
 
-bool SweepHangDetector::determinePossibleSweepExitValues() {
-    assert(_possibleSweepExitValues.empty());
-
-    auto loop0 = _transitionGroups[0].incomingLoop(), loop1 = _transitionGroups[1].incomingLoop();
-    for (int exitValue : loop1->exitValues() ) {
-        _possibleSweepExitValues.insert(exitValue);
-    }
-    for (int exitValue : loop0->exitValues() ) {
-        if (loop1->sweepValueChangeType() == SweepValueChangeType::UNIFORM_CHANGE ||
-            loop1->sweepValueChangeType() == SweepValueChangeType::NO_CHANGE
-        ) {
-            _possibleSweepExitValues.insert(exitValue - loop1->sweepValueChange());
-        } else {
-            // TODO: Take into account all possible changes made by loop
-            return false;
-        }
-    }
-
-    assert(_sweepTransitionValues.empty());
-    if (_transitionGroups[0].outgoingLoop() != _transitionGroups[1].incomingLoop()) {
-        for (int exitValue : _transitionGroups[0].outgoingLoop()->exitValues()) {
-            _sweepTransitionValues.insert(exitValue);
-        }
-    }
-
-    return true;
-}
-
 bool SweepHangDetector::analyzeLoops() {
     const RunSummary& runSummary = _executor.getRunSummary();
     auto *group = _transitionGroups;
@@ -197,10 +169,6 @@ bool SweepHangDetector::analyzeLoops() {
     // Both loops should move in opposite directions
     if (group[0].locatedAtRight() == group[1].locatedAtRight()) {
         return sweepHangFailure(_executor);
-    }
-
-    if (!determinePossibleSweepExitValues()) {
-        return false;
     }
 
     return true;
@@ -358,25 +326,24 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
 
     // DP is at one side of the sweep. Find the other end of the sweep.
-    auto groups = _transitionGroups;
-    bool checkSweepTransition = groups[0].outgoingLoop() != groups[1].incomingLoop();
     auto sweepGroup = _transitionGroups[0];
+    auto sweepLoop = sweepGroup.outgoingLoop();
     bool sweepMakesPersistentChange = (sweepGroup.combinedSweepValueChangeType()
                                        != SweepValueChangeType::NO_CHANGE);
-    dp += delta;
+    dp += delta * std::max(1, abs(sweepGroup.firstTransition().transition->dataPointerDelta()));
     while (*dp) {
-        if (checkSweepTransition &&
-            _sweepTransitionValues.find(*dp) != _sweepTransitionValues.end()
-        ) {
-            sweepGroup = _transitionGroups[1];
-            sweepMakesPersistentChange = (sweepGroup.combinedSweepValueChangeType()
-                                          != SweepValueChangeType::NO_CHANGE);
-            checkSweepTransition = false;
-        }
+        if (sweepLoop->isExitValue(*dp)) {
+            // Found end of sweep
 
-        if (_possibleSweepExitValues.find(*dp) != _possibleSweepExitValues.end()) {
-            // Found end of sweep at other end
-            break;
+            if (sweepLoop != _transitionGroups[1].incomingLoop()) {
+                // This is a mid-sweep transition, continue with incoming sweep loop
+                sweepGroup = _transitionGroups[1];
+                sweepLoop = sweepGroup.incomingLoop();
+                sweepMakesPersistentChange = (sweepGroup.combinedSweepValueChangeType()
+                                              != SweepValueChangeType::NO_CHANGE);
+            } else {
+                break;
+            }
         }
 
         if (sweepMakesPersistentChange && sweepGroup.canSweepChangeValueTowardsZero(*dp)) {
@@ -401,8 +368,6 @@ void SweepHangDetector::clear() {
     for (SweepTransitionGroup &tg : _transitionGroups) {
         tg.clear();
     }
-    _possibleSweepExitValues.clear();
-    _sweepTransitionValues.clear();
 }
 
 bool SweepHangDetector::analyzeHangBehaviour() {

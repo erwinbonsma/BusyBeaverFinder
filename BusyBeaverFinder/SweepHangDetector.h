@@ -33,9 +33,6 @@ class SweepHangDetector : public HangDetector {
     SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
     PeriodicSweepTransitionGroup _transitionGroups[2];
 
-    std::set<int> _possibleSweepExitValues;
-    std::set<int> _sweepTransitionValues;
-
     /* Analysis */
     // Returns run block index of the transition that precedes the given sweep loop. If there is
     // no transition between subsequent sweep loops, it returns sweepLoopRunBlockIndex.
@@ -44,8 +41,6 @@ class SweepHangDetector : public HangDetector {
     // If only one of the sweeps makes a uniform change and the other loop makes no change, returns
     // the value of this change. Returns 0 otherwise
     int singleSweepValueChange() const;
-
-    bool determinePossibleSweepExitValues();
 
     bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
                             int &rotationEquivalenceOffset) const;
