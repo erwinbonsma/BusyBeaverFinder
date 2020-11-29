@@ -402,6 +402,10 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
+    if (!analyzeSweepIterations()) {
+        return false;
+    }
+
     clear();
 
     if (!analyzeLoops()) {
