@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "InterpretedProgram.h"
+#include "Utils.h"
 
 GliderHangDetector::GliderHangDetector(const ProgramExecutor& executor)
     : HangDetector(executor) {}
@@ -69,8 +70,12 @@ bool GliderHangDetector::isGliderLoop() {
         return false;
     }
 
-    // The delta for the next loop counter should be larger (or at least equal)
-    return abs(_curCounterDelta) <= abs(_nxtCounterDelta);
+    if (abs(_curCounterDelta) > abs(_nxtCounterDelta)) {
+        // The delta for the next loop counter should be larger (or at least equal)
+        return false;
+    }
+
+   return true;
 }
 
 bool GliderHangDetector::analyzeLoop() {
@@ -95,12 +100,27 @@ bool GliderHangDetector::analyzeLoop() {
     return true;
 }
 
+bool GliderHangDetector::determineCounterQueueSize() {
+    int counterDistance = _nxtCounterDpOffset - _curCounterDpOffset;
+    int shift = _transitionSequence.dataPointerDelta() + _curCounterDpOffset;
+
+    if (shift == 0 || counterDistance % shift != 0) {
+        // The next counter never actually becomes the current counter
+        return false;
+    }
+
+    _counterQueueSize = abs(counterDistance / shift);
+
+    return true;
+}
+
 bool GliderHangDetector::checkTransitionDeltas() {
     int totalNxtDelta = 0;
     int totalNxtNxtDelta = 0;
     int minDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
     int maxDpOffset = _curCounterDpOffset; // Set it to a value that is guaranteed in range
-    int shift = _nxtCounterDpOffset - _curCounterDpOffset;
+    int counterDistance = _nxtCounterDpOffset - _curCounterDpOffset;
+    int shift = _transitionSequence.dataPointerDelta() + _curCounterDpOffset;
 
     for (int i = maxAheadOffset; --i >= 0; ) {
         _aheadDelta[i] = 0;
@@ -109,7 +129,7 @@ bool GliderHangDetector::checkTransitionDeltas() {
     for (int i = _transitionSequence.numDataDeltas(); --i >= 0; ) {
         const DataDelta& dd = _transitionSequence.dataDeltaAt(i);
         int relDelta = dd.dpOffset();
-        bool isAhead = relDelta * shift > 0;
+        bool isAhead = sign(relDelta) == sign(shift);
 
         if (relDelta % shift == 0 && isAhead) {
             // This modifies a future loop counter. Track by how much
@@ -128,14 +148,15 @@ bool GliderHangDetector::checkTransitionDeltas() {
             maxDpOffset = std::max(maxDpOffset, dd.dpOffset());
         }
 
-        if ((relDelta - 2 * shift) * shift > 0) {
+        if (sign(relDelta - counterDistance - shift) == sign(shift)) {
             // The value is ahead of the next loop counter. Update the ahead values. Loop in case
             // it is so far ahead it contributes more than once.
             //
-            // Note, shifting twice. Once to make the offset relative to the next loop counter
-            // (instead of the current one), and once more to take into account that at the moment
-            // of the check the next transition sequence has not yet been executed.
-            int dpOffset = std::abs(relDelta - 2 * shift);
+            // Note, shifting by "counterDistance" to make the offset relative to the next loop
+            // counter (instead of the current one) and shifting by "shift" to take into account
+            // that at the moment of the check the next transition sequence has not yet been
+            // executed.
+            int dpOffset = std::abs(relDelta - counterDistance - shift);
             assert(dpOffset < maxAheadOffset);
             while (dpOffset >= 0) {
                 _aheadDelta[dpOffset] += dd.delta();
@@ -165,7 +186,7 @@ bool GliderHangDetector::checkTransitionDeltas() {
     // Calculate number of bootstrap cycles
     _numBootstrapCycles = std::max(std::abs(minDpOffset), std::abs(maxDpOffset)) / std::abs(shift);
 
-    return (_curCounterDpOffset + _transitionSequence.dataPointerDelta()) == shift;
+    return true;
 }
 
 bool GliderHangDetector::analyzeTransitionSequence() {
@@ -186,6 +207,10 @@ bool GliderHangDetector::analyzeTransitionSequence() {
 
     if (!_transitionSequence.analyzeSequence(interpretedProgram, runSummary,
                                              startIndex, endIndex - startIndex)) {
+        return false;
+    }
+
+    if (!determineCounterQueueSize()) {
         return false;
     }
 

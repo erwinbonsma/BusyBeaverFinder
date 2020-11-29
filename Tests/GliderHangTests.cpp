@@ -271,7 +271,32 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
         // * * o _ o *
         // o _ o * *
         Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::APERIODIC_GLIDER) == 1);
+    }
+    SECTION( "6x6-GliderWithCounterQueue" ) {
+        // Glider hang where the next counter in the glider loop is not immediately the current
+        // counter in the next glider loop iteration. It takes two iterations of the glider loop
+        // before it becomes the current counter. So effectively there is a queue of glider
+        // counters.
+        //
+        //       *
+        // *   * o _ *
+        // o o o o *
+        // _ * _ o o *
+        // _   _ * *
+        // _   *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

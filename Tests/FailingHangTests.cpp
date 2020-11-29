@@ -84,24 +84,6 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
-    SECTION( "6x6-UndetectedGlider" ) {
-        //       *
-        // *   * o _ *
-        // o o o o *
-        // _ * _ o o *
-        // _   _ * *
-        // _   *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
     SECTION( "6x6-SweepWithInSequenceOscillatingZeros" ) {
         // The body of the sweep consists of alternating -1 and 0 values. The left side is a fixed
         // but increasing value, the right side of the sequence steadily grows. The leftward sweep

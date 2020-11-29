@@ -26,12 +26,18 @@ class GliderHangDetector : public HangDetector {
     int _nxtCounterDpOffset, _nxtCounterDelta;
     int _numBootstrapCycles;
 
+    // How many iterations of the meta-loop before the next counter (the one whose absolute value
+    // is being increased) becomes the current counter (the one whose absolute value is decreased).
+    // It is typically one, but can be bigger for more complex glider loops.
+    int _counterQueueSize;
+
     // Loop analysis
     bool identifyLoopCounter();
     bool isGliderLoop();
     bool analyzeLoop();
 
     // Sequence analysis
+    bool determineCounterQueueSize();
     bool checkTransitionDeltas();
     bool analyzeTransitionSequence();
 
