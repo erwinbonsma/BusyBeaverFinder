@@ -214,19 +214,30 @@ bool SweepHangDetector::analyzeTransitions() {
         if (group[j].outgoingLoop() != group[1 - j].incomingLoop()) {
             // Before the transition there is an extra outgoing loop that needs to be checked
 
-            --nextLoopIndex;
-            if (!runSummary.runBlockAt(nextLoopIndex)->isLoop()) {
+            int prevLoopIndex = findPreviousSweepLoop(nextLoopIndex);
+            if (prevLoopIndex < metaLoop1Index) {
+                return sweepHangFailure(_executor);
+            }
+
+            if (nextLoopIndex - prevLoopIndex > 1) {
+                // There's a transition sequence separating both loops
                 if (group[j].midSweepTransition() == nullptr) {
                     assert(numUniqueTransitions < MAX_SWEEP_TRANSITION_ANALYSIS);
                     SweepTransitionAnalysis *sta = &_transitionAnalysisPool[numUniqueTransitions++];
 
-                    if (!sta->analyzeSweepTransition(nextLoopIndex, nextLoopIndex + 1, _executor)) {
+                    if (!sta->analyzeSweepTransition(prevLoopIndex + 1, nextLoopIndex, _executor)) {
                         return sweepHangFailure(_executor);
                     }
                     group[j].setMidSweepTransition(sta);
+                } else {
+                    if (!group[j].midSweepTransition()->transitionEquals(prevLoopIndex + 1,
+                                                                         nextLoopIndex,
+                                                                         _executor)) {
+                        return sweepHangFailure(_executor);
+                    }
                 }
-                --nextLoopIndex;
             }
+            nextLoopIndex = prevLoopIndex;
 
             int ignored;
             if (!loopsAreEquivalent(runSummary.runBlockAt(nextLoopIndex),

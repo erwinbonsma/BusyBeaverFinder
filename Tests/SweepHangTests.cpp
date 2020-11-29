@@ -1886,6 +1886,28 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepHangWithMidSweepLoopSwitchViaTransitionWithLoop" ) {
+        // The rightwards sweep switches loops. Both loops are separated by a transition sequence
+        // which itself contains a short loop, with a fixed number of iterations.
+        //
+        //       *
+        // *   * o _ *
+        // o o o o *
+        // _ * _ o o *
+        // _   _ * *
+        // _   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
     SECTION( "6x6-DualHeadedSweepHangWithFastGrowingHead" ) {
         // Program with a complex sweep. The sequence consists of both positive and negative values.
         // During the sweep, the sign of some values oscillate (1 => DEC 2 => -1 => INC 2 => 1).
