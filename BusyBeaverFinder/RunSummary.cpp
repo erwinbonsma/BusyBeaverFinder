@@ -163,20 +163,20 @@ bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
     return newRunBlocks;
 }
 
-int RunSummary::getRunBlockLength(int index) const {
-    bool isLast = index == (getNumRunBlocks() - 1);
-    const RunBlock* runBlockP = _runBlockHistory + index;
-    int startIndex = runBlockP->getStartIndex();
+int RunSummary::getRunBlockLength(int startIndex, int endIndex) const {
+    bool isLast = endIndex == getNumRunBlocks();
+    const RunBlock* runBlockP = _runBlockHistory + startIndex;
+    int programBlockStartIndex = runBlockP->getStartIndex();
 
     if (isLast) {
         if (_programBlockPendingP != nullptr) {
             // Last run is completed. There are still some unallocated program blocks though
-            return (int)(_programBlockPendingP - _programBlockHistory) - startIndex;
+            return (int)(_programBlockPendingP - _programBlockHistory) - programBlockStartIndex;
         } else {
-            return (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+            return (int)(_programBlockHistoryP - _programBlockHistory) - programBlockStartIndex;
         }
     } else {
-        return (runBlockP + 1)->getStartIndex() - startIndex;
+        return (_runBlockHistory + endIndex)->getStartIndex() - programBlockStartIndex;
     }
 }
 

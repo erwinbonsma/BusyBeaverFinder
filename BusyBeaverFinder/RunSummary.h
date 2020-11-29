@@ -153,6 +153,10 @@ public:
     const RunBlock* runBlockAt(int index) const { return _runBlockHistory + index; }
     const RunBlock* getLastRunBlock() const { return (_runBlockHistoryP - 1); }
 
+    // Gets the length in program blocks of a sequence of one or more run blocks. The endIndex is
+    // exclusive
+    int getRunBlockLength(int startIndex, int endIndex) const;
+
     // Returns the length in program blocks of the given run block.
     //
     // Note, for loops it counts the repeated executions. Furthermore, the total does not have to
@@ -162,7 +166,7 @@ public:
     // E.g.
     // Seq = A B C (where A, B and C are Program Blocks)
     // => A B C A B C A B X => length = 8, where X is the program block that breaks the loop
-    int getRunBlockLength(int index) const;
+    int getRunBlockLength(int index) const { return getRunBlockLength(index, index + 1); }
     int getRunBlockLength(const RunBlock* block) const {
         return getRunBlockLength((int)(block - _runBlockHistory));
     }

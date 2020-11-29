@@ -26,6 +26,33 @@ bool sweepHangFailure(const ProgramExecutor& executor) {
 SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
 : HangDetector(executor) {}
 
+bool SweepHangDetector::analyzeSweepIterations() {
+    const RunSummary &runSummary = _executor.getRunSummary();
+    const RunSummary &metaRunSummary = _executor.getMetaRunSummary();
+    const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
+
+    _sweepRepetitionPeriod = 1;
+    while (_sweepRepetitionPeriod * 3 <= _executor.getMetaRunSummary().getLoopIteration()) {
+        int sweepLoopPeriod = metaLoop->getLoopPeriod() * _sweepRepetitionPeriod;
+
+        int startLoop3 = runSummary.getNumRunBlocks() - sweepLoopPeriod;
+        int startLoop2 = startLoop3 - sweepLoopPeriod;
+        int startLoop1 = startLoop2 - sweepLoopPeriod;
+
+        int lenLoop1 = runSummary.getRunBlockLength(startLoop1, startLoop2);
+        int lenLoop2 = runSummary.getRunBlockLength(startLoop2, startLoop3);
+        int lenLoop3 = runSummary.getRunBlockLength(startLoop3, runSummary.getNumRunBlocks());
+
+        if ((lenLoop2 - lenLoop1) == (lenLoop3 - lenLoop2)) {
+            return true;
+        }
+
+        _sweepRepetitionPeriod += 1;
+    }
+
+    return sweepHangFailure(_executor);
+}
+
 int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {
     const RunSummary& runSummary = _executor.getRunSummary();
     int startIndex = sweepLoopRunBlockIndex;
@@ -168,10 +195,13 @@ bool SweepHangDetector::loopsAreEquivalent(const RunBlock* loop1, const RunBlock
 bool SweepHangDetector::analyzeTransitions() {
     const RunSummary &runSummary = _executor.getRunSummary();
     const RunSummary &metaRunSummary = _executor.getMetaRunSummary();
-    const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
     auto *group = _transitionGroups;
-    int metaLoop2Index = runSummary.getNumRunBlocks() - metaLoop->getLoopPeriod() - 1;
-    int metaLoop1Index = metaLoop2Index - metaLoop->getLoopPeriod();
+
+    const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
+    int sweepLoopPeriod = metaLoop->getLoopPeriod() * _sweepRepetitionPeriod;
+
+    int metaLoop2Index = runSummary.getNumRunBlocks() - sweepLoopPeriod - 1;
+    int metaLoop1Index = metaLoop2Index - sweepLoopPeriod;
     int nextLoopIndex = runSummary.getNumRunBlocks() - 1;
     int nextLoopStartInstructionIndex = 0;
     int numSweeps = 0, numUniqueTransitions = 0;
@@ -351,7 +381,9 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
 
 bool SweepHangDetector::shouldCheckNow(bool loopContinues) {
     // Should wait for the sweep-loop to finish
-    return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
+    return (!loopContinues &&
+            _executor.getMetaRunSummary().isInsideLoop() &&
+            _executor.getMetaRunSummary().getLoopIteration() >= 3);
 }
 
 void SweepHangDetector::clear() {

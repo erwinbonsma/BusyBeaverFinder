@@ -33,6 +33,12 @@ class SweepHangDetector : public HangDetector {
     SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
     PeriodicSweepTransitionGroup _transitionGroups[2];
 
+    // The number of meta-loop iterations that comparise a fully-repeating sweep loop. A requirement
+    // for a fully-repeating sweep loop is that the number of execution steps increases linearly
+    // each iteration. The sweep repetition period is typically one, but can be larger when the
+    // sweep has multiple fixed turning points at a given end of the sweep.
+    int _sweepRepetitionPeriod;
+
     /* Analysis */
     // Returns run block index of the transition that precedes the given sweep loop. If there is
     // no transition between subsequent sweep loops, it returns sweepLoopRunBlockIndex.
@@ -47,6 +53,7 @@ class SweepHangDetector : public HangDetector {
     bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
                             int &rotationEquivalenceOffset) const;
 
+    bool analyzeSweepIterations();
     bool analyzeLoops();
     bool analyzeTransitions();
     bool analyzeTransitionGroups();
