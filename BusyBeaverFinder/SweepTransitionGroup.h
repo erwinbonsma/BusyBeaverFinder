@@ -186,7 +186,7 @@ class SweepTransitionGroup {
     // Here value is the final value of the data cell that caused the loop exit.
     bool dataDeltasCanTransformValueToExit(int value, const DataDeltas &dataDeltas) const;
     bool hasIndirectExitForValueAfterExit(int value, int exitInstruction) const;
-    bool hasIndirectExitForValue(int value) const;
+    bool canLoopExitChangeValueToExitValue(int value) const;
 
     bool determineCombinedSweepValueChange();
     bool determineSweepEndType();

@@ -90,6 +90,27 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
+    SECTION( "6x6-IrregularSweep4" ) {
+        // Irregular sweep that was wrongly classified as a regular hang before checking that the
+        // only exit for the growing sequence was on a zero value.
+        //
+        //     * *
+        //   * o _ _ *
+        //   * o o *
+        //   o o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
     SECTION( "6x6-SweepWithBinaryCounter") {
         // Sweep with binary counter at its left side. When the binary counter overflows, it adds
         // a bit and starts again at zero.
