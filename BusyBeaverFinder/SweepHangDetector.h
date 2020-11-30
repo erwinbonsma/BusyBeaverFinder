@@ -46,10 +46,6 @@ class SweepHangDetector : public HangDetector {
 
     int findPreviousSweepLoop(int runBlockIndex) const;
 
-    // If only one of the sweeps makes a uniform change and the other loop makes no change, returns
-    // the value of this change. Returns 0 otherwise
-    int singleSweepValueChange() const;
-
     bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
                             int &rotationEquivalenceOffset) const;
 
@@ -59,8 +55,6 @@ class SweepHangDetector : public HangDetector {
     bool analyzeTransitionGroups();
 
     /* Dynamic checks */
-    // Finds the point where the appendix connects to the sweep body
-    DataPointer findAppendixStart(DataPointer dp, const SweepTransitionGroup &group);
     // Find the other end of the sequence. Updates dp accordingly. When deltaSign is non-zero, it
     // verifies that this delta moves the entire sequence away from zero.
     bool scanSweepSequence(DataPointer &dp, bool atRight);

@@ -75,22 +75,6 @@ int SweepHangDetector::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) 
     return startIndex;
 }
 
-// If both sweeps only make a single change, returns that. Otherwise returns 0.
-int SweepHangDetector::singleSweepValueChange() const {
-    auto loop0 = _transitionGroups[0].incomingLoop(), loop1 =_transitionGroups[0].outgoingLoop();
-    auto type0 = loop0->sweepValueChangeType(), type1 = loop1->sweepValueChangeType();
-
-    if (type0 == SweepValueChangeType::NO_CHANGE && type1 == SweepValueChangeType::UNIFORM_CHANGE) {
-        return loop1->sweepValueChange();
-    }
-
-    if (type1 == SweepValueChangeType::NO_CHANGE && type0 == SweepValueChangeType::UNIFORM_CHANGE) {
-        return loop0->sweepValueChange();
-    }
-
-    return 0;
-}
-
 int SweepHangDetector::findPreviousSweepLoop(int runBlockIndex) const {
     const RunSummary& runSummary = _executor.getRunSummary();
 
@@ -326,22 +310,6 @@ bool SweepHangDetector::analyzeTransitionGroups() {
     return true;
 }
 
-DataPointer SweepHangDetector::findAppendixStart(DataPointer dp,
-                                                 const SweepTransitionGroup &group) {
-    const Data& data = _executor.getData();
-    int delta = group.locatedAtRight() ? -1 : 1;
-
-    while (true) {
-        int val = data.valueAt(dp, delta);
-        if (val == 0 || !group.incomingLoop()->isExitValue(val)) {
-            break;
-        }
-        dp += delta;
-    }
-
-    return dp;
-}
-
 bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     const Data& data = _executor.getData();
 
@@ -456,9 +424,6 @@ Trilian SweepHangDetector::proofHang() {
 //    data.dump();
 
     DataPointer dp1 = dp0; // Initial value
-//    if (_transitionGroups[1].endType() == SweepEndType::FIXED_GROWING) {
-//        dp0 = findAppendixStart(dp0, _transitionGroups[1]);
-//    }
 
     if (!scanSweepSequence(dp1, _transitionGroups[0].locatedAtRight())) {
         return Trilian::MAYBE;
