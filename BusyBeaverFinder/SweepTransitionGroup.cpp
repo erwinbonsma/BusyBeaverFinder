@@ -484,18 +484,20 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 // For hang detection this distinction does not (yet?) matter, so is not urgent.
                 _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
             } else {
-                if (!nonExitToExitBySweep &&
-                    _transitions.size() == 1 &&
-                    numberOfTransitionsForExitValue(0) == 1
-                ) {
+                if (nonExitToExitBySweep || numberOfTransitionsForExitValue(0) == 0) {
+                    // Unsupported for regular sweeps
+                    return transitionGroupFailure(*this);
+                } else if (_transitions.size() == numberOfTransitionsForExitValue(0)) {
                     // Although the loop exit could change values to an exit-value, the loop exit
                     // apparently never occurs at a place on the data tape where this occurs. This
                     // for example happens for fast-growing sequences where the loop exit is not
                     // on the very first zero.
                     _sweepEndType = SweepEndType::STEADY_GROWTH;
                 } else {
-                    // Unsupported for regular sweeps
-                    return transitionGroupFailure(*this);
+                    // There are some non-zero exits next to the zero exits, so the growth is
+                    // irregular. However, given that the sweep is fully regular, we can conclude
+                    // its an irregularly growing end (and not an a-periodic appendix).
+                    _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
                 }
             }
         } else {

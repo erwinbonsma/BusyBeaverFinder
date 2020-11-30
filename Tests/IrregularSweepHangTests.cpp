@@ -69,27 +69,6 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
 
         REQUIRE(tracker.getTotalDetectedHangs() == 0); // TEMP
     }
-    SECTION( "6x6-IrregularSweep3" ) {
-        // Irregular sweep that was wrongly classified as a regular hang before the check on
-        // linearly increasing meta-loop execution steps was added.
-        //
-        //     * * *
-        //   * o o _ *
-        //   * o o *
-        //   o o o *
-        // * _ o o *
-        // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
     SECTION( "6x6-IrregularSweep4" ) {
         // Irregular sweep that was wrongly classified as a regular hang before checking that the
         // only exit for the growing sequence was on a zero value.

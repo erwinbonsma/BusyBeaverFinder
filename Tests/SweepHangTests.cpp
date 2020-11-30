@@ -798,6 +798,35 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
+    SECTION( "6x6-SweepWithIrregularGrowth8" ) {
+        // Sweep with irregular growth on its right side. It grows as follows:
+        // [body] 2 3 2 0 0...
+        // [body] 2 3 1 2 0...
+        //   [body] 2 3 2 0...
+        //
+        // Furthermore, the program enters the hang meta-loop quite late. First it ends up executing
+        // another sweep meta-loop, which however is not yet a hang (as this loop exits after three
+        // iterations.
+        //
+        //     * * *
+        //   * o o _ *
+        //   * o o *
+        //   o o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
+    }
     SECTION( "6x6-SweepLoopExceedsMidSequencePoint" ) {
         // Program where DP during its leftwards sweep briefly extends beyond the mid-sequence
         // point before initiating the turn.
@@ -1766,6 +1795,32 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-SweepHangWithComplexFastGrowingEnd3" ) {
+        // The sequence is always extended with two values each iteration, but the values it adds
+        // vary. It eithers adds 0 1 or 1 1. Interestingly, when it adds two ones, it also fills
+        // up the zero-gap left in the previous extension so that the result at the right is a
+        // growing sequence of ones. The steady growth on its left is also realized via a pretty
+        // complex transition.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        // * o _ o _
+        // * _ _ o _ *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
     }
     SECTION( "6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition1" ) {
         // Sweep hang where the rightwards sweep features two sweep loops. The sweep is dual-headed.
