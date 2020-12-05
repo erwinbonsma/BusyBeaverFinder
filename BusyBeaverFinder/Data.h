@@ -32,6 +32,8 @@ class Data {
     // Undo-stack for data operations
     UndoOp *_undoStack = nullptr;
 
+    UndoOp *_maxBoundChanged, *_minBoundChanged;
+
     void updateBounds();
 
 public:
@@ -75,6 +77,9 @@ public:
     int getUndoStackSize() const { return (int)(_undoP - _undoStack); }
     const UndoOp* getUndoStackPointer() const { return _undoP; }
     void undo(const UndoOp* _targetUndoP);
+
+    int numOperationsSinceMinBoundChanged() const { return (int)(_undoP - _minBoundChanged); }
+    int numOperationsSinceMaxBoundChanged() const { return (int)(_undoP - _maxBoundChanged); }
 
     void dump() const;
     void dumpStack() const;
