@@ -1820,7 +1820,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
     SECTION( "6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition1" ) {
         // Sweep hang where the rightwards sweep features two sweep loops. The sweep is dual-headed.
