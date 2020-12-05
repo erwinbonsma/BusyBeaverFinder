@@ -27,10 +27,10 @@ class Data {
 
     bool _undoEnabled;
 
-    DataOp *_undoP = nullptr;
-    DataOp *_maxUndoP = nullptr;
+    UndoOp *_undoP = nullptr;
+    UndoOp *_maxUndoP = nullptr;
     // Undo-stack for data operations
-    DataOp *_undoStack = nullptr;
+    UndoOp *_undoStack = nullptr;
 
     void updateBounds();
 
@@ -61,15 +61,20 @@ public:
 
     bool onlyZerosAhead(DataPointer dp, bool atRight) const;
 
-    void inc();
-    void dec();
-    bool shr();
-    bool shl();
+    void inc(unsigned char delta);
+    void dec(unsigned char delta);
+    bool shr(unsigned char shift);
+    bool shl(unsigned char shift);
+
+    void inc() { inc(1); };
+    void dec() { dec(1); };
+    bool shr() { return shr(1); };
+    bool shl() { return shl(1); };
 
     bool hasUndoCapacity() const { return _undoP < _maxUndoP; }
     int getUndoStackSize() const { return (int)(_undoP - _undoStack); }
-    DataOp* getUndoStackPointer() const { return _undoP; }
-    void undo(DataOp* _targetUndoP);
+    const UndoOp* getUndoStackPointer() const { return _undoP; }
+    void undo(const UndoOp* _targetUndoP);
 
     void dump() const;
     void dumpStack() const;

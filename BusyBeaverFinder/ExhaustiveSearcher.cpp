@@ -187,28 +187,20 @@ bool ExhaustiveSearcher::executeCurrentBlock() {
     int amount = _block->getInstructionAmount();
     if (_block->isDelta()) {
         if (amount > 0) {
-            while (--amount >= 0) {
-                _data.inc();
-            }
+            _data.inc(amount);
         } else {
-            while (++amount <= 0) {
-                _data.dec();
-            }
+            _data.dec(-amount);
         }
     } else {
         if (amount > 0) {
-            while (--amount >= 0) {
-                if (!_data.shr()) {
-                    _tracker->reportError();
-                    return true;
-                }
+            if (!_data.shr(amount)) {
+                _tracker->reportError();
+                return true;
             }
         } else {
-            while (++amount <= 0) {
-                if (!_data.shl()) {
-                    _tracker->reportError();
-                    return true;
-                }
+            if (!_data.shl(-amount)) {
+                _tracker->reportError();
+                return true;
             }
         }
     }
@@ -310,7 +302,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
 }
 
 void ExhaustiveSearcher::run(int depth) {
-    DataOp* initialDataUndoP = _data.getUndoStackPointer();
+    const UndoOp* initialDataUndoP = _data.getUndoStackPointer();
     int initialSteps = _numSteps;
 
     _interpretedProgramBuilder.push();

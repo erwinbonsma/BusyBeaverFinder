@@ -41,13 +41,7 @@ struct ProgramPointer {
 typedef int* DataPointer;
 
 // Data operations
-enum class DataOp : char {
-    INC = 0,
-    DEC = 1,
-    SHR = 2,
-    SHL = 3,
-    NONE = 4
-};
+typedef unsigned char UndoOp;
 
 // Direction of turn
 enum class TurnDirection : char {

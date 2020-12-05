@@ -13,17 +13,24 @@
 #include "Data.h"
 #include "Utils.h"
 
-// Extra capacity beyond the requested maximum (as a single program block may add multiple items
-// to the stack and ExhaustiveSearcher::run does not check capacity)
-const int undoStackSentinelCapacity = 64;
+// Extra capacity add both ends of the data buffer so that pointer-arithmetic for non-unit shifts
+// is always valid.
+const int dataSentinelBufferSize = 16;
+
+enum class DataOp : unsigned char {
+    INC = 0x00,
+    DEC = 0x40,
+    SHR = 0x80,
+    SHL = 0xc0,
+};
 
 Data::Data(int size) {
     _size = size;
-    _data = new int[_size];
+    _data = new int[_size + 2 * dataSentinelBufferSize];
 
-    _midDataP = &_data[_size / 2];
-    _minDataP = &_data[0]; // Inclusive
-    _maxDataP = &_data[_size - 1]; // Inclusive
+    _midDataP = &_data[dataSentinelBufferSize + _size / 2];
+    _minDataP = &_data[dataSentinelBufferSize]; // Inclusive
+    _maxDataP = &_data[dataSentinelBufferSize + _size - 1]; // Inclusive
 
     reset();
 }
@@ -37,7 +44,7 @@ Data::~Data() {
 }
 
 void Data::reset() {
-    for (int i = _size; --i >= 0; ) {
+    for (int i = _size + 2 * dataSentinelBufferSize; --i >= 0; ) {
         _data[i] = 0;
     }
 
@@ -54,7 +61,7 @@ void Data::setStackSize(int size) {
         delete[] _undoStack;
     }
 
-    _undoStack = new DataOp[size + undoStackSentinelCapacity];
+    _undoStack = new UndoOp[size];
     _undoP = _undoStack;
     _maxUndoP = _undoStack + size;
 }
@@ -120,54 +127,54 @@ bool Data::onlyZerosAhead(DataPointer dp, bool atRight) const {
     return true;
 }
 
-void Data::inc() {
-    (*_dataP)++;
+void Data::inc(unsigned char delta) {
+    (*_dataP) += delta;
 
     if (_undoEnabled) {
-        *(_undoP++) = DataOp::INC;
+        *(_undoP++) = delta | (unsigned char)DataOp::INC;
     }
 
     updateBounds();
 }
 
-void Data::dec() {
-    (*_dataP)--;
+void Data::dec(unsigned char delta) {
+    (*_dataP) -= delta;
 
     if (_undoEnabled) {
-        *(_undoP++) = DataOp::DEC;
+        *(_undoP++) = delta | (unsigned char)DataOp::DEC;
     }
 
     updateBounds();
 }
 
-bool Data::shr() {
-    _dataP++;
+bool Data::shr(unsigned char shift) {
+    _dataP += shift;
 
     if (_undoEnabled) {
-        *(_undoP++) = DataOp::SHR;
+        *(_undoP++) = shift | (unsigned char)DataOp::SHR;
     }
 
     return _dataP < _maxDataP;
 }
 
-bool Data::shl() {
-    _dataP--;
+bool Data::shl(unsigned char shift) {
+    _dataP -= shift;
 
     if (_undoEnabled) {
-        *(_undoP++) = DataOp::SHL;
+        *(_undoP++) = shift | (unsigned char)DataOp::SHL;
     }
 
     return _dataP > _minDataP;
 }
 
-void Data::undo(DataOp* _targetUndoP) {
+void Data::undo(const UndoOp* _targetUndoP) {
     while (_undoP != _targetUndoP) {
-        switch (*(--_undoP)) {
-            case DataOp::INC: (*_dataP)--; updateBounds(); break;
-            case DataOp::DEC: (*_dataP)++; updateBounds(); break;
-            case DataOp::SHR: _dataP--; break;
-            case DataOp::SHL: _dataP++; break;
-            case DataOp::NONE: break;
+        UndoOp undo = *(--_undoP);
+        switch (undo & 0xc0) {
+            case (int)DataOp::INC: (*_dataP) -= undo & 0x3f; updateBounds(); break;
+            case (int)DataOp::DEC: (*_dataP) += undo & 0x3f; updateBounds(); break;
+            case (int)DataOp::SHR: _dataP -= undo & 0x3f; break;
+            case (int)DataOp::SHL: _dataP += undo & 0x3f; break;
         }
     }
 }
@@ -208,12 +215,12 @@ void Data::dump() const {
 }
 
 void Data::dumpStack() const {
-    DataOp *p = &_undoStack[0];
+    UndoOp *p = &_undoStack[0];
     while (p < _undoP) {
         if (p != &_undoStack[0]) {
             std::cout << ",";
         }
-        std::cout << (char)*p;
+        std::cout << *p;
         p++;
     }
 }
