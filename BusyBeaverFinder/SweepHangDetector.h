@@ -19,11 +19,13 @@ const int MAX_SWEEP_LOOP_ANALYSIS = 4;
  *
  * It should identify all sweep hangs for which the following holds:
  * - The hang results in an endless meta-run loop (i.e. the hang is regular)
- *   It therefore does not detect loops with a FIXED_GROWING sweep end-type, which execute a kind of
- *   binary count
+ *   It therefore does not detect loops with a FIXED_APERIODIC_APPENDIX sweep end-type, which
+ *   execute a kind of binary count
  * - A sweep in a given direction always executes the same loop (under rotation-equivalence)
  *   Note: The rotation-equivalence allowance means that the entry instruction for this loop may
  *   differ
+ *   - The loop may switch mid-sweep to another one. In that case, the outgoing loop should always
+ *     be the same (under rotation-equivalence), and the incoming loop should always be the same.
  */
 class SweepHangDetector : public HangDetector {
     friend SweepTransitionGroup;

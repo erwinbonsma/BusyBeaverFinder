@@ -55,12 +55,17 @@ enum class SweepEndType : int {
      */
     FIXED_POINT_DECREASING_VALUE,
 
-    /* The sweep always ends in an "appendix" sequence. This appendix consists of two (or more)
+    /* The sweep ends in an "appendix" sequence. This appendix consists of two (or more)
      * different exit values. These values can change each sweep, impacting where the sweep ends
-     * the next time. The appendix can also grow over time. However, the side of the appendix that
-     * is attached to the body of the sweep has a fixed position.
+     * the next time. The appendix grows over time but this is aperiodic. Some kind of binary
+     * counting is realized, and the size of appendix grows logarithmitically. The side of the
+     * appendix that is attached to the body of the sweep has a fixed position.
      */
-    FIXED_GROWING
+    FIXED_APERIODIC_APPENDIX,
+
+    /* The sweep end type is unsupported (or to complex to be recognized by the current logic).
+     */
+    UNSUPPORTED
 };
 
 std::ostream &operator<<(std::ostream &os, SweepEndType sweepEndType);

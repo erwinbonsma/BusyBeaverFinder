@@ -35,7 +35,8 @@ std::ostream &operator<<(std::ostream &os, SweepEndType endType) {
         case SweepEndType::FIXED_POINT_MULTIPLE_VALUES: os << "Fixed point, multiple values"; break;
         case SweepEndType::FIXED_POINT_INCREASING_VALUE: os << "Fixed point, increasing value"; break;
         case SweepEndType::FIXED_POINT_DECREASING_VALUE: os << "Fixed point, decreasing value"; break;
-        case SweepEndType::FIXED_GROWING: os << "Fixed growing"; break;
+        case SweepEndType::FIXED_APERIODIC_APPENDIX: os << "Aperiodic appendix"; break;
+        case SweepEndType::UNSUPPORTED: os << "Unsupported"; break;
         case SweepEndType::UNKNOWN: break;
     }
 
@@ -444,18 +445,15 @@ bool SweepTransitionGroup::determineSweepEndType() {
         }
     }
 
-    // When abs(delta DP) > 1, not only change at DP is relevant. See e.g. FakeSweep.
-    // TODO: Extend recognition accordingly.
-
     if (numNonZeroExits > 0) {
         if (numNonZeroExits < _transitions.size()) {
-            // To facilitate analysis, when one exit is on a non-zero value, require that all are
-            // TODO: Extend analysis when needed
+            // To facilitate analysis, when one exit is on a non-zero value, require that all are.
+            _sweepEndType = SweepEndType::UNSUPPORTED;
             return transitionGroupFailure(*this);
         }
         if (numNegativeDeltas > 0 && numPositiveDeltas > 0) {
-            // To facilitate analysis, require that deltas are not in opposite directions.
-            // TODO: Extend analysis when needed
+            // To facilitate analysis, require that deltas are in the same directions.
+            _sweepEndType = SweepEndType::UNSUPPORTED;
             return transitionGroupFailure(*this);
         }
         if (numPositiveDeltas > 0) {
@@ -484,8 +482,12 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 // For hang detection this distinction does not (yet?) matter, so is not urgent.
                 _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
             } else {
-                if (nonExitToExitBySweep || numberOfTransitionsForExitValue(0) == 0) {
+                if (numberOfTransitionsForExitValue(0) == 0) {
+                    // Unsettled. Need at least one transition for zero
+                    return transitionGroupFailure(*this);
+                } else if (nonExitToExitBySweep) {
                     // Unsupported for regular sweeps
+                    _sweepEndType = SweepEndType::UNSUPPORTED;
                     return transitionGroupFailure(*this);
                 } else if (_transitions.size() == numberOfTransitionsForExitValue(0)) {
                     // Although the loop exit could change values to an exit-value, the loop exit
@@ -502,6 +504,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
             }
         } else {
             // Unsupported sweep end type
+            _sweepEndType = SweepEndType::UNSUPPORTED;
             return transitionGroupFailure(*this);
         }
     }
@@ -673,7 +676,7 @@ bool SweepTransitionGroup::analyzeGroup() {
 
                             break;
                         }
-                        case SweepEndType::FIXED_GROWING:
+                        case SweepEndType::FIXED_APERIODIC_APPENDIX:
                             if (!_incomingLoop->isExitValue(dd.delta())) {
                                 return transitionGroupFailure(*this);
                             }
@@ -685,6 +688,7 @@ bool SweepTransitionGroup::analyzeGroup() {
                             // Do not support this (yet?)
                             return transitionGroupFailure(*this);
                         case SweepEndType::UNKNOWN:
+                        case SweepEndType::UNSUPPORTED:
                             assert(false);
                     }
                 }
@@ -731,7 +735,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
                 return Trilian::MAYBE;
             }
             break;
-        case SweepEndType::FIXED_GROWING: {
+        case SweepEndType::FIXED_APERIODIC_APPENDIX: {
             assert(false); // Not yet used. TODO: Move elsewhere
             int delta = locatedAtRight() ? 1 : -1;
             // Skip all appendix values
@@ -752,6 +756,7 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
             break;
 
         case SweepEndType::UNKNOWN:
+        case SweepEndType::UNSUPPORTED:
             assert(false);
     }
     return Trilian::YES;
