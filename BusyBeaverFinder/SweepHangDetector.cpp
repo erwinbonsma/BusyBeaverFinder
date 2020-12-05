@@ -274,6 +274,8 @@ bool SweepHangDetector::analyzeTransitions() {
 
             group[j].setFirstTransition(newTransition);
         } else {
+            st->numOccurences += 1;
+
             group[j].setFirstTransition(*st);
         }
 
@@ -291,6 +293,13 @@ bool SweepHangDetector::analyzeTransitions() {
     }
 
     if (numSweeps % 2 != 0) {
+        // Should never happen. If so, should investigate
+        assert(false);
+
+        return sweepHangFailure(_executor);
+    }
+
+    if (group[0].hasUniqueTransitions() || group[1].hasUniqueTransitions()) {
         // Should never happen. If so, should investigate
         assert(false);
 

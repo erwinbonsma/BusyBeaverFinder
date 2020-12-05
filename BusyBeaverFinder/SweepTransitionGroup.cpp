@@ -584,6 +584,17 @@ const SweepTransition* SweepTransitionGroup::findTransitionMatching(
     return nullptr;
 }
 
+bool SweepTransitionGroup::hasUniqueTransitions() const {
+    for (auto elem : _transitions) {
+        const SweepTransition &tr = elem.second;
+        if (tr.numOccurences == 1) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool SweepTransitionGroup::analyzeSweeps() {
     _locatedAtRight = _incomingLoop->dataPointerDelta() > 0;
     if (_locatedAtRight == (_outgoingLoop->dataPointerDelta() > 0)) {

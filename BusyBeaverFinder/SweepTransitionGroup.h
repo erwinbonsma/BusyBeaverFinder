@@ -144,8 +144,9 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta);
 struct SweepTransition {
     const SweepTransitionAnalysis *transition;
     int nextLoopStartIndex;
+    mutable int numOccurences;
 
-    SweepTransition() : transition(nullptr), nextLoopStartIndex(0) {}
+    SweepTransition() : transition(nullptr), nextLoopStartIndex(0), numOccurences(1) {}
     SweepTransition(const SweepTransitionAnalysis *sta, int nextLoopStartIndex)
     : transition(sta), nextLoopStartIndex(nextLoopStartIndex) {}
 };
@@ -227,6 +228,7 @@ public:
                                                   int transitionStartIndex,
                                                   int transitionEndIndex,
                                                   const ProgramExecutor& executor) const;
+    bool hasUniqueTransitions() const;
 
     void clear();
     bool analyzeSweeps();
