@@ -28,12 +28,11 @@ const int MAX_SWEEP_LOOP_ANALYSIS = 4;
  *     be the same (under rotation-equivalence), and the incoming loop should always be the same.
  */
 class SweepHangDetector : public HangDetector {
-    friend SweepTransitionGroup;
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
 
     SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
     SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
-    PeriodicSweepTransitionGroup _transitionGroups[2];
+    SweepTransitionGroup *_transitionGroups[2];
 
     // The number of meta-loop iterations that comparise a fully-repeating sweep loop. A requirement
     // for a fully-repeating sweep loop is that the number of execution steps increases linearly
@@ -72,6 +71,7 @@ protected:
 
 public:
     SweepHangDetector(const ProgramExecutor& executor);
+    ~SweepHangDetector();
 
     virtual HangType hangType() const { return HangType::REGULAR_SWEEP; }
 

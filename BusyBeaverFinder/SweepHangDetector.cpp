@@ -24,7 +24,15 @@ bool sweepHangFailure(const ProgramExecutor& executor) {
 }
 
 SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
-: HangDetector(executor) {}
+: HangDetector(executor) {
+    _transitionGroups[0] = new PeriodicSweepTransitionGroup();
+    _transitionGroups[1] = new PeriodicSweepTransitionGroup();
+}
+
+SweepHangDetector::~SweepHangDetector() {
+    delete _transitionGroups[0];
+    delete _transitionGroups[1];
+}
 
 bool SweepHangDetector::analyzeSweepIterations() {
     const RunSummary &runSummary = _executor.getRunSummary();
@@ -116,7 +124,7 @@ bool SweepHangDetector::analyzeLoops() {
 
         switch (numAnalyzedLoops) {
             case 0:
-                group[0].setIncomingLoop(&_loopAnalysisPool[0]);
+                group[0]->setIncomingLoop(&_loopAnalysisPool[0]);
                 numAnalyzedLoops += 1;
                 break;
             case 1:
@@ -124,17 +132,17 @@ bool SweepHangDetector::analyzeLoops() {
                     _loopAnalysisPool[1].movesRightwards()
                 ) {
                     // This sweep apparently consists of two different loops
-                    group[1].setOutgoingLoop(&_loopAnalysisPool[1]);
+                    group[1]->setOutgoingLoop(&_loopAnalysisPool[1]);
                     numAnalyzedLoops += 1;
                 } else {
                     // It's apparently the incoming loop in the other direction
-                    group[1].setOutgoingLoop(&_loopAnalysisPool[0]);
-                    group[1].setIncomingLoop(&_loopAnalysisPool[1]);
+                    group[1]->setOutgoingLoop(&_loopAnalysisPool[0]);
+                    group[1]->setIncomingLoop(&_loopAnalysisPool[1]);
                     numAnalyzedLoops += 2;
                 }
                 break;
             case 2:
-                group[1].setIncomingLoop(&_loopAnalysisPool[numSweepLoops - 1]);
+                group[1]->setIncomingLoop(&_loopAnalysisPool[numSweepLoops - 1]);
                 numAnalyzedLoops += 1;
                 break;
             case 3:
@@ -142,23 +150,23 @@ bool SweepHangDetector::analyzeLoops() {
                     _loopAnalysisPool[numSweepLoops - 1].movesRightwards()
                 ) {
                     // This sweep apparently consists of two different loops
-                    group[0].setOutgoingLoop(&_loopAnalysisPool[numSweepLoops - 1]);
+                    group[0]->setOutgoingLoop(&_loopAnalysisPool[numSweepLoops - 1]);
                     numAnalyzedLoops += 1;
                 } else {
                     // It's apparently the incoming loop in the other direction
-                    group[0].setOutgoingLoop(&_loopAnalysisPool[numSweepLoops - 2]);
+                    group[0]->setOutgoingLoop(&_loopAnalysisPool[numSweepLoops - 2]);
                     numSweepLoops -= 1;
                     numAnalyzedLoops += 1;
                 }
         }
     }
 
-    if (!group[0].analyzeSweeps() || !group[1].analyzeSweeps()) {
+    if (!group[0]->analyzeSweeps() || !group[1]->analyzeSweeps()) {
         return false;
     }
 
     // Both loops should move in opposite directions
-    if (group[0].locatedAtRight() == group[1].locatedAtRight()) {
+    if (group[0]->locatedAtRight() == group[1]->locatedAtRight()) {
         return sweepHangFailure(_executor);
     }
 
@@ -195,7 +203,7 @@ bool SweepHangDetector::analyzeTransitions() {
     while (nextLoopIndex > metaLoop1Index) {
         int j = (numSweeps + 1) % 2;
 
-        if (group[j].outgoingLoop() != group[1 - j].incomingLoop()) {
+        if (group[j]->outgoingLoop() != group[1 - j]->incomingLoop()) {
             // Before the transition there is an extra outgoing loop that needs to be checked
 
             int prevLoopIndex = findPreviousSweepLoop(nextLoopIndex);
@@ -205,16 +213,16 @@ bool SweepHangDetector::analyzeTransitions() {
 
             if (nextLoopIndex - prevLoopIndex > 1) {
                 // There's a transition sequence separating both loops
-                if (group[j].midSweepTransition() == nullptr) {
+                if (group[j]->midSweepTransition() == nullptr) {
                     assert(numUniqueTransitions < MAX_SWEEP_TRANSITION_ANALYSIS);
                     SweepTransitionAnalysis *sta = &_transitionAnalysisPool[numUniqueTransitions++];
 
                     if (!sta->analyzeSweepTransition(prevLoopIndex + 1, nextLoopIndex, _executor)) {
                         return sweepHangFailure(_executor);
                     }
-                    group[j].setMidSweepTransition(sta);
+                    group[j]->setMidSweepTransition(sta);
                 } else {
-                    if (!group[j].midSweepTransition()->transitionEquals(prevLoopIndex + 1,
+                    if (!group[j]->midSweepTransition()->transitionEquals(prevLoopIndex + 1,
                                                                          nextLoopIndex,
                                                                          _executor)) {
                         return sweepHangFailure(_executor);
@@ -225,7 +233,7 @@ bool SweepHangDetector::analyzeTransitions() {
 
             int ignored;
             if (!loopsAreEquivalent(runSummary.runBlockAt(nextLoopIndex),
-                                    group[j].outgoingLoop()->loopRunBlock(), ignored)
+                                    group[j]->outgoingLoop()->loopRunBlock(), ignored)
             ) {
                 // Sequence does not follow expected sweep pattern anymore
                 return sweepHangFailure(_executor);
@@ -242,7 +250,7 @@ bool SweepHangDetector::analyzeTransitions() {
         const RunBlock *loopBlock = runSummary.runBlockAt(loopIndex);
         int rotationEquivalenceOffset = 0;
 
-        if (!loopsAreEquivalent(group[j].incomingLoop()->loopRunBlock(), loopBlock,
+        if (!loopsAreEquivalent(group[j]->incomingLoop()->loopRunBlock(), loopBlock,
                                 rotationEquivalenceOffset)
         ) {
             // Sequence does not follow expected sweep pattern anymore
@@ -251,7 +259,7 @@ bool SweepHangDetector::analyzeTransitions() {
 
         int loopLen = runSummary.getRunBlockLength(loopIndex);
         int exitIndex = (loopLen - 1 + rotationEquivalenceOffset) % loopBlock->getLoopPeriod();
-        const SweepTransition* st = group[j].findTransitionMatching(exitIndex,
+        const SweepTransition* st = group[j]->findTransitionMatching(exitIndex,
                                                                     transitionStartIndex,
                                                                     nextLoopIndex,
                                                                     _executor);
@@ -270,13 +278,13 @@ bool SweepHangDetector::analyzeTransitions() {
             }
 
             SweepTransition newTransition(sta, nextLoopStartInstructionIndex);
-            group[j].addTransitionForExit(exitIndex, newTransition);
+            group[j]->addTransitionForExit(exitIndex, newTransition);
 
-            group[j].setFirstTransition(newTransition);
+            ((PeriodicSweepTransitionGroup *)group[j])->setFirstTransition(newTransition);
         } else {
             st->numOccurences += 1;
 
-            group[j].setFirstTransition(*st);
+            ((PeriodicSweepTransitionGroup *)group[j])->setFirstTransition(*st);
         }
 
         nextLoopIndex = loopIndex;
@@ -299,7 +307,7 @@ bool SweepHangDetector::analyzeTransitions() {
         return sweepHangFailure(_executor);
     }
 
-    if (group[0].hasUniqueTransitions() || group[1].hasUniqueTransitions()) {
+    if (group[0]->hasUniqueTransitions() || group[1]->hasUniqueTransitions()) {
         // Should never happen. If so, should investigate
         assert(false);
 
@@ -310,8 +318,8 @@ bool SweepHangDetector::analyzeTransitions() {
 }
 
 bool SweepHangDetector::analyzeTransitionGroups() {
-    for (SweepTransitionGroup &tg : _transitionGroups) {
-        if (!tg.analyzeGroup()) {
+    for (SweepTransitionGroup* tg : _transitionGroups) {
+        if (!tg->analyzeGroup()) {
             return false;
         }
     }
@@ -331,30 +339,31 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
 
     // DP is at one side of the sweep. Find the other end of the sweep.
     auto sweepGroup = _transitionGroups[0];
-    auto sweepLoop = sweepGroup.outgoingLoop();
-    bool sweepMakesPersistentChange = (sweepGroup.combinedSweepValueChangeType()
+    auto sweepLoop = sweepGroup->outgoingLoop();
+    bool sweepMakesPersistentChange = (sweepGroup->combinedSweepValueChangeType()
                                        != SweepValueChangeType::NO_CHANGE);
-    dp += delta * std::max(1, abs(sweepGroup.firstTransition().transition->dataPointerDelta()));
+    dp += delta * std::max(1, abs(((PeriodicSweepTransitionGroup *)sweepGroup)->firstTransition()
+                                   .transition->dataPointerDelta()));
     while (*dp) {
         if (sweepLoop->isExitValue(*dp)) {
             // Found end of sweep
 
-            if (sweepLoop != _transitionGroups[1].incomingLoop()) {
+            if (sweepLoop != _transitionGroups[1]->incomingLoop()) {
                 // This is a mid-sweep transition, continue with incoming sweep loop
-                if (sweepGroup.midSweepTransition() != nullptr) {
-                    dp += sweepGroup.midSweepTransition()->dataPointerDelta();
+                if (sweepGroup->midSweepTransition() != nullptr) {
+                    dp += sweepGroup->midSweepTransition()->dataPointerDelta();
                 }
 
                 sweepGroup = _transitionGroups[1];
-                sweepLoop = sweepGroup.incomingLoop();
-                sweepMakesPersistentChange = (sweepGroup.combinedSweepValueChangeType()
+                sweepLoop = sweepGroup->incomingLoop();
+                sweepMakesPersistentChange = (sweepGroup->combinedSweepValueChangeType()
                                               != SweepValueChangeType::NO_CHANGE);
             } else {
                 break;
             }
         }
 
-        if (sweepMakesPersistentChange && sweepGroup.canSweepChangeValueTowardsZero(*dp)) {
+        if (sweepMakesPersistentChange && sweepGroup->canSweepChangeValueTowardsZero(*dp)) {
             // The sweep makes changes to the sequence that move some values towards zero
             return sweepHangFailure(_executor);
         }
@@ -375,8 +384,8 @@ bool SweepHangDetector::shouldCheckNow(bool loopContinues) {
 }
 
 void SweepHangDetector::clear() {
-    for (SweepTransitionGroup &tg : _transitionGroups) {
-        tg.clear();
+    for (SweepTransitionGroup *tg : _transitionGroups) {
+        tg->clear();
     }
 }
 
@@ -434,14 +443,14 @@ Trilian SweepHangDetector::proofHang() {
 
     DataPointer dp1 = dp0; // Initial value
 
-    if (!scanSweepSequence(dp1, _transitionGroups[0].locatedAtRight())) {
+    if (!scanSweepSequence(dp1, _transitionGroups[0]->locatedAtRight())) {
         return Trilian::MAYBE;
     }
     assert(dp0 != dp1);
 
     for (int i = 0; i < 2; ++i) {
         DataPointer dp = (i == 0) ? dp0 : dp1;
-        Trilian result = _transitionGroups[i].proofHang(dp, data);
+        Trilian result = _transitionGroups[i]->proofHang(dp, data);
 
         if (result != Trilian::YES) {
             return result;
@@ -458,7 +467,7 @@ Trilian SweepHangDetector::proofHang() {
 }
 
 const SweepTransitionGroup& SweepHangDetector::transitionGroup(bool atRight) const {
-    return _transitionGroups[(int) (_transitionGroups[1].locatedAtRight() == atRight)];
+    return *_transitionGroups[(int) (_transitionGroups[1]->locatedAtRight() == atRight)];
 }
 
 void SweepHangDetector::dump() const {
@@ -468,7 +477,7 @@ void SweepHangDetector::dump() const {
 std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
     for (int i = 0; i < 2; i++) {
         os << "Transition Group " << i << std::endl;
-        os << detector._transitionGroups[i] << std::endl;
+        os << *(detector._transitionGroups[i]) << std::endl;
     }
 
     return os;
