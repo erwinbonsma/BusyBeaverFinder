@@ -69,7 +69,7 @@ class ExhaustiveSearcher : public ProgramExecutor {
 
     FastExecutor _fastExecutor;
 
-    HangDetector* _hangDetectors[4];
+    HangDetector* _hangDetectors[5];
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;

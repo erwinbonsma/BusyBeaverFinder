@@ -81,7 +81,8 @@ public:
     int numOperationsSinceMinBoundChanged() const { return (int)(_undoP - _minBoundChanged); }
     int numOperationsSinceMaxBoundChanged() const { return (int)(_undoP - _maxBoundChanged); }
 
-    void dump() const;
+    void dumpWithCursor(DataPointer cursor) const;
+    void dump() const { dumpWithCursor(_dataP); };
     void dumpStack() const;
     void dumpHangInfo() const;
 };

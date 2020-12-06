@@ -21,6 +21,8 @@ protected:
 
 public:
     IrregularSweepHangDetector(const ProgramExecutor& executor);
+
+    virtual HangType hangType() const override { return HangType::IRREGULAR_SWEEP; }
 };
 
 #endif /* IrregularSweepHangDetector_h */

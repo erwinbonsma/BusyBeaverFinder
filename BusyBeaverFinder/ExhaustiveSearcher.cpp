@@ -41,8 +41,8 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _hangDetectors[0] = new PeriodicHangDetector(*this);
     _hangDetectors[1] = new MetaPeriodicHangDetector(*this);
     _hangDetectors[2] = new GliderHangDetector(*this);
-//    _hangDetectors[3] = new PeriodicSweepHangDetector(*this);
-    _hangDetectors[3] = new IrregularSweepHangDetector(*this);
+    _hangDetectors[3] = new PeriodicSweepHangDetector(*this);
+    _hangDetectors[4] = new IrregularSweepHangDetector(*this);
 
     _zArrayHelperBuf = nullptr;
 

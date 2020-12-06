@@ -61,6 +61,8 @@ protected:
 
 public:
     PeriodicSweepHangDetector(const ProgramExecutor& executor);
+
+    virtual HangType hangType() const override { return HangType::REGULAR_SWEEP; }
 };
 
 #endif /* PeriodicSweepHangDetector_h */

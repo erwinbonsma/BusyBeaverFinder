@@ -136,6 +136,8 @@ public:
     // The delta realized by the loop at the given offset, assuming the loop runs endlessly.
     int deltaAt(int dpOffset) const;
 
+    int deltaAtOnNonStandardEntry(int dpOffset, int startingInstruction) const;
+
     // Returns the loop exit for the specified loop instruction
     const LoopExit& exit(int index) const { return _loopExit[index]; }
 

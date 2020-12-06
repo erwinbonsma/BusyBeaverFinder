@@ -122,6 +122,13 @@ int LoopAnalysis::deltaAt(int dpOffset) const {
     return delta;
 }
 
+int LoopAnalysis::deltaAtOnNonStandardEntry(int dpOffset, int startingInstruction) const {
+    assert(startingInstruction > 0);
+
+    const DataDelta &dd = effectiveResultAt(startingInstruction - 1);
+    return deltaAt(dpOffset - dd.dpOffset()) - dd.delta();
+}
+
 void LoopAnalysis::squashDeltas() {
     _squashedDeltas.clear();
 

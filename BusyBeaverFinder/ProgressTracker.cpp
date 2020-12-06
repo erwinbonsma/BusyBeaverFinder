@@ -41,7 +41,10 @@ void ProgressTracker::report() {
 //    _searcher.getProgram().dump();
 //    _searcher.getInterpretedProgram().dump();
 //    _searcher.dumpExecutionState();
-//    if (_lastDetectedHang && _lastDetectedHang->hangType()==HangType::REGULAR_SWEEP) {
+//    if (_lastDetectedHang && (
+//            _lastDetectedHang->hangType()==HangType::REGULAR_SWEEP ||
+//            _lastDetectedHang->hangType()==HangType::IRREGULAR_SWEEP
+//    )) {
 //        ((const SweepHangDetector *)_lastDetectedHang)->dump();
 //    }
 //    _searcher.getProgram().dumpWeb();
@@ -234,8 +237,9 @@ void ProgressTracker::dumpHangStats() {
     << "  #No Data Loop = " << _totalHangsByType[(int)HangType::NO_DATA_LOOP] << std::endl
     << "  #No Exit = " << _totalHangsByType[(int)HangType::NO_EXIT] << std::endl
     << "  #Periodic = " << _totalHangsByType[(int)HangType::PERIODIC] << std::endl
-    << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl
     << "  #Glider = " << _totalHangsByType[(int)HangType::APERIODIC_GLIDER] << std::endl
+    << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl
+    << "  #Irregular Sweep = " << _totalHangsByType[(int)HangType::IRREGULAR_SWEEP] << std::endl
     << "  #Undetected = " << _totalHangsByType[(int)HangType::UNDETECTED] << std::endl;
 }
 

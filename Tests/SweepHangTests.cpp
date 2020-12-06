@@ -12,19 +12,6 @@
 #include "ExhaustiveSearcher.h"
 #include "SweepHangDetector.h"
 
-SweepEndType sweepEndType(const ProgressTracker &tracker, bool atRight) {
-    return ((const SweepHangDetector *)tracker.getLastDetectedHang()
-            )->transitionGroup(atRight).endType();
-}
-
-SweepEndType rightSweepEndType(const ProgressTracker &tracker) {
-    return sweepEndType(tracker, true);
-}
-
-SweepEndType leftSweepEndType(const ProgressTracker &tracker) {
-    return sweepEndType(tracker, false);
-}
-
 TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]" ) {
     ExhaustiveSearcher searcher(5, 5, 64);
     ProgressTracker tracker(searcher);

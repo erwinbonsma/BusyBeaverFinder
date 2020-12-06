@@ -34,6 +34,7 @@ SweepTransitionScanner::SweepTransitionScanner(const SweepHangDetector &sweepHan
     _metaRunSummary(sweepHangDetector._executor.getMetaRunSummary())
 {
     _nextLoopIndex = _runSummary.getNumRunBlocks() - 1;
+    _nextLoopStartInstructionIndex = 0;
     _numSweeps = 0;
     _numUniqueTransitions = 0;
 }
@@ -143,9 +144,7 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     }
 
     _nextLoopIndex = loopIndex;
-    _nextLoopStartInstructionIndex = (rotationEquivalenceOffset != 0
-                                      ? loopBlock->getLoopPeriod() - rotationEquivalenceOffset
-                                      : 0);
+    _nextLoopStartInstructionIndex = rotationEquivalenceOffset;
     _numSweeps++;
 
     return st;
@@ -414,9 +413,24 @@ void SweepHangDetector::dump() const {
 
 std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
     for (int i = 0; i < 2; i++) {
-        os << "Transition Group " << i << std::endl;
-        os << *(detector._transitionGroups[i]) << std::endl;
+        auto tg = detector._transitionGroups[i];
+        os << "Transition Group " << i << " @";
+        os << (tg->locatedAtRight() ? "Right" : "Left") << std::endl;
+        os << *tg << std::endl;
     }
 
     return os;
+}
+
+SweepEndType sweepEndType(const ProgressTracker &tracker, bool atRight) {
+    return ((const SweepHangDetector *)tracker.getLastDetectedHang()
+            )->transitionGroup(atRight).endType();
+}
+
+SweepEndType rightSweepEndType(const ProgressTracker &tracker) {
+    return sweepEndType(tracker, true);
+}
+
+SweepEndType leftSweepEndType(const ProgressTracker &tracker) {
+    return sweepEndType(tracker, false);
 }

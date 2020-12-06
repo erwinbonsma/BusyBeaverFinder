@@ -257,6 +257,7 @@ void SweepTransitionGroup::clear() {
     _outgoingLoop = nullptr;
     _midSweepTransition = nullptr;
     _sweepEndType = SweepEndType::UNKNOWN;
+    _nonExitToExitValues.clear();
 }
 
 int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
@@ -394,11 +395,13 @@ bool SweepTransitionGroup::determineSweepEndType() {
 
         // Add any changes made by the outgoing loop
         int dpOffset = -sta->dataPointerDelta();
+        int delta = deltaAfterExit;
         if (trans.nextLoopStartIndex > 0) {
             // Take into account that the loop does not start at the first instruction
-            dpOffset -= _outgoingLoop->effectiveResultAt(trans.nextLoopStartIndex - 1).dpOffset();
+            delta += _outgoingLoop->deltaAtOnNonStandardEntry(dpOffset, trans.nextLoopStartIndex);
+        } else {
+            delta += _outgoingLoop->deltaAt(dpOffset);
         }
-        int delta = deltaAfterExit + _outgoingLoop->deltaAt(dpOffset);
 
         // Determine how much the value changes compared to its initial value.
         int totalDelta = delta - loopExit.exitCondition.value();
@@ -434,12 +437,14 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 // Check if the sweep loop changes the value towards zero
                 if (canSweepChangeValueTowardsZero(delta)) {
                     ++nonExitToExitBySweep;
+                    _nonExitToExitValues.insert(delta);
                 } else {
                     if (_sweepValueChangeType != SweepValueChangeType::NO_CHANGE) {
                         ++nonExitToSweepBody;
                     }
                     if (canLoopExitChangeValueToExitValue(delta)) {
                         ++nonExitToExitByLoopExit;
+                        _nonExitToExitValues.insert(delta);
                     }
                 }
             }
@@ -742,12 +747,16 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
             }
             break;
         case SweepEndType::FIXED_APERIODIC_APPENDIX: {
-            assert(false); // Not yet used. TODO: Move elsewhere
+//            data.dumpWithCursor(dp);
             int delta = locatedAtRight() ? 1 : -1;
             // Skip all appendix values
             while (true) {
                 int val = data.valueAt(dp, delta);
-                if (val == 0 || !_incomingLoop->isExitValue(val)) {
+                bool isAppendixValue = (
+                    _incomingLoop->isExitValue(val) ||
+                    _nonExitToExitValues.find(val) != _nonExitToExitValues.end()
+                );
+                if (val == 0 || !isAppendixValue) {
                     break;
                 }
                 dp += delta;

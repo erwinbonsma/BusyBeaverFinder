@@ -38,11 +38,11 @@ bool IrregularSweepHangDetector::analyzeTransitions() {
     while (numUniqueTransitions != 0 || transitionScanner.numSweeps() < 8) {
         const SweepTransition* st = transitionScanner.analyzePreviousSweepTransition();
         if (st == nullptr) {
-            std::cout << std::endl;
+//            std::cout << std::endl;
             return irregularSweepHangFailure(_executor);
         }
 
-        std::cout << transitionScanner.numSweeps() << ":" << numUniqueTransitions << " ";
+//        std::cout << transitionScanner.numSweeps() << ":" << numUniqueTransitions << " ";
         if (st->numOccurences == 1) {
             ++numUniqueTransitions;
         } else if (st->numOccurences == 2) {
@@ -50,14 +50,14 @@ bool IrregularSweepHangDetector::analyzeTransitions() {
         }
     }
 
-    std::cout << "numSweeps = " << transitionScanner.numSweeps() << std::endl;
-    if (transitionScanner.numSweeps() == 8) {
-        return false; // TEMP
-    }
+//    std::cout << "numSweeps = " << transitionScanner.numSweeps() << std::endl;
+//    if (transitionScanner.numSweeps() == 8) {
+//        return false; // TEMP
+//    }
 
-    if (transitionScanner.numSweeps() > 8) {
-        _executor.getData().dump();
-    }
+//    if (transitionScanner.numSweeps() > 8) {
+//        _executor.getData().dump();
+//    }
 
     return true;
 }
@@ -67,9 +67,9 @@ bool IrregularSweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-    dump();
-    std::cout << _transitionGroups[0]->endType() << " " << _transitionGroups[1]->endType()
-    << std::endl;
+//    dump();
+//    std::cout << _transitionGroups[0]->endType() << " " << _transitionGroups[1]->endType()
+//    << std::endl;
 
     // An irregular sweep should have at least one a-periodic end point
     if (! (_transitionGroups[0]->endType() == SweepEndType::FIXED_APERIODIC_APPENDIX ||

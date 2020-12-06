@@ -12,7 +12,7 @@
 #include "HangDetector.h"
 #include "SweepTransitionGroup.h"
 
-const int MAX_SWEEP_TRANSITION_ANALYSIS = 8;
+const int MAX_SWEEP_TRANSITION_ANALYSIS = 16;
 const int MAX_SWEEP_LOOP_ANALYSIS = 4;
 
 class SweepHangDetector;
@@ -78,13 +78,15 @@ public:
     SweepHangDetector(const ProgramExecutor& executor);
     ~SweepHangDetector();
 
-    virtual HangType hangType() const { return HangType::REGULAR_SWEEP; }
-
     const SweepTransitionGroup& transitionGroup(bool atRight) const;
 
     void dump() const;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector);
+
+// Helper functions for testing. These rely on the last detected hang being a sweep hang
+SweepEndType rightSweepEndType(const ProgressTracker &tracker);
+SweepEndType leftSweepEndType(const ProgressTracker &tracker);
 
 #endif /* SweepHangDetector_h */

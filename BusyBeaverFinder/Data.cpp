@@ -189,7 +189,7 @@ void Data::undo(const UndoOp* _targetUndoP) {
     _maxBoundChanged = _undoStack;
 }
 
-void Data::dump() const {
+void Data::dumpWithCursor(DataPointer cursor) const {
     // Find end
     int *max = _maxDataP - 1;
     while (max > _dataP && *max == 0) {
@@ -206,7 +206,7 @@ void Data::dump() const {
         if (p == _minBoundP) {
             std::cout << "<< ";
         }
-        if (p == _dataP) {
+        if (p == cursor) {
             std::cout << "[" << *p << "]";
         } else {
             std::cout << *p;
