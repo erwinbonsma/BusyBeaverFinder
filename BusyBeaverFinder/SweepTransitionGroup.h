@@ -151,9 +151,9 @@ struct SweepTransition {
     int nextLoopStartIndex;
     mutable int numOccurences;
 
-    SweepTransition() : transition(nullptr), nextLoopStartIndex(0), numOccurences(1) {}
+    SweepTransition() : transition(nullptr), nextLoopStartIndex(0), numOccurences(0) {}
     SweepTransition(const SweepTransitionAnalysis *sta, int nextLoopStartIndex)
-    : transition(sta), nextLoopStartIndex(nextLoopStartIndex) {}
+    : transition(sta), nextLoopStartIndex(nextLoopStartIndex), numOccurences(1) {}
 };
 
 class SweepTransitionGroup {
@@ -195,11 +195,11 @@ class SweepTransitionGroup {
     bool canLoopExitChangeValueToExitValue(int value) const;
 
     bool determineCombinedSweepValueChange();
-    bool determineSweepEndType();
 
     void collectInsweepDeltasAfterTransition(SweepTransition st, DataDeltas &dataDeltas) const;
 
 protected:
+    virtual bool determineSweepEndType();
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 
 public:

@@ -34,6 +34,8 @@ SweepTransitionScanner::SweepTransitionScanner(const SweepHangDetector &sweepHan
     _metaRunSummary(sweepHangDetector._executor.getMetaRunSummary())
 {
     _nextLoopIndex = _runSummary.getNumRunBlocks() - 1;
+    _numSweeps = 0;
+    _numUniqueTransitions = 0;
 }
 
 int SweepTransitionScanner::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {

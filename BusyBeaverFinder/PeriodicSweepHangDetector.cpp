@@ -20,6 +20,19 @@ bool periodicSweepHangFailure(const PeriodicSweepTransitionGroup& transitionGrou
     return false;
 }
 
+bool PeriodicSweepTransitionGroup::determineSweepEndType() {
+    if (!SweepTransitionGroup::determineSweepEndType()) {
+        return false;
+    }
+
+    if (endType() == SweepEndType::FIXED_APERIODIC_APPENDIX) {
+        // Unsupported for periodic sweeps
+        return periodicSweepHangFailure(*this);
+    }
+
+    return true;
+}
+
 bool PeriodicSweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& data) const {
     int maxOvershoot = 0;
     for (auto kv : _firstTransition.transition->preConditions()) {

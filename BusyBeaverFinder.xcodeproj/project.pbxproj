@@ -49,6 +49,8 @@
 		AA4F4516225A44830069FF36 /* RunSummaryTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4515225A44830069FF36 /* RunSummaryTests.cpp */; };
 		AA5D7E91257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E8F257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp */; };
 		AA5D7E92257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E8F257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp */; };
+		AA5D7E99257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */; };
+		AA5D7E9A257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */; };
 		AA639B32254C232200DD5129 /* IrregularSweepHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA639B31254C232200DD5129 /* IrregularSweepHangTests.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
@@ -140,6 +142,8 @@
 		AA4F4515225A44830069FF36 /* RunSummaryTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RunSummaryTests.cpp; sourceTree = "<group>"; };
 		AA5D7E8F257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PeriodicSweepHangDetector.cpp; sourceTree = "<group>"; };
 		AA5D7E90257CDBAE0054FC4E /* PeriodicSweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodicSweepHangDetector.h; sourceTree = "<group>"; };
+		AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IrregularSweepHangDetector.cpp; sourceTree = "<group>"; };
+		AA5D7E98257D2F030054FC4E /* IrregularSweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IrregularSweepHangDetector.h; sourceTree = "<group>"; };
 		AA639B31254C232200DD5129 /* IrregularSweepHangTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IrregularSweepHangTests.cpp; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
 		AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExhaustiveSearcher.h; sourceTree = "<group>"; };
@@ -289,6 +293,8 @@
 				AABDCBAF253B197B0009516B /* SweepHangDetector.h */,
 				AA5D7E8F257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp */,
 				AA5D7E90257CDBAE0054FC4E /* PeriodicSweepHangDetector.h */,
+				AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */,
+				AA5D7E98257D2F030054FC4E /* IrregularSweepHangDetector.h */,
 			);
 			name = HangDetection;
 			sourceTree = "<group>";
@@ -393,6 +399,7 @@
 				AABDCBB0253B197B0009516B /* SweepHangDetector.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA2865BB23D30F8900F738ED /* MetaPeriodicHangDetector.cpp in Sources */,
+				AA5D7E99257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */,
 				AA37E6CB2295D62200117A85 /* FastExecutor.cpp in Sources */,
 				AACC274525458F5D007E83C3 /* InterpretedProgram.cpp in Sources */,
 				AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */,
@@ -421,6 +428,7 @@
 				AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */,
 				AA4F4510224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AABDCBB1253B197B0009516B /* SweepHangDetector.cpp in Sources */,
+				AA5D7E9A257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,

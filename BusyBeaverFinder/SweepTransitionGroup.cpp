@@ -486,9 +486,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
                     // Unsettled. Need at least one transition for zero
                     return transitionGroupFailure(*this);
                 } else if (nonExitToExitBySweep) {
-                    // Unsupported for regular sweeps
-                    _sweepEndType = SweepEndType::UNSUPPORTED;
-                    return transitionGroupFailure(*this);
+                    _sweepEndType = SweepEndType::FIXED_APERIODIC_APPENDIX;
                 } else if (_transitions.size() == numberOfTransitionsForExitValue(0)) {
                     // Although the loop exit could change values to an exit-value, the loop exit
                     // apparently never occurs at a place on the data tape where this occurs. This
