@@ -226,8 +226,8 @@ public:
     bool hasTransitionForExit(int exitIndex) const {
         return _transitions.find(exitIndex) != _transitions.end();
     }
-    void addTransitionForExit(int exitIndex, SweepTransition st) {
-        _transitions.insert({exitIndex, st});
+    const SweepTransition* addTransitionForExit(int exitIndex, SweepTransition st) {
+        return &(_transitions.insert({exitIndex, st})->second);
     }
     const SweepTransition* findTransitionMatching(int exitInstruction,
                                                   int transitionStartIndex,
@@ -244,20 +244,5 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
-
-class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
-    SweepTransition _firstTransition;
-
-    bool onlyZeroesAhead(DataPointer dp, const Data& data) const override;
-
-public:
-    // The first transition for this group. If the group has multiple transitions, the first
-    // transition depends on when analysis is invoked, so is somewhat arbitrary. However, it also
-    // means that it is the first transition that will be executed next, which therefore is useful
-    // in analysing the data when trying to proof the hang.
-    SweepTransition firstTransition() const { return _firstTransition; };
-
-    void setFirstTransition(SweepTransition transition) { _firstTransition = transition; }
-};
 
 #endif /* SweepTransitionGroup_h */

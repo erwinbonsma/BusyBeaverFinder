@@ -15,7 +15,7 @@
 
 #include "GliderHangDetector.h"
 #include "MetaPeriodicHangDetector.h"
-#include "SweepHangDetector.h"
+#include "PeriodicSweepHangDetector.h"
 
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
@@ -40,7 +40,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
     _hangDetectors[0] = new PeriodicHangDetector(*this);
     _hangDetectors[1] = new MetaPeriodicHangDetector(*this);
     _hangDetectors[2] = new GliderHangDetector(*this);
-    _hangDetectors[3] = new SweepHangDetector(*this);
+    _hangDetectors[3] = new PeriodicSweepHangDetector(*this);
 
     _zArrayHelperBuf = nullptr;
 
