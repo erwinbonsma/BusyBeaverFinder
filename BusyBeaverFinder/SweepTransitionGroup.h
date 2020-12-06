@@ -241,6 +241,8 @@ public:
 
     bool allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const;
     Trilian proofHang(DataPointer dp, const Data& data);
+
+    virtual std::ostream& dump(std::ostream &os) const;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);

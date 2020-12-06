@@ -61,6 +61,14 @@ bool PeriodicSweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& d
     return true;
 }
 
+std::ostream& PeriodicSweepTransitionGroup::dump(std::ostream &os) const {
+    SweepTransitionGroup::dump(os);
+    os << std::endl;
+    if (_firstTransition.transition) {
+        os << "First transition = " << *(_firstTransition.transition);
+    }
+    return os;
+}
 
 PeriodicSweepHangDetector::PeriodicSweepHangDetector(const ProgramExecutor& executor)
 : SweepHangDetector(executor) {
@@ -152,8 +160,7 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
 
 bool PeriodicSweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
     auto sweepGroup = (PeriodicSweepTransitionGroup *)_transitionGroups[0];
-    int initialDelta = std::max(1, abs(sweepGroup->firstTransition()
-                                       .transition->dataPointerDelta()));
+    int initialDelta = abs(sweepGroup->firstTransition().transition->dataPointerDelta()) + 1;
 
     return scanSweepSequenceAfterDelta(dp, atRight, initialDelta);
 }
@@ -170,5 +177,9 @@ bool PeriodicSweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-    return SweepHangDetector::analyzeHangBehaviour();
+    if (!SweepHangDetector::analyzeHangBehaviour()) {
+        return false;
+    }
+
+    return true;
 }

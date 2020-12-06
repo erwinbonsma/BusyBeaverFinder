@@ -24,6 +24,8 @@ public:
     SweepTransition firstTransition() const { return _firstTransition; };
 
     void setFirstTransition(SweepTransition transition) { _firstTransition = transition; }
+
+    std::ostream& dump(std::ostream &os) const override;
 };
 
 /* Detector for sweep hangs.

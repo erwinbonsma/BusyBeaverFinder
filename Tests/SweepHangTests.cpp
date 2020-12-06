@@ -2041,4 +2041,28 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepHangWithComplexTransitionAtBothEnds" ) {
+        // Sweep with fairly complex transition sequence at both ends, which also shifts DP. This
+        // requires careful checking when scanning the sequence and/or checking if pre-conditions
+        // are met.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        //   o _ o o *
+        // * _ _ _ _ *
+        // o o * * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
 }

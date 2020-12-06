@@ -358,7 +358,7 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-    //((const ExhaustiveSearcher &)_executor).getProgram().dumpWeb();
+//    ((const ExhaustiveSearcher &)_executor).getProgram().dumpWeb();
 
     if (!analyzeTransitionGroups()) {
         return sweepHangFailure(_executor);

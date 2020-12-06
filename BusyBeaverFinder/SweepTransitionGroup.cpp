@@ -762,12 +762,12 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
     return Trilian::YES;
 }
 
-std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
-    os << "Incoming Loop: #" << group._incomingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
-    os << *group._incomingLoop;
+std::ostream& SweepTransitionGroup::dump(std::ostream &os) const {
+    os << "Incoming Loop: #" << _incomingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
+    os << *_incomingLoop;
 
-    auto iter = group._transitions.begin();
-    while (iter != group._transitions.end()) {
+    auto iter = _transitions.begin();
+    while (iter != _transitions.end()) {
         int exitIndex = iter->first;
         SweepTransition transition = iter->second;
         os << "  Exit instruction = " << exitIndex;
@@ -776,15 +776,19 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
         ++iter;
     }
 
-    os << "Outgoing Loop: #" << group._outgoingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
-    os << *group._outgoingLoop;
-    if (group._midSweepTransition != nullptr) {
-        os << "  Mid-sweep transition: " << *(group._midSweepTransition) << std::endl;
+    os << "Outgoing Loop: #" << _outgoingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
+    os << *_outgoingLoop;
+    if (_midSweepTransition != nullptr) {
+        os << "  Mid-sweep transition: " << *_midSweepTransition << std::endl;
     }
 
-    if (group.endType() != SweepEndType::UNKNOWN) {
-        os << "Type = " << group.endType();
+    if (_sweepEndType != SweepEndType::UNKNOWN) {
+        os << "Type = " << _sweepEndType;
     }
 
     return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group) {
+    return group.dump(os);
 }
