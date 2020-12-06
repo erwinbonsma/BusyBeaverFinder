@@ -11,6 +11,7 @@
 int numPeriodicSweepFailures = 0;
 bool periodicSweepHangFailure(const ProgramExecutor& executor) {
 //    executor.dumpExecutionState();
+//    executor.getData().dump();
     numPeriodicSweepFailures++;
     return false;
 }
@@ -137,7 +138,7 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
             return false;
         }
 
-        if (st->numOccurences == 1 && transitionScanner.nextLoopIndex() <= metaLoop2Index) {
+        if (st->numOccurences == 1 && transitionScanner.nextLoopIndex() < metaLoop2Index) {
             // No new transition should be encountered after one iteration of the meta-loop
             return periodicSweepHangFailure(_executor);
         }

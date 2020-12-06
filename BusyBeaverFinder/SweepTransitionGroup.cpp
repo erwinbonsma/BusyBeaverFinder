@@ -372,10 +372,11 @@ bool SweepTransitionGroup::canLoopExitChangeValueToExitValue(int value) const {
 }
 
 bool SweepTransitionGroup::determineSweepEndType() {
-    bool exitToExit = false;
-    bool exitToNonExit = false;
-    bool nonExitToExitBySweep = false;
-    bool nonExitToExitByLoopExit = false;
+    int exitToExit = 0;
+    int exitToNonExit = 0;
+    int nonExitToExitBySweep = 0;
+    int nonExitToExitByLoopExit = 0;
+    int nonExitToSweepBody = 0;
     int numPositiveDeltas = 0, numNegativeDeltas = 0;
     int numNonZeroExits = 0;
 
@@ -416,7 +417,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 // The value that caused the loop to exit and continue at the given transition, is
                 // converted (by the transition) to another value that causes a loop exit (in a
                 // later sweep).
-                exitToExit = true;
+                ++exitToExit;
 
                 int numTransitions = numberOfTransitionsForExitValue(delta);
                 if (numTransitions < exitCount) {
@@ -428,15 +429,18 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 // This transition extends the sequence. It results in a value that does not
                 // (directly) cause the loop to exit in a future sweep.
 
-                exitToNonExit = true;
+                ++exitToNonExit;
 
                 // Check if the sweep loop changes the value towards zero
                 if (canSweepChangeValueTowardsZero(delta)) {
-                    nonExitToExitBySweep = true;
-                }
-
-                if (canLoopExitChangeValueToExitValue(delta)) {
-                    nonExitToExitByLoopExit = true;
+                    ++nonExitToExitBySweep;
+                } else {
+                    if (_sweepValueChangeType != SweepValueChangeType::NO_CHANGE) {
+                        ++nonExitToSweepBody;
+                    }
+                    if (canLoopExitChangeValueToExitValue(delta)) {
+                        ++nonExitToExitByLoopExit;
+                    }
                 }
             }
         } else {
@@ -480,7 +484,11 @@ bool SweepTransitionGroup::determineSweepEndType() {
             if (_sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
                 // TODO: Refine. This may also lead to FIXED_POINT_MULTIPLE_VALUES
                 // For hang detection this distinction does not (yet?) matter, so is not urgent.
-                _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+                if (nonExitToSweepBody) {
+                    _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+                } else {
+                    _sweepEndType = SweepEndType::FIXED_APERIODIC_APPENDIX;
+                }
             } else {
                 if (numberOfTransitionsForExitValue(0) == 0) {
                     // Unsettled. Need at least one transition for zero
