@@ -65,8 +65,8 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
 
         REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION( "6x6-IrregularSweepWhereIncomingLoopClears3" ) {
         // The behavior of this program is very similar to the previous two programs, but reversed.
