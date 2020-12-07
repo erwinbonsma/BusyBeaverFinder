@@ -22,10 +22,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
     settings.maxSteps = 1000000;
     searcher.configure(settings);
 
-    SECTION( "6x6-IrregularSweep2") {
-        // Quite similar to 6x6-IrregularSweep3. However, the negative values in the data sequence
-        // are updated differently. So useful to check if both can be detected by a more advanced
-        // detection algorithm.
+    SECTION( "6x6-IrregularSweepWhereIncomingLoopClears" ) {
         //
         //     * * *
         //   * o o _ *
@@ -46,7 +43,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-SweepWithBinaryCounter") {
+    SECTION( "6x6-IrregularSweepWhereIncomingLoopClears2" ) {
         // Sweep with binary counter at its left side. When the binary counter overflows, it adds
         // a bit and starts again at zero.
         //
@@ -67,5 +64,77 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-IrregularSweepWhereIncomingLoopOscillates" ) {
+        // Exit value is 1, non-exit is 2. The incoming loop oscillates the non-exit value (2) to
+        // the exit value (1) and restores it to the non-exit unless the loop was exited. In the
+        // latter case the value that neighbours the exit remains at 1, and becomes the new exit.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        // * _ o o *
+        // * _ o *
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+    }
+    SECTION( "6x6-IrregularSweepWhereIncomingLoopOscillates2" ) {
+        // Very similar to the previous two hanging programs. It was incorrectly classified as a
+        // meta-periodic hang by an earlier verion of the sweep hang detection.
+        //
+        //     * * *
+        //   * o o _ *
+        //   * o _ *
+        //   o o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+    }
+    SECTION( "6x6-IrregularSweepWhereIncomingLoopOscillates3") {
+        // Very similar to previous three irregular sweep hangs. However, it has an interesting
+        // feature that next to the binary counter, inside the sweep sequence, is a value that is
+        // decreased only when the left-most binary counter bit flips. So it effectively counts the
+        // number of bits of the binary counter.
+        //
+        //     * *
+        //   * o _ _ *
+        //   * o o *
+        //   o o o *
+        // * _ o o *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
+            Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
 }

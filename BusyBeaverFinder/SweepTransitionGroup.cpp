@@ -70,14 +70,6 @@ void SweepLoopAnalysis::collectInsweepDeltasAfterExit(int exitInstruction,
                 dpDelta += pb->getInstructionAmount();
             }
 
-#ifdef SWEEP_DEBUG_TRACE
-            if (instruction == exitInstruction) {
-                std::cout << "Iteration " << iteration
-                    << " dpOffset = " << dpDelta
-                    << ": " << dataDeltas << std::endl;
-            }
-#endif
-
             if (instruction == exitInstruction && iteration == maxIteration) {
                 assert(dpDelta == 0);
                 int dpDeltaStartIteration = dpDelta - effectiveResultAt(exitInstruction).dpOffset();
@@ -508,9 +500,12 @@ bool SweepTransitionGroup::determineSweepEndType() {
                     _sweepEndType = SweepEndType::STEADY_GROWTH;
                 } else {
                     // There are some non-zero exits next to the zero exits, so the growth is
-                    // irregular. However, given that the sweep is fully regular, we can conclude
-                    // its an irregularly growing end (and not an a-periodic appendix).
-                    _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+                    // irregular.
+                    if (nonExitToSweepBody) {
+                        _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
+                    } else {
+                        _sweepEndType = SweepEndType::FIXED_APERIODIC_APPENDIX;
+                    }
                 }
             }
         } else {
