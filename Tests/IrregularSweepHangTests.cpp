@@ -23,6 +23,9 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
     searcher.configure(settings);
 
     SECTION( "6x6-IrregularSweepWhereIncomingLoopClears" ) {
+        // Irregular sweep with an a-periodically growing appendix at its right end. The incoming
+        // loop exits on 1 and then converts this value to the non-exit 2. The incoming loop also
+        // resets all 2 values it passes back to 1.
         //
         //     * * *
         //   * o o _ *
@@ -44,8 +47,30 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION( "6x6-IrregularSweepWhereIncomingLoopClears2" ) {
-        // Sweep with binary counter at its left side. When the binary counter overflows, it adds
-        // a bit and starts again at zero.
+        // Very similar in behavior to the previous two programs. Also an appendix at its right,
+        // with the same exit and non-exit values.
+        //
+        //       *
+        //       o _ *
+        // *   * o o
+        // o _ _ o *
+        // o * _ o *
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
+    SECTION( "6x6-IrregularSweepWhereIncomingLoopClears3" ) {
+        // The behavior of this program is very similar to the previous two programs, but reversed.
+        // The appendix is on its left, and the sign of the appendix values is inverted.
         //
         //     *
         //   * o _ *

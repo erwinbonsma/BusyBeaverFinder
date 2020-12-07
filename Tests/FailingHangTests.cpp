@@ -115,7 +115,110 @@ TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6
             Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
             Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN,  Ins::UNSET
+            Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix" ) {
+        // This sweep hang has an a-periodically growing appendix at its left. The exit value is
+        // -1, the non-exit value is -2. However, the appendix is polluted by a positive value
+        // that increased each time the incoming sweep loop passes it.
+        //
+        //       *
+        //     * o _ *
+        //     * o _
+        //     o o *
+        // * * _ o
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix2" ) {
+        // This is very similar in behavior to the previous program.
+        //
+        //       *
+        //     * o _ *
+        // *   * o _
+        // o o o o *
+        // o * _ o
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix3" ) {
+        // The sweep hang has an a-periodically growing appendix at its right side. The exit value
+        // is 1, the non-exit 2. The appendix is poluted with a negative value that is decremented
+        // each time it is passed by the incoming loop.
+        //
+        //   *   *
+        // * o * o _ *
+        // o o * o *
+        // _ _ _ o *
+        // _ * _ o _ *
+        // _     *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+}
+
+TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" ) {
+    ExhaustiveSearcher searcher(6, 6, 256);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectionSteps = 20000;
+    settings.maxSteps = 1000000;
+    searcher.configure(settings);
+
+    SECTION( "6x6-IrregularHopScotch" ) {
+        // This program executes a curious sweep. The sweep does not have a sweep body. At the left
+        // there's a fixed, ever-increasing exit. Directly attached is an a-periodically growing
+        // appendix which consists of three values: 0, -1 and -2.
+        //
+        // The right-moving loop moves DP two steps. It increases the values it lands on by one,
+        // converting -2's to -1's. It exits on zero.
+        //
+        // The left-moving sweep is more chaotic. It clears -1 values and leaves -2 values behind.
+        // It only converts half of the -1 values to -2. The others it resets to zero.
+        //
+        //       * *
+        //   * * o _ *
+        // * o o o _ *
+        // * _ _ _ _ *
+        // * * o o *
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 
