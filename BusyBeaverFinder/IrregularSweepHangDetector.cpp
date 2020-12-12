@@ -30,6 +30,13 @@ bool IrregularSweepTransitionGroup::determineSweepEndType() {
         int exitCount = 0;
 
         auto loop = incomingLoop();
+        if (abs(loop->dataPointerDelta()) != 1) {
+            // The loop over the appendix should not be able to skip over zeroes by moving DP more
+            // than one unit each iteration. This is needed to avoid false positives for some long-
+            // running yet finite 7x7 programs
+            return irregularSweepHangFailure(*this);
+        }
+
         for (int i = loop->loopSize(); --i >= 0; ) {
             auto loopExit = loop->exit(i);
 

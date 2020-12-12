@@ -249,7 +249,6 @@ void SweepTransitionGroup::clear() {
     _outgoingLoop = nullptr;
     _midSweepTransition = nullptr;
     _sweepEndType = SweepEndType::UNKNOWN;
-    _nonExitToExitValues.clear();
 }
 
 int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
@@ -429,14 +428,12 @@ bool SweepTransitionGroup::determineSweepEndType() {
                 // Check if the sweep loop changes the value towards zero
                 if (canSweepChangeValueTowardsZero(delta)) {
                     ++nonExitToExitBySweep;
-                    _nonExitToExitValues.insert(delta);
                 } else {
                     if (_sweepValueChangeType != SweepValueChangeType::NO_CHANGE) {
                         ++nonExitToSweepBody;
                     }
                     if (canLoopExitChangeValueToExitValue(delta)) {
                         ++nonExitToExitByLoopExit;
-                        _nonExitToExitValues.insert(delta);
                     }
                 }
             }
@@ -744,16 +741,10 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
         case SweepEndType::FIXED_APERIODIC_APPENDIX: {
 //            data.dumpWithCursor(dp);
             int delta = locatedAtRight() ? 1 : -1;
-            // Skip all appendix values
-            while (true) {
-                int val = data.valueAt(dp, delta);
-                bool isAppendixValue = (
-                    _incomingLoop->isExitValue(val) ||
-                    _nonExitToExitValues.find(val) != _nonExitToExitValues.end()
-                );
-                if (val == 0 || !isAppendixValue) {
-                    break;
-                }
+            // Skip all values until first zero. Note, this skips all appendix values, but possibly
+            // also polution inside the appendix (i.e. values not involved in the binary-like
+            // counting, or in other words, values that do not cause a loop exit).
+            while (data.valueAt(dp, delta)) {
                 dp += delta;
             }
         }

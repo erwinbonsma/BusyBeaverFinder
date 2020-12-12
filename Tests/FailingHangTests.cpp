@@ -122,68 +122,6 @@ TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
-    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix" ) {
-        // This sweep hang has an a-periodically growing appendix at its left. The exit value is
-        // -1, the non-exit value is -2. However, the appendix is polluted by a positive value
-        // that increased each time the incoming sweep loop passes it.
-        //
-        //       *
-        //     * o _ *
-        //     * o _
-        //     o o *
-        // * * _ o
-        // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
-    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix2" ) {
-        // This is very similar in behavior to the previous program.
-        //
-        //       *
-        //     * o _ *
-        // *   * o _
-        // o o o o *
-        // o * _ o
-        // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
-    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix3" ) {
-        // The sweep hang has an a-periodically growing appendix at its right side. The exit value
-        // is 1, the non-exit 2. The appendix is poluted with a negative value that is decremented
-        // each time it is passed by the incoming loop.
-        //
-        //   *   *
-        // * o * o _ *
-        // o o * o *
-        // _ _ _ o *
-        // _ * _ o _ *
-        // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
-    }
 }
 
 TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" ) {

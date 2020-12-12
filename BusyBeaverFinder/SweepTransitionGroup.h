@@ -172,8 +172,6 @@ class SweepTransitionGroup {
     // more than one, which can happen if the transition depends on nearby data values.
     std::multimap<int, SweepTransition> _transitions;
 
-    std::set<int> _nonExitToExitValues;
-
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
 
