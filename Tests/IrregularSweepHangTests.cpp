@@ -162,7 +162,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix" ) {
+    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix" ) {
         // This sweep hang has an a-periodically growing appendix at its left. The exit value is
         // -1, the non-exit value is -2. However, the appendix is polluted by a positive value
         // that increased each time the incoming sweep loop passes it.
@@ -185,7 +185,7 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix2" ) {
+    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix2" ) {
         // This is very similar in behavior to the previous program.
         //
         //       *
@@ -206,9 +206,9 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-IrregularSweepHangWithPolutedAppendix3" ) {
+    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix3" ) {
         // The sweep hang has an a-periodically growing appendix at its right side. The exit value
-        // is 1, the non-exit 2. The appendix is poluted with a negative value that is decremented
+        // is 1, the non-exit 2. The appendix is polluted with a negative value that is decremented
         // each time it is passed by the incoming loop.
         //
         //   *   *
