@@ -51,10 +51,10 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         //   * * _ o *
         // * o _ _ *
         // o o o o *
-        // o * o _ *
+        // - * o _ *
         // _   * *
         Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
             Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
             Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA,
             Ins::TURN, Ins::UNSET
@@ -88,6 +88,72 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
+    SECTION( "6x6-SweepWithInSequenceOscillatingValues" ) {
+        // Similar to the previous program, but here the sequence body consists of -1 and -2
+        // values. The leftward sweep swaps these values every sweep.
+        //
+        //     * * *
+        //   * _ o o *
+        //   * o o *
+        // * o _ _ _ *
+        // *   * o o
+        // o _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-SweepWithIrregularFixedPointGrowingValue" ) {
+        // The right end of the sequence looks as follows: [body] 1 X 1 0 0 0
+        // The rightward sweep loop moves DP two units. Half of the sweeps it ends on the first
+        // 1. In that case, the loop exits and returns without making any modifications. The other
+        // half of the sweeps and on the second 1. In that case, it increases the positive value
+        // X by one.
+        //
+        //       *
+        //   * * o _ *
+        // * _ o o *
+        // * o o _ _
+        // * * _ o _ *
+        // o _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "6x6-LateStartingPeriodicSweepWithTwoFastGrowingEnds" ) {
+        // This program executes a complex sweep that looks to be irregular but seems to becomes
+        // regular eventually. TODO: Check why the meta-run summary does not reflect this.
+        //
+        //     * * *
+        //   * o o _ *
+        //   * * o _
+        //   _ o o *
+        // * _ _ o _ *
+        // o o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
 }
 
 TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][fail]" ) {
@@ -101,7 +167,7 @@ TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6
     settings.maxSteps = 1000000;
     searcher.configure(settings);
 
-    SECTION( "6x6-SweepWithBinaryCounter6" ) {
+    SECTION( "6x6-IrregularSweepWithZeroesInAppendix" ) {
         // A truly binary counter. It actually uses ones and zeros, and also properly generates
         // binary numbers (only with most-significant bit at the right).
         //
