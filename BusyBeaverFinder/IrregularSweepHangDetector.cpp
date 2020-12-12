@@ -15,10 +15,46 @@ bool irregularSweepHangFailure(const ProgramExecutor& executor) {
     return false;
 }
 
+bool irregularSweepHangFailure(const IrregularSweepTransitionGroup& transitionGroup) {
+    numIrregularSweepFailures++;
+    return false;
+}
+
+bool IrregularSweepTransitionGroup::determineSweepEndType() {
+    if (!SweepTransitionGroup::determineSweepEndType()) {
+        return false;
+    }
+
+    if (endType() == SweepEndType::FIXED_APERIODIC_APPENDIX) {
+        bool exitsOnZero = false;
+        int exitCount = 0;
+
+        auto loop = incomingLoop();
+        for (int i = loop->loopSize(); --i >= 0; ) {
+            auto loopExit = loop->exit(i);
+
+            if (loopExit.exitWindow == ExitWindow::ANYTIME) {
+                exitCount += 1;
+                if (loopExit.exitCondition.isTrueForValue(0)) {
+                    exitsOnZero = true;
+                }
+            }
+        }
+
+        // The incoming loop should have exactly two anytime exits, with one exiting at zero (which
+        // extends the appendix)
+        if (exitCount != 2 || !exitsOnZero) {
+            return irregularSweepHangFailure(*this);
+        }
+    }
+
+    return true;
+}
+
 IrregularSweepHangDetector::IrregularSweepHangDetector(const ProgramExecutor& executor)
 : SweepHangDetector(executor) {
     for (int i = 0; i < 2; i++ ) {
-        _transitionGroups[i] = new SweepTransitionGroup();
+        _transitionGroups[i] = new IrregularSweepTransitionGroup();
     }
 }
 

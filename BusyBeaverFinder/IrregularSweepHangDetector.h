@@ -11,6 +11,12 @@
 
 #include "SweepHangDetector.h"
 
+class IrregularSweepTransitionGroup : public SweepTransitionGroup {
+
+    bool determineSweepEndType() override;
+
+};
+
 class IrregularSweepHangDetector : public SweepHangDetector {
 
 protected:
