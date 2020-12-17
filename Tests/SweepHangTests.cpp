@@ -2058,4 +2058,29 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
+    SECTION( "6x6-SweepWithFixedPointMultiValueExitAndInSweepOscillatingChange" ) {
+        // The right sweep ends at a fixed point with multiple (pairs of) values. It either ends
+        // with 2 1, or 3 0. Analysis wrongly concluded that the sweep will be broken (as one
+        // transition results in a delta of 2, which is bigger and opposite to the sweep value
+        // change of -1).
+        //
+        //     * * *
+        //   * o o _ *
+        // * _ o o *
+        //   _ * o _
+        // * o _ _ _ *
+        // o o * *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
+    }
 }

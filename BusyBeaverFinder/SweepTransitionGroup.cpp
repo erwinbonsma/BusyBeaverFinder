@@ -659,6 +659,10 @@ bool SweepTransitionGroup::analyzeGroup() {
                                && abs(dd.delta()) <= abs(_sweepValueChange)) {
                         // The transition dampens changes made by the sweep, but does not change
                         // the direction of the delta. That's okay.
+                    } else if (_sweepEndType == SweepEndType::FIXED_POINT_MULTIPLE_VALUES) {
+                        // The delta is (presumably) part of the periodic behavior that cause this
+                        // end-point to remained fixed but oscillate at multiple values.
+                        // TODO: Verify that delta is part of value(s) that oscillate periodically?
                     } else {
                         // All other changes could (eventually) cause the sweep hang to be aborted
                         return transitionGroupFailure(*this);
