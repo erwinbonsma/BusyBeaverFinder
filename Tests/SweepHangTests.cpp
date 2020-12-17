@@ -2083,4 +2083,62 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
     }
+    SECTION( "6x6-SweepWithFixedPointMultiValueExitAndInSweepOscillatingChange2" ) {
+        // Similar in behavior to the previous program. Here, the sequence at the right either ends
+        // with 0 -1 or -1 -1.
+        //
+        //       * *
+        //   * * _ o *
+        // * o _ _ *
+        // o o o o *
+        // - * o _ *
+        // _   * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH); // TODO: FIXME
+    }
+    SECTION( "6x6-SweepHangWithGhostInSweepTransitionDelta" ) {
+        // The sweep transition at the left side is fairly complicated, which caused it to initially
+        // fail hang detection. The output the program produces is actually simple:
+        //   0 0 1 X 1 1 .... 1 1 0 0
+        // The value X is increasing by one each sweep iteration. The right-side of the sequence
+        // is extended with a 1-value each iteration. However, detection initially failed because
+        // the transition at the right has a fixed-loop, whose last instruction is actually also
+        // part of the next loop (the actual sweep loop). This loop does not modify the sequence.
+        // However, due to how the run-block assignment works, it sees the following happening to
+        // the value to the right of the value X
+        // 1) Sweep transition decreases value by 1 (by the instruction that is actually part of
+        //    the outgoing sweep loop)
+        // 2) Due to bootstrap effects of the outgoing loop, this change is undone
+        // So the value remains unchanged. However, it sees a transition delta of -1, combined with
+        // the delta of the value X of 1, this failed an earlier version of the hang detector.
+        //
+        // ? ? * * ? ?
+        // ? * o o _ *
+        // ? o _ o * ?
+        // ? o * _ _ ?
+        // * _ _ o _ *
+        // o o * * ? ?
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+    }
 }

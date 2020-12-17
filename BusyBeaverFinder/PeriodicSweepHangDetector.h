@@ -14,6 +14,7 @@
 class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
     SweepTransition _firstTransition;
 
+    bool hangIsMetaPeriodic() override { return true; }
     bool determineSweepEndType() override;
     bool onlyZeroesAhead(DataPointer dp, const Data& data) const override;
 

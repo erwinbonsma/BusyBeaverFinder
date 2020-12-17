@@ -199,6 +199,14 @@ class SweepTransitionGroup {
     void collectInsweepDeltasAfterTransition(SweepTransition st, DataDeltas &dataDeltas) const;
 
 protected:
+    // Indicates if the hang is locked into a periodic behavior at the meta-run level. Not only
+    // should the sequence of meta run-blocks be periodic, also the length of the run-block loops
+    // that do not have a fixed length (i.e. the sweep loops) should increase with a fixed number
+    // of iterations each period. When this is the case, the checks on the changes made by the
+    // loops and transition sequences associated with this transition group can be a bit more
+    // lenient.
+    virtual bool hangIsMetaPeriodic() { return false; }
+
     virtual bool determineSweepEndType();
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 

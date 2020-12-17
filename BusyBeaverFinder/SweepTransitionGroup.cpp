@@ -645,14 +645,20 @@ bool SweepTransitionGroup::analyzeGroup() {
 
                     if (_sweepValueChange == 0) {
                         // The loop does not make any changes.
-                        if (_insideSweepTransitionDeltaSign != 0 &&
-                            sgn != sign(_insideSweepTransitionDeltaSign)) {
-                            // Changes are in opposite directions. Do not allow this (for now?).
-                            // There could be strange interactions.
+
+                        if (_insideSweepTransitionDeltaSign == 0) {
+                            // Okay, first change
+                            _insideSweepTransitionDeltaSign = sgn;
+                        } else if (sgn == sign(_insideSweepTransitionDeltaSign)) {
+                            // Okay, changes are in the same direction.
+                        } else if (hangIsMetaPeriodic()) {
+                            // Okay, apparently the various changes result in a stable changes
+                            // to the sweep body
+                        } else {
+                            // Changes are in opposite directions. There could be strange
+                            // interactions. Do not support this
                             return transitionGroupFailure(*this);
                         }
-                        // Changes are in the same direction. That's okay.
-                        _insideSweepTransitionDeltaSign = sgn;
                     } else if (sgn == sign(_sweepValueChange)) {
                         // The transition amplifies the changes made by the sweeps. That's okay.
                     } else if (_sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE
