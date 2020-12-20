@@ -294,8 +294,18 @@ bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp,
 
             if (sweepLoop != _transitionGroups[1]->incomingLoop()) {
                 // This is a mid-sweep transition, continue with incoming sweep loop
-                if (sweepGroup->midSweepTransition() != nullptr) {
+                if (
+                    sweepGroup->midSweepTransition() != nullptr &&
+                    sign(sweepGroup->midSweepTransition()->dataPointerDelta()) == sign(delta)
+                ) {
+                    // Skip over any possible exit values
                     dp += sweepGroup->midSweepTransition()->dataPointerDelta();
+
+                    // Note: If delta direction differs from sweep direction DP is not adjusted to
+                    // ensure that DP changes only the expected direction to never violate the
+                    // post-condition that DP should always differ from the initial value and
+                    // shifted in the right direction. This should never impact analysis of actual
+                    // sweep hangs.
                 }
 
                 sweepGroup = _transitionGroups[1];
