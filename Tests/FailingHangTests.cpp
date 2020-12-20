@@ -187,3 +187,62 @@ TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" )
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
 }
+
+TEST_CASE( "7x7 hangs", "[hang][7x7][fail]" ) {
+    ExhaustiveSearcher searcher(7, 7, 16384);
+    ProgressTracker tracker(searcher);
+
+    tracker.setDumpBestSofarLimit(INT_MAX);
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectionSteps = 100000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+    settings.undoCapacity = settings.maxSteps;
+    searcher.configure(settings);
+
+    SECTION( "7x7-UndetectedHang1" ) {
+        // *   *   * *
+        // o _ _ _ _ _ *
+        // _   _ * _ _
+        // _ * o o o o *
+        // _   * o o o *
+        // _ * _ o o *
+        // _   * * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+    SECTION( "7x7-UndetectedHang2" ) {
+        // Irregular sweep.
+        //
+        // TODO: Analyze why hang is not detected with current logic.
+        //
+        // *       *
+        // o _ * _ o _ *
+        // _ _ * * o _
+        // _ _ o o _ *
+        // _ o _ * o _
+        // _ * * _ o o *
+        // _       * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+}
