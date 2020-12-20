@@ -163,8 +163,10 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
     if (_transitionGroups[0]->hasUniqueTransitions() ||
         _transitionGroups[1]->hasUniqueTransitions()
     ) {
-        // Should never happen. If so, should investigate
-        assert(false);
+        // Exceptional case. Given that the meta-run is in a loop it is not expected. However, it
+        // can happen if the transitions contain loops with a small but varying number of
+        // iterations (e.g. 2 and 3). In this case, transition sequences in different iterations
+        // of the meta-loop can differ in length due to this varying iteration count.
 
         return periodicSweepHangFailure(_executor);
     }

@@ -245,4 +245,28 @@ TEST_CASE( "7x7 hangs", "[hang][7x7][fail]" ) {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
+    SECTION( "7x7-UndetectedHang3" ) {
+        // Program that causes Periodic Sweep Hang Detector to create transition-groups with
+        // unique transitions. This caused an assertion to fail, which after analysis, has been
+        // removed.
+        //
+        // *     * *
+        // o _ _ _ _ _ *
+        // _   * _ o _
+        // _ * o o o *
+        // _   _ o _
+        // _ * _ _ _ o *
+        // _   * * * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
 }

@@ -36,7 +36,10 @@ SweepTransitionScanner::SweepTransitionScanner(const SweepHangDetector &sweepHan
     _nextLoopIndex = _runSummary.getNumRunBlocks() - 1;
     _nextLoopStartInstructionIndex = 0;
     _numSweeps = 0;
-    _numUniqueTransitions = 0;
+    _numUniqueTransitions = (
+        (sweepHangDetector._transitionGroups[0]->midSweepTransition() != nullptr ? 1 : 0) +
+        (sweepHangDetector._transitionGroups[1]->midSweepTransition() != nullptr ? 1 : 0)
+    );
 }
 
 int SweepTransitionScanner::findPrecedingTransitionStart(int sweepLoopRunBlockIndex) const {
@@ -65,8 +68,10 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     auto &executor = _sweepHangDetector._executor;
     int j = (_numSweeps + 1) % 2;
 
-    if (group[j]->outgoingLoop() != group[1 - j]->incomingLoop()) {
-        // Before the transition there is an extra outgoing loop that needs to be checked
+    if (group[j]->outgoingLoop() != group[1 - j]->incomingLoop() ||
+        group[j]->midSweepTransition() != nullptr
+    ) {
+        // The sweep consists of two parts, possibly separated by a mid-sweep transition
 
         int prevLoopIndex = _sweepHangDetector.findPreviousSweepLoop(_nextLoopIndex);
         if (prevLoopIndex < 0) {
@@ -76,20 +81,12 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
         if (_nextLoopIndex - prevLoopIndex > 1) {
             // There's a transition sequence separating both loops
             if (group[j]->midSweepTransition() == nullptr) {
-                assert(_numUniqueTransitions < MAX_SWEEP_TRANSITION_ANALYSIS);
-                SweepTransitionAnalysis *sta = &(_sweepHangDetector
-                                                 ._transitionAnalysisPool[_numUniqueTransitions++]);
-
-                if (!sta->analyzeSweepTransition(prevLoopIndex + 1, _nextLoopIndex, executor)) {
-                    return sweepTransitionScanFailure(executor);
-                }
-                group[j]->setMidSweepTransition(sta);
-            } else {
-                if (!group[j]->midSweepTransition()->transitionEquals(prevLoopIndex + 1,
-                                                                      _nextLoopIndex,
-                                                                      executor)) {
-                    return sweepTransitionScanFailure(executor);
-                }
+                return sweepTransitionScanFailure(executor);
+            }
+            if (!group[j]->midSweepTransition()->transitionEquals(prevLoopIndex + 1,
+                                                                  _nextLoopIndex,
+                                                                  executor)) {
+                return sweepTransitionScanFailure(executor);
             }
         }
         _nextLoopIndex = prevLoopIndex;
@@ -177,6 +174,27 @@ int SweepHangDetector::findPreviousSweepLoop(int runBlockIndex) const {
     return runBlockIndex;
 }
 
+bool SweepHangDetector::analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoingLoop,
+                                                       int runBlockIndexIncomingLoop,
+                                                       bool isFirstSweep) {
+    if (runBlockIndexOutgoingLoop + 1 == runBlockIndexIncomingLoop) {
+        // There is no transition sequence separating both sweep loops
+        return true;
+    }
+
+    SweepTransitionAnalysis *sta =
+        &_transitionAnalysisPool[_transitionGroups[1]->midSweepTransition() ? 1 : 0];
+
+    if (!sta->analyzeSweepTransition(runBlockIndexOutgoingLoop + 1,
+                                     runBlockIndexIncomingLoop, _executor)) {
+        return sweepTransitionScanFailure(_executor);
+    }
+
+    _transitionGroups[isFirstSweep ? 1 : 0]->setMidSweepTransition(sta);
+
+    return true;
+}
+
 bool SweepHangDetector::analyzeLoops() {
     const RunSummary& runSummary = _executor.getRunSummary();
     auto *group = _transitionGroups;
@@ -189,6 +207,7 @@ bool SweepHangDetector::analyzeLoops() {
     }
 
     while (numAnalyzedLoops < 4) {
+        int nextIndex = runBlockIndex;
         runBlockIndex = findPreviousSweepLoop(runBlockIndex);
         if (runBlockIndex < 0) {
             return false;
@@ -210,6 +229,10 @@ bool SweepHangDetector::analyzeLoops() {
                     // This sweep apparently consists of two different loops
                     group[1]->setOutgoingLoop(&_loopAnalysisPool[1]);
                     numAnalyzedLoops += 1;
+
+                    if (!analyzeMidSweepTransitionIfAny(runBlockIndex, nextIndex, true)) {
+                        return false;
+                    }
                 } else {
                     // It's apparently the incoming loop in the other direction
                     group[1]->setOutgoingLoop(&_loopAnalysisPool[0]);
@@ -228,6 +251,10 @@ bool SweepHangDetector::analyzeLoops() {
                     // This sweep apparently consists of two different loops
                     group[0]->setOutgoingLoop(&_loopAnalysisPool[numSweepLoops - 1]);
                     numAnalyzedLoops += 1;
+
+                    if (!analyzeMidSweepTransitionIfAny(runBlockIndex, nextIndex, false)) {
+                        return false;
+                    }
                 } else {
                     // It's apparently the incoming loop in the other direction
                     group[0]->setOutgoingLoop(&_loopAnalysisPool[numSweepLoops - 2]);

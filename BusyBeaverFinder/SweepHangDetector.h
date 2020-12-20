@@ -58,6 +58,9 @@ protected:
     bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
                             int &rotationEquivalenceOffset) const;
 
+    bool analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoingLoop,
+                                        int runBlockIndexIncomingLoop,
+                                        bool isFirstSweep);
     bool analyzeLoops();
     virtual bool analyzeTransitions() = 0;
     bool analyzeTransitionGroups();
