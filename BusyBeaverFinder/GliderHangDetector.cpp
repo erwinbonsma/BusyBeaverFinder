@@ -157,6 +157,11 @@ bool GliderHangDetector::checkTransitionDeltas() {
             // that at the moment of the check the next transition sequence has not yet been
             // executed.
             int dpOffset = std::abs(relDelta - counterDistance - shift);
+            if (dpOffset >= maxAheadOffset) {
+                std::cout << "dpOffset >= maxAheadOffset: ";
+                ((ExhaustiveSearcher &)_executor).dumpInstructionStack();
+                return false;
+            }
             assert(dpOffset < maxAheadOffset);
             while (dpOffset >= 0) {
                 _aheadDelta[dpOffset] += dd.delta();

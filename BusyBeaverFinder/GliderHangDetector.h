@@ -13,7 +13,7 @@
 
 #include "LoopAnalysis.h"
 
-const int maxAheadOffset = 4;
+const int maxAheadOffset = 16;
 
 class GliderHangDetector : public HangDetector {
 
