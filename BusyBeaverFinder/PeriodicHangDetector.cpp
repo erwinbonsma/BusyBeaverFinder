@@ -61,9 +61,9 @@ bool PeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
                 p += _loop.dataPointerDelta();
                 count++;
                 if (count > 32) {
-                    _executor.dumpExecutionState();
-                    _loop.dump();
-                    assert(false);
+                    // Abort. This is not expected to occur in practise for (small) programs that
+                    // are actually locked in a periodic hang.
+                    return false;
                 }
             }
         }

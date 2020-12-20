@@ -126,7 +126,9 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
                                                                 executor);
     if (st == nullptr) {
         // This is a new transition. Add it
-        assert(_numUniqueTransitions < MAX_SWEEP_TRANSITION_ANALYSIS);
+        if (_numUniqueTransitions >= MAX_SWEEP_TRANSITION_ANALYSIS) {
+            return sweepTransitionScanFailure(executor);
+        }
         SweepTransitionAnalysis *sta = &(_sweepHangDetector.
                                          _transitionAnalysisPool[_numUniqueTransitions++]);
 
