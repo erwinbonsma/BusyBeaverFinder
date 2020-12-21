@@ -313,7 +313,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
     SearchSettings settings = searcher.getSettings();
     settings.maxHangDetectionSteps = 100000;
     settings.undoCapacity = settings.maxHangDetectionSteps;
-    settings.maxSteps = 10000000;
+    settings.maxSteps = 100000000;
     searcher.configure(settings);
 
     SECTION( "BB 7x7 #1237792" ) {
@@ -436,5 +436,42 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
         };
 
         twoShotSearch(searcher, resumeFrom, 9607923);
+    }
+    SECTION( "BB 7x7 #22606881" ) {
+        //   *   * *
+        // * o _ o _ *
+        //   * * o o _ *
+        //   _ o o * _
+        // * _ _ o o o *
+        // o o o * _ _
+        // _ _       *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+
+        twoShotSearch(searcher, resumeFrom, 22606881);
+    }
+    SECTION( "BB 7x7 #33207907" ) {
+        //   * *   *
+        // * o o _ _ *
+        //   * o o _ _ *
+        //   _ o * * _
+        // * _ o o o o *
+        // * _ * _ _ o *
+        // o _ _ _ o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA,
+            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP,
+            Ins::UNSET
+        };
+
+        twoShotSearch(searcher, resumeFrom, 33207907);
     }
 }
