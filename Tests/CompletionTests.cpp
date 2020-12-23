@@ -94,7 +94,7 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
     }
 }
 
-TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {
+TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
     ExhaustiveSearcher searcher(7, 7, 16384);
     ProgressTracker tracker(searcher);
 
@@ -103,8 +103,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {
 
     SearchSettings settings = searcher.getSettings();
     settings.maxHangDetectionSteps = 1000000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.undoCapacity = settings.maxSteps;
+    settings.maxSteps = 40000000;
+
+    // Can be small, it should only be big enough to let program reach completion after last
+    // instruction from resume stack is encountered (to avoid late-escape).
+    settings.undoCapacity = 32;
+
     searcher.configure(settings);
 
     SECTION( "BB 7x7 #117273" ) {
@@ -282,36 +286,6 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {
 
         REQUIRE(tracker.getMaxStepsFound() == 951921);
     }
-}
-
-// Follows up on late-escapes
-void multiShotSearch(ExhaustiveSearcher& searcher, Ins* resumeStack, int numExpectedSteps) {
-    ProgressTracker* tracker = searcher.getProgressTracker();
-
-    searcher.findOne(resumeStack);
-
-    long prevTotalLateEscapes = 0;
-    while (tracker->getTotalLateEscapes() == prevTotalLateEscapes + 1) {
-        prevTotalLateEscapes = tracker->getTotalLateEscapes();
-        searcher.searchSubTree(resumeStack, true);
-    }
-
-    REQUIRE(tracker->getMaxStepsFound() == numExpectedSteps);
-}
-
-TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
-    ProgressTracker tracker(searcher);
-
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 100000;
-    settings.undoCapacity = settings.maxHangDetectionSteps;
-    settings.maxSteps = 100000000;
-    searcher.configure(settings);
-
     SECTION( "BB 7x7 #1237792" ) {
         // Notable because it ends with DP on a high value: 31985.
         //
@@ -329,8 +303,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
             Ins::TURN, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 1237792);
+        REQUIRE(tracker.getMaxStepsFound() == 1237792);
     }
     SECTION( "BB 7x7 #1659389" ) {
         //   *   * *
@@ -347,8 +322,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP,
             Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 1659389);
+        REQUIRE(tracker.getMaxStepsFound() == 1659389);
     }
     SECTION( "BB 7x7 #1842683" ) {
         Ins resumeFrom[] = {
@@ -358,8 +334,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::TURN, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 1842683);
+        REQUIRE(tracker.getMaxStepsFound() == 1842683);
     }
     SECTION( "BB 7x7 #3007569" ) {
         //   *       _
@@ -376,8 +353,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN,
             Ins::NOOP, Ins::NOOP, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 3007569);
+        REQUIRE(tracker.getMaxStepsFound() == 3007569);
     }
     SECTION( "BB 7x7 #8447143" ) {
         //   *       *
@@ -394,8 +372,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
             Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 8447143);
+        REQUIRE(tracker.getMaxStepsFound() == 8447143);
     }
     SECTION( "BB 7x7 #9408043" ) {
         //   *   * *
@@ -412,8 +391,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 9408043);
+        REQUIRE(tracker.getMaxStepsFound() == 9408043);
     }
     SECTION( "BB 7x7 #9607923" ) {
         //       * * *
@@ -430,8 +410,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
             Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 9607923);
+        REQUIRE(tracker.getMaxStepsFound() == 9607923);
     }
     SECTION( "BB 7x7 #22606881" ) {
         //   *   * *
@@ -448,8 +429,9 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 22606881);
+        REQUIRE(tracker.getMaxStepsFound() == 22606881);
     }
     SECTION( "BB 7x7 #33207907" ) {
         //   * *   *
@@ -467,7 +449,8 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP,
             Ins::UNSET
         };
+        searcher.findOne(resumeFrom);
 
-        multiShotSearch(searcher, resumeFrom, 33207907);
+        REQUIRE(tracker.getMaxStepsFound() == 33207907);
     }
 }
