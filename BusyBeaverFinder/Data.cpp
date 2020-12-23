@@ -56,10 +56,16 @@ void Data::reset() {
     _undoP = _undoStack;
     _minBoundChanged = _undoP;
     _maxBoundChanged = _undoP;
+    _undoEnabled = true;
 }
 
 void Data::setStackSize(int size) {
     if (_undoStack != nullptr) {
+        if (_maxUndoP - _undoP == size) {
+            // Nothing needs doing. Stack size is unchanged
+            return;
+        }
+
         delete[] _undoStack;
     }
 

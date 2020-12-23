@@ -122,6 +122,7 @@ public:
     void reset();
 
     // Set the capacity (in program blocks)
+    int getCapacity() const;
     void setCapacity(int capacity, int* helperBuf);
 
     // Returns true if this resulted in the creation of one or more RunBlocks

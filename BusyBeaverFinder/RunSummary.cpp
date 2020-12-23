@@ -37,8 +37,19 @@ RunSummary::~RunSummary() {
     freeDynamicArrays();
 }
 
+int RunSummary::getCapacity() const {
+    return (int)(_programBlockHistoryMaxP - _programBlockHistory);
+}
+
 void RunSummary::setCapacity(int capacity, int* helperBuf) {
-    freeDynamicArrays();
+    if (_programBlockHistory != nullptr) {
+        if (getCapacity() == capacity) {
+            // Nothing needs doing. The buffers are already of the correct size
+            return;
+        }
+
+        freeDynamicArrays();
+    }
 
     _programBlockHistory = new ProgramBlockIndex[capacity];
     _programBlockHistoryMaxP = _programBlockHistory + capacity;

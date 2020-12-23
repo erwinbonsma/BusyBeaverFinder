@@ -6,8 +6,6 @@
 //  Copyright © 2019 Erwin Bonsma
 //
 
-#include <stdio.h>
-
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"
@@ -20,12 +18,12 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
     searcher.setProgressTracker(&tracker);
 
     SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 0; // Disable hang detection
     settings.maxSteps = 10000000;
     searcher.configure(settings);
 
     SECTION( "EscapeIntoSuccess" ) {
-        // After escape terminates without encountering unset instructions
+        // After "escape" terminates without encountering unset instructions. This is therefore
+        // not an actual late escape.
         //
         //   *     * *
         // * o o _ _ _ *
@@ -42,12 +40,15 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom);
+        searcher.searchSubTree(resumeFrom, true);
 
         REQUIRE(tracker.getTotalSuccess() == 1);
         REQUIRE(tracker.getMaxStepsFound() == 3152126);
     }
     SECTION( "EscapeIntoSearch" ) {
+        // After 6326 steps, does not encounter any new instructions until program escapes after
+        // 1648530 steps.
+        //
         // After escape encounters a single unset instructions, which results in three possible
         // programs
         Ins resumeFrom[] = {
@@ -58,15 +59,18 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom);
+        searcher.searchSubTree(resumeFrom, true);
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
         REQUIRE(tracker.getTotalSuccess() == 2);
         REQUIRE(tracker.getMaxStepsFound() == 1648533);
     }
     SECTION( "EscapeIntoSearch2" ) {
-        // Escapes after more than 3M steps. This can result in various programs: some that
-        // complete and others that hang (in two types of detectable hang).
+        // After 394 steps, does not encounter any new instructions until program escapes after
+        // 3007566 steps.
+        //
+        // This then results in various programs: some that complete and others that hang (in two
+        // types of detectable hang).
         //
         //   *       ?
         //   _ _ _ * ? ?
@@ -83,7 +87,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom);
+        searcher.searchSubTree(resumeFrom, true);
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_DATA_LOOP) == 1);
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 2);

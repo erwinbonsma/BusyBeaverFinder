@@ -43,6 +43,7 @@ public:
     void reset();
 
     void setEnableUndo(bool enable) { _undoEnabled = enable; }
+    bool undoEnabled() const { return _undoEnabled; }
 
     void setStackSize(int size);
 

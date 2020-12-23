@@ -46,9 +46,11 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 
     _zArrayHelperBuf = nullptr;
 
+    // Set default search mode
     _searchMode = SearchMode::FULL_TREE;
+    _delayHangDetection = false;
 
-    // Init defaults
+    // Set default search settings
     _settings.maxSteps = 1024;
     _settings.maxHangDetectionSteps = _settings.maxSteps;
     _settings.undoCapacity = 1024;
@@ -73,14 +75,22 @@ void ExhaustiveSearcher::configure(SearchSettings settings) {
 }
 
 void ExhaustiveSearcher::reconfigure() {
-    if (_zArrayHelperBuf != nullptr) {
-        delete[] _zArrayHelperBuf;
-    }
-    _zArrayHelperBuf = new int[_settings.maxHangDetectionSteps / 2];
+    // Default. Will be adapted during search when fast resume is enabled.
+    _hangDetectionEnd = _settings.maxHangDetectionSteps;
 
-    _runSummary[0].setCapacity(_settings.maxHangDetectionSteps, _zArrayHelperBuf);
-    _runSummary[1].setCapacity(_settings.maxHangDetectionSteps, _zArrayHelperBuf);
     _data.setStackSize(_settings.undoCapacity);
+
+    int capacity = _settings.maxHangDetectionSteps;
+    if (_zArrayHelperBuf == nullptr || _runSummary[1].getCapacity() != capacity) {
+        // The arrays need to be re-allocated
+
+        delete[] _zArrayHelperBuf; // okay to delete when null
+
+        _zArrayHelperBuf = new int[capacity / 2];
+
+        _runSummary[0].setCapacity(capacity, _zArrayHelperBuf);
+        _runSummary[1].setCapacity(capacity, _zArrayHelperBuf);
+    }
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -141,11 +151,22 @@ void ExhaustiveSearcher::branch(int depth) {
     ProgramPointer pp0 = _pp;
     InstructionPointer insP = nextInstructionPointer(_pp);
     bool resuming = *_resumeFrom != Ins::UNSET;
-    bool backtracking = !(
-        _searchMode == SearchMode::FIND_ONE ||
-        (_searchMode == SearchMode::SUB_TREE && resuming)
+    bool abortSearch = (
+        _searchMode == SearchMode::FIND_ONE || (_searchMode == SearchMode::SUB_TREE && resuming)
     );
-    _data.setEnableUndo(backtracking);
+
+    if (!resuming && !_data.undoEnabled()) {
+        // First unset instruction after the resumeFrom stack
+
+        // Enable backtracking
+        _data.setEnableUndo(true);
+
+        if (_delayHangDetection) {
+            // Start hang detection
+            _delayHangDetection = false;
+            _hangDetectionEnd += _numSteps;
+        }
+    }
 
     for (int i = 0; i < 3; i++) {
         Ins ins = validInstructions[i];
@@ -153,6 +174,8 @@ void ExhaustiveSearcher::branch(int depth) {
         if (resuming) {
             if (ins == *_resumeFrom) {
                 _resumeFrom++;
+
+                resuming = false; // Let search continue in FULL_TREE search mode
             } else {
                 continue;
             }
@@ -166,13 +189,10 @@ void ExhaustiveSearcher::branch(int depth) {
         run(depth + 1);
         _pp = pp0;
 
-        if (!backtracking) {
+        if (abortSearch) {
             assert(_data.getUndoStackSize() == 0);
             break;
         }
-
-        // Clear so that search continues after resuming
-        resuming = false;
     }
     _program.clearInstruction(insP);
     _instructionStack[depth] = Ins::UNSET;
@@ -281,8 +301,8 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             }
         }
 
-        if (_numSteps >= _settings.maxHangDetectionSteps) {
-            return executeCompiledBlocksWithBacktracking();
+        if (_numSteps >= _hangDetectionEnd) {
+            return executeCompiledBlocks();
         }
     }
 
@@ -296,7 +316,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
         return backtrackProgramPointer;
     }
 
-    if (_numSteps >= _settings.maxHangDetectionSteps) {
+    if (_numSteps >= _hangDetectionEnd || _delayHangDetection) {
         return executeCompiledBlocksWithBacktracking();
     }
 
@@ -405,13 +425,14 @@ backtrack:
     _interpretedProgramBuilder.pop();
 }
 
+Ins noResumeStack[] = { Ins::UNSET };
 void ExhaustiveSearcher::search() {
-    _resumeFrom = new Ins[1];
-    _resumeFrom[0] = Ins::UNSET;
+    _resumeFrom = noResumeStack;
 
     _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
     _numSteps = 0;
+    _data.reset();
     run(0);
 }
 
@@ -425,12 +446,20 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _pp.dir = Dir::UP;
     _numSteps = 0;
     _data.reset();
+
+    // When searching the entire tree, undo should be enabled from the start, so that search can
+    // continue outside the initial subtree specified by the resumeFrom stack. For other search
+    // modes it will only be enabled once this subtree is entered.
+    _data.setEnableUndo(_searchMode == SearchMode::FULL_TREE);
+
     run(0);
 }
 
-void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom) {
+void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom, bool delayHangDetection) {
     _searchMode = SearchMode::SUB_TREE;
+    _delayHangDetection = delayHangDetection;
     search(resumeFrom);
+    _delayHangDetection = false;
     _searchMode = SearchMode::FULL_TREE;
 }
 

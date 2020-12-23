@@ -6,8 +6,6 @@
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#include <stdio.h>
-
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"
@@ -286,18 +284,16 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7][1-shot]" ) {
     }
 }
 
-void twoShotSearch(ExhaustiveSearcher& searcher, Ins* resumeStack, int numExpectedSteps) {
+// Follows up on late-escapes
+void multiShotSearch(ExhaustiveSearcher& searcher, Ins* resumeStack, int numExpectedSteps) {
     ProgressTracker* tracker = searcher.getProgressTracker();
 
     searcher.findOne(resumeStack);
 
-    if (tracker->getTotalLateEscapes() == 1) {
-        assert(false); // Flawed test design? Somehow never triggered
-        SearchSettings settings = searcher.getSettings();
-        settings.maxHangDetectionSteps = 0; // Disable hang detection
-        searcher.configure(settings);
-
-        searcher.findOne(resumeStack);
+    long prevTotalLateEscapes = 0;
+    while (tracker->getTotalLateEscapes() == prevTotalLateEscapes + 1) {
+        prevTotalLateEscapes = tracker->getTotalLateEscapes();
+        searcher.searchSubTree(resumeStack, true);
     }
 
     REQUIRE(tracker->getMaxStepsFound() == numExpectedSteps);
@@ -334,7 +330,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 1237792);
+        multiShotSearch(searcher, resumeFrom, 1237792);
     }
     SECTION( "BB 7x7 #1659389" ) {
         //   *   * *
@@ -352,7 +348,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 1659389);
+        multiShotSearch(searcher, resumeFrom, 1659389);
     }
     SECTION( "BB 7x7 #1842683" ) {
         Ins resumeFrom[] = {
@@ -363,7 +359,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 1842683);
+        multiShotSearch(searcher, resumeFrom, 1842683);
     }
     SECTION( "BB 7x7 #3007569" ) {
         //   *       _
@@ -381,7 +377,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::NOOP, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 3007569);
+        multiShotSearch(searcher, resumeFrom, 3007569);
     }
     SECTION( "BB 7x7 #8447143" ) {
         //   *       *
@@ -399,7 +395,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 8447143);
+        multiShotSearch(searcher, resumeFrom, 8447143);
     }
     SECTION( "BB 7x7 #9408043" ) {
         //   *   * *
@@ -417,7 +413,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 9408043);
+        multiShotSearch(searcher, resumeFrom, 9408043);
     }
     SECTION( "BB 7x7 #9607923" ) {
         //       * * *
@@ -435,7 +431,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 9607923);
+        multiShotSearch(searcher, resumeFrom, 9607923);
     }
     SECTION( "BB 7x7 #22606881" ) {
         //   *   * *
@@ -453,7 +449,7 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 22606881);
+        multiShotSearch(searcher, resumeFrom, 22606881);
     }
     SECTION( "BB 7x7 #33207907" ) {
         //   * *   *
@@ -472,6 +468,6 @@ TEST_CASE( "7x7 Two-Shot Completion tests", "[success][7x7][2-shot]" ) {
             Ins::UNSET
         };
 
-        twoShotSearch(searcher, resumeFrom, 33207907);
+        multiShotSearch(searcher, resumeFrom, 33207907);
     }
 }
