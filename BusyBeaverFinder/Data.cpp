@@ -54,8 +54,6 @@ void Data::reset() {
     _maxBoundP = _minBoundP - 1; // Empty bounds
 
     _undoP = _undoStack;
-    _minBoundChanged = _undoP;
-    _maxBoundChanged = _undoP;
     _undoEnabled = true;
 }
 
@@ -80,28 +78,22 @@ void Data::updateBounds() {
             do {
                 _minBoundP++;
             } while (*_minBoundP == 0 && _minBoundP <= _maxBoundP);
-            _minBoundChanged = _undoP;
         }
         else if (_dataP == _maxBoundP) {
             do {
                 _maxBoundP--;
             } while (*_maxBoundP == 0 && _maxBoundP >= _minBoundP);
-            _maxBoundChanged = _undoP;
         }
     } else {
         if (_minBoundP > _maxBoundP) {
             _minBoundP = _dataP;
             _maxBoundP = _dataP;
-            _minBoundChanged = _undoP;
-            _maxBoundChanged = _undoP;
         }
         else if (_dataP < _minBoundP) {
             _minBoundP = _dataP;
-            _minBoundChanged = _undoP;
         }
         else if (_dataP > _maxBoundP) {
             _maxBoundP = _dataP;
-            _maxBoundChanged = _undoP;
         }
     }
 
@@ -191,8 +183,6 @@ void Data::undo(const UndoOp* _targetUndoP) {
             case (int)DataOp::SHL: _dataP += undo & 0x3f; break;
         }
     }
-    _minBoundChanged = _undoStack;
-    _maxBoundChanged = _undoStack;
 }
 
 void Data::dumpWithCursor(DataPointer cursor) const {
