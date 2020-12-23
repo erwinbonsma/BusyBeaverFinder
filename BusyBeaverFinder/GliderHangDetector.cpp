@@ -158,8 +158,6 @@ bool GliderHangDetector::checkTransitionDeltas() {
             // executed.
             int dpOffset = std::abs(relDelta - counterDistance - shift);
             if (dpOffset >= maxAheadOffset) {
-                std::cout << "dpOffset >= maxAheadOffset: ";
-                ((ExhaustiveSearcher &)_executor).dumpInstructionStack();
                 return false;
             }
             assert(dpOffset < maxAheadOffset);

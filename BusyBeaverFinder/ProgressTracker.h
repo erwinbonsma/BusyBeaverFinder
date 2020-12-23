@@ -34,10 +34,6 @@ class ProgressTracker {
     long _totalFaultyHangs = 0;
     clock_t _startTime;
 
-#ifdef TRACK_EQUIVALENCE
-    ulonglong _equivalenceTotal = 0;
-#endif
-
     HangType _detectedHang = HangType::UNDETECTED;
 
     int _maxStepsSofar = 0;
