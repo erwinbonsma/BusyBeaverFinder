@@ -90,11 +90,13 @@ void init(int argc, char * argv[]) {
         resumeStack = loadResumeStackFromFile(resumeFile, width * height);
     }
 
+    tracker = new ProgressTracker(*searcher);
+
     if (result.count("late-escapes")) {
         lateEscapeFile = result["late-escapes"].as<std::string>();
+        tracker->setDumpDone(true);
     }
 
-    tracker = new ProgressTracker(*searcher);
     if (result.count("dump-period")) {
         tracker->setDumpStatsPeriod(result["dump-period"].as<int>());
     }

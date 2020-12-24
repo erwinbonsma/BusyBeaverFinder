@@ -22,6 +22,8 @@ class ProgressTracker {
     int _dumpStackPeriod = 1000000;
     int _dumpBestSofarLimit = 256;
     bool _dumpUndetectedHangs = false;
+    // Can be useful when searching a subtree, e.g. when following up on a late escape
+    bool _dumpDone = false;
 
     ExhaustiveSearcher& _searcher;
 
@@ -54,6 +56,7 @@ public:
     void setDumpStatsPeriod(int val) { _dumpStatsPeriod = val; }
     void setDumpStackPeriod(int val) { _dumpStackPeriod = val; }
     void setDumpUndetectedHangs(bool flag) { _dumpUndetectedHangs = flag; }
+    void setDumpDone(bool flag) { _dumpDone = flag; }
     void setDumpBestSofarLimit(int minSteps) { _dumpBestSofarLimit = minSteps; }
 
     long getTotalSuccess() const { return _totalSuccess; }

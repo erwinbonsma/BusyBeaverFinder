@@ -59,6 +59,11 @@ void ProgressTracker::report() {
 void ProgressTracker::reportDone(int totalSteps) {
     _totalSuccess++;
 
+    if (_dumpDone) {
+        std::cout << "Done(" << totalSteps << "): ";
+        _searcher.dumpInstructionStack();
+    }
+
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
