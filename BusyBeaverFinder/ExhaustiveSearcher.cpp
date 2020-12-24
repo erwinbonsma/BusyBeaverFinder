@@ -289,8 +289,14 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
             bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
-                    _tracker->reportDetectedHang(hangDetector, _settings.testHangDetection);
-                    if (_settings.testHangDetection) {
+                    bool testHang = _settings.testHangDetection && (
+                        hangDetector->hangType() == HangType::REGULAR_SWEEP ||
+                        hangDetector->hangType() == HangType::IRREGULAR_SWEEP ||
+                        hangDetector->hangType() == HangType::APERIODIC_GLIDER
+                    );
+
+                    _tracker->reportDetectedHang(hangDetector, testHang);
+                    if (testHang) {
                         fastExecution();
                     }
                     return backtrackProgramPointer;
