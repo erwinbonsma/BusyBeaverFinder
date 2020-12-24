@@ -414,6 +414,27 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
 
         REQUIRE(tracker.getMaxStepsFound() == 9607923);
     }
+    SECTION( "BB 7x7 #10981971" ) {
+        // Very similar to BB 22.6M. The main logic is identical. Only the bootstrap differs.
+        //
+        //   *   * *
+        // * o _ o _ *
+        //   * * o o _ *
+        //   _ o o * _
+        // * _ _ o o o *
+        // * _   * _ _
+        // o _ _ o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getMaxStepsFound() == 10981971);
+    }
     SECTION( "BB 7x7 #22606881" ) {
         //   *   * *
         // * o _ o _ *
