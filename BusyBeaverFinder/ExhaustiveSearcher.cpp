@@ -75,9 +75,6 @@ void ExhaustiveSearcher::configure(SearchSettings settings) {
 }
 
 void ExhaustiveSearcher::reconfigure() {
-    // Default. Will be adapted during search when fast resume is enabled.
-    _hangDetectionEnd = _settings.maxHangDetectionSteps;
-
     _data.setStackSize(_settings.undoCapacity);
 
     int capacity = _settings.maxHangDetectionSteps;
@@ -425,32 +422,34 @@ backtrack:
     _interpretedProgramBuilder.pop();
 }
 
-Ins noResumeStack[] = { Ins::UNSET };
-void ExhaustiveSearcher::search() {
-    _resumeFrom = noResumeStack;
-
+void ExhaustiveSearcher::initSearch() {
     _pp.p = _program.getStartProgramPointer();
     _pp.dir = Dir::UP;
     _numSteps = 0;
     _data.reset();
+    _hangDetectionEnd = _settings.maxHangDetectionSteps;
+}
+
+
+Ins noResumeStack[] = { Ins::UNSET };
+void ExhaustiveSearcher::search() {
+    _resumeFrom = noResumeStack;
+    initSearch();
+
     run(0);
 }
 
 void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _resumeFrom = resumeFrom;
-
-    std::cout << "Resuming from: ";
-    ::dumpInstructionStack(_resumeFrom);
-
-    _pp.p = _program.getStartProgramPointer();
-    _pp.dir = Dir::UP;
-    _numSteps = 0;
-    _data.reset();
+    initSearch();
 
     // When searching the entire tree, undo should be enabled from the start, so that search can
     // continue outside the initial subtree specified by the resumeFrom stack. For other search
     // modes it will only be enabled once this subtree is entered.
     _data.setEnableUndo(_searchMode == SearchMode::FULL_TREE);
+
+    std::cout << "Resuming from: ";
+    ::dumpInstructionStack(_resumeFrom);
 
     run(0);
 }

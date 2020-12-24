@@ -88,6 +88,7 @@ class ExhaustiveSearcher : public ProgramExecutor {
     bool isSweepDiverging();
 
     void reconfigure();
+    void initSearch();
 
     bool executeCurrentBlock();
 
