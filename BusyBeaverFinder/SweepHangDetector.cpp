@@ -160,10 +160,19 @@ SweepHangDetector::~SweepHangDetector() {
 }
 
 bool SweepHangDetector::shouldCheckNow(bool loopContinues) const {
+    const RunSummary& runSummary = _executor.getRunSummary();
+
     // Should wait for the sweep-loop to finish
     return (
         !loopContinues &&
-        _executor.getRunSummary().getLoopIteration() >= MIN_ITERATIONS_LAST_SWEEP_LOOP
+
+        // Analysis should latch onto a sweep-loop (not a fixed loop part of a transition sequence)
+        runSummary.getLoopIteration() >= MIN_ITERATIONS_LAST_SWEEP_LOOP &&
+
+        // The run should contain two full sweeps preceded by a loop: L0 (T0 L1 T1 L0) (T0 L1 T1 L0)
+        // Note, transitions are named after the loop that precedes it (as they depend on the exit
+        // of that loop).
+        runSummary.getNumRunBlocks() > 8
     );
 }
 
@@ -391,15 +400,6 @@ void SweepHangDetector::clearAnalysis() {
 }
 
 bool SweepHangDetector::analyzeHangBehaviour() {
-    const RunSummary& runSummary = _executor.getRunSummary();
-
-    if (runSummary.getNumRunBlocks() <= 8) {
-        // The run should contain two full sweeps preceded by a loop: L0 (T0 L1 T1 L0) (T0 L1 T1 L0)
-        // Note, transitions are named after the loop that precedes it (as they depend on the exit
-        // of that loop).
-        return false;
-    }
-
     if (oldAnalysisAvailable()) {
         clearAnalysis(); // TEMP
     }
