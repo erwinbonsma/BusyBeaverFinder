@@ -38,11 +38,11 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
 {
     initInstructionStack(width * height);
 
-    _hangDetectors[0] = new PeriodicHangDetector(*this);
-    _hangDetectors[1] = new MetaPeriodicHangDetector(*this);
-    _hangDetectors[2] = new GliderHangDetector(*this);
-    _hangDetectors[3] = new PeriodicSweepHangDetector(*this);
-    _hangDetectors[4] = new IrregularSweepHangDetector(*this);
+    _hangDetectors.push_back(new PeriodicHangDetector(*this));
+    _hangDetectors.push_back(new MetaPeriodicHangDetector(*this));
+    _hangDetectors.push_back(new GliderHangDetector(*this));
+    _hangDetectors.push_back(new PeriodicSweepHangDetector(*this));
+    _hangDetectors.push_back(new IrregularSweepHangDetector(*this));
 
     _zArrayHelperBuf = nullptr;
 

@@ -9,6 +9,8 @@
 #ifndef ExhaustiveSearcher_h
 #define ExhaustiveSearcher_h
 
+#include <vector>
+
 #include "ProgramExecutor.h"
 
 #include "Program.h"
@@ -76,7 +78,7 @@ class ExhaustiveSearcher : public ProgramExecutor {
 
     FastExecutor _fastExecutor;
 
-    HangDetector* _hangDetectors[5];
+    std::vector<HangDetector*> _hangDetectors;
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;
