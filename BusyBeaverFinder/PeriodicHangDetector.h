@@ -27,23 +27,23 @@ protected:
     LoopAnalysis _loop;
     int _loopStart;
 
-    bool shouldCheckNow(bool loopContinues);
+    bool shouldCheckNow(bool loopContinues) const override;
 
     // Analyses the loop. Returns YES if it exhibits periodic hang behavior. In that case, _loop
     // and _loopStart should point to the analyzed periodic loop and its starting point.
-    bool analyzeHangBehaviour();
+    bool analyzeHangBehaviour() override;
 
     Trilian proofHangPhase1();
     Trilian proofHangPhase2();
 
-    Trilian proofHang();
+    Trilian proofHang() override;
 
 public:
     PeriodicHangDetector(const ProgramExecutor& executor);
 
-    HangType hangType() const { return HangType::PERIODIC; }
+    HangType hangType() const override { return HangType::PERIODIC; }
 
-    void reset();
+    void reset() override;
 };
 
 #endif /* PeriodicHangDetector_h */

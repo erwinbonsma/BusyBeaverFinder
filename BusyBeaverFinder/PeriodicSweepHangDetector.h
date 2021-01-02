@@ -53,12 +53,12 @@ class PeriodicSweepHangDetector : public SweepHangDetector {
     bool analyzeSweepIterations();
 
 protected:
-    bool shouldCheckNow(bool loopContinues) override;
+    bool shouldCheckNow(bool loopContinues) const override;
 
     bool analyzeHangBehaviour() override;
     bool analyzeTransitions() override;
 
-    bool scanSweepSequence(DataPointer &dp, bool atRight) override;
+    bool scanSweepSequence(DataPointer &dp, int fromEndIndex) override;
 
 public:
     PeriodicSweepHangDetector(const ProgramExecutor& executor);

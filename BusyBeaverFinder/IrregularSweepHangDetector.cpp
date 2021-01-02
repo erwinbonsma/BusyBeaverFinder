@@ -65,11 +65,6 @@ IrregularSweepHangDetector::IrregularSweepHangDetector(const ProgramExecutor& ex
     }
 }
 
-bool IrregularSweepHangDetector::shouldCheckNow(bool loopContinues) {
-    // Should wait for the sweep-loop to finish
-    return !loopContinues;
-}
-
 bool IrregularSweepHangDetector::analyzeTransitions() {
     SweepTransitionScanner transitionScanner(*this);
     int numUniqueTransitions = 0;

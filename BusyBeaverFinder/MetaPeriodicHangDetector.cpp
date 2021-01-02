@@ -13,7 +13,7 @@
 MetaPeriodicHangDetector::MetaPeriodicHangDetector(const ProgramExecutor& executor)
     : PeriodicHangDetector(executor) {}
 
-bool MetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) {
+bool MetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) const {
     // Should wait for the inner-loop to finish
     return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
 }

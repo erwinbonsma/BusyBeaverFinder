@@ -16,14 +16,14 @@ class MetaPeriodicHangDetector : public PeriodicHangDetector {
     bool _lastAnalysisResult;
 
 protected:
-    bool shouldCheckNow(bool loopContinues);
-    bool analyzeHangBehaviour();
-    Trilian proofHang();
+    bool shouldCheckNow(bool loopContinues) const override;
+    bool analyzeHangBehaviour() override;
+    Trilian proofHang() override;
 
 public:
     MetaPeriodicHangDetector(const ProgramExecutor& executor);
 
-    void reset();
+    void reset() override;
 };
 
 #endif /* MetaPeriodicHangDetector_h */

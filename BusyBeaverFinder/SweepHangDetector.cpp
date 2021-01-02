@@ -159,6 +159,14 @@ SweepHangDetector::~SweepHangDetector() {
     }
 }
 
+bool SweepHangDetector::shouldCheckNow(bool loopContinues) const {
+    // Should wait for the sweep-loop to finish
+    return (
+        !loopContinues &&
+        _executor.getRunSummary().getLoopIteration() >= MIN_ITERATIONS_LAST_SWEEP_LOOP
+    );
+}
+
 int SweepHangDetector::findPreviousSweepLoop(int runBlockIndex) const {
     const RunSummary& runSummary = _executor.getRunSummary();
 
@@ -203,10 +211,6 @@ bool SweepHangDetector::analyzeLoops() {
     int numSweepLoops = 0;
     int numAnalyzedLoops = 0;
     int runBlockIndex = runSummary.getNumRunBlocks();
-
-    if (runSummary.getLoopIteration() < MIN_ITERATIONS_LAST_SWEEP_LOOP) {
-        return sweepHangFailure(_executor);
-    }
 
     while (numAnalyzedLoops < 4) {
         int nextIndex = runBlockIndex;
@@ -299,29 +303,30 @@ bool SweepHangDetector::analyzeTransitionGroups() {
     return true;
 }
 
-bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp,
-                                                    bool atRight, int initialDpDelta
+bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp, int fromEndIndex,
+                                                    int initialDpDelta
 ) {
     const Data& data = _executor.getData();
+
+    // DP is at one side of the sweep. Find the other end of the sweep.
+    auto sweepGroup = _transitionGroups[fromEndIndex];
+    auto sweepLoop = sweepGroup->outgoingLoop();
+    bool sweepMakesPersistentChange = (sweepGroup->combinedSweepValueChangeType()
+                                       != SweepValueChangeType::NO_CHANGE);
 
     // For now, scan all values as the values that are skipped now may be expected during a next
     // sweep.
     // TODO?: Make analysis smarter.
-    int delta = atRight ? -1 : 1;
+    int delta = sweepGroup->locatedAtRight() ? -1 : 1;
 
     DataPointer dpEnd = (delta > 0) ? data.getMaxDataP() : data.getMinDataP();
 
-    // DP is at one side of the sweep. Find the other end of the sweep.
-    auto sweepGroup = _transitionGroups[0];
-    auto sweepLoop = sweepGroup->outgoingLoop();
-    bool sweepMakesPersistentChange = (sweepGroup->combinedSweepValueChangeType()
-                                       != SweepValueChangeType::NO_CHANGE);
     dp += delta * initialDpDelta;
     while (*dp) {
         if (sweepLoop->isExitValue(*dp)) {
             // Found end of sweep
 
-            if (sweepLoop != _transitionGroups[1]->incomingLoop()) {
+            if (sweepLoop != _transitionGroups[1 - fromEndIndex]->incomingLoop()) {
                 // This is a mid-sweep transition, continue with incoming sweep loop
                 if (
                     sweepGroup->midSweepTransition() != nullptr &&
@@ -337,7 +342,7 @@ bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp,
                     // sweep hangs.
                 }
 
-                sweepGroup = _transitionGroups[1];
+                sweepGroup = _transitionGroups[1 - fromEndIndex];
                 sweepLoop = sweepGroup->incomingLoop();
                 sweepMakesPersistentChange = (sweepGroup->combinedSweepValueChangeType()
                                               != SweepValueChangeType::NO_CHANGE);
@@ -359,8 +364,22 @@ bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp,
     return true;
 }
 
-bool SweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
-    return scanSweepSequenceAfterDelta(dp, atRight, 1);
+bool SweepHangDetector::scanSweepSequence(DataPointer &dp, int fromEndIndex) {
+    return scanSweepSequenceAfterDelta(dp, fromEndIndex, 1);
+}
+
+bool SweepHangDetector::verifySweepReturns(DataPointer dp1, DataPointer dp0) {
+    DataPointer dp2 = dp1;
+
+    if (!scanSweepSequence(dp2, 1)) {
+        return sweepHangFailure(_executor);
+    }
+
+    if (dp2 != dp0) {
+        return sweepHangFailure(_executor);
+    }
+
+    return true;
 }
 
 void SweepHangDetector::clear() {
@@ -419,7 +438,7 @@ Trilian SweepHangDetector::proofHang() {
 
     DataPointer dp1 = dp0; // Initial value
 
-    if (!scanSweepSequence(dp1, _transitionGroups[0]->locatedAtRight())) {
+    if (!scanSweepSequence(dp1, 0)) {
         return Trilian::MAYBE;
     }
     assert(dp0 != dp1);
@@ -432,6 +451,11 @@ Trilian SweepHangDetector::proofHang() {
             return result;
         }
     }
+
+// TODO: Enable
+//    if (!verifySweepReturns(dp1, dp0)) {
+//        return Trilian::MAYBE;
+//    }
 
 //    _executor.getRunSummary().dump();
 //    _executor.getMetaRunSummary().dump();

@@ -47,16 +47,16 @@ class GliderHangDetector : public HangDetector {
     bool onlyZeroesAhead();
 
 protected:
-    bool shouldCheckNow(bool loopContinues);
+    bool shouldCheckNow(bool loopContinues) const override;
 
-    bool analyzeHangBehaviour();
+    bool analyzeHangBehaviour() override;
 
-    Trilian proofHang();
+    Trilian proofHang() override;
 
 public:
     GliderHangDetector(const ProgramExecutor& executor);
 
-    virtual HangType hangType() const { return HangType::APERIODIC_GLIDER; }
+    virtual HangType hangType() const override { return HangType::APERIODIC_GLIDER; }
 };
 
 #endif /* GliderHangDetector_h */

@@ -14,7 +14,7 @@
 
 class HangDetector {
     // When last hang proof attempt was done that failed
-    int _lastCheckPoint;
+    int _lastFailedCheckPoint;
 
     // When last analysis was performed
     int _analysisCheckPoint;
@@ -29,7 +29,7 @@ protected:
     // hang that is being detected.
     int currentCheckPoint() { return _executor.getRunSummary().getNumRunBlocks(); }
 
-    virtual bool shouldCheckNow(bool loopContinues) = 0;
+    virtual bool shouldCheckNow(bool loopContinues) const = 0;
 
     // Checks if the run summary and possibly meta-run summary exhibits the characteristic behaviour
     // for the hang that is being detected. Returns true iff this is the case. It should then also

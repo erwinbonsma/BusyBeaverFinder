@@ -16,7 +16,7 @@
 GliderHangDetector::GliderHangDetector(const ProgramExecutor& executor)
     : HangDetector(executor) {}
 
-bool GliderHangDetector::shouldCheckNow(bool loopContinues) {
+bool GliderHangDetector::shouldCheckNow(bool loopContinues) const {
     // Should wait for the glider-loop to finish
     return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
 }

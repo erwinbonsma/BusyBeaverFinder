@@ -53,6 +53,8 @@ protected:
     SweepTransitionGroup *_transitionGroups[2];
 
     /* Analysis */
+    bool shouldCheckNow(bool loopContinues) const override;
+
     int findPreviousSweepLoop(int runBlockIndex) const;
 
     bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
@@ -68,12 +70,13 @@ protected:
     /* Dynamic checks */
     // Find the other end of the sequence. Updates dp accordingly. When deltaSign is non-zero, it
     // verifies that this delta moves the entire sequence away from zer*o.
-    bool scanSweepSequenceAfterDelta(DataPointer &dp, bool atRight, int initialDpDelta);
-    virtual bool scanSweepSequence(DataPointer &dp, bool atRight);
+    bool scanSweepSequenceAfterDelta(DataPointer &dp, int fromEndIndex, int initialDpDelta);
+    virtual bool scanSweepSequence(DataPointer &dp, int fromEndIndex);
+    bool verifySweepReturns(DataPointer dp1, DataPointer dp0);
 
-    bool analyzeHangBehaviour();
+    bool analyzeHangBehaviour() override;
 
-    Trilian proofHang();
+    Trilian proofHang() override;
 
     void clear();
 

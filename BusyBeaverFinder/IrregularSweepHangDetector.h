@@ -20,8 +20,6 @@ class IrregularSweepTransitionGroup : public SweepTransitionGroup {
 class IrregularSweepHangDetector : public SweepHangDetector {
 
 protected:
-    bool shouldCheckNow(bool loopContinues) override;
-
     bool analyzeHangBehaviour() override;
     bool analyzeTransitions() override;
 

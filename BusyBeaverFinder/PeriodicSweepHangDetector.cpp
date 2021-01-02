@@ -174,16 +174,16 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
     return true;
 }
 
-bool PeriodicSweepHangDetector::scanSweepSequence(DataPointer &dp, bool atRight) {
-    auto sweepGroup = (PeriodicSweepTransitionGroup *)_transitionGroups[0];
+bool PeriodicSweepHangDetector::scanSweepSequence(DataPointer &dp, int fromEndIndex) {
+    auto sweepGroup = (PeriodicSweepTransitionGroup *)_transitionGroups[fromEndIndex];
     int initialDelta = abs(sweepGroup->firstTransition().transition->dataPointerDelta()) + 1;
 
-    return scanSweepSequenceAfterDelta(dp, atRight, initialDelta);
+    return scanSweepSequenceAfterDelta(dp, fromEndIndex, initialDelta);
 }
 
-bool PeriodicSweepHangDetector::shouldCheckNow(bool loopContinues) {
+bool PeriodicSweepHangDetector::shouldCheckNow(bool loopContinues) const {
     // Should wait for the sweep-loop to finish
-    return (!loopContinues &&
+    return (SweepHangDetector::shouldCheckNow(loopContinues) &&
             _executor.getMetaRunSummary().isInsideLoop() &&
             _executor.getMetaRunSummary().getLoopIteration() >= 3);
 }
