@@ -188,7 +188,7 @@ TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" )
     }
 }
 
-TEST_CASE( "7x7 hangs", "[hang][7x7][fail]" ) {
+TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
     ExhaustiveSearcher searcher(7, 7, 16384);
     ProgressTracker tracker(searcher);
 
@@ -292,5 +292,175 @@ TEST_CASE( "7x7 hangs", "[hang][7x7][fail]" ) {
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
+}
+
+TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
+    ExhaustiveSearcher searcher(7, 7, 16384);
+    ProgressTracker tracker(searcher);
+
+    tracker.setDumpBestSofarLimit(INT_MAX);
+    searcher.setProgressTracker(&tracker);
+
+    SearchSettings settings = searcher.getSettings();
+    settings.maxHangDetectionSteps = 100000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+    settings.undoCapacity = settings.maxSteps;
+    searcher.configure(settings);
+
+    SECTION( "7x7-FalsePositive1" ) {
+        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
+        // appendix at its right. However, the leftwards sweep moves DP by two cells each
+        // iteration. All leftward sweeps, however, seem to end on the first zero at the left. This
+        // is caused by how the "bits" in the binary appendix at the right toggle. However, after
+        // 2000 steps the left sweep lands on the second zero, which causes the program to exit.
+        //
+        // Fix: Do not allow sweep loop that moves away from aperiodic appendix to move DP more
+        // than one?
+        //
+        // *     * *
+        // o _ * _ _ _ *
+        // _ _ * o o _
+        // _ _ o o o *
+        // _ o _ o _ *
+        // _ * _ o o *
+        // _   * * *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not actually be detected as hanging
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "7x7-FalsePositive2" ) {
+        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
+        // appendix at its right. However, the sequence that changes a -1 bit in the binary
+        // appendix to a -2 requires that the cell located two cells to its left has a non-zero
+        // value. This is not the case for a -1 value near the end of the appendix.
+        //
+        // Fix: Require that in-appendix transition sequences for aperiodic appendix do not inspect
+        // values beyond the bit that they are toggling.
+        //
+        //     *     *
+        //   * _ _ * o *
+        // * _ o o o _ *
+        // *   _ * o _
+        // o o o * o *
+        // _   * _ o *
+        // _       *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not actually be detected as hanging
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "7x7-FalsePositive3" ) {
+        // Program exhibits a behavior that resembles a simple hang. Steady growth at its right,
+        // and a fixed point at its left. However, this fixed point is classified incorrectly. The
+        // transition sequence (plus subsequent bootstrap of the outgoing loop) actually moves one
+        // cell towards zero.
+        //
+        // Fix: Detect that transition sequence (with subsequent loop bootstrap) moves one cell
+        // towards zero.
+        //
+        //   *     * *
+        //   _ _ * o _ *
+        // * o _ o o o *
+        // * * * o * o
+        // o o o o * o
+        // _ * _ o _ o
+        // _     *   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not actually be detected as hanging
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "7x7-FalsePositive4" ) {
+        // Program exhibits a behavior that resembles a simple hang. Steady growth at both sides.
+        // However, there is an isolated one at the left of the sequence that breaks the leftward
+        // growth and causes the program to terminate.
+        //
+        // Fix: Correctly detect that this 1 value causes a different execution path.
+        //
+        //       *
+        //     * o _ *
+        //     * o * _ *
+        // *   _ o * o
+        // o o o o o o *
+        // _ * _ _ _ o
+        // _     *   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not actually be detected as hanging
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "7x7-FalsePositive5" ) {
+        // Very similar in behavior to the previous program.
+        //
+        // Fix: Same as previous
+        //
+        //   *   * *
+        // * o o _ _ *
+        //     * o o *
+        // *   _ o * _ *
+        // o o o o o o *
+        // _ * _ o o o *
+        // _   * *   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not actually be detected as hanging
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+    }
+    SECTION( "7x7-FalsePositive6" ) {
+        // Very similar in behavior to the previous program. Possibly a bit more subtle.
+        //
+        //       *
+        //     * o _ _ *
+        //     * o   *
+        // *   _ o * _
+        // o o o o o o *
+        // _ * _ _ _ o
+        // _     *   *
+        Ins resumeFrom[] = {
+            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
+            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
+            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not actually be detected as hanging
+        REQUIRE(tracker.getTotalDetectedHangs() == 1);
     }
 }
