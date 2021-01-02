@@ -78,7 +78,7 @@ protected:
 
     Trilian proofHang() override;
 
-    void clear();
+    void clearAnalysis() override;
 
 public:
     SweepHangDetector(const ProgramExecutor& executor);

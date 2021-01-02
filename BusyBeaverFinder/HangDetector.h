@@ -36,6 +36,18 @@ protected:
     // have analysed the loop(s) that comprise the assumed hang.
     virtual bool analyzeHangBehaviour() = 0;
 
+    // Clears results of analysis. It is invoked when a hang check failed.
+    virtual void clearAnalysis() { _analysisCheckPoint = -1; }
+
+    // Returns true results of a previous analysis are still available. This is the case when the
+    // program might hang, but this cannot yet be proven. When analysing the hang behavior in
+    // analyzeHangBehavior a hang detector may want to re-use the old analysis (and verify that it
+    // is still valid) instead of redoing it. This is not only a possible optimization, but may be
+    // essential to prove certain hangs. In particular, it is needed when the hang cannot be proven
+    // in one go and the proof spans multiple checkpoints. This is for example the case for
+    // irregular sweep hangs, as these lack natural check points (due to their irregularity).
+    bool oldAnalysisAvailable() const { return _analysisCheckPoint != -1; }
+
     // Checks if it can be proven that the program hang. Returns YES if this is the case. Can
     // return MAYBE if it is not yet clear yet.
     virtual Trilian proofHang() = 0;

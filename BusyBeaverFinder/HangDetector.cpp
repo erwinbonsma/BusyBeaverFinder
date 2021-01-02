@@ -20,6 +20,8 @@ HangDetector::HangDetector(const ProgramExecutor& executor) :
 void HangDetector::reset() {
     _lastFailedCheckPoint = -1;
     _analysisCheckPoint = -1;
+
+    clearAnalysis();
 }
 
 bool HangDetector::detectHang(bool loopContinues) {
@@ -38,6 +40,7 @@ bool HangDetector::detectHang(bool loopContinues) {
         // We have not yet analysed the current situation
         if (!analyzeHangBehaviour()) {
             _lastFailedCheckPoint = now;
+            clearAnalysis();
             return false;
         }
         _analysisCheckPoint = now;
@@ -49,6 +52,7 @@ bool HangDetector::detectHang(bool loopContinues) {
     }
     if (result == Trilian::NO) {
         _lastFailedCheckPoint = now;
+        clearAnalysis();
         return false;
     }
 

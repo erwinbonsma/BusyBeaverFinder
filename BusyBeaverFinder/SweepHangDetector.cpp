@@ -382,7 +382,9 @@ bool SweepHangDetector::verifySweepReturns(DataPointer dp1, DataPointer dp0) {
     return true;
 }
 
-void SweepHangDetector::clear() {
+void SweepHangDetector::clearAnalysis() {
+    HangDetector::clearAnalysis();
+
     for (SweepTransitionGroup *tg : _transitionGroups) {
         tg->clear();
     }
@@ -398,7 +400,9 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-    clear();
+    if (oldAnalysisAvailable()) {
+        clearAnalysis(); // TEMP
+    }
 
     if (!analyzeLoops()) {
         return false;
