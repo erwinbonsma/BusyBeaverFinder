@@ -377,20 +377,6 @@ bool SweepHangDetector::scanSweepSequence(DataPointer &dp, int fromEndIndex) {
     return scanSweepSequenceAfterDelta(dp, fromEndIndex, 1);
 }
 
-bool SweepHangDetector::verifySweepReturns(DataPointer dp1, DataPointer dp0) {
-    DataPointer dp2 = dp1;
-
-    if (!scanSweepSequence(dp2, 1)) {
-        return sweepHangFailure(_executor);
-    }
-
-    if (dp2 != dp0) {
-        return sweepHangFailure(_executor);
-    }
-
-    return true;
-}
-
 void SweepHangDetector::clearAnalysis() {
     HangDetector::clearAnalysis();
 
@@ -416,10 +402,6 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return sweepHangFailure(_executor);
     }
 
-//    _executor.getInterpretedProgram().dump();
-//    _executor.dumpExecutionState();
-//    dump();
-
     return true;
 }
 
@@ -442,17 +424,6 @@ Trilian SweepHangDetector::proofHang() {
             return result;
         }
     }
-
-// TODO: Enable
-//    if (!verifySweepReturns(dp1, dp0)) {
-//        return Trilian::MAYBE;
-//    }
-
-//    _executor.getRunSummary().dump();
-//    _executor.getMetaRunSummary().dump();
-//    dump();
-//    _executor.getData().dump();
-//    _executor.getInterpretedProgram().dump();
 
     return Trilian::YES;
 }

@@ -72,7 +72,6 @@ protected:
     // verifies that this delta moves the entire sequence away from zer*o.
     bool scanSweepSequenceAfterDelta(DataPointer &dp, int fromEndIndex, int initialDpDelta);
     virtual bool scanSweepSequence(DataPointer &dp, int fromEndIndex);
-    bool verifySweepReturns(DataPointer dp1, DataPointer dp0);
 
     bool analyzeHangBehaviour() override;
 
