@@ -408,20 +408,9 @@ bool SweepHangDetector::analyzeHangBehaviour() {
         return false;
     }
 
-//    std::cout
-//    << "0-IN=" << _transitionGroups[0].incomingLoop()->loopRunBlock()->getSequenceIndex()
-//    << ", 0-OUT=" << _transitionGroups[0].outgoingLoop()->loopRunBlock()->getSequenceIndex()
-//    << ", 1-IN=" << _transitionGroups[1].incomingLoop()->loopRunBlock()->getSequenceIndex()
-//    << ", 1-OUT=" << _transitionGroups[1].outgoingLoop()->loopRunBlock()->getSequenceIndex()
-//    << std::endl;
-
-//    _executor.dumpExecutionState();
-
     if (!analyzeTransitions()) {
         return false;
     }
-
-//    ((const ExhaustiveSearcher &)_executor).getProgram().dumpWeb();
 
     if (!analyzeTransitionGroups()) {
         return sweepHangFailure(_executor);
@@ -437,8 +426,6 @@ bool SweepHangDetector::analyzeHangBehaviour() {
 Trilian SweepHangDetector::proofHang() {
     const Data& data = _executor.getData();
     DataPointer dp0 = data.getDataPointer();
-
-//    data.dump();
 
     DataPointer dp1 = dp0; // Initial value
 
