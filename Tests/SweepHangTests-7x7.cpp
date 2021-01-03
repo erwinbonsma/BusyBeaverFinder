@@ -11,7 +11,7 @@
 #include "ExhaustiveSearcher.h"
 #include "SweepHangDetector.h"
 
-TEST_CASE( "7x7 sweep hangs", "[hang][7x7][sweep][regular]" ) {
+TEST_CASE( "7x7 sweep hangs", "[hang][7x7][sweep][irregular]" ) {
     ExhaustiveSearcher searcher(7, 7, 16384);
     ProgressTracker tracker(searcher);
 

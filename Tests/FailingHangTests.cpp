@@ -417,6 +417,8 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        //REQUIRE(tracker.getMaxStepsFound() == 257);
     }
     SECTION( "7x7-FalsePositive5" ) {
         // Very similar in behavior to the previous program.
@@ -462,5 +464,7 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(tracker.getTotalDetectedHangs() == 1);
+
+        //REQUIRE(tracker.getMaxStepsFound() == 317);
     }
 }
