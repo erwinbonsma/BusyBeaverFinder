@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 const int dx[4] = { 0, 1, 0, -1 };
 const int dy[4] = { 1, 0, -1, 0 };
@@ -158,6 +159,68 @@ int findRepeatedSequence(const int* input, int* buf, int len) {
     }
 
     return 0;
+}
+
+std::set<int> deltasCanSumToSet1, deltasCanSumToSet2, deltasCanSumToSet3;
+std::vector<int> deltasCanSumToVector1, deltasCanSumToVector2;
+bool deltasCanSumTo(std::set<int> deltas, int target) {
+    assert(target != 0);
+
+    // Handle trivial cases
+    if (deltas.size() == 0) {
+        return false;
+    }
+
+    // Scan deltas
+    auto &forwardDeltas = deltasCanSumToSet1;
+    auto &backwardDeltas = deltasCanSumToSet2;
+    forwardDeltas.clear();
+    backwardDeltas.clear();
+
+    for (int delta : deltas) {
+        if (sign(delta) == sign(target)) {
+            if (target % delta == 0) {
+                return true;
+            }
+            forwardDeltas.insert(abs(delta));
+        } else {
+            backwardDeltas.insert(-abs(delta));
+        }
+    }
+    target = abs(target);
+
+    // Try to reach target value
+    auto &values = deltasCanSumToSet3;
+    auto *curValues = &deltasCanSumToVector1;
+    auto *nxtValues = &deltasCanSumToVector2;
+    values.clear();
+    values.insert(0);
+    curValues->clear();
+    curValues->push_back(0);
+
+    while (curValues->size() > 0) {
+        nxtValues->clear();
+        for (int value : *curValues) {
+            for (int delta : (value < target) ? forwardDeltas : backwardDeltas) {
+                int newValue = value + delta;
+                if (
+                    newValue == target || (target - value) % delta == 0
+                ) {
+                    return true;
+                }
+                if (values.find(newValue) == values.end()) {
+                    values.insert(newValue);
+                    nxtValues->push_back(newValue);
+                }
+            }
+        }
+
+        auto tmp = curValues;
+        curValues = nxtValues;
+        nxtValues = tmp;
+    }
+
+    return false;
 }
 
 // Returns nullptr when input did not contain any instructions (this could be a comment line)

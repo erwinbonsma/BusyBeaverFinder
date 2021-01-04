@@ -279,32 +279,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
-    SECTION( "6x6-SweepWithZeroFixedPointThatOscillatesDuringTurn" ) {
-        // A leftwards extending sweep that turns at the right on a zero value. During the turn,
-        // this value briefly oscillates to 1 before it is restored to zero. The logic of this
-        // reveral is fairly complex. A noteworthy feature of this program is that it generates a
-        // sequence of descending values: -1 -2 -3 -4 -5 .... etc
-        //
-        //   *   * *
-        // * o o _ _ *
-        // o _ o _ _ *
-        // o * * o o *
-        // o * _ o *
-        // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
-
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
-    }
-    SECTION( "6x6-SweepWithNonZeroFixedPointThatOscillatesDuringTurn" ) {
+    SECTION( "6x6-SweepWithNonZeroFixedPointThatOscillatesDuringTurn3" ) {
         // Hang featuring a complex fixed turn at the right side of the sequence. The sweep loop
         // ends on value 1 (with it becoming zero). The transition changes this value to 2, and the
         // left-sweeping loop finally restores it to 1.
@@ -328,7 +303,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
-    SECTION( "6x6-SweepWithNonZeroFixedPointThatOscillatesDuringTurn2" ) {
+    SECTION( "6x6-SweepWithNonZeroFixedPointThatOscillatesDuringTurn4" ) {
         // The right-sweep exits on a fixed point, with value one. When the loop exits, it is zero.
         // The transition increases it to two, with the left-sweeping loop restoring it to one
         // again.
@@ -344,6 +319,31 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
             Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
             Ins::NOOP, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
+
+        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
+    }
+    SECTION( "6x6-SweepWithZeroFixedPointThatOscillatesDuringTurn" ) {
+        // A leftwards extending sweep that turns at the right on a zero value. During the turn,
+        // this value briefly oscillates to 1 before it is restored to zero. The logic of this
+        // reveral is fairly complex. A noteworthy feature of this program is that it generates a
+        // sequence of descending values: -1 -2 -3 -4 -5 .... etc
+        //
+        //   *   * *
+        // * o o _ _ *
+        // o _ o _ _ *
+        // o * * o o *
+        // o * _ o *
+        // o     *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
         searcher.findOne(resumeFrom);
 

@@ -32,6 +32,7 @@
 		AA28C0A422073D2A00F7EC25 /* SweepHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */; };
 		AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A52207428A00F7EC25 /* CompletionTests.cpp */; };
 		AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */; };
+		AA2E8BA325A222CA003AD189 /* DeltaSummationTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2E8BA225A222CA003AD189 /* DeltaSummationTests.cpp */; };
 		AA37E6CB2295D62200117A85 /* FastExecutor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA37E6C92295D62200117A85 /* FastExecutor.cpp */; };
 		AA37E6CC2295D62200117A85 /* FastExecutor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA37E6C92295D62200117A85 /* FastExecutor.cpp */; };
 		AA37E6CE229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA37E6CD229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp */; };
@@ -126,6 +127,7 @@
 		AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SweepHangTests.cpp; sourceTree = "<group>"; };
 		AA28C0A52207428A00F7EC25 /* CompletionTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CompletionTests.cpp; sourceTree = "<group>"; };
 		AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PeriodDetectionTests.cpp; sourceTree = "<group>"; };
+		AA2E8BA225A222CA003AD189 /* DeltaSummationTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DeltaSummationTests.cpp; sourceTree = "<group>"; };
 		AA37E6C92295D62200117A85 /* FastExecutor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FastExecutor.cpp; sourceTree = "<group>"; };
 		AA37E6CA2295D62200117A85 /* FastExecutor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FastExecutor.h; sourceTree = "<group>"; };
 		AA37E6CD229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LateEscapeFollowUpTests.cpp; sourceTree = "<group>"; };
@@ -251,6 +253,7 @@
 				AA153A8F228371BA00F7B1DF /* InterpretationTests.cpp */,
 				AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */,
 				AA0D5ADE225D1901001909AF /* RepeatDetectionTests.cpp */,
+				AA2E8BA225A222CA003AD189 /* DeltaSummationTests.cpp */,
 				AA4F4515225A44830069FF36 /* RunSummaryTests.cpp */,
 				AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */,
 				AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */,
@@ -432,6 +435,7 @@
 				AA4F4510224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AABDCBB1253B197B0009516B /* SweepHangDetector.cpp in Sources */,
 				AA5D7E9A257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */,
+				AA2E8BA325A222CA003AD189 /* DeltaSummationTests.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,

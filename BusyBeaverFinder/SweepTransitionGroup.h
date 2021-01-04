@@ -156,8 +156,78 @@ struct SweepTransition {
     : transition(sta), nextLoopStartIndex(nextLoopStartIndex), numOccurences(1) {}
 };
 
+class SweepTransitionGroup;
+class SweepEndTypeAnalysis {
+protected:
+    const SweepTransitionGroup& _group;
+
+    int deltaAfterExit(const LoopExit& loopExit, const SweepTransition& trans) const;
+
+    void addInsweepDeltasAfterTransition(SweepTransition st, DataDeltas &dataDeltas) const;
+
+    void addInSweepDeltasForExit(std::set<int> &deltas, int exitInstruction) const;
+
+    // Determines all in-sweep deltas that can occur as part of a loop exit and adds them to the
+    // given set. This method considers the following changes:
+    // 1. Changes by the incoming loop. Due to the exit, these deltas can differ from the steady
+    //    state deltas applied during the sweep.
+    // 2. Changes by the subsequent transition(s). These are applied on top of the deltas of the
+    //    incoming loop.
+    // 3. Bootstrap only changes by the outgoing loop.
+    void collectExitRelatedInsweepDeltas(std::set<int> &deltas) const;
+
+    void collectSweepDeltas(std::set<int> &deltas) const;
+
+    bool valueCanBeChangedToExitByDeltas(int value, std::set<int> &deltas) const;
+
+public:
+    SweepEndTypeAnalysis(const SweepTransitionGroup& group) : _group(group) {}
+
+    virtual SweepEndType determineSweepEndType() = 0;
+};
+
+class SweepEndTypeAnalysisZeroExits : SweepEndTypeAnalysis {
+    // Counts transitions where an exit value remains unchanged, or changes into another exit.
+    int _exitToExit = 0;
+
+    // Counts transitions where an exit value is converted to a value that can never be converted
+    // into an exit. It considers sweep changes as well as any in-sweep deltas by transitions.
+    int _exitToSweepBody = 0;
+
+    // Counts transitions where an exit value is converted to a value that is not an exit, but might
+    // be changed into one later. It might also be changed to a definite sweep body value, or always
+    // remain in limbo.
+    int _exitToLimbo = 0;
+
+    int _limboToExitBySweep = 0;
+    int _limboToExitByLoopExit = 0;
+    int _limboToSweepBody = 0;
+
+    bool _exitValueChanges;
+
+    bool analyseExits();
+    SweepEndType classifySweepEndType();
+
+public:
+    SweepEndTypeAnalysisZeroExits(const SweepTransitionGroup& group)
+    : SweepEndTypeAnalysis(group) {};
+
+    SweepEndType determineSweepEndType() override;
+};
+
+class SweepEndTypeAnalysisNonZeroExits : SweepEndTypeAnalysis {
+public:
+    SweepEndTypeAnalysisNonZeroExits(const SweepTransitionGroup& group)
+    : SweepEndTypeAnalysis(group) {};
+
+    SweepEndType determineSweepEndType() override;
+};
+
 class SweepTransitionGroup {
     friend std::ostream &operator<<(std::ostream&, const SweepTransitionGroup&);
+    friend SweepEndTypeAnalysis;
+    friend SweepEndTypeAnalysisZeroExits;
+    friend SweepEndTypeAnalysisNonZeroExits;
 
     // The loop that start this (group of) transition(s).
     const SweepLoopAnalysis *_incomingLoop;
@@ -188,15 +258,7 @@ class SweepTransitionGroup {
     int numberOfTransitionsForExitValue(int value) const;
     int numberOfExitsForValue(int value) const;
 
-    // Checks if the given value can be modified by the next sweep loop to result in an exit.
-    // Here value is the final value of the data cell that caused the loop exit.
-    bool dataDeltasCanTransformValueToExit(int value, const DataDeltas &dataDeltas) const;
-    bool hasIndirectExitForValueAfterExit(int value, int exitInstruction) const;
-    bool canLoopExitChangeValueToExitValue(int value) const;
-
     bool determineCombinedSweepValueChange();
-
-    void collectInsweepDeltasAfterTransition(SweepTransition st, DataDeltas &dataDeltas) const;
 
 protected:
     // Indicates if the hang is locked into a periodic behavior at the meta-run level. Not only

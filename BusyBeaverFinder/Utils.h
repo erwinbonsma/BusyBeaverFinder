@@ -9,7 +9,7 @@
 #ifndef Utils_h
 #define Utils_h
 
-#include <stdio.h>
+#include <set>
 #include <string>
 #include <istream>
 
@@ -46,6 +46,9 @@ int findPeriod(const char* input, int* buf, int len);
 // abcdabc => 0
 // abcdee => 1
 int findRepeatedSequence(const int* input, int* buf, int len);
+
+// Returns true if any combination of deltas (with repeats) can sum to target value.
+bool deltasCanSumTo(std::set<int> deltas, int target);
 
 Ins* loadResumeStackFromStream(std::istream &input, int maxSize);
 
