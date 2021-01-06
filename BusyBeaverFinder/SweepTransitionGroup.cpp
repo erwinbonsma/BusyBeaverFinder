@@ -283,28 +283,17 @@ void SweepEndTypeAnalysis::addInSweepDeltasForExit(std::set<int> &deltas,
     auto beg = _group._transitions.lower_bound(exitInstruction);
     auto end = _group._transitions.upper_bound(exitInstruction);
 
-    if (beg == end) {
-        // Check the impact of the incoming loop only. This covers the situation where no transition
-        // yet exists following the given exit, but one could actually be encountered (when the
-        // program runs for longer).
+    while (beg != end) {
+        auto &sweepTransition = beg->second;
+
         _group._incomingLoop->collectInsweepDeltasAfterExit(exitInstruction, dataDeltas);
+        addInsweepDeltasAfterTransition(sweepTransition, dataDeltas);
 
         for (DataDelta dd : dataDeltas) {
             deltas.insert(dd.delta());
         }
-    } else {
-        while (beg != end) {
-            auto &sweepTransition = beg->second;
 
-            _group._incomingLoop->collectInsweepDeltasAfterExit(exitInstruction, dataDeltas);
-            addInsweepDeltasAfterTransition(sweepTransition, dataDeltas);
-
-            for (DataDelta dd : dataDeltas) {
-                deltas.insert(dd.delta());
-            }
-
-            ++beg;
-        }
+        ++beg;
     }
 }
 
