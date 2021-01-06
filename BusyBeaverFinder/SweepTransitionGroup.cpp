@@ -28,6 +28,7 @@ bool transitionGroupFailure(const SweepTransitionGroup& tg) {
 }
 
 SweepEndType unsupportedSweepEndType(const SweepTransitionGroup& tg) {
+//    std::cout << tg << std::endl;
     numTransitionGroupFailures++;
     return SweepEndType::UNSUPPORTED;
 }
@@ -465,7 +466,7 @@ SweepEndType SweepEndTypeAnalysisZeroExits::classifySweepEndType() {
     }
 
     // TODO: Extend
-    return SweepEndType::UNSUPPORTED;
+    return unsupportedSweepEndType(_group);
 /*
     if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
         if (_limboToSweepBody) {

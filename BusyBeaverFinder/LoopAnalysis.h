@@ -130,6 +130,7 @@ public:
     // always the same loop instruction (or set of instructions) that first sees a data value.
     int numBootstrapCycles() const { return _numBootstrapCycles; }
 
+    const DataDeltas& dataDeltas() const override;
     int numDataDeltas() const override;
     const DataDelta& dataDeltaAt(int idx) const override;
 
