@@ -28,7 +28,7 @@ bool transitionGroupFailure(const SweepTransitionGroup& tg) {
 }
 
 SweepEndType unsupportedSweepEndType(const SweepTransitionGroup& tg) {
-//    std::cout << tg << std::endl;
+    std::cout << tg << std::endl;
     numTransitionGroupFailures++;
     return SweepEndType::UNSUPPORTED;
 }
@@ -280,8 +280,8 @@ void SweepEndTypeAnalysis::addInSweepDeltasForExit(std::set<int> &deltas,
     auto &dataDeltas = addInSweepDeltasForExitDataDeltas;
 
     // Determine what all inside-sweep deltas can be when this exit is taken
-    auto beg = _group._transitions.lower_bound(exitInstruction);
-    auto end = _group._transitions.upper_bound(exitInstruction);
+    auto beg = _group._transitionMap.lower_bound(exitInstruction);
+    auto end = _group._transitionMap.upper_bound(exitInstruction);
 
     while (beg != end) {
         auto &sweepTransition = beg->second;
@@ -328,7 +328,7 @@ void SweepEndTypeAnalysis::collectSweepDeltas(std::set<int> &deltas) const {
 }
 
 bool SweepEndTypeAnalysis::valueCanBeChangedToExitByDeltas(int value, std::set<int> &deltas) const {
-    for (auto kv : _group._transitions) {
+    for (auto kv : _group._transitionMap) {
         const LoopExit &loopExit = _group._incomingLoop->exit(kv.first);
 
         if (loopExit.exitWindow == ExitWindow::ANYTIME) {
@@ -375,7 +375,7 @@ bool SweepEndTypeAnalysisZeroExits::analyseExits() {
     _exitToExit = _exitToLimbo = _exitToSweepBody = 0;
     _limboToExitBySweep = _limboToExitByLoopExit = _limboToSweepBody = 0;
 
-    for (auto kv : _group._transitions) {
+    for (auto kv : _group._transitionMap) {
         const LoopExit &loopExit = _group._incomingLoop->exit(kv.first);
         const SweepTransition &trans = kv.second;
 
@@ -454,6 +454,17 @@ SweepEndType SweepEndTypeAnalysisZeroExits::classifySweepEndType() {
         return SweepEndType::IRREGULAR_GROWTH;
     }
 
+    // Try to identify the a-periodic appendix
+    if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
+        if (_limboToExitBySweep) {
+            return SweepEndType::FIXED_APERIODIC_APPENDIX;
+        }
+    }
+
+    // This is still too general.
+    // TODO: Refine
+    return SweepEndType::IRREGULAR_GROWTH;
+
     // TODO: Extend
     return unsupportedSweepEndType(_group);
 /*
@@ -505,7 +516,7 @@ SweepEndType SweepEndTypeAnalysisNonZeroExits::determineSweepEndType() {
     int numPositiveDeltas = 0;
     int numNegativeDeltas = 0;
 
-    for (auto kv : _group._transitions) {
+    for (auto kv : _group._transitionMap) {
         const LoopExit &loopExit = _group._incomingLoop->exit(kv.first);
         const SweepTransition &trans = kv.second;
 
@@ -541,7 +552,7 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
 }
 
 void SweepTransitionGroup::clear() {
-    _transitions.clear();
+    _transitionMap.clear();
     _incomingLoop = nullptr;
     _outgoingLoop = nullptr;
     _midSweepTransition = nullptr;
@@ -551,7 +562,7 @@ void SweepTransitionGroup::clear() {
 int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
     int count = 0;
 
-    for (auto kv : _transitions) {
+    for (auto kv : _transitionMap) {
         int exitIndex = kv.first;
 
         if (_incomingLoop->exit(exitIndex).exitCondition.isTrueForValue(value)) {
@@ -568,7 +579,7 @@ bool SweepTransitionGroup::determineSweepEndType() {
 
 //    std::cout << *this;
 
-    for (auto kv : _transitions) {
+    for (auto kv : _transitionMap) {
         const LoopExit &loopExit = _incomingLoop->exit(kv.first);
 
         if (loopExit.exitWindow == ExitWindow::ANYTIME) {
@@ -658,8 +669,8 @@ bool SweepTransitionGroup::canSweepChangeValueTowardsZero(int value) const {
 const SweepTransition* SweepTransitionGroup::findTransitionMatching(
     int exitInstruction, int startIndex, int endIndex, const ProgramExecutor& executor
 ) const {
-    for (auto beg = _transitions.lower_bound(exitInstruction),
-              end = _transitions.upper_bound(exitInstruction);
+    for (auto beg = _transitionMap.lower_bound(exitInstruction),
+              end = _transitionMap.upper_bound(exitInstruction);
          beg != end; ++beg
     ) {
         const SweepTransition &tr = beg->second;
@@ -672,7 +683,7 @@ const SweepTransition* SweepTransitionGroup::findTransitionMatching(
 }
 
 bool SweepTransitionGroup::hasUniqueTransitions() const {
-    for (auto elem : _transitions) {
+    for (auto elem : _transitionMap) {
         const SweepTransition &tr = elem.second;
         if (tr.numOccurences == 1) {
             return true;
@@ -712,7 +723,7 @@ bool SweepTransitionGroup::analyzeGroup() {
 
     _insideSweepTransitionDeltaSign = 0;
     _outsideDeltas.clear();
-    for (auto kv : _transitions) {
+    for (auto kv : _transitionMap) {
         const SweepTransition transition = kv.second;
         const SweepTransitionAnalysis *analysis = transition.transition;
 
@@ -858,8 +869,8 @@ std::ostream& SweepTransitionGroup::dump(std::ostream &os) const {
     os << "Incoming Loop: #" << _incomingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
     os << *_incomingLoop;
 
-    auto iter = _transitions.begin();
-    while (iter != _transitions.end()) {
+    auto iter = _transitionMap.begin();
+    while (iter != _transitionMap.end()) {
         int exitIndex = iter->first;
         SweepTransition transition = iter->second;
         os << "  Exit instruction = " << exitIndex;

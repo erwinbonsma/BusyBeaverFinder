@@ -8,6 +8,8 @@
 
 #include "PeriodicSweepHangDetector.h"
 
+#include <algorithm>
+
 int numPeriodicSweepFailures = 0;
 bool periodicSweepHangFailure(const ProgramExecutor& executor) {
 //    executor.dumpExecutionState();
@@ -34,9 +36,31 @@ bool PeriodicSweepTransitionGroup::determineSweepEndType() {
     return true;
 }
 
+void PeriodicSweepTransitionGroup::addTransition(const SweepTransition *transition) {
+    _transitions.push_back(transition);
+}
+
+bool PeriodicSweepTransitionGroup::finishTransitionAnalysis() {
+    if (hasUniqueTransitions()) {
+        // As two iterations of the meta-loop have been scanned. Each transition should occur
+        // (at least) twice.
+        return periodicSweepHangFailure(*this);
+    }
+
+    // Order transitions chronologically
+    std::reverse(std::begin(_transitions), std::end(_transitions));
+
+    return true;
+}
+
 bool PeriodicSweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& data) const {
+    // TODO: Make smarter
+    // It should fully exploit the periodic analysis and from that determine how many values
+    // external to DP (a loop exit) have already been visited by the sweep which do not need
+    // be zero (and also what value they should be for the sweep hang to continue as indefinitely).
+
     int maxOvershoot = 0;
-    for (auto kv : _firstTransition.transition->preConditions()) {
+    for (auto kv : _transitions[0]->transition->preConditions()) {
         int dpOffset = kv.first;
         if (dpOffset != 0 && locatedAtRight() == (dpOffset > 0)) {
             PreCondition preCondition = kv.second;
@@ -78,9 +102,12 @@ bool PeriodicSweepTransitionGroup::onlyZeroesAhead(DataPointer dp, const Data& d
 std::ostream& PeriodicSweepTransitionGroup::dump(std::ostream &os) const {
     SweepTransitionGroup::dump(os);
     os << std::endl;
-    if (_firstTransition.transition) {
-        os << "First transition = " << *(_firstTransition.transition);
+
+    os << "Transitions:" << std::endl;
+    for (auto tr : _transitions) {
+        os << *(tr->transition) << std::endl;
     }
+
     return os;
 }
 
@@ -138,13 +165,14 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
             return false;
         }
 
-        if (st->numOccurences == 1 && transitionScanner.nextLoopIndex() < metaLoop2Index) {
+        if (transitionScanner.nextLoopIndex() >= metaLoop2Index) {
+            // First iteration of meta-loop
+            ((PeriodicSweepTransitionGroup *)_transitionGroups[transitionScanner.numSweeps() % 2]
+             )->addTransition(st);
+        } else if (st->numOccurences == 1) {
             // No new transition should be encountered after one iteration of the meta-loop
             return periodicSweepHangFailure(_executor);
         }
-
-        ((PeriodicSweepTransitionGroup *)_transitionGroups[transitionScanner.numSweeps() % 2]
-         )->setFirstTransition(*st);
     }
 
     if (transitionScanner.nextLoopIndex() != metaLoop1Index) {
@@ -160,15 +188,10 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
         return periodicSweepHangFailure(_executor);
     }
 
-    if (_transitionGroups[0]->hasUniqueTransitions() ||
-        _transitionGroups[1]->hasUniqueTransitions()
-    ) {
-        // Exceptional case. Given that the meta-run is in a loop it is not expected. However, it
-        // can happen if the transitions contain loops with a small but varying number of
-        // iterations (e.g. 2 and 3). In this case, transition sequences in different iterations
-        // of the meta-loop can differ in length due to this varying iteration count.
-
-        return periodicSweepHangFailure(_executor);
+    for (auto tg : _transitionGroups) {
+        if (! ((PeriodicSweepTransitionGroup *)tg)->finishTransitionAnalysis()) {
+            return periodicSweepHangFailure(_executor);
+        }
     }
 
     return true;
@@ -176,7 +199,7 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
 
 bool PeriodicSweepHangDetector::scanSweepSequence(DataPointer &dp, int fromEndIndex) {
     auto sweepGroup = (PeriodicSweepTransitionGroup *)_transitionGroups[fromEndIndex];
-    int initialDelta = abs(sweepGroup->firstTransition().transition->dataPointerDelta()) + 1;
+    int initialDelta = abs(sweepGroup->firstTransition()->transition->dataPointerDelta()) + 1;
 
     return scanSweepSequenceAfterDelta(dp, fromEndIndex, initialDelta);
 }

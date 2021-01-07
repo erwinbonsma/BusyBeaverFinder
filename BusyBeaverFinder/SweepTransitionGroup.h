@@ -238,9 +238,9 @@ class SweepTransitionGroup {
 
     // Map from a given loop exit to the transition(s) that follows it.
     //
-    // Note: Most exits are followed by one transition. However, it is possible that there is
-    // more than one, which can happen if the transition depends on nearby data values.
-    std::multimap<int, SweepTransition> _transitions;
+    // Note: Most exits are followed by either no or one transition. However, it is possible that
+    // there is more than one, which can happen if the transition depends on nearby data values.
+    std::multimap<int, SweepTransition> _transitionMap;
 
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
@@ -294,10 +294,10 @@ public:
     bool canSweepChangeValueTowardsZero(int value) const;
 
     bool hasTransitionForExit(int exitIndex) const {
-        return _transitions.find(exitIndex) != _transitions.end();
+        return _transitionMap.find(exitIndex) != _transitionMap.end();
     }
     const SweepTransition* addTransitionForExit(int exitIndex, SweepTransition st) {
-        return &(_transitions.insert({exitIndex, st})->second);
+        return &(_transitionMap.insert({exitIndex, st})->second);
     }
     const SweepTransition* findTransitionMatching(int exitInstruction,
                                                   int transitionStartIndex,

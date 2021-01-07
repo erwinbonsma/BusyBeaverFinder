@@ -12,20 +12,24 @@
 #include "SweepHangDetector.h"
 
 class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
-    SweepTransition _firstTransition;
+    friend class PeriodicSweepHangDetector;
+
+    // The transitions, ordered as they occur during one period of the sweep.
+    std::vector<const SweepTransition*> _transitions;
 
     bool hangIsMetaPeriodic() override { return true; }
     bool determineSweepEndType() override;
     bool onlyZeroesAhead(DataPointer dp, const Data& data) const override;
+
+    void addTransition(const SweepTransition *transition);
+    bool finishTransitionAnalysis();
 
 public:
     // The first transition for this group. If the group has multiple transitions, the first
     // transition depends on when analysis is invoked, so is somewhat arbitrary. However, it also
     // means that it is the first transition that will be executed next, which therefore is useful
     // in analysing the data when trying to proof the hang.
-    SweepTransition firstTransition() const { return _firstTransition; };
-
-    void setFirstTransition(SweepTransition transition) { _firstTransition = transition; }
+    const SweepTransition* firstTransition() const { return _transitions[0]; };
 
     std::ostream& dump(std::ostream &os) const override;
 };
