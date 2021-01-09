@@ -17,6 +17,11 @@ class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
     // The transitions, ordered as they occur during one period of the sweep.
     std::vector<const SweepTransition*> _transitions;
 
+    // The deltas of the sweep end-point after each sweep. Positive deltas means that the sequence
+    // grows. The sum of all deltas can only be zero (fixed point) or positive (growing sequence).
+    // However, individual deltas can be negative.
+    std::vector<int> _sweepExitDeltas;
+
     bool hangIsMetaPeriodic() override { return true; }
     bool determineSweepEndType() override;
     bool onlyZeroesAhead(DataPointer dp, const Data& data) const override;
@@ -24,12 +29,19 @@ class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
     void addTransition(const SweepTransition *transition);
     bool finishTransitionAnalysis();
 
+    void addExitDelta(int delta) { _sweepExitDeltas.push_back(delta); }
+
 public:
     // The first transition for this group. If the group has multiple transitions, the first
     // transition depends on when analysis is invoked, so is somewhat arbitrary. However, it also
     // means that it is the first transition that will be executed next, which therefore is useful
     // in analysing the data when trying to proof the hang.
     const SweepTransition* firstTransition() const { return _transitions[0]; };
+
+    bool isSweepGrowing() const;
+    bool isSweepGrowthConstant() const;
+
+    void clear() override;
 
     std::ostream& dump(std::ostream &os) const override;
 };

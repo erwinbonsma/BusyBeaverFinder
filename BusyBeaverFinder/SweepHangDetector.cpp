@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include "Utils.h"
+#include "RunSummary.h"
 
 const int MAX_ITERATIONS_TRANSITION_LOOPS = 3;
 const int MIN_ITERATIONS_LAST_SWEEP_LOOP = 5;
@@ -67,6 +68,7 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     auto group = _sweepHangDetector._transitionGroups;
     auto &executor = _sweepHangDetector._executor;
     int j = (_numSweeps + 1) % 2;
+    int lastLoopIndex = _nextLoopIndex;
 
     if (group[j]->outgoingLoop() != group[1 - j]->incomingLoop() ||
         group[j]->midSweepTransition() != nullptr
@@ -145,6 +147,9 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     _nextLoopIndex = loopIndex;
     _nextLoopStartInstructionIndex = rotationEquivalenceOffset;
     _numSweeps++;
+
+    _lastSweepLength = abs(getDpDelta(executor.getRunSummary(), executor.getInterpretedProgram(),
+                                      transitionStartIndex, lastLoopIndex + 1));
 
     return st;
 }
@@ -410,6 +415,9 @@ Trilian SweepHangDetector::proofHang() {
     DataPointer dp0 = data.getDataPointer();
 
     DataPointer dp1 = dp0; // Initial value
+
+    std::cout << *this << std::endl;
+    _executor.getData().dump();
 
     if (!scanSweepSequence(dp1, 0)) {
         return Trilian::MAYBE;

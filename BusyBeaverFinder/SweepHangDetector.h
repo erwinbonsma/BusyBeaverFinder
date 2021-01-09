@@ -25,6 +25,7 @@ class SweepTransitionScanner {
     int _nextLoopIndex;
     int _nextLoopStartInstructionIndex;
     int _numSweeps;
+    int _lastSweepLength;
     int _numUniqueTransitions;
 
     // Returns run block index of the transition that precedes the given sweep loop. If there is
@@ -36,6 +37,7 @@ public:
 
     int nextLoopIndex() const { return _nextLoopIndex; }
     int numSweeps() const { return _numSweeps; }
+    int lastSweepLength() const { return _lastSweepLength; }
 
     // Go back in the run history to find and analyze the previous sweep transition. If no
     // transition can be found because the run history does not exhibit a sweep behavior (anymore),

@@ -305,7 +305,7 @@ public:
                                                   const ProgramExecutor& executor) const;
     bool hasUniqueTransitions() const;
 
-    void clear();
+    virtual void clear();
     bool analyzeSweeps();
     bool analyzeGroup();
 

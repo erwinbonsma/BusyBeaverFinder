@@ -183,4 +183,10 @@ public:
     void dump() const;
 };
 
+class InterpretedProgram;
+// Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up to
+// lastRunBlock (exclusive).
+int getDpDelta(const RunSummary &runSummary, const InterpretedProgram &program,
+               int firstRunBlock, int lastRunBlock);
+
 #endif /* RunSummary_h */
