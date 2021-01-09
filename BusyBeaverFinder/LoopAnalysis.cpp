@@ -129,8 +129,20 @@ int LoopAnalysis::deltaAt(int dpOffset) const {
 int LoopAnalysis::deltaAtOnNonStandardEntry(int dpOffset, int startingInstruction) const {
     assert(startingInstruction > 0);
 
-    const DataDelta &dd = effectiveResultAt(startingInstruction - 1);
-    return deltaAt(dpOffset - dd.dpOffset()) - dd.delta();
+    // Establish delta, compensating for DP offset
+    auto ddEntry = effectiveResultAt(startingInstruction - 1);
+    int delta = deltaAt(dpOffset + ddEntry.dpOffset());
+
+    // Undo data value changes caused by skipped instructions.
+    for (int i = startingInstruction; --i >= 0; ) {
+        auto dd = effectiveResultAt(i);
+        if (dd.dpOffset() == (dpOffset + ddEntry.dpOffset())) {
+            delta -= dd.delta();
+            break;
+        }
+    }
+
+    return delta;
 }
 
 void LoopAnalysis::squashDeltas() {

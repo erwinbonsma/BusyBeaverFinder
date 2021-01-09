@@ -75,7 +75,7 @@ public:
     bool expressionEquals(Operator op, int value) const {
         return op == _operator && value == _value;
     }
-    bool modulusContraintEquals(int modulus) const { return modulus == _modulus; }
+    bool modulusConstraintEquals(int modulus) const { return modulus == _modulus; }
 };
 
 std::ostream &operator<<(std::ostream &os, const ExitCondition &ec);
