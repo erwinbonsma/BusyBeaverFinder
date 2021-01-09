@@ -416,8 +416,8 @@ Trilian SweepHangDetector::proofHang() {
 
     DataPointer dp1 = dp0; // Initial value
 
-    std::cout << *this << std::endl;
-    _executor.getData().dump();
+//    std::cout << *this << std::endl;
+//    _executor.getData().dump();
 
     if (!scanSweepSequence(dp1, 0)) {
         return Trilian::MAYBE;

@@ -809,17 +809,10 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1); // FIXME? See below.
+        REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-
-        // Strictly speaking, this classification is incorrect as the appendix is periodically
-        // growing via irregular growth. The hang detector correctly detects that the 1-valued exit
-        // could convert a neighbouring 2-value into an exit. However, it does not detect that this
-        // cannot happen anymore once the program settles into the periodic rythm described above.
-        // This does not really matter though, as the conclusion that the program hangs is still
-        // correct.
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX); // FIXME?
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
     }
     SECTION( "6x6-SweepLoopExceedsMidSequencePoint" ) {
         // Program where DP during its leftwards sweep briefly extends beyond the mid-sequence
@@ -2104,8 +2097,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(tracker.getTotalHangs(HangType::REGULAR_SWEEP) == 1);
 
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        // It grows irregularly, but is wrongly classified as steady growth
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH); // TODO: FIXME
+        REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
     }
     SECTION( "6x6-SweepHangWithGhostInSweepTransitionDelta" ) {
         // The sweep transition at the left side is fairly complicated, which caused it to initially

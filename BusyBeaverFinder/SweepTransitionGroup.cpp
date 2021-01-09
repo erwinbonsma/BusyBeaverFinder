@@ -454,12 +454,12 @@ SweepEndType SweepEndTypeAnalysisZeroExits::classifySweepEndType() {
         return SweepEndType::IRREGULAR_GROWTH;
     }
 
-    // Try to identify the a-periodic appendix
-    if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
-        if (_limboToExitBySweep) {
-            return SweepEndType::FIXED_APERIODIC_APPENDIX;
-        }
-    }
+//    // Try to identify the a-periodic appendix
+//    if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
+//        if (_limboToExitBySweep) {
+//            return SweepEndType::FIXED_APERIODIC_APPENDIX;
+//        }
+//    }
 
     // Possibly refined elsewhere, with more context
     return SweepEndType::UNKNOWN;
