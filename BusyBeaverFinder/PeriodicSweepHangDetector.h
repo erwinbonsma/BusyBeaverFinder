@@ -31,6 +31,8 @@ class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
 
     void addExitDelta(int delta) { _sweepExitDeltas.push_back(delta); }
 
+    bool determineZeroExitSweepEndType() override;
+
 public:
     // The first transition for this group. If the group has multiple transitions, the first
     // transition depends on when analysis is invoked, so is somewhat arbitrary. However, it also

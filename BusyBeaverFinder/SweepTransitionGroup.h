@@ -25,11 +25,13 @@ class ProgramExecutor;
 enum class SweepEndType : int {
     UNKNOWN = 0,
 
+    // TODO: Rename to MONOTONOUS_GROWTH
     /* The sequence is growing each sweep. Each iteration it adds one (or more) non-exit values
      * to the sweep body.
      */
     STEADY_GROWTH = 1,
 
+    // TODO: Rename to NONUNIFORM_GROWTH
     /* The sequence is growing, but not each sweep. This end value of the sequence can take two
      * (or more) different exit values. For at least one value, the sweep will change it into
      * another exit value. For at least one other value, the sweep will change it in a non-exit
@@ -269,12 +271,22 @@ protected:
     // lenient.
     virtual bool hangIsMetaPeriodic() { return false; }
 
+    void setEndType(SweepEndType endType) {
+        assert(!didDetermineEndType());
+        _sweepEndType = endType;
+    }
+
+    virtual bool determineZeroExitSweepEndType();
+    virtual bool determineNonZeroExitSweepEndType();
     virtual bool determineSweepEndType();
+
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 
 public:
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
+    bool didDetermineEndType() { return (_sweepEndType != SweepEndType::UNKNOWN &&
+                                         _sweepEndType != SweepEndType::UNSUPPORTED); }
 
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
     int insideSweepTransitionDeltaSign() const { return _insideSweepTransitionDeltaSign; }

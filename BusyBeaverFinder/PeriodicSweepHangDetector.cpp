@@ -129,6 +129,22 @@ bool PeriodicSweepTransitionGroup::isSweepGrowthConstant() const {
     return true;
 }
 
+bool PeriodicSweepTransitionGroup::determineZeroExitSweepEndType() {
+    if (SweepTransitionGroup::determineZeroExitSweepEndType()) {
+        return true;
+    }
+
+    if (!isSweepGrowing()) {
+        setEndType(SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
+    } else if (isSweepGrowthConstant()) {
+        setEndType(SweepEndType::STEADY_GROWTH);
+    } else {
+        setEndType(SweepEndType::IRREGULAR_GROWTH);
+    }
+
+    return didDetermineEndType();
+}
+
 std::ostream& PeriodicSweepTransitionGroup::dump(std::ostream &os) const {
     SweepTransitionGroup::dump(os);
     os << std::endl;

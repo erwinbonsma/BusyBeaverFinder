@@ -461,47 +461,8 @@ SweepEndType SweepEndTypeAnalysisZeroExits::classifySweepEndType() {
         }
     }
 
-    // This is still too general.
-    // TODO: Refine
-    return SweepEndType::IRREGULAR_GROWTH;
-
-    // TODO: Extend
-    return unsupportedSweepEndType(_group);
-/*
-    if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
-        if (_limboToSweepBody) {
-            // TODO: Refine. This may also lead to FIXED_POINT_MULTIPLE_VALUES
-            // This can happen when the value never moves out of reach of the transition
-            // sequences.
-            // For hang detection this distinction does not (yet?) matter, so is not urgent.
-
-        } else {
-            return SweepEndType::FIXED_APERIODIC_APPENDIX;
-        }
-    } else {
-        int numberOfExitsForZero = _group.numberOfTransitionsForExitValue(0);
-        if (numberOfExitsForZero == 0) {
-            // Unsettled. Need at least one transition for zero
-            return unsupportedSweepEndType(_group);
-        } else if (_limboToExitBySweep) {
-            return SweepEndType::FIXED_APERIODIC_APPENDIX;
-        } else if (_group._transitions.size() == numberOfExitsForZero) {
-            // Although the limbo value could change to an exit-value, the loop exit that can
-            // cause this apparently never occurs at a place on the data tape where this occurs.
-            // This for example happens for fast-growing sequences where the loop exit is not
-            // on the very first zero.
-            return SweepEndType::STEADY_GROWTH;
-        } else {
-            // There are some non-zero exits next to the zero exits, so the growth is
-            // irregular.
-            if (_limboToSweepBody) {
-                _sweepEndType = SweepEndType::IRREGULAR_GROWTH;
-            } else {
-                _sweepEndType = SweepEndType::FIXED_APERIODIC_APPENDIX;
-            }
-        }
-    }
- */
+    // Possibly refined elsewhere, with more context
+    return SweepEndType::UNKNOWN;
 }
 
 SweepEndType SweepEndTypeAnalysisZeroExits::determineSweepEndType() {
@@ -573,6 +534,22 @@ int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
     return count;
 }
 
+bool SweepTransitionGroup::determineZeroExitSweepEndType() {
+    SweepEndTypeAnalysisZeroExits analysis(*this);
+
+    _sweepEndType = analysis.determineSweepEndType();
+
+    return didDetermineEndType();
+}
+
+bool SweepTransitionGroup::determineNonZeroExitSweepEndType() {
+    SweepEndTypeAnalysisNonZeroExits analysis(*this);
+
+    _sweepEndType = analysis.determineSweepEndType();
+
+    return didDetermineEndType();
+}
+
 bool SweepTransitionGroup::determineSweepEndType() {
     int numNonZeroExits = 0;
     int numExits = 0;
@@ -592,20 +569,15 @@ bool SweepTransitionGroup::determineSweepEndType() {
     }
 
     if (numNonZeroExits == 0) {
-        SweepEndTypeAnalysisZeroExits analysis(*this);
-
-        _sweepEndType = analysis.determineSweepEndType();
+        return determineZeroExitSweepEndType();
     } else if (numNonZeroExits == numExits) {
-        SweepEndTypeAnalysisNonZeroExits analysis(*this);
-
-        _sweepEndType = analysis.determineSweepEndType();
-    } else {
-        // To facilitate analysis, when one exit is on a non-zero value, require that all are.
-        _sweepEndType = SweepEndType::UNSUPPORTED;
-        return transitionGroupFailure(*this);
+        return determineNonZeroExitSweepEndType();
     }
 
-    return _sweepEndType != SweepEndType::UNSUPPORTED;
+    // To facilitate analysis, when one exit is on a non-zero value, require that all are.
+    _sweepEndType = SweepEndType::UNSUPPORTED;
+
+    return transitionGroupFailure(*this);
 }
 
 bool SweepTransitionGroup::determineCombinedSweepValueChange() {
