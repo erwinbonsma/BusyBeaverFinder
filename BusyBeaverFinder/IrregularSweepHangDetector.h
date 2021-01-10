@@ -13,6 +13,10 @@
 
 class IrregularSweepTransitionGroup : public SweepTransitionGroup {
 
+    bool exhibitsAperiodicGrowth();
+    bool determineZeroExitSweepEndType() override;
+
+public:
     bool determineSweepEndType() override;
 
 };

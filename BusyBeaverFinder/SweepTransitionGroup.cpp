@@ -450,16 +450,29 @@ SweepEndType SweepEndTypeAnalysisZeroExits::classifySweepEndType() {
 
     assert(_exitToLimbo);
     assert(_limboToExitBySweep || _limboToExitByLoopExit);
+
+    if (_group.numberOfTransitionsForExitValue(0) == 0) {
+        return SweepEndType::UNKNOWN;
+    }
+
     if (_exitToSweepBody) {
         return SweepEndType::IRREGULAR_GROWTH;
     }
 
-//    // Try to identify the a-periodic appendix
-//    if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
-//        if (_limboToExitBySweep) {
-//            return SweepEndType::FIXED_APERIODIC_APPENDIX;
-//        }
-//    }
+    // Try to identify the a-periodic appendix
+    if (_group.numberOfTransitionsForExitValue(0) > 0) {
+        if (_group._sweepValueChangeType == SweepValueChangeType::UNIFORM_CHANGE) {
+            if (_limboToExitBySweep) {
+                return SweepEndType::FIXED_APERIODIC_APPENDIX;
+            }
+        }
+        if (_group._sweepValueChangeType == SweepValueChangeType::NO_CHANGE) {
+            if (_limboToExitBySweep) {
+                assert(false); // Check if this can actually occur
+                return SweepEndType::FIXED_APERIODIC_APPENDIX;
+            }
+        }
+    }
 
     // Possibly refined elsewhere, with more context
     return SweepEndType::UNKNOWN;
@@ -512,12 +525,16 @@ std::ostream &operator<<(std::ostream &os, const SweepTransitionAnalysis& sta) {
     return os;
 }
 
+SweepTransitionGroup::SweepTransitionGroup()
+    : _zeroExitEndTypeAnalysis(*this), _nonZeroExitEndTypeAnalysis(*this) {}
+
 void SweepTransitionGroup::clear() {
     _transitionMap.clear();
     _incomingLoop = nullptr;
     _outgoingLoop = nullptr;
     _midSweepTransition = nullptr;
     _sweepEndType = SweepEndType::UNKNOWN;
+    _sweepExitDeltas.clear();
 }
 
 int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
@@ -534,18 +551,37 @@ int SweepTransitionGroup::numberOfTransitionsForExitValue(int value) const {
     return count;
 }
 
-bool SweepTransitionGroup::determineZeroExitSweepEndType() {
-    SweepEndTypeAnalysisZeroExits analysis(*this);
+bool SweepTransitionGroup::isSweepGrowing() const {
+    int sum = 0;
 
-    _sweepEndType = analysis.determineSweepEndType();
+    for (int delta : _sweepExitDeltas) {
+        sum += delta;
+    }
+
+    return sum != 0;
+}
+
+bool SweepTransitionGroup::isSweepGrowthConstant() const {
+    auto it = _sweepExitDeltas.cbegin();
+    int firstDelta = *it;
+
+    while (++it != _sweepExitDeltas.cend()) {
+        if (*it != firstDelta) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SweepTransitionGroup::determineZeroExitSweepEndType() {
+    _sweepEndType = _zeroExitEndTypeAnalysis.determineSweepEndType();
 
     return didDetermineEndType();
 }
 
 bool SweepTransitionGroup::determineNonZeroExitSweepEndType() {
-    SweepEndTypeAnalysisNonZeroExits analysis(*this);
-
-    _sweepEndType = analysis.determineSweepEndType();
+    _sweepEndType = _nonZeroExitEndTypeAnalysis.determineSweepEndType();
 
     return didDetermineEndType();
 }
@@ -688,7 +724,7 @@ bool SweepTransitionGroup::analyzeSweeps() {
 
 bool SweepTransitionGroup::analyzeGroup() {
     if (!determineSweepEndType()) {
-        return false;
+        return transitionGroupFailure(*this);
     }
 
 //    std::cout << *this << std::endl;
@@ -837,6 +873,16 @@ Trilian SweepTransitionGroup::proofHang(DataPointer dp, const Data& data) {
     return Trilian::YES;
 }
 
+std::ostream& SweepTransitionGroup::dumpExitDeltas(std::ostream &os) const {
+    os << "Sweep exit deltas:";
+    for (int delta : _sweepExitDeltas) {
+        os << " " << delta;
+    }
+    os << std::endl;
+
+    return os;
+}
+
 std::ostream& SweepTransitionGroup::dump(std::ostream &os) const {
     os << "Incoming Loop: #" << _incomingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
     os << *_incomingLoop;
@@ -856,6 +902,8 @@ std::ostream& SweepTransitionGroup::dump(std::ostream &os) const {
     if (_midSweepTransition != nullptr) {
         os << "  Mid-sweep transition: " << *_midSweepTransition << std::endl;
     }
+
+    dumpExitDeltas(os);
 
     if (_sweepEndType != SweepEndType::UNKNOWN) {
         os << "Type = " << _sweepEndType;

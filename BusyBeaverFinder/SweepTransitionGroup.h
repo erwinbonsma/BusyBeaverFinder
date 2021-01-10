@@ -190,20 +190,20 @@ public:
 
 class SweepEndTypeAnalysisZeroExits : SweepEndTypeAnalysis {
     // Counts transitions where an exit value remains unchanged, or changes into another exit.
-    int _exitToExit = 0;
+    int _exitToExit;
 
     // Counts transitions where an exit value is converted to a value that can never be converted
     // into an exit. It considers sweep changes as well as any in-sweep deltas by transitions.
-    int _exitToSweepBody = 0;
+    int _exitToSweepBody;
 
     // Counts transitions where an exit value is converted to a value that is not an exit, but might
     // be changed into one later. It might also be changed to a definite sweep body value, or always
     // remain in limbo.
-    int _exitToLimbo = 0;
+    int _exitToLimbo;
 
-    int _limboToExitBySweep = 0;
-    int _limboToExitByLoopExit = 0;
-    int _limboToSweepBody = 0;
+    int _limboToExitBySweep;
+    int _limboToExitByLoopExit;
+    int _limboToSweepBody;
 
     bool _exitValueChanges;
 
@@ -244,6 +244,9 @@ class SweepTransitionGroup {
     // there is more than one, which can happen if the transition depends on nearby data values.
     std::multimap<int, SweepTransition> _transitionMap;
 
+    SweepEndTypeAnalysisZeroExits _zeroExitEndTypeAnalysis;
+    SweepEndTypeAnalysisNonZeroExits _nonZeroExitEndTypeAnalysis;
+
     SweepEndType _sweepEndType;
     bool _locatedAtRight;
 
@@ -257,12 +260,14 @@ class SweepTransitionGroup {
     // sweep loops themselves do not make any combined change (as otherwise the latter is leading).
     int _insideSweepTransitionDeltaSign;
 
-    int numberOfTransitionsForExitValue(int value) const;
-    int numberOfExitsForValue(int value) const;
-
     bool determineCombinedSweepValueChange();
 
 protected:
+    // The deltas of the sweep end-point after each sweep. Positive deltas means that the sequence
+    // grows. The sum of all deltas can only be zero (fixed point) or positive (growing sequence).
+    // However, individual deltas can be negative.
+    std::vector<int> _sweepExitDeltas;
+
     // Indicates if the hang is locked into a periodic behavior at the meta-run level. Not only
     // should the sequence of meta run-blocks be periodic, also the length of the run-block loops
     // that do not have a fixed length (i.e. the sweep loops) should increase with a fixed number
@@ -276,6 +281,9 @@ protected:
         _sweepEndType = endType;
     }
 
+    int numberOfExitsForValue(int value) const;
+    int numberOfTransitionsForExitValue(int value) const;
+
     virtual bool determineZeroExitSweepEndType();
     virtual bool determineNonZeroExitSweepEndType();
     virtual bool determineSweepEndType();
@@ -283,6 +291,10 @@ protected:
     virtual bool onlyZeroesAhead(DataPointer dp, const Data& data) const;
 
 public:
+    SweepTransitionGroup();
+
+    void addExitDelta(int delta) { _sweepExitDeltas.push_back(delta); }
+
     bool locatedAtRight() const { return _locatedAtRight; }
     SweepEndType endType() const { return _sweepEndType; }
     bool didDetermineEndType() { return (_sweepEndType != SweepEndType::UNKNOWN &&
@@ -290,6 +302,9 @@ public:
 
     const DataDeltas& outsideDeltas() const { return _outsideDeltas; }
     int insideSweepTransitionDeltaSign() const { return _insideSweepTransitionDeltaSign; }
+
+    bool isSweepGrowing() const;
+    bool isSweepGrowthConstant() const;
 
     const SweepLoopAnalysis* incomingLoop() const { return _incomingLoop; }
     const SweepLoopAnalysis* outgoingLoop() const { return _outgoingLoop; }
@@ -324,6 +339,7 @@ public:
     bool allOutsideDeltasMoveAwayFromZero(DataPointer dp, const Data& data) const;
     Trilian proofHang(DataPointer dp, const Data& data);
 
+    std::ostream& dumpExitDeltas(std::ostream &os) const;
     virtual std::ostream& dump(std::ostream &os) const;
 };
 

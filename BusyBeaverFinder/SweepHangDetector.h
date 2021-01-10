@@ -49,6 +49,10 @@ class SweepHangDetector : public HangDetector {
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
     friend SweepTransitionScanner;
 
+    // Sweep lengths during analysis. Is used to populate exit deltas in transition groups by
+    //
+    std::vector<int> _sweepLengths;
+
 protected:
     mutable SweepTransitionAnalysis _transitionAnalysisPool[MAX_SWEEP_TRANSITION_ANALYSIS];
     SweepLoopAnalysis _loopAnalysisPool[MAX_SWEEP_LOOP_ANALYSIS];
@@ -61,6 +65,12 @@ protected:
 
     bool loopsAreEquivalent(const RunBlock* loop1, const RunBlock *loop2,
                             int &rotationEquivalenceOffset) const;
+
+    // Adds sweep length during analysis. As analysis goes backward in time, it is also expected
+    // that sweep lengths are added this way. I.e. they are added in reverse-chronological order.
+    void addSweepLength(int sweepLen) { _sweepLengths.push_back(sweepLen); }
+    int numSweepLengths() const { return (int)_sweepLengths.size(); }
+    void populateExitDeltas();
 
     bool analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoingLoop,
                                         int runBlockIndexIncomingLoop,

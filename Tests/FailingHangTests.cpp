@@ -186,6 +186,30 @@ TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" )
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(tracker.getTotalDetectedHangs() == 0);
     }
+    SECTION( "6x6-IrregularSweepHangWithHeavilyPollutedAppendix" ) {
+        // A non-standard irregular sweep. The leftward sweep loop moves DP two cells and creates
+        // a heavily polluted a-periodically growing appendix. The sweep loops exits on -1 cells,
+        // which it then converts to the limbo value -2, which the sweep can convert to the -1
+        // value again. In between pairs of -1/-2 values are postives values. Interestingly, their
+        // value decrease exponentially. After approximately 2.25 M steps: 200 > 100 > 50 > 26 >
+        // 13 > 7 > 4 > 2.
+        //
+        //     *
+        //   * o _ _ *
+        //   * o o _
+        //   o o * *
+        // * _ o _ *
+        // o o *
+        Ins resumeFrom[] = {
+            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
+            Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+        };
+        searcher.findOne(resumeFrom);
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+    }
 }
 
 TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {

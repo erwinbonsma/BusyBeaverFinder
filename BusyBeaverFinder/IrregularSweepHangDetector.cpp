@@ -20,6 +20,34 @@ bool irregularSweepHangFailure(const IrregularSweepTransitionGroup& transitionGr
     return false;
 }
 
+std::set<int> tmpExhibitsAperiodicGrowthSet;
+bool IrregularSweepTransitionGroup::exhibitsAperiodicGrowth() {
+    auto exitDeltas = tmpExhibitsAperiodicGrowthSet;
+    exitDeltas.clear();
+
+    bool hasNegativeDeltas = false;
+    for (int exitDelta : _sweepExitDeltas) {
+        exitDeltas.insert(exitDelta);
+        if (exitDelta < 0) {
+            hasNegativeDeltas = true;
+        }
+    }
+
+    return (hasNegativeDeltas && exitDeltas.size() >= 3);
+}
+
+bool IrregularSweepTransitionGroup::determineZeroExitSweepEndType() {
+    if (SweepTransitionGroup::determineZeroExitSweepEndType()) {
+        return true;
+    }
+
+    if (exhibitsAperiodicGrowth()) {
+        setEndType(SweepEndType::FIXED_APERIODIC_APPENDIX);
+    }
+
+    return didDetermineEndType();
+}
+
 bool IrregularSweepTransitionGroup::determineSweepEndType() {
     if (!SweepTransitionGroup::determineSweepEndType()) {
         return false;
@@ -76,11 +104,11 @@ bool IrregularSweepHangDetector::analyzeTransitions() {
     while (numUniqueTransitions != 0 || transitionScanner.numSweeps() < 8) {
         const SweepTransition* st = transitionScanner.analyzePreviousSweepTransition();
         if (st == nullptr) {
-//            std::cout << std::endl;
             return irregularSweepHangFailure(_executor);
         }
 
-//        std::cout << transitionScanner.numSweeps() << ":" << numUniqueTransitions << " ";
+        addSweepLength(transitionScanner.lastSweepLength());
+
         if (st->numOccurences == 1) {
             ++numUniqueTransitions;
         } else if (st->numOccurences == 2) {
@@ -88,14 +116,7 @@ bool IrregularSweepHangDetector::analyzeTransitions() {
         }
     }
 
-//    std::cout << "numSweeps = " << transitionScanner.numSweeps() << std::endl;
-//    if (transitionScanner.numSweeps() == 8) {
-//        return false; // TEMP
-//    }
-
-//    if (transitionScanner.numSweeps() > 8) {
-//        _executor.getData().dump();
-//    }
+    populateExitDeltas();
 
     return true;
 }

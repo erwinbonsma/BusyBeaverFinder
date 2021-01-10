@@ -103,30 +103,6 @@ void PeriodicSweepTransitionGroup::clear() {
     SweepTransitionGroup::clear();
 
     _transitions.clear();
-    _sweepExitDeltas.clear();
-}
-
-bool PeriodicSweepTransitionGroup::isSweepGrowing() const {
-    int sum = 0;
-
-    for (int delta : _sweepExitDeltas) {
-        sum += delta;
-    }
-
-    return sum > 0;
-}
-
-bool PeriodicSweepTransitionGroup::isSweepGrowthConstant() const {
-    auto it = _sweepExitDeltas.cbegin();
-    int firstDelta = *it;
-
-    while (++it != _sweepExitDeltas.cend()) {
-        if (*it != firstDelta) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 bool PeriodicSweepTransitionGroup::determineZeroExitSweepEndType() {
@@ -136,10 +112,12 @@ bool PeriodicSweepTransitionGroup::determineZeroExitSweepEndType() {
 
     if (!isSweepGrowing()) {
         setEndType(SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
-    } else if (isSweepGrowthConstant()) {
-        setEndType(SweepEndType::STEADY_GROWTH);
-    } else {
-        setEndType(SweepEndType::IRREGULAR_GROWTH);
+    } else if (numberOfTransitionsForExitValue(0) > 0) {
+        if (isSweepGrowthConstant()) {
+            setEndType(SweepEndType::STEADY_GROWTH);
+        } else {
+            setEndType(SweepEndType::IRREGULAR_GROWTH);
+        }
     }
 
     return didDetermineEndType();
@@ -154,12 +132,6 @@ std::ostream& PeriodicSweepTransitionGroup::dump(std::ostream &os) const {
         os << *(tr->transition) << std::endl;
     }
 
-    os << "Sweep exit deltas:";
-    for (int delta : _sweepExitDeltas) {
-        os << " " << delta;
-    }
-    os << std::endl;
-
     return os;
 }
 
@@ -168,6 +140,25 @@ PeriodicSweepHangDetector::PeriodicSweepHangDetector(const ProgramExecutor& exec
     for (int i = 0; i < 2; i++ ) {
         _transitionGroups[i] = new PeriodicSweepTransitionGroup();
     }
+}
+
+bool PeriodicSweepHangDetector::checkLineairIncrease(int start1, int start2, int start3) const {
+    const RunSummary &runSummary = _executor.getRunSummary();
+
+    assert(start3 - start2 == start2 - start1);
+    for (int i = start2 - start1; --i >= 0; ) {
+        int len1 = runSummary.getRunBlockLength(start1 + i);
+        int len2 = runSummary.getRunBlockLength(start2 + i);
+        int len3 = runSummary.getRunBlockLength(start3 + i);
+
+        // Verify that the run block lengths remain constant (for transition sequences and
+        // associated small loops) or increase lineairly (for sweep loops).
+        if (len2 - len1 != len3 - len2) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool PeriodicSweepHangDetector::analyzeSweepIterations() {
@@ -187,7 +178,10 @@ bool PeriodicSweepHangDetector::analyzeSweepIterations() {
         int lenLoop2 = runSummary.getRunBlockLength(startLoop2, startLoop3);
         int lenLoop3 = runSummary.getRunBlockLength(startLoop3, runSummary.getNumRunBlocks());
 
-        if ((lenLoop2 - lenLoop1) == (lenLoop3 - lenLoop2)) {
+        if (
+            (lenLoop2 - lenLoop1) == (lenLoop3 - lenLoop2) &&
+            checkLineairIncrease(startLoop1, startLoop2, startLoop3)
+        ) {
             return true;
         }
 
@@ -197,16 +191,12 @@ bool PeriodicSweepHangDetector::analyzeSweepIterations() {
     return periodicSweepHangFailure(_executor);
 }
 
-std::vector<int> tmpSweepLengths;
 bool PeriodicSweepHangDetector::analyzeTransitions() {
     const RunSummary &runSummary = _executor.getRunSummary();
     const RunSummary &metaRunSummary = _executor.getMetaRunSummary();
 
     const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
     int sweepLoopPeriod = metaLoop->getLoopPeriod() * _sweepRepetitionPeriod;
-
-    auto sweepLengths = tmpSweepLengths;
-    sweepLengths.clear();
 
     int metaLoop2Index = runSummary.getNumRunBlocks() - sweepLoopPeriod - 1;
     int metaLoop1Index = metaLoop2Index - sweepLoopPeriod;
@@ -226,16 +216,16 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
             ((PeriodicSweepTransitionGroup *)_transitionGroups[transitionScanner.numSweeps() % 2]
              )->addTransition(st);
 
-            sweepLengths.push_back(transitionScanner.lastSweepLength());
+            addSweepLength(transitionScanner.lastSweepLength());
         } else {
             if (st->numOccurences == 1) {
                 // No new transition should be encountered after one iteration of the meta-loop
                 return periodicSweepHangFailure(_executor);
             }
 
-            if (sweepLengths.size() % 2 == 0) {
+            if (numSweepLengths() % 2 == 0) {
                 // Add 2*N+1 sweep lengths to be able to calculate 2*N deltas
-                sweepLengths.push_back(transitionScanner.lastSweepLength());
+                addSweepLength(transitionScanner.lastSweepLength());
             }
         }
     }
@@ -259,16 +249,7 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
         }
     }
 
-    // Determine sweep exit deltas
-    auto it = sweepLengths.crbegin(); // Use reverse iterator to add deltas in chronological order
-    int prevLen = *it;
-    int numSweeps = 0;
-    while (++it != sweepLengths.crend()) {
-        int delta = *it - prevLen;
-        prevLen = *it;
-        ++numSweeps;
-        ((PeriodicSweepTransitionGroup *)_transitionGroups[numSweeps % 2])->addExitDelta(delta);
-    }
+    populateExitDeltas();
 
     return true;
 }

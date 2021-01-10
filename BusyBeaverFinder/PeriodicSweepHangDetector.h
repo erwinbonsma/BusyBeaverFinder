@@ -17,19 +17,12 @@ class PeriodicSweepTransitionGroup : public SweepTransitionGroup {
     // The transitions, ordered as they occur during one period of the sweep.
     std::vector<const SweepTransition*> _transitions;
 
-    // The deltas of the sweep end-point after each sweep. Positive deltas means that the sequence
-    // grows. The sum of all deltas can only be zero (fixed point) or positive (growing sequence).
-    // However, individual deltas can be negative.
-    std::vector<int> _sweepExitDeltas;
-
     bool hangIsMetaPeriodic() override { return true; }
     bool determineSweepEndType() override;
     bool onlyZeroesAhead(DataPointer dp, const Data& data) const override;
 
     void addTransition(const SweepTransition *transition);
     bool finishTransitionAnalysis();
-
-    void addExitDelta(int delta) { _sweepExitDeltas.push_back(delta); }
 
     bool determineZeroExitSweepEndType() override;
 
@@ -39,9 +32,6 @@ public:
     // means that it is the first transition that will be executed next, which therefore is useful
     // in analysing the data when trying to proof the hang.
     const SweepTransition* firstTransition() const { return _transitions[0]; };
-
-    bool isSweepGrowing() const;
-    bool isSweepGrowthConstant() const;
 
     void clear() override;
 
@@ -68,6 +58,7 @@ class PeriodicSweepHangDetector : public SweepHangDetector {
     // sweep has multiple fixed turning points at a given end of the sweep.
     int _sweepRepetitionPeriod;
 
+    bool checkLineairIncrease(int start1, int start2, int start3) const;
     bool analyzeSweepIterations();
 
 protected:

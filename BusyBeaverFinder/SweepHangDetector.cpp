@@ -198,6 +198,19 @@ int SweepHangDetector::findPreviousSweepLoop(int runBlockIndex) const {
     return runBlockIndex;
 }
 
+void SweepHangDetector::populateExitDeltas() {
+    // Determine sweep exit deltas
+    auto it = _sweepLengths.crbegin(); // Use reverse iterator to add deltas in chronological order
+    int prevLen = *it;
+    int tgIndex = _sweepLengths.size() % 2;
+    while (++it != _sweepLengths.crend()) {
+        int delta = *it - prevLen;
+        prevLen = *it;
+        _transitionGroups[tgIndex]->addExitDelta(delta);
+        tgIndex = 1 - tgIndex;
+    }
+}
+
 bool SweepHangDetector::analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoingLoop,
                                                        int runBlockIndexIncomingLoop,
                                                        bool isFirstSweep) {
@@ -388,6 +401,8 @@ void SweepHangDetector::clearAnalysis() {
     for (SweepTransitionGroup *tg : _transitionGroups) {
         tg->clear();
     }
+
+    _sweepLengths.clear();
 }
 
 bool SweepHangDetector::analyzeHangBehaviour() {
