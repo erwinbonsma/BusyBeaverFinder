@@ -67,7 +67,6 @@ void populateRunSummary(RunSummary& runSummary, ProgramBlockIndex* programBlocks
     while (*programBlockP >= 0) {
         runSummary.recordProgramBlock(*programBlockP++);
     }
-    runSummary.dump();
 }
 
 TEST_CASE( "RunSummary", "[util][runsummary]" ) {
