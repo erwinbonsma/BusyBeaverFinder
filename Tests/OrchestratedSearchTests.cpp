@@ -23,14 +23,16 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     settings.maxSteps = 2048;
     searcher.configure(settings);
 
-    orchestratedSearch(searcher);
-//    tracker.dumpFinalStats();
+    SECTION("Find all") {
+        orchestratedSearch(searcher);
+        //    tracker.dumpFinalStats();
 
-    REQUIRE(tracker.getMaxStepsFound() == 44);
-    REQUIRE(tracker.getTotalSuccess() == 26319);
-    REQUIRE(tracker.getTotalDetectedHangs() == 4228);
-    REQUIRE(tracker.getTotalHangs() == 4228);
-    REQUIRE(tracker.getTotalErrors() == 0);
+        REQUIRE(tracker.getMaxStepsFound() == 44);
+        REQUIRE(tracker.getTotalSuccess() == 26319);
+        REQUIRE(tracker.getTotalDetectedHangs() == 4228);
+        REQUIRE(tracker.getTotalHangs() == 4228);
+        REQUIRE(tracker.getTotalErrors() == 0);
+    }
 }
 
 TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
@@ -49,12 +51,14 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
 //    settings.testHangDetection = true;
     searcher.configure(settings);
 
-    orchestratedSearch(searcher);
-    tracker.dumpFinalStats();
+    SECTION ("Find all") {
+        orchestratedSearch(searcher);
+        tracker.dumpFinalStats();
 
-    REQUIRE(tracker.getMaxStepsFound() == 573);
-    REQUIRE(tracker.getTotalSuccess() == 6475715);
-    REQUIRE(tracker.getTotalHangs() == 1546939);
-    REQUIRE(tracker.getTotalErrors() == 0);
-    REQUIRE(tracker.getTotalDetectedHangs() == 1546895);
+        REQUIRE(tracker.getMaxStepsFound() == 573);
+        REQUIRE(tracker.getTotalSuccess() == 6475715);
+        REQUIRE(tracker.getTotalHangs() == 1546939);
+        REQUIRE(tracker.getTotalErrors() == 0);
+        REQUIRE(tracker.getTotalDetectedHangs() == 1546895);
+    }
 }

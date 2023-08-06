@@ -43,12 +43,14 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
     settings.maxSteps = 1024;
     searcher.configure(settings);
 
-    searcher.search();
+    SECTION("Find all") {
+        searcher.search();
 
-    REQUIRE(tracker.getMaxStepsFound() == 15);
-    REQUIRE(tracker.getTotalSuccess() == 854);
-    REQUIRE(tracker.getTotalErrors() == 0);
-    REQUIRE(tracker.getTotalDetectedHangs() == tracker.getTotalHangs());
+        REQUIRE(tracker.getMaxStepsFound() == 15);
+        REQUIRE(tracker.getTotalSuccess() == 854);
+        REQUIRE(tracker.getTotalErrors() == 0);
+        REQUIRE(tracker.getTotalDetectedHangs() == tracker.getTotalHangs());
+    }
 }
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
@@ -63,10 +65,12 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     settings.maxSteps = 2048;
     searcher.configure(settings);
 
-    searcher.search();
+    SECTION("Find all") {
+        searcher.search();
 
-    REQUIRE(tracker.getMaxStepsFound() == 44);
-    REQUIRE(tracker.getTotalSuccess() == 51410);
-    REQUIRE(tracker.getTotalErrors() == 0);
-    REQUIRE(tracker.getTotalHangs() == tracker.getTotalDetectedHangs());
+        REQUIRE(tracker.getMaxStepsFound() == 44);
+        REQUIRE(tracker.getTotalSuccess() == 51410);
+        REQUIRE(tracker.getTotalErrors() == 0);
+        REQUIRE(tracker.getTotalHangs() == tracker.getTotalDetectedHangs());
+    }
 }
