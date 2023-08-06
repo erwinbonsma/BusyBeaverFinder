@@ -291,7 +291,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-PeriodicHangWithInnerLoop2" ) {
         // Another periodic hang with an inner loop.
@@ -310,7 +310,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-PeriodicHangWithInnerLoop3" ) {
         // Another periodic hang with an inner loop.
@@ -328,7 +328,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-NonUniformCountingLoop1" ) {
         // Classification: Periodic, Changing, Non-Uniform, Sentry Go
@@ -356,7 +356,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-NonUniformCountingLoop2" ) {
         // Periodic hang which changes two values. One value is decreased by one each iteration,
@@ -379,7 +379,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-DelayedHang2" ) {
         // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
@@ -410,7 +410,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-DelayedHang3" ) {
         // Variant of the previous hang. However, it is sufficiently different that it revealed a
@@ -430,7 +430,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-DelayedHang4" ) {
         // Another variant of the previous hang. It is added as this program set the record in the
@@ -450,7 +450,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-PeriodicHangWithThreeInnerLoops" ) {
         // Periodic hang with a period of 136 steps. Each iteration it extends the sequence to the
@@ -479,7 +479,7 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         };
         searcher.findOne(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
     }
     SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop" ) {
         // A periodic hang at the low-level run summary which initially looks like a hang at the

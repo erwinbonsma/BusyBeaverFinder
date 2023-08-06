@@ -50,17 +50,18 @@ enum class TurnDirection : char {
     NONE = -1
 };
 
-const int numHangTypes = 7;
-const int numDetectedHangTypes = 6;
+const int numHangTypes = 8;
+const int numDetectedHangTypes = 7;
 enum class HangType : char {
     // Simple loop, without any DATA
     NO_DATA_LOOP = 0,
     NO_EXIT = 1,
     PERIODIC = 2,
-    REGULAR_SWEEP = 3,
-    IRREGULAR_SWEEP = 4,
-    APERIODIC_GLIDER = 5,
-    UNDETECTED = 6 // Should always be last
+    META_PERIODIC = 3,
+    REGULAR_SWEEP = 4,
+    IRREGULAR_SWEEP = 5,
+    APERIODIC_GLIDER = 6,
+    UNDETECTED = 7 // Should always be last
 };
 
 enum class Trilian : char {

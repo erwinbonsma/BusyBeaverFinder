@@ -23,6 +23,8 @@ protected:
 public:
     MetaPeriodicHangDetector(const ProgramExecutor& executor);
 
+    HangType hangType() const override { return HangType::META_PERIODIC; }
+
     void reset() override;
 };
 
