@@ -68,10 +68,10 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
     }
     SECTION( "6x6-SweepWithIrregularFixedPointGrowingValue" ) {
         // The right end of the sequence looks as follows: [body] 1 X 1 0 0 0
-        // The rightward sweep loop moves DP two units. Half of the sweeps it ends on the first
-        // 1. In that case, the loop exits and returns without making any modifications. The other
-        // half of the sweeps and on the second 1. In that case, it increases the positive value
-        // X by one.
+        // The rightward sweep loop moves DP two units. Half of the sweeps it ends on the first 1.
+        // In that case, the loop exits and returns without making any modifications. The other
+        // half of the sweeps it ends on the second 1. In that case, it increases the positive
+        // value X by one.
         //
         //       *
         //   * * o _ *
