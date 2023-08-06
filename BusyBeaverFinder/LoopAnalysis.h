@@ -10,6 +10,7 @@
 #define LoopAnalysis_h
 
 #include <iostream>
+#include <stdint.h>
 
 #include "SequenceAnalysis.h"
 
@@ -19,14 +20,14 @@ class RunSummary;
 const int maxLoopSize = 64;
 const int maxLoopExits = 128;
 
-enum class Operator : char {
+enum class Operator : int8_t {
     EQUALS = 0,
     UNEQUAL = 1,
     LESS_THAN_OR_EQUAL = 2,
     GREATER_THAN_OR_EQUAL = 3
 };
 
-enum class ExitWindow : char {
+enum class ExitWindow : int8_t {
     // This exit can happen in any iteration of the loop
     ANYTIME = 0,
 

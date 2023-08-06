@@ -15,10 +15,10 @@
 #include "Program.h"
 
 // Set when instruction has been set
-const unsigned char INSTRUCTION_SET_BIT = 0x01;
+const uint8_t INSTRUCTION_SET_BIT = 0x01;
 
 // Set when instruction is a Delta (otherwise it is a Shift)
-const unsigned char INSTRUCTION_TYPE_BIT = 0x02;
+const uint8_t INSTRUCTION_TYPE_BIT = 0x02;
 
 InterpretedProgramBuilder::InterpretedProgramBuilder() {
     _stateP = _state;

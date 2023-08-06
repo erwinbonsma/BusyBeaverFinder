@@ -17,7 +17,7 @@
 // is always valid.
 const int dataSentinelBufferSize = 16;
 
-enum class DataOp : unsigned char {
+enum class DataOp : uint8_t {
     INC = 0x00,
     DEC = 0x40,
     SHR = 0x80,
@@ -133,41 +133,41 @@ bool Data::onlyZerosAhead(DataPointer dp, bool atRight) const {
     return true;
 }
 
-void Data::inc(unsigned char delta) {
+void Data::inc(uint8_t delta) {
     (*_dataP) += delta;
 
     if (_undoEnabled) {
-        *(_undoP++) = delta | (unsigned char)DataOp::INC;
+        *(_undoP++) = delta | (uint8_t)DataOp::INC;
     }
 
     updateBounds();
 }
 
-void Data::dec(unsigned char delta) {
+void Data::dec(uint8_t delta) {
     (*_dataP) -= delta;
 
     if (_undoEnabled) {
-        *(_undoP++) = delta | (unsigned char)DataOp::DEC;
+        *(_undoP++) = delta | (uint8_t)DataOp::DEC;
     }
 
     updateBounds();
 }
 
-bool Data::shr(unsigned char shift) {
+bool Data::shr(uint8_t shift) {
     _dataP += shift;
 
     if (_undoEnabled) {
-        *(_undoP++) = shift | (unsigned char)DataOp::SHR;
+        *(_undoP++) = shift | (uint8_t)DataOp::SHR;
     }
 
     return _dataP < _maxDataP;
 }
 
-bool Data::shl(unsigned char shift) {
+bool Data::shl(uint8_t shift) {
     _dataP -= shift;
 
     if (_undoEnabled) {
-        *(_undoP++) = shift | (unsigned char)DataOp::SHL;
+        *(_undoP++) = shift | (uint8_t)DataOp::SHL;
     }
 
     return _dataP > _minDataP;

@@ -21,9 +21,9 @@ const int maxProgramStackFrames = maxWidth * maxHeight;
 class Program;
 
 struct MutableProgramBlock {
-    unsigned char flags;
-    char amount;
-    char numSteps;
+    uint8_t flags;
+    int8_t amount;
+    int8_t numSteps;
 };
 
 struct ProgramStack {
@@ -77,6 +77,5 @@ public:
     TurnDirection startTurnDirectionForBlock(ProgramBlock* block);
     ProgramPointer getStartProgramPointer(ProgramBlock* block, Program& program);
 };
-
 
 #endif /* InterpretedProgramBuilder_h */

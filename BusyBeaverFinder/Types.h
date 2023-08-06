@@ -9,10 +9,12 @@
 #ifndef Types_h
 #define Types_h
 
+#include <stdint.h>
+
 #include "Consts.h"
 
 // Program instructions
-enum class Ins : char {
+enum class Ins : int8_t {
     UNSET = 0,
     NOOP = 1,
     DATA = 2,
@@ -41,10 +43,10 @@ struct ProgramPointer {
 typedef int* DataPointer;
 
 // Data operations
-typedef unsigned char UndoOp;
+typedef uint8_t UndoOp;
 
 // Direction of turn
-enum class TurnDirection : char {
+enum class TurnDirection : int8_t {
     COUNTERCLOCKWISE = 0,
     CLOCKWISE = 1,
     NONE = -1
@@ -52,7 +54,7 @@ enum class TurnDirection : char {
 
 const int numHangTypes = 8;
 const int numDetectedHangTypes = 7;
-enum class HangType : char {
+enum class HangType : int8_t {
     // Simple loop, without any DATA
     NO_DATA_LOOP = 0,
     NO_EXIT = 1,
@@ -64,7 +66,7 @@ enum class HangType : char {
     UNDETECTED = 7 // Should always be last
 };
 
-enum class Trilian : char {
+enum class Trilian : int8_t {
     NO = 0,
     YES = 1,
     MAYBE = 2

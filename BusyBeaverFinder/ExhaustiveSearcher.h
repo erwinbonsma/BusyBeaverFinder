@@ -9,6 +9,7 @@
 #ifndef ExhaustiveSearcher_h
 #define ExhaustiveSearcher_h
 
+#include <stdint.h>
 #include <vector>
 
 #include "ProgramExecutor.h"
@@ -24,7 +25,7 @@
 
 class HangDetector;
 
-enum class SearchMode : char {
+enum class SearchMode : int8_t {
     FULL_TREE = 0,
     SUB_TREE = 1,
     FIND_ONE = 2,

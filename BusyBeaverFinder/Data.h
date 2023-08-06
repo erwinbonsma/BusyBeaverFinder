@@ -10,6 +10,7 @@
 #define Data_h
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "Consts.h"
 #include "Types.h"
@@ -62,10 +63,10 @@ public:
 
     bool onlyZerosAhead(DataPointer dp, bool atRight) const;
 
-    void inc(unsigned char delta);
-    void dec(unsigned char delta);
-    bool shr(unsigned char shift);
-    bool shl(unsigned char shift);
+    void inc(uint8_t delta);
+    void dec(uint8_t delta);
+    bool shr(uint8_t shift);
+    bool shl(uint8_t shift);
 
     void inc() { inc(1); };
     void dec() { dec(1); };
