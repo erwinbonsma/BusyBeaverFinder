@@ -258,7 +258,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
     }
     SECTION( "6x6-SweepWithNonZeroFixedPointThatOscillatesDuringTurn2") {
         // A single-headed sweep. The fixed point has value 1, which is changed to zero when the
-        // loop exit. The subsequent transition restores the value to 1 again.
+        // loop exits. The subsequent transition restores the value to 1 again.
         //
         // *     *
         // o _ * o _ *
@@ -623,7 +623,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
-    SECTION( "6x6-SweepWithIrregularGrowth" ) {
+    SECTION( "6x6-SweepWithPeriodicGrowth" ) {
         // The sweep extends rightwards, but the sequence is only extended once every two sweeps.
         // At the left, the sequence is bounded by a mid-sequence zero that oscillates during the
         // turn. DP also briefly exceeds this mid-sequence point during the transition
@@ -646,7 +646,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
     }
-    SECTION( "6x6-SweepWithIrregularGrowth2" ) {
+    SECTION( "6x6-SweepWithPeriodicGrowth2" ) {
         //       *
         //     * o _ *
         //   * * o _
@@ -665,8 +665,8 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-SweepIrregularGrowth3") {
-        // Sweep with irregular growth at its left side. It alternates between two reversal
+    SECTION( "6x6-SweepWithPeriodicGrowth3") {
+        // Sweep with periodic growth at its left side. It alternates between two reversal
         // sequences:
         //
         // "... 0 0 1 1 [body]" => "... 0 1 0 3 [body]"
@@ -694,8 +694,8 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
-    SECTION( "6x6-SweepIrregularGrowth4" ) {
-        // A sweep with irregular growth at its right side, and a fixed point with multiple values
+    SECTION( "6x6-SweepWithPeriodicGrowth4" ) {
+        // A sweep with periodic growth at its right side, and a fixed point with multiple values
         // at its left. It generates a sequence of only 2's, but does so quite slowly given that it
         // is a sweep that only adds a value once every two full sweeps.
         //
@@ -718,8 +718,8 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_MULTIPLE_VALUES);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
     }
-    SECTION( "6x6-SweepIrregularGrowth5" ) {
-        // Similar behavior as 6x6-SweepIrregularGrowth3.
+    SECTION( "6x6-SweepWithPeriodicGrowth5" ) {
+        // Similar behavior as 6x6-SweepWithPeriodicGrowth3.
         //
         //       *
         //   * * o _ *
@@ -740,7 +740,7 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
-    SECTION( "6x6-SweepIrregularGrowth6" ) {
+    SECTION( "6x6-SweepWithPeriodicGrowth6" ) {
         //   *   * *
         // * o o _ _ *
         //   _ o o o *
@@ -760,8 +760,8 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
     }
-    SECTION( "6x6-SweepIrregularGrowth7" ) {
-        // This dual-headed sweep has irregular growth at its left side. Two transitions alternate
+    SECTION( "6x6-SweepWithPeriodicGrowth7" ) {
+        // This dual-headed sweep where the left side grows periodically. Two transitions alternate
         // there. Both start the same (from the same loop exit instruction), but deviate later due
         // to data difference at the left of the value that caused the sweep to abort.
         //
@@ -785,8 +785,8 @@ TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
         REQUIRE(leftSweepEndType(tracker) == SweepEndType::IRREGULAR_GROWTH);
         REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
     }
-    SECTION( "6x6-SweepWithIrregularGrowth8" ) {
-        // Sweep with irregular growth on its right side. It grows as follows:
+    SECTION( "6x6-SweepWithPeriodicGrowth8" ) {
+        // Sweep with periodic growth on its right side. It grows as follows:
         // [body] 2 3 2 0 0...
         // [body] 2 3 1 2 0...
         //   [body] 2 3 2 0...
