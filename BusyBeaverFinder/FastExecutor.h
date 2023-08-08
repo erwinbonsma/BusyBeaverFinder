@@ -29,7 +29,7 @@ public:
 
     // Returns the number of executed steps. Returns -1 in case of an error (data full). When it is
     // equal or larger than maxSteps, it is an assumed hang.
-    int execute(ProgramBlock *programBlock, int maxSteps);
+    int execute(const ProgramBlock *programBlock, int maxSteps);
 
     void dump();
 };

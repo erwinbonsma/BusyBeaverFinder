@@ -28,7 +28,7 @@ FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-int FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
+int FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) {
     int numSteps = 0;
 
     // Clear data

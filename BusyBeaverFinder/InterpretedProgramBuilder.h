@@ -33,6 +33,9 @@ struct ProgramStack {
     int numFinalizedBlocks;
 };
 
+/* Maintains an InterpretedProgram for the program state as it is during the search. It updates it
+ * as the search expands and backtracks.
+ */
 class InterpretedProgramBuilder : public InterpretedProgram {
     ProgramBlock _blocks[maxProgramBlocks];
     int _blockIndexLookup[maxProgramBlocks];
@@ -49,10 +52,17 @@ class InterpretedProgramBuilder : public InterpretedProgram {
 public:
     InterpretedProgramBuilder();
 
+    //---------------------------------------------------------------------------------------------
     // Implementation of InterpretedProgram
+
     int numProgramBlocks() const override { return _stateP->numBlocks; };
     const ProgramBlock* programBlockAt(int index) const override { return _blocks + index; };
     int indexOf(const ProgramBlock *block) const override { return (int)(block - _blocks); }
+
+    const ProgramBlock* getEntryBlock() const override { return _blocks; }
+
+    //---------------------------------------------------------------------------------------------
+    // Methods to update the program as the search progresses
 
     void push();
     void pop();
@@ -68,7 +78,6 @@ public:
     int getAmount();
     int getNumSteps();
 
-    ProgramBlock* getEntryBlock() { return _blocks; }
     ProgramBlock* finalizeBlock(InstructionPointer endP);
     ProgramBlock* enterBlock(ProgramBlock* block);
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);

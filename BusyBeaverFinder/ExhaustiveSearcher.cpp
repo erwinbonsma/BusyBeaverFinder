@@ -260,7 +260,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithBacktracking() {
 }
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
-    ProgramBlock* entryBlock = _interpretedProgramBuilder.getEntryBlock();
+    const ProgramBlock* entryBlock = _interpretedProgramBuilder.getEntryBlock();
 
     _runSummary[0].reset();
     _runSummary[1].reset();
