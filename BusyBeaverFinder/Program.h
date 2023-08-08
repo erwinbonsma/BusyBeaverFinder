@@ -9,7 +9,8 @@
 #ifndef Program_h
 #define Program_h
 
-#include <stdio.h>
+#include <string>
+#include <vector>
 
 #include "Consts.h"
 #include "Types.h"
@@ -23,7 +24,7 @@ class Program {
     int _height;
 
     // Instruction array
-    Ins _instructions[programStorageSize];
+    std::vector<Ins> _instructions;
 
     InstructionPointer getInstructionP(int col, int row) const {
         return InstructionPointer { .col = col, .row = row };
@@ -38,8 +39,7 @@ public:
     int getWidth() const { return _width; }
     int getHeight() const { return _height; }
 
-    const Ins* getInstructionBuffer() const { return _instructions; }
-    Ins* getInstructionBuffer() { return _instructions; }
+    const Ins* getInstructionBuffer() const { return &_instructions[0]; }
 
     InstructionPointer getStartProgramPointer() {
         return InstructionPointer { .col = 0, .row = -1 };
@@ -66,6 +66,8 @@ public:
      * The total number of possible programs of size WxH = 3^((W - 1) * (H - 1)) * 2^(W + H - 2)
      */
     ulonglong getEquivalenceNumber();
+
+    std::string toWebString() const;
 
     void dump() const;
     void dumpWeb() const;

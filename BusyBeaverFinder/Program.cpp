@@ -25,11 +25,11 @@ Program::Program(int width, int height) {
     //
     // Note, there's no extra rightmost column. This is not needed, the pointer will wrap and end
     // up in the leftmost "DONE" column.
-    Ins* pp = _instructions;
+    _instructions.clear();
     for (int row = -1; row <= maxHeight; row++) {
         for (int col = -1; col < maxWidth; col++) {
-            *pp = (row >=0 && row < height && col >= 0 && col < width) ? Ins::UNSET : Ins::DONE;
-            pp++;
+            _instructions.push_back((row >=0 && row < height && col >= 0 && col < width)
+                                    ? Ins::UNSET : Ins::DONE);
         }
     }
 }
@@ -43,11 +43,9 @@ Ins Program::getInstruction(int col, int row) const {
 }
 
 void Program::clone(Program& dest) const {
-    const Ins* ppSrc = getInstructionBuffer();
-    Ins* ppDst = dest.getInstructionBuffer();
-    for (int i = programStorageSize; --i >= 0; ) {
-        *ppDst++ = *ppSrc++;
-    }
+    dest._height = _height;
+    dest._width = _width;
+    dest._instructions = _instructions;
 }
 
 ulonglong Program::getEquivalenceNumber() {
@@ -80,6 +78,19 @@ ulonglong Program::getEquivalenceNumber() {
     return num;
 }
 
+std::string Program::toWebString() const {
+    std::string s;
+    s.reserve(_height * _width);
+
+    for (int y = _height; --y >= 0; ) {
+        for (int x = 0; x < _width; x++) {
+            s += web_chars[(int)getInstruction(x, y)];
+        }
+    }
+
+    return s;
+}
+
 void Program::dump() const {
     for (int y = _height; --y >= 0; ) {
         for (int x = 0; x < _width; x++) {
@@ -90,14 +101,8 @@ void Program::dump() const {
 }
 
 void Program::dumpWeb() const {
-    for (int y = _height; --y >= 0; ) {
-        for (int x = 0; x < _width; x++) {
-            std::cout << web_chars[(int)getInstruction(x, y)];
-        }
-    }
-    std::cout << std::endl;
+    std::cout << toWebString() << std::endl;
 }
-
 
 void Program::dump(InstructionPointer insP) const {
     char sepChar = ' ';
