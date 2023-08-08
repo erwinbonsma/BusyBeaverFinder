@@ -36,7 +36,7 @@ int FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) {
 
     _dataP = _midDataP;
 
-    while (numSteps < maxSteps && programBlock != nullptr && programBlock->isFinalized()) {
+    while (numSteps < maxSteps && programBlock->isFinalized()) {
         int amount = programBlock->getInstructionAmount();
 
         if (programBlock->isDelta()) {
