@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include "ProgramBlock.h"
-#include "ProgressTracker.h"
 
 const int sentinelSize = 8;
 
@@ -29,10 +28,8 @@ FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-void FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
+int FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
     int numSteps = 0;
-
-    _tracker->reportFastExecution();
 
     // Clear data
     memset(_data, 0, _dataBufSize * sizeof(int));
@@ -47,8 +44,7 @@ void FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
         } else {
             _dataP += amount;
             if (_dataP < _minDataP || _dataP >= _maxDataP) {
-                _tracker->reportError();
-                return;
+                return -1;
             }
         }
 
@@ -57,11 +53,7 @@ void FastExecutor::execute(ProgramBlock *programBlock, int maxSteps) {
         programBlock = (*_dataP == 0) ? programBlock->zeroBlock() : programBlock->nonZeroBlock();
     }
 
-    if (numSteps >= maxSteps) {
-        _tracker->reportAssumedHang();
-    } else {
-        _tracker->reportLateEscape(numSteps);
-    }
+    return numSteps;
 }
 
 void FastExecutor::dump() {

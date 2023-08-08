@@ -86,10 +86,6 @@ class ExhaustiveSearcher : public ProgramExecutor {
 
     void initInstructionStack(int size);
 
-    bool periodicHangDetected();
-    bool sweepHangDetected();
-    bool isSweepDiverging();
-
     void reconfigure();
     void initSearch();
 

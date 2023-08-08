@@ -12,7 +12,6 @@
 #include <stdio.h>
 
 class ProgramBlock;
-class ProgressTracker;
 
 class FastExecutor {
     int* _data;
@@ -24,14 +23,13 @@ class FastExecutor {
 
     int* _dataP;
 
-    ProgressTracker* _tracker;
 public:
     FastExecutor(int dataSize);
     ~FastExecutor();
 
-    void setProgressTracker(ProgressTracker* tracker) { _tracker = tracker; }
-
-    void execute(ProgramBlock *programBlock, int maxSteps);
+    // Returns the number of executed steps. Returns -1 in case of an error (data full). When it is
+    // equal or larger than maxSteps, it is an assumed hang.
+    int execute(ProgramBlock *programBlock, int maxSteps);
 
     void dump();
 };

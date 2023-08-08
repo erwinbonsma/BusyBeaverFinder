@@ -141,7 +141,6 @@ void ExhaustiveSearcher::dump() {
 
 void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
     _tracker = tracker;
-    _fastExecutor.setProgressTracker(tracker);
 }
 
 void ExhaustiveSearcher::branch(int depth) {
@@ -196,7 +195,16 @@ void ExhaustiveSearcher::branch(int depth) {
 }
 
 void ExhaustiveSearcher::fastExecution() {
-    _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(), _settings.maxSteps);
+    _tracker->reportFastExecution();
+    int numSteps = _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(),
+                                         _settings.maxSteps);
+    if (numSteps < 0) {
+        _tracker->reportError();
+    } else if (numSteps >= _settings.maxSteps) {
+        _tracker->reportAssumedHang();
+    } else {
+        _tracker->reportLateEscape(numSteps);
+    }
 }
 
 // Returns "true" if the search should backtrack. This can be for several reason: the program exited
@@ -315,7 +323,7 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
     if (!_data.hasUndoCapacity()) {
-        _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(), _settings.maxSteps);
+        fastExecution();
         return backtrackProgramPointer;
     }
 
