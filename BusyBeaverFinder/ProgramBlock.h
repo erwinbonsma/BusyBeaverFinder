@@ -37,6 +37,9 @@ public:
 
     void init(int startIndex);
     void reset();
+
+    void finalizeHang();
+    void finalizeExit(int numSteps);
     void finalize(bool isDelta, int amount, int numSteps,
                   ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock);
 
@@ -45,6 +48,8 @@ public:
 
     bool isFinalized() const { return _isFinalized; }
 
+    bool isExit() const { return _instructionAmount == 0 && _numSteps >= 0; }
+    bool isHang() const { return _numSteps < 0; }
     bool isDelta() const { return _isDelta; }
     int getInstructionAmount() const { return _instructionAmount; }
     int getNumSteps() const { return _numSteps; }

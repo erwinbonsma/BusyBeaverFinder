@@ -437,8 +437,7 @@ backtrack:
 }
 
 void ExhaustiveSearcher::initSearch() {
-    _pp.p = _program.getStartProgramPointer();
-    _pp.dir = Dir::UP;
+    _pp = _program.getStartProgramPointer();
     _numSteps = 0;
     _data.reset();
     _hangDetectionEnd = _settings.maxHangDetectionSteps;

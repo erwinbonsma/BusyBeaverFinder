@@ -42,8 +42,8 @@ public:
 
     const Ins* getInstructionBuffer() const { return &_instructions[0]; }
 
-    InstructionPointer getStartProgramPointer() {
-        return InstructionPointer { .col = 0, .row = -1 };
+    ProgramPointer getStartProgramPointer() {
+        return ProgramPointer { .p = { .col = 0, .row = -1 }, .dir = Dir::UP };
     }
 
     int indexFor(InstructionPointer insP) const;

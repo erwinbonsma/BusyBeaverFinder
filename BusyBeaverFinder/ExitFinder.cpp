@@ -99,7 +99,7 @@ bool ExitFinder::finalizeBlock(ProgramBlock* block) {
     int steps = 0;
 
     // Rotation delta
-    int delta = (_interpretedProgramBuilder.startTurnDirectionForBlock(block) == TurnDirection::CLOCKWISE)
+    int delta = (_interpretedProgramBuilder.turnDirectionForBlock(block) == TurnDirection::CLOCKWISE)
         ? 1 : 3;
 
     while (1) {

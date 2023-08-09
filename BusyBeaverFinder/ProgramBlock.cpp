@@ -31,6 +31,18 @@ void ProgramBlock::reset() {
     }
 }
 
+void ProgramBlock::finalizeHang() {
+    _isFinalized = true;
+    _instructionAmount = 0;
+    _numSteps = -1;
+}
+
+void ProgramBlock::finalizeExit(int numSteps) {
+    _isFinalized = true;
+    _numSteps = numSteps;
+    _instructionAmount = 0;
+}
+
 void ProgramBlock::finalize(bool isDelta, int amount, int numSteps,
                             ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock) {
     _isFinalized = true;
@@ -55,12 +67,14 @@ void ProgramBlock::dump() const {
 std::ostream &operator<<(std::ostream &os, const ProgramBlock &pb) {
     if (!pb.isFinalized()) {
         os << "-";
+    } else if (pb.isExit()) {
+        os << "EXIT";
+    } else if (pb.isHang()) {
+        os << "HANG";
+    } else if (pb.getInstructionAmount() >= 0) {
+        os << (pb.isDelta() ? "INC " : "SHR ") << pb.getInstructionAmount();
     } else {
-        if (pb.getInstructionAmount() >= 0) {
-            os << (pb.isDelta() ? "INC " : "SHR ") << pb.getInstructionAmount();
-        } else {
-            os << (pb.isDelta() ? "DEC " : "SHL ") << -pb.getInstructionAmount();
-        }
+        os << (pb.isDelta() ? "DEC " : "SHL ") << -pb.getInstructionAmount();
     }
 
     return os;

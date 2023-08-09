@@ -10,6 +10,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <vector>
 
 #include "Utils.h"
 #include "Program.h"
@@ -19,6 +20,34 @@ const uint8_t INSTRUCTION_SET_BIT = 0x01;
 
 // Set when instruction is a Delta (otherwise it is a Shift)
 const uint8_t INSTRUCTION_TYPE_BIT = 0x02;
+
+InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& program) {
+    InterpretedProgramBuilder  builder;
+    std::vector<ProgramBlock*> stack;
+
+    while (true) {
+        ProgramBlock* block = builder.buildActiveBlock(program);
+
+        // Add new continuation blocks to stack
+        if (!block->isExit()) {
+            if (!block->nonZeroBlock()->isFinalized()) {
+                stack.push_back(block->nonZeroBlock());
+            }
+            if (block->zeroBlock() && !block->zeroBlock()->isFinalized()) {
+                stack.push_back(block->zeroBlock());
+            }
+        }
+
+        // Select a new block to finalize
+        if (stack.empty()) break;
+
+        block = stack.back();
+        stack.pop_back();
+        builder.enterBlock(block);
+    }
+
+    return builder;
+}
 
 InterpretedProgramBuilder::InterpretedProgramBuilder() {
     _stateP = _state;
@@ -30,6 +59,62 @@ InterpretedProgramBuilder::InterpretedProgramBuilder() {
     _stateP->numBlocks = 0;
     _stateP->numFinalizedBlocks = 0;
     enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
+}
+
+ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program) {
+    ProgramBlock *block = _blocks + _stateP->activeBlockIndex;
+    MutableProgramBlock &activeBlock = _stateP->activeBlock;
+
+    ProgramPointer pp = getStartProgramPointer(block, program);
+    TurnDirection td = turnDirectionForBlock(block);
+
+    do {
+        InstructionPointer ip;
+        Ins ins;
+        do {
+            ip = nextInstructionPointer(pp);
+            ins = program.getInstruction(ip);
+
+            switch (ins) {
+                case Ins::DONE:
+                    return finalizeExitBlock();
+                case Ins::UNSET:
+                    assert(false);
+                    break;
+                case Ins::NOOP:
+                    break;
+                case Ins::DATA:
+                    activeBlock.flags |= INSTRUCTION_SET_BIT;
+                    switch (pp.dir) {
+                        case Dir::UP:
+                        case Dir::DOWN:
+                            activeBlock.flags |= INSTRUCTION_TYPE_BIT;
+                            activeBlock.amount += 1 - (int)pp.dir;
+                            break;
+                        case Dir::RIGHT:
+                        case Dir::LEFT:
+                            activeBlock.flags &= ~INSTRUCTION_TYPE_BIT;
+                            activeBlock.amount += 2 - (int)pp.dir;
+                            break;
+                    }
+                    break;
+                case Ins::TURN:
+                    if (activeBlock.flags & INSTRUCTION_SET_BIT) {
+                        return finalizeBlock(pp.p);
+                    } else {
+                        if (td == TurnDirection::COUNTERCLOCKWISE) {
+                            pp.dir = (Dir)(((int)pp.dir + 3) % 4);
+                        } else {
+                            pp.dir = (Dir)(((int)pp.dir + 1) % 4);
+                        }
+                    }
+            }
+        } while (ins == Ins::TURN);
+
+        pp.p = ip;
+    } while (activeBlock.numSteps++ < 127);
+
+    return finalizeHangBlock();
 }
 
 void InterpretedProgramBuilder::checkState() {
@@ -87,7 +172,7 @@ InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(ProgramBl
     return InstructionPointer { .col = col, .row = row };
 }
 
-TurnDirection InterpretedProgramBuilder::startTurnDirectionForBlock(ProgramBlock* block) {
+TurnDirection InterpretedProgramBuilder::turnDirectionForBlock(ProgramBlock* block) {
     return (TurnDirection)(block->getStartIndex() & 0x01);
 }
 
@@ -95,12 +180,17 @@ ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(ProgramBlock* b
                                                                  Program& program) {
     ProgramPointer pp;
 
-    pp.p = startInstructionForBlock(block);
-    pp.dir = (Dir)0;
+    if (block == getEntryBlock()) {
+        pp.p = InstructionPointer { .col = 0, .row = -1 };
+        pp.dir = Dir::UP;
+    } else {
+        pp.p = startInstructionForBlock(block);
+        pp.dir = (Dir)0;
 
-    // Find a TURN
-    while (program.getInstruction(nextInstructionPointer(pp)) != Ins::TURN) {
-        pp.dir = (Dir)((int)pp.dir + 1);
+        // Find a TURN
+        while (program.getInstruction(nextInstructionPointer(pp)) != Ins::TURN) {
+            pp.dir = (Dir)((int)pp.dir + 1);
+        }
     }
 
     return pp;
@@ -153,14 +243,33 @@ int InterpretedProgramBuilder::getNumSteps() {
     return _stateP->activeBlock.numSteps;
 }
 
+ProgramBlock* InterpretedProgramBuilder::finalizeExitBlock() {
+    ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
+    assert( !block->isFinalized() );
+
+    block->finalizeExit(getNumSteps());
+    _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
+
+    return block;
+}
+
+ProgramBlock* InterpretedProgramBuilder::finalizeHangBlock() {
+    ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
+    assert( !block->isFinalized() );
+
+    block->finalizeHang();
+    _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
+
+    return block;
+}
+
 ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer endP) {
     ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
-
     assert( !block->isFinalized() );
 
     ProgramBlock* zeroBlock = nullptr;
     if (
-        startTurnDirectionForBlock(block) == TurnDirection::COUNTERCLOCKWISE &&
+        turnDirectionForBlock(block) == TurnDirection::COUNTERCLOCKWISE &&
         isDeltaInstruction() &&
         getAmount() != 0
     ) {
@@ -172,7 +281,6 @@ ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer endP) 
     ProgramBlock* nonZeroBlock = getBlock(endP, TurnDirection::CLOCKWISE);
 
     block->finalize(isDeltaInstruction(), getAmount(), getNumSteps(), zeroBlock, nonZeroBlock);
-
     _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
 
 //    checkState();

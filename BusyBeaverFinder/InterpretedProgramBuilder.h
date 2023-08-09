@@ -50,6 +50,8 @@ class InterpretedProgramBuilder : public InterpretedProgram {
     void checkState();
 
 public:
+    static InterpretedProgramBuilder fromProgram(Program& program);
+
     InterpretedProgramBuilder();
 
     //---------------------------------------------------------------------------------------------
@@ -78,12 +80,17 @@ public:
     int getAmount();
     int getNumSteps();
 
+    ProgramBlock* buildActiveBlock(Program& program);
+
+    ProgramBlock* finalizeExitBlock();
+    ProgramBlock* finalizeHangBlock();
     ProgramBlock* finalizeBlock(InstructionPointer endP);
+
     ProgramBlock* enterBlock(ProgramBlock* block);
     ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
     ProgramBlock* getBlock(int startIndex) { return _blocks + _blockIndexLookup[startIndex]; }
 
-    TurnDirection startTurnDirectionForBlock(ProgramBlock* block);
+    TurnDirection turnDirectionForBlock(ProgramBlock* block);
     ProgramPointer getStartProgramPointer(ProgramBlock* block, Program& program);
 };
 

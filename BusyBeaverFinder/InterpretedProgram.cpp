@@ -24,7 +24,11 @@ void InterpretedProgram::dumpBlock(const ProgramBlock* block, std::ostream &os) 
         os << "-";
     }
 
-    os << "/" << indexOf(block->nonZeroBlock());
+    if (block->nonZeroBlock() != nullptr) {
+        os << "/" << indexOf(block->nonZeroBlock());
+    } else {
+        os << "/-";
+    }
 
     os << ", #Steps = " << block->getNumSteps();
 
