@@ -17,7 +17,6 @@
 
 typedef unsigned long long ulonglong;
 
-const int programStorageSize = (maxWidth + 1) * (maxHeight + 2);
 
 class Program {
     int _width;
@@ -32,6 +31,8 @@ class Program {
     Ins getInstruction(int col, int row) const;
 
 public:
+    static Program fromString(std::string s);
+
     Program(int width, int height);
 
     void clone(Program& dest) const;
@@ -68,6 +69,7 @@ public:
     ulonglong getEquivalenceNumber();
 
     std::string toWebString() const;
+    std::string toString() const;
 
     void dump() const;
     void dumpWeb() const;

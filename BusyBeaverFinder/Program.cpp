@@ -12,6 +12,41 @@
 
 const char ins_chars[5] = {'?', '_', 'o', '*', 'X' };
 const char web_chars[5] = {'_', '_', 'o', '*', 'X' };
+const uint8_t ins_vals[5] = {0, 0, 1, 2, 0};
+
+char charForVal(int v) {
+    return (v == 0) ? '_' : 'a' + (v - 1);
+}
+
+Program Program::fromString(std::string s) {
+    auto chars = s.begin();
+    int w = (*chars++ - '0');
+    int h = (*chars++ - '0');
+    std::vector<Ins> v;
+    InstructionPointer insP = { .col = 0, .row = h - 1 };
+    Program prog = Program(w, h);
+
+    while (insP.row >= 0) {
+        if (v.empty()) {
+            char ch = *chars++;
+            int val = ch == '_' ? 0 : (ch - 'a') + 1;
+            while (v.size() < 3) {
+                v.push_back((Ins)((val % 3) + 1));
+                val /= 3;
+            }
+        }
+
+        prog.setInstruction(insP, v.back());
+        v.pop_back();
+
+        if (++insP.col == w) {
+            --insP.row;
+            insP.col = 0;
+        }
+    }
+
+    return prog;
+}
 
 Program::Program(int width, int height) {
     _width = width;
@@ -86,6 +121,38 @@ std::string Program::toWebString() const {
         for (int x = 0; x < _width; x++) {
             s += web_chars[(int)getInstruction(x, y)];
         }
+    }
+
+    return s;
+}
+
+std::string Program::toString() const {
+    std::string s;
+    s.reserve((_height * _width + 2) / 3);
+    int n = 0, v = 0;
+
+    s += ('0' + _width);
+    s += ('0' + _height);
+
+    for (int y = _height; --y >= 0; ) {
+        for (int x = 0; x < _width; x++) {
+            v *= 3;
+            v += ins_vals[(int)getInstruction(x, y)];
+            ++n;
+            if (n == 3) {
+                s += charForVal(v);
+                n = 0;
+                v = 0;
+            }
+        }
+    }
+
+    if (n != 0) {
+        while (n != 3) {
+            v *= 3;
+            ++n;
+        }
+        s += charForVal(v);
     }
 
     return s;
