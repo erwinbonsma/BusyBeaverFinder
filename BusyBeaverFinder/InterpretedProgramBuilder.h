@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 
+#include "Consts.h"
 #include "InterpretedProgram.h"
 #include "Types.h"
 #include "ProgramBlock.h"

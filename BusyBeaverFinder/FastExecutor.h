@@ -7,9 +7,11 @@
 //
 #pragma once
 
-#include "ProgramExecutor.h"
+#include "Types.h"
 
-class FastExecutor : public ProgramExecutor {
+class ProgramBlock;
+
+class FastExecutor {
     int* _data;
     int _dataBufSize;
 
@@ -18,14 +20,18 @@ class FastExecutor : public ProgramExecutor {
     int* _maxDataP;
 
     int* _dataP;
+
+    int _maxSteps;
     int _numSteps;
 
 public:
     FastExecutor(int dataSize);
     ~FastExecutor();
 
-    RunResult execute(const ProgramBlock *programBlock, int maxSteps) override;
-    int numSteps() const override { return _numSteps; }
+    void setMaxSteps(int steps) { _maxSteps = steps; }
+    int numSteps() const { return _numSteps; }
+
+    RunResult execute(const ProgramBlock *programBlock);
 
     void dump();
 };

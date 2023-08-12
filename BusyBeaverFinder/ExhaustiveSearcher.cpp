@@ -77,6 +77,8 @@ void ExhaustiveSearcher::configure(SearchSettings settings) {
 void ExhaustiveSearcher::reconfigure() {
     _data.setStackSize(_settings.undoCapacity);
 
+    _fastExecutor.setMaxSteps(_settings.maxSteps);
+
     int capacity = _settings.maxHangDetectionSteps;
     if (_zArrayHelperBuf == nullptr || _runSummary[1].getCapacity() != capacity) {
         // The arrays need to be re-allocated
@@ -196,8 +198,7 @@ void ExhaustiveSearcher::branch(int depth) {
 
 void ExhaustiveSearcher::fastExecution() {
     _tracker->reportFastExecution();
-    RunResult result = _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(),
-                                             _settings.maxSteps);
+    RunResult result = _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock());
     switch (result) {
         case RunResult::SUCCESS:
         case RunResult::PROGRAM_ERROR:
@@ -209,6 +210,7 @@ void ExhaustiveSearcher::fastExecution() {
         case RunResult::ASSUMED_HANG:
             _tracker->reportAssumedHang();
             break;
+        case RunResult::UNKNOWN:
         case RunResult::DETECTED_HANG:
             assert(false);
     }

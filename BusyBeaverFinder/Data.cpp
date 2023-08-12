@@ -133,6 +133,16 @@ bool Data::onlyZerosAhead(DataPointer dp, bool atRight) const {
     return true;
 }
 
+void Data::delta(int delta) {
+    (*_dataP) += delta;
+    updateBounds();
+}
+
+bool Data::shift(int shift) {
+    _dataP += shift;
+    return _dataP > _minDataP && _dataP < _maxDataP;
+}
+
 void Data::inc(uint8_t delta) {
     (*_dataP) += delta;
 

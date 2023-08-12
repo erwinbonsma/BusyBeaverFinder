@@ -28,7 +28,7 @@ FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-RunResult FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) {
+RunResult FastExecutor::execute(const ProgramBlock *programBlock) {
     _numSteps = 0;
 
     // Clear data
@@ -49,7 +49,7 @@ RunResult FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) 
         }
 
         _numSteps += programBlock->getNumSteps();
-        if (_numSteps > maxSteps) {
+        if (_numSteps > _maxSteps) {
             return RunResult::ASSUMED_HANG;
         }
 

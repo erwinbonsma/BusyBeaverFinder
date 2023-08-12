@@ -63,6 +63,9 @@ public:
 
     bool onlyZerosAhead(DataPointer dp, bool atRight) const;
 
+    void delta(int delta);
+    bool shift(int shift);
+
     void inc(uint8_t delta);
     void dec(uint8_t delta);
     bool shr(uint8_t shift);

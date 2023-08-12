@@ -5,13 +5,9 @@
 //  Created by Erwin on 19/01/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef Types_h
-#define Types_h
+#pragma once
 
 #include <stdint.h>
-
-#include "Consts.h"
 
 // Program instructions
 enum class Ins : int8_t {
@@ -72,4 +68,21 @@ enum class Trilian : int8_t {
     MAYBE = 2
 };
 
-#endif /* Types_h */
+enum class RunResult {
+    UNKNOWN = 0,
+
+    // Program completed successfully
+    SUCCESS = 1,
+
+    // Error execution data instruction
+    DATA_ERROR = 2,
+
+    // Encountered an unfinalized program block
+    PROGRAM_ERROR = 3,
+
+    // A hang detector detected a hang
+    DETECTED_HANG = 4,
+
+    // The program did not complete within the limit allowed steps
+    ASSUMED_HANG = 5,
+};
