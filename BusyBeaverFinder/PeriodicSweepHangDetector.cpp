@@ -11,9 +11,9 @@
 #include <algorithm>
 
 int numPeriodicSweepFailures = 0;
-bool periodicSweepHangFailure(const ProgramExecutor& executor) {
-//    executor.dumpExecutionState();
-//    executor.getData().dump();
+bool periodicSweepHangFailure(const ExecutionState& execution) {
+//    execution.dumpExecutionState();
+//    execution.getData().dump();
     numPeriodicSweepFailures++;
     return false;
 }
@@ -135,15 +135,15 @@ std::ostream& PeriodicSweepTransitionGroup::dump(std::ostream &os) const {
     return os;
 }
 
-PeriodicSweepHangDetector::PeriodicSweepHangDetector(const ProgramExecutor& executor)
-: SweepHangDetector(executor) {
+PeriodicSweepHangDetector::PeriodicSweepHangDetector(const ExecutionState& execution)
+: SweepHangDetector(execution) {
     for (int i = 0; i < 2; i++ ) {
         _transitionGroups[i] = new PeriodicSweepTransitionGroup();
     }
 }
 
 bool PeriodicSweepHangDetector::checkLineairIncrease(int start1, int start2, int start3) const {
-    const RunSummary &runSummary = _executor.getRunSummary();
+    const RunSummary &runSummary = _execution.getRunSummary();
 
     assert(start3 - start2 == start2 - start1);
     for (int i = start2 - start1; --i >= 0; ) {
@@ -162,12 +162,12 @@ bool PeriodicSweepHangDetector::checkLineairIncrease(int start1, int start2, int
 }
 
 bool PeriodicSweepHangDetector::analyzeSweepIterations() {
-    const RunSummary &runSummary = _executor.getRunSummary();
-    const RunSummary &metaRunSummary = _executor.getMetaRunSummary();
+    const RunSummary &runSummary = _execution.getRunSummary();
+    const RunSummary &metaRunSummary = _execution.getMetaRunSummary();
     const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
 
     _sweepRepetitionPeriod = 1;
-    while (_sweepRepetitionPeriod * 3 <= _executor.getMetaRunSummary().getLoopIteration()) {
+    while (_sweepRepetitionPeriod * 3 <= _execution.getMetaRunSummary().getLoopIteration()) {
         int sweepLoopPeriod = metaLoop->getLoopPeriod() * _sweepRepetitionPeriod;
 
         int startLoop3 = runSummary.getNumRunBlocks() - sweepLoopPeriod;
@@ -188,12 +188,12 @@ bool PeriodicSweepHangDetector::analyzeSweepIterations() {
         _sweepRepetitionPeriod += 1;
     }
 
-    return periodicSweepHangFailure(_executor);
+    return periodicSweepHangFailure(_execution);
 }
 
 bool PeriodicSweepHangDetector::analyzeTransitions() {
-    const RunSummary &runSummary = _executor.getRunSummary();
-    const RunSummary &metaRunSummary = _executor.getMetaRunSummary();
+    const RunSummary &runSummary = _execution.getRunSummary();
+    const RunSummary &metaRunSummary = _execution.getMetaRunSummary();
 
     const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
     int sweepLoopPeriod = metaLoop->getLoopPeriod() * _sweepRepetitionPeriod;
@@ -220,7 +220,7 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
         } else {
             if (st->numOccurences == 1) {
                 // No new transition should be encountered after one iteration of the meta-loop
-                return periodicSweepHangFailure(_executor);
+                return periodicSweepHangFailure(_execution);
             }
 
             if (numSweepLengths() % 2 == 0) {
@@ -233,19 +233,19 @@ bool PeriodicSweepHangDetector::analyzeTransitions() {
     if (transitionScanner.nextLoopIndex() != metaLoop1Index) {
         // For a regular sweep (locked into a meta-loop), the entire iteration of the meta-loop
         // should be analysed and match the expected sweep behavior.
-        return periodicSweepHangFailure(_executor);
+        return periodicSweepHangFailure(_execution);
     }
 
     if (transitionScanner.numSweeps() % 2 != 0) {
         // Should never happen. If so, should investigate
         assert(false);
 
-        return periodicSweepHangFailure(_executor);
+        return periodicSweepHangFailure(_execution);
     }
 
     for (auto tg : _transitionGroups) {
         if (! ((PeriodicSweepTransitionGroup *)tg)->finishTransitionAnalysis()) {
-            return periodicSweepHangFailure(_executor);
+            return periodicSweepHangFailure(_execution);
         }
     }
 
@@ -264,8 +264,8 @@ bool PeriodicSweepHangDetector::scanSweepSequence(DataPointer &dp, int fromEndIn
 bool PeriodicSweepHangDetector::shouldCheckNow(bool loopContinues) const {
     // Should wait for the sweep-loop to finish
     return (SweepHangDetector::shouldCheckNow(loopContinues) &&
-            _executor.getMetaRunSummary().isInsideLoop() &&
-            _executor.getMetaRunSummary().getLoopIteration() >= 3);
+            _execution.getMetaRunSummary().isInsideLoop() &&
+            _execution.getMetaRunSummary().getLoopIteration() >= 3);
 }
 
 bool PeriodicSweepHangDetector::analyzeHangBehaviour() {

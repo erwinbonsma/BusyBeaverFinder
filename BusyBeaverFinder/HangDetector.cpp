@@ -11,8 +11,8 @@
 #include <cassert>
 #include <iostream>
 
-HangDetector::HangDetector(const ProgramExecutor& executor) :
-    _executor(executor)
+HangDetector::HangDetector(const ExecutionState& execution) :
+    _execution(execution)
 {
     reset();
 }

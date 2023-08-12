@@ -54,7 +54,7 @@ protected:
     Trilian proofHang() override;
 
 public:
-    GliderHangDetector(const ProgramExecutor& executor);
+    GliderHangDetector(const ExecutionState& execution);
 
     virtual HangType hangType() const override { return HangType::APERIODIC_GLIDER; }
 };

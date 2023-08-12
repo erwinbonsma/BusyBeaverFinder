@@ -9,8 +9,8 @@
 #include "IrregularSweepHangDetector.h"
 
 int numIrregularSweepFailures = 0;
-bool irregularSweepHangFailure(const ProgramExecutor& executor) {
-//    executor.dumpExecutionState();
+bool irregularSweepHangFailure(const ExecutionState& execution) {
+//    execution.dumpExecutionState();
     numIrregularSweepFailures++;
     return false;
 }
@@ -86,8 +86,8 @@ bool IrregularSweepTransitionGroup::determineSweepEndType() {
     return true;
 }
 
-IrregularSweepHangDetector::IrregularSweepHangDetector(const ProgramExecutor& executor)
-: SweepHangDetector(executor) {
+IrregularSweepHangDetector::IrregularSweepHangDetector(const ExecutionState& execution)
+: SweepHangDetector(execution) {
     for (int i = 0; i < 2; i++ ) {
         _transitionGroups[i] = new IrregularSweepTransitionGroup();
     }
@@ -104,7 +104,7 @@ bool IrregularSweepHangDetector::analyzeTransitions() {
     while (numUniqueTransitions != 0 || transitionScanner.numSweeps() < 8) {
         const SweepTransition* st = transitionScanner.analyzePreviousSweepTransition();
         if (st == nullptr) {
-            return irregularSweepHangFailure(_executor);
+            return irregularSweepHangFailure(_execution);
         }
 
         addSweepLength(transitionScanner.lastSweepLength());
@@ -134,7 +134,7 @@ bool IrregularSweepHangDetector::analyzeHangBehaviour() {
     if (! (_transitionGroups[0]->endType() == SweepEndType::FIXED_APERIODIC_APPENDIX ||
            _transitionGroups[1]->endType() == SweepEndType::FIXED_APERIODIC_APPENDIX)
     ) {
-        return irregularSweepHangFailure(_executor);
+        return irregularSweepHangFailure(_execution);
     }
 
     return true;

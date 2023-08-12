@@ -21,7 +21,7 @@ protected:
     Trilian proofHang() override;
 
 public:
-    MetaPeriodicHangDetector(const ProgramExecutor& executor);
+    MetaPeriodicHangDetector(const ExecutionState& execution);
 
     HangType hangType() const override { return HangType::META_PERIODIC; }
 

@@ -28,7 +28,7 @@ protected:
     bool analyzeTransitions() override;
 
 public:
-    IrregularSweepHangDetector(const ProgramExecutor& executor);
+    IrregularSweepHangDetector(const ExecutionState& execution);
 
     virtual HangType hangType() const override { return HangType::IRREGULAR_SWEEP; }
 };

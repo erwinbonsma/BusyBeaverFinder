@@ -13,18 +13,18 @@
 #include "InterpretedProgram.h"
 #include "Utils.h"
 
-GliderHangDetector::GliderHangDetector(const ProgramExecutor& executor)
-    : HangDetector(executor) {}
+GliderHangDetector::GliderHangDetector(const ExecutionState& execution)
+    : HangDetector(execution) {}
 
 bool GliderHangDetector::shouldCheckNow(bool loopContinues) const {
     // Should wait for the glider-loop to finish
-    return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
+    return !loopContinues && _execution.getMetaRunSummary().isInsideLoop();
 }
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
 bool GliderHangDetector::identifyLoopCounter() {
-    const RunSummary& runSummary = _executor.getRunSummary();
-    const InterpretedProgram& interpretedProgram = _executor.getInterpretedProgram();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const InterpretedProgram& interpretedProgram = _execution.getInterpretedProgram();
 
     ProgramBlockIndex pbIndex = runSummary.getLastProgramBlockIndex();
     const ProgramBlock* pb = interpretedProgram.programBlockAt(pbIndex);
@@ -80,11 +80,11 @@ bool GliderHangDetector::isGliderLoop() {
 
 bool GliderHangDetector::analyzeLoop() {
     // Assume that the loop which just finished is the glider-loop
-    const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
 
     _loopRunBlock = runSummary.getLastRunBlock();
 
-    if (!_loop.analyzeLoop(_executor.getInterpretedProgram(), runSummary,
+    if (!_loop.analyzeLoop(_execution.getInterpretedProgram(), runSummary,
                            _loopRunBlock->getStartIndex(), _loopRunBlock->getLoopPeriod())) {
         return false;
     }
@@ -193,9 +193,9 @@ bool GliderHangDetector::checkTransitionDeltas() {
 }
 
 bool GliderHangDetector::analyzeTransitionSequence() {
-    const RunSummary& runSummary = _executor.getRunSummary();
-    const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
-    const InterpretedProgram& interpretedProgram = _executor.getInterpretedProgram();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const RunSummary& metaRunSummary = _execution.getMetaRunSummary();
+    const InterpretedProgram& interpretedProgram = _execution.getInterpretedProgram();
 
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
@@ -228,8 +228,8 @@ bool GliderHangDetector::analyzeTransitionSequence() {
 
 bool GliderHangDetector::analyzeHangBehaviour() {
     //std::cout <<  "Analysing" << std::endl;
-    //_executor.getInterpretedProgram().dump();
-    //_executor.dumpHangDetection();
+    //_execution.getInterpretedProgram().dump();
+    //_execution.dumpHangDetection();
 
     if (!analyzeLoop()) {
         return false;
@@ -243,7 +243,7 @@ bool GliderHangDetector::analyzeHangBehaviour() {
 }
 
 bool GliderHangDetector::isBootstrapping() {
-    const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
 
     return (runSummary.getLoopIteration() < _numBootstrapCycles);
 }
@@ -251,8 +251,8 @@ bool GliderHangDetector::isBootstrapping() {
 // Checks that the transition sequence is identical each time. I.e. if it contains loops, their
 // iteration count is always fixed. This in turn means that it always does the same thing.
 bool GliderHangDetector::transitionSequenceIsFixed() {
-    const RunSummary& runSummary = _executor.getRunSummary();
-    const RunSummary& metaRunSummary = _executor.getMetaRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const RunSummary& metaRunSummary = _execution.getMetaRunSummary();
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
 
@@ -276,14 +276,14 @@ bool GliderHangDetector::transitionSequenceIsFixed() {
 // Verify that the values ahead of the next counter match those made by the (accumulated) effect of
 // the transition sequence and are zero everywhere else.
 bool GliderHangDetector::onlyZeroesAhead() {
-    const Data& data = _executor.getData();
+    const Data& data = _execution.getData();
     int shift = _nxtCounterDpOffset - _curCounterDpOffset;
     int delta = (shift > 0) ? 1 : -1;
     DataPointer dpStart = data.getDataPointer() + shift;
     DataPointer dpEnd = (shift > 0) ? data.getMaxDataP() : data.getMinDataP();
     DataPointer dp = dpStart;
 
-    //_executor.dumpHangDetection();
+    //_execution.dumpHangDetection();
 
     while (true) {
         if (dp != dpStart) {

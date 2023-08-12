@@ -8,15 +8,15 @@
 
 #include "SweepTransitionGroup.h"
 
-#include "ProgramExecutor.h"
+#include "ExecutionState.h"
 #include "SweepHangDetector.h"
 
 //#define SWEEP_DEBUG_TRACE
 
 int numTransitionGroupFailures = 0;
 
-bool transitionGroupFailure(const ProgramExecutor& executor) {
-//    executor.dumpExecutionState();
+bool transitionGroupFailure(const ExecutionState& execution) {
+//    execution.dumpExecutionState();
     numTransitionGroupFailures++;
     return false;
 }
@@ -116,19 +116,19 @@ bool SweepLoopAnalysis::canSweepChangeValueTowardsZero(int value) const {
 }
 
 bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
-                                         const ProgramExecutor& executor) {
+                                         const ExecutionState& execution) {
     _loopRunBlock = runBlock;
 
-    if (!analyzeLoop(executor.getInterpretedProgram(),
-                     executor.getRunSummary(),
+    if (!analyzeLoop(execution.getInterpretedProgram(),
+                     execution.getRunSummary(),
                      runBlock->getStartIndex(),
                      runBlock->getLoopPeriod())) {
-        return transitionGroupFailure(executor);
+        return transitionGroupFailure(execution);
     }
 
     if (dataPointerDelta() == 0) {
         // A sweep loop cannot be stationary
-        return transitionGroupFailure(executor);
+        return transitionGroupFailure(execution);
     }
 
     _sweepValueChanges.clear();
@@ -203,25 +203,25 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sla) {
 }
 
 bool SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
-                                                     const ProgramExecutor& executor) {
-    const RunSummary& runSummary = executor.getRunSummary();
-    const InterpretedProgram& interpretedProgram = executor.getInterpretedProgram();
+                                                     const ExecutionState& execution) {
+    const RunSummary& runSummary = execution.getRunSummary();
+    const InterpretedProgram& interpretedProgram = execution.getInterpretedProgram();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
     int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
 
     if (!analyzeSequence(interpretedProgram, runSummary, pbStart, numProgramBlocks)) {
-        return transitionGroupFailure(executor);
+        return transitionGroupFailure(execution);
     }
 
     return true;
 }
 
 bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
-                                               const ProgramExecutor& executor) const {
-    const RunSummary& runSummary = executor.getRunSummary();
-    const InterpretedProgram& program = executor.getInterpretedProgram();
+                                               const ExecutionState& execution) const {
+    const RunSummary& runSummary = execution.getRunSummary();
+    const InterpretedProgram& program = execution.getInterpretedProgram();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
@@ -675,14 +675,14 @@ bool SweepTransitionGroup::canSweepChangeValueTowardsZero(int value) const {
 }
 
 const SweepTransition* SweepTransitionGroup::findTransitionMatching(
-    int exitInstruction, int startIndex, int endIndex, const ProgramExecutor& executor
+    int exitInstruction, int startIndex, int endIndex, const ExecutionState& execution
 ) const {
     for (auto beg = _transitionMap.lower_bound(exitInstruction),
               end = _transitionMap.upper_bound(exitInstruction);
          beg != end; ++beg
     ) {
         const SweepTransition &tr = beg->second;
-        if (tr.transition->transitionEquals(startIndex, endIndex, executor)) {
+        if (tr.transition->transitionEquals(startIndex, endIndex, execution)) {
             return &tr;
         }
     }

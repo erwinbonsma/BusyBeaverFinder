@@ -18,21 +18,21 @@ const int MIN_ITERATIONS_LAST_SWEEP_LOOP = 5;
 //#define SWEEP_DEBUG_TRACE
 
 int numFailed = 0;
-bool sweepHangFailure(const ProgramExecutor& executor) {
-//    executor.dumpExecutionState();
+bool sweepHangFailure(const ExecutionState& execution) {
+//    execution.dumpExecutionState();
     numFailed++;
     return false;
 }
 
-const SweepTransition* sweepTransitionScanFailure(const ProgramExecutor& executor) {
+const SweepTransition* sweepTransitionScanFailure(const ExecutionState& execution) {
     numFailed++;
     return nullptr;
 }
 
 SweepTransitionScanner::SweepTransitionScanner(const SweepHangDetector &sweepHangDetector) :
     _sweepHangDetector(sweepHangDetector),
-    _runSummary(sweepHangDetector._executor.getRunSummary()),
-    _metaRunSummary(sweepHangDetector._executor.getMetaRunSummary())
+    _runSummary(sweepHangDetector._execution.getRunSummary()),
+    _metaRunSummary(sweepHangDetector._execution.getMetaRunSummary())
 {
     _nextLoopIndex = _runSummary.getNumRunBlocks() - 1;
     _nextLoopStartInstructionIndex = 0;
@@ -66,7 +66,7 @@ int SweepTransitionScanner::findPrecedingTransitionStart(int sweepLoopRunBlockIn
 
 const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() {
     auto group = _sweepHangDetector._transitionGroups;
-    auto &executor = _sweepHangDetector._executor;
+    auto &execution = _sweepHangDetector._execution;
     int j = (_numSweeps + 1) % 2;
     int lastLoopIndex = _nextLoopIndex;
 
@@ -77,18 +77,18 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
 
         int prevLoopIndex = _sweepHangDetector.findPreviousSweepLoop(_nextLoopIndex);
         if (prevLoopIndex < 0) {
-            return sweepTransitionScanFailure(executor);
+            return sweepTransitionScanFailure(execution);
         }
 
         if (_nextLoopIndex - prevLoopIndex > 1) {
             // There's a transition sequence separating both loops
             if (group[j]->midSweepTransition() == nullptr) {
-                return sweepTransitionScanFailure(executor);
+                return sweepTransitionScanFailure(execution);
             }
             if (!group[j]->midSweepTransition()->transitionEquals(prevLoopIndex + 1,
                                                                   _nextLoopIndex,
-                                                                  executor)) {
-                return sweepTransitionScanFailure(executor);
+                                                                  execution)) {
+                return sweepTransitionScanFailure(execution);
             }
         }
         _nextLoopIndex = prevLoopIndex;
@@ -99,14 +99,14 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
                                                    ignored)
         ) {
             // Sequence does not follow expected sweep pattern anymore
-            return sweepTransitionScanFailure(executor);
+            return sweepTransitionScanFailure(execution);
         }
     }
 
     int transitionStartIndex = findPrecedingTransitionStart(_nextLoopIndex);
     if (transitionStartIndex <= 0) {
         // This can happen when the sequence (and resulting sweeps) are still too short
-        return sweepTransitionScanFailure(executor);
+        return sweepTransitionScanFailure(execution);
     }
 
     int loopIndex = transitionStartIndex - 1;
@@ -117,7 +117,7 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
                                                rotationEquivalenceOffset)
     ) {
         // Sequence does not follow expected sweep pattern anymore
-        return sweepTransitionScanFailure(executor);
+        return sweepTransitionScanFailure(execution);
     }
 
     int loopLen = _runSummary.getRunBlockLength(loopIndex);
@@ -125,17 +125,17 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     const SweepTransition* st = group[j]->findTransitionMatching(exitIndex,
                                                                 transitionStartIndex,
                                                                 _nextLoopIndex,
-                                                                executor);
+                                                                execution);
     if (st == nullptr) {
         // This is a new transition. Add it
         if (_numUniqueTransitions >= MAX_SWEEP_TRANSITION_ANALYSIS) {
-            return sweepTransitionScanFailure(executor);
+            return sweepTransitionScanFailure(execution);
         }
         SweepTransitionAnalysis *sta = &(_sweepHangDetector.
                                          _transitionAnalysisPool[_numUniqueTransitions++]);
 
-        if (!sta->analyzeSweepTransition(transitionStartIndex, _nextLoopIndex, executor)) {
-            return sweepTransitionScanFailure(executor);
+        if (!sta->analyzeSweepTransition(transitionStartIndex, _nextLoopIndex, execution)) {
+            return sweepTransitionScanFailure(execution);
         }
 
         SweepTransition newTransition(sta, _nextLoopStartInstructionIndex);
@@ -148,14 +148,14 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     _nextLoopStartInstructionIndex = rotationEquivalenceOffset;
     _numSweeps++;
 
-    _lastSweepLength = abs(getDpDelta(executor.getRunSummary(), executor.getInterpretedProgram(),
+    _lastSweepLength = abs(getDpDelta(execution.getRunSummary(), execution.getInterpretedProgram(),
                                       transitionStartIndex, lastLoopIndex + 1));
 
     return st;
 }
 
-SweepHangDetector::SweepHangDetector(const ProgramExecutor& executor)
-: HangDetector(executor) {}
+SweepHangDetector::SweepHangDetector(const ExecutionState& execution)
+: HangDetector(execution) {}
 
 SweepHangDetector::~SweepHangDetector() {
     for (int i = 0; i < 2; i++) {
@@ -165,7 +165,7 @@ SweepHangDetector::~SweepHangDetector() {
 }
 
 bool SweepHangDetector::shouldCheckNow(bool loopContinues) const {
-    const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
 
     // Should wait for the sweep-loop to finish
     return (
@@ -182,7 +182,7 @@ bool SweepHangDetector::shouldCheckNow(bool loopContinues) const {
 }
 
 int SweepHangDetector::findPreviousSweepLoop(int runBlockIndex) const {
-    const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
 
     while (--runBlockIndex >= 0) {
         const RunBlock *runBlock = runSummary.runBlockAt(runBlockIndex);
@@ -223,8 +223,8 @@ bool SweepHangDetector::analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoing
         &_transitionAnalysisPool[_transitionGroups[1]->midSweepTransition() ? 1 : 0];
 
     if (!sta->analyzeSweepTransition(runBlockIndexOutgoingLoop + 1,
-                                     runBlockIndexIncomingLoop, _executor)) {
-        return sweepTransitionScanFailure(_executor);
+                                     runBlockIndexIncomingLoop, _execution)) {
+        return sweepTransitionScanFailure(_execution);
     }
 
     _transitionGroups[isFirstSweep ? 1 : 0]->setMidSweepTransition(sta);
@@ -233,7 +233,7 @@ bool SweepHangDetector::analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoing
 }
 
 bool SweepHangDetector::analyzeLoops() {
-    const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
     auto *group = _transitionGroups;
     int numSweepLoops = 0;
     int numAnalyzedLoops = 0;
@@ -246,7 +246,7 @@ bool SweepHangDetector::analyzeLoops() {
             return false;
         }
         const RunBlock *runBlock = runSummary.runBlockAt(runBlockIndex);
-        if (!_loopAnalysisPool[numSweepLoops++].analyzeSweepLoop(runBlock, _executor)) {
+        if (!_loopAnalysisPool[numSweepLoops++].analyzeSweepLoop(runBlock, _execution)) {
             return false;
         }
 
@@ -303,7 +303,7 @@ bool SweepHangDetector::analyzeLoops() {
 
     // Both loops should move in opposite directions
     if (group[0]->locatedAtRight() == group[1]->locatedAtRight()) {
-        return sweepHangFailure(_executor);
+        return sweepHangFailure(_execution);
     }
 
     return true;
@@ -316,7 +316,7 @@ bool SweepHangDetector::loopsAreEquivalent(const RunBlock* loop1, const RunBlock
 
     return (
         loop1->getSequenceIndex() == loop2->getSequenceIndex() ||
-        _executor.getRunSummary().areLoopsRotationEqual(loop1, loop2, rotationEquivalenceOffset)
+        _execution.getRunSummary().areLoopsRotationEqual(loop1, loop2, rotationEquivalenceOffset)
     );
 }
 
@@ -333,7 +333,7 @@ bool SweepHangDetector::analyzeTransitionGroups() {
 bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp, int fromEndIndex,
                                                     int initialDpDelta
 ) {
-    const Data& data = _executor.getData();
+    const Data& data = _execution.getData();
 
     // DP is at one side of the sweep. Find the other end of the sweep.
     auto sweepGroup = _transitionGroups[fromEndIndex];
@@ -380,7 +380,7 @@ bool SweepHangDetector::scanSweepSequenceAfterDelta(DataPointer &dp, int fromEnd
 
         if (sweepMakesPersistentChange && sweepGroup->canSweepChangeValueTowardsZero(*dp)) {
             // The sweep makes changes to the sequence that move some values towards zero
-            return sweepHangFailure(_executor);
+            return sweepHangFailure(_execution);
         }
 
         assert(dp != dpEnd); // Assumes abs(delta) == 1
@@ -419,20 +419,20 @@ bool SweepHangDetector::analyzeHangBehaviour() {
     }
 
     if (!analyzeTransitionGroups()) {
-        return sweepHangFailure(_executor);
+        return sweepHangFailure(_execution);
     }
 
     return true;
 }
 
 Trilian SweepHangDetector::proofHang() {
-    const Data& data = _executor.getData();
+    const Data& data = _execution.getData();
     DataPointer dp0 = data.getDataPointer();
 
     DataPointer dp1 = dp0; // Initial value
 
 //    std::cout << *this << std::endl;
-//    _executor.getData().dump();
+//    _execution.getData().dump();
 
     if (!scanSweepSequence(dp1, 0)) {
         return Trilian::MAYBE;

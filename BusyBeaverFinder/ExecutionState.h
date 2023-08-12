@@ -1,21 +1,19 @@
 //
-//  ProgramExecutor.h
+//  ExecutionState.h
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 25/10/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
+#pragma once
 
-#ifndef ProgramExecutor_h
-#define ProgramExecutor_h
-
-#include "Data.h"
-#include "RunSummary.h"
-#include "InterpretedProgram.h"
+class Data;
+class InterpretedProgram;
+class RunSummary;
 
 /* Abstract data type. Interface to hang detectors
  */
-class ProgramExecutor {
+class ExecutionState {
 
 public:
     virtual const InterpretedProgram& getInterpretedProgram() const = 0;
@@ -27,5 +25,3 @@ public:
 
     virtual void dumpExecutionState() const;
 };
-
-#endif /* ProgramExecutor_h */

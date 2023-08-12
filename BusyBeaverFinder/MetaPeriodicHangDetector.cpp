@@ -10,21 +10,21 @@
 
 #include <iostream>
 
-MetaPeriodicHangDetector::MetaPeriodicHangDetector(const ProgramExecutor& executor)
-    : PeriodicHangDetector(executor) {}
+MetaPeriodicHangDetector::MetaPeriodicHangDetector(const ExecutionState& execution)
+    : PeriodicHangDetector(execution) {}
 
 bool MetaPeriodicHangDetector::shouldCheckNow(bool loopContinues) const {
     // Should wait for the inner-loop to finish
-    return !loopContinues && _executor.getMetaRunSummary().isInsideLoop();
+    return !loopContinues && _execution.getMetaRunSummary().isInsideLoop();
 }
 
 bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
-    const RunSummary& runSummary = _executor.getRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
 
     // Points to the last run-block that is part of the meta-loop. Although it is not yet finalized,
     // as it is a loop which will not continue, we know it will.
     int endIndex = runSummary.getNumRunBlocks() - 1;
-    int metaLoopPeriod = _executor.getMetaRunSummary().getLoopPeriod();
+    int metaLoopPeriod = _execution.getMetaRunSummary().getLoopPeriod();
 
     // Determine how many of the last iterations of the meta-loop were exactly the same (i.e. all
     // inner-loops ran for the same duration).
@@ -61,14 +61,14 @@ bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
                   + runSummary.getRunBlockLength(endRunBlockIndex);
     int loopPeriod = loopEnd - _loopStart;
 
-    _lastAnalysisResult = _loop.analyzeLoop(_executor.getInterpretedProgram(),
+    _lastAnalysisResult = _loop.analyzeLoop(_execution.getInterpretedProgram(),
                                             runSummary, _loopStart, loopPeriod);
 
     return _lastAnalysisResult;
 }
 
 Trilian MetaPeriodicHangDetector::proofHang() {
-    int loopLen = _executor.getRunSummary().getNumProgramBlocks() - _loopStart;
+    int loopLen = _execution.getRunSummary().getNumProgramBlocks() - _loopStart;
 
     if (loopLen % _loop.loopSize() != 0) {
         // The meta loop may contain multiple loops, which may trigger an invocation of proofHang

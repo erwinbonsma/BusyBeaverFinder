@@ -131,7 +131,7 @@ void ExhaustiveSearcher::dumpSettings() {
 void ExhaustiveSearcher::dumpExecutionState() const {
     std::cout << "Num steps: " << _numSteps << std::endl;
     dumpInstructionStack();
-    ProgramExecutor::dumpExecutionState();
+    ExecutionState::dumpExecutionState();
 }
 
 void ExhaustiveSearcher::dump() {

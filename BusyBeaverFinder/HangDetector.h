@@ -5,12 +5,11 @@
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef HangDetector_h
-#define HangDetector_h
+#pragma once
 
 #include "Types.h"
 #include "ExhaustiveSearcher.h"
+#include "RunSummary.h"
 
 class HangDetector {
     // When last hang proof attempt was done that failed
@@ -20,14 +19,14 @@ class HangDetector {
     int _analysisCheckPoint;
 
 protected:
-    const ProgramExecutor& _executor;
+    const ExecutionState& _execution;
 
     // Returns the current check point, typically the program-block or run-block of either the run
     // summary or meta-run summary. Once the detector checked for a hang (and this checked failed)
     // it will only check again after the check point has changed. So the checkpoint should only
     // change when the next check might pass. What a suitable checkpoint is depends on the type of
     // hang that is being detected.
-    int currentCheckPoint() { return _executor.getRunSummary().getNumRunBlocks(); }
+    int currentCheckPoint() { return _execution.getRunSummary().getNumRunBlocks(); }
 
     virtual bool shouldCheckNow(bool loopContinues) const = 0;
 
@@ -53,7 +52,7 @@ protected:
     virtual Trilian proofHang() = 0;
 
 public:
-    HangDetector(const ProgramExecutor& executor);
+    HangDetector(const ExecutionState& execution);
     virtual ~HangDetector() {}
 
     virtual HangType hangType() const = 0;
@@ -67,5 +66,3 @@ public:
     // initiate a check
     bool detectHang(bool loopContinues);
 };
-
-#endif /* HangDetector_h */

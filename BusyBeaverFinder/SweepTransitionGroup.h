@@ -14,7 +14,7 @@
 #include "RunSummary.h"
 
 class Data;
-class ProgramExecutor;
+class ExecutionState;
 
 #include <map>
 #include <set>
@@ -131,7 +131,7 @@ public:
 
     bool requiresFixedInput() const { return _requiresFixedInput; }
 
-    bool analyzeSweepLoop(const RunBlock* runBlock, const ProgramExecutor& executor);
+    bool analyzeSweepLoop(const RunBlock* runBlock, const ExecutionState& execution);
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
@@ -139,9 +139,9 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 class SweepTransitionAnalysis : public SequenceAnalysis {
 public:
     // The indexes are run block indices. The end index is exclusive.
-    bool analyzeSweepTransition(int startIndex, int endIndex, const ProgramExecutor& executor);
+    bool analyzeSweepTransition(int startIndex, int endIndex, const ExecutionState& execution);
 
-    bool transitionEquals(int startIndex, int endIndex, const ProgramExecutor& executor) const;
+    bool transitionEquals(int startIndex, int endIndex, const ExecutionState& execution) const;
 
     void dump() const;
 };
@@ -329,7 +329,7 @@ public:
     const SweepTransition* findTransitionMatching(int exitInstruction,
                                                   int transitionStartIndex,
                                                   int transitionEndIndex,
-                                                  const ProgramExecutor& executor) const;
+                                                  const ExecutionState& execution) const;
     bool hasUniqueTransitions() const;
 
     virtual void clear();

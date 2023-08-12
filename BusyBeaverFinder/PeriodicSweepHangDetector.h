@@ -70,7 +70,7 @@ protected:
     bool scanSweepSequence(DataPointer &dp, int fromEndIndex) override;
 
 public:
-    PeriodicSweepHangDetector(const ProgramExecutor& executor);
+    PeriodicSweepHangDetector(const ExecutionState& execution);
 
     virtual HangType hangType() const override { return HangType::REGULAR_SWEEP; }
 };

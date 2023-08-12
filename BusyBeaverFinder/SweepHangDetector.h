@@ -92,7 +92,7 @@ protected:
     void clearAnalysis() override;
 
 public:
-    SweepHangDetector(const ProgramExecutor& executor);
+    SweepHangDetector(const ExecutionState& execution);
     ~SweepHangDetector();
 
     const SweepTransitionGroup& transitionGroup(bool atRight) const;

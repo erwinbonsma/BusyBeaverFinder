@@ -5,14 +5,14 @@
 //  Created by Erwin on 29/01/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef ExhaustiveSearcher_h
-#define ExhaustiveSearcher_h
+#pragma once
 
 #include <stdint.h>
 #include <vector>
 
-#include "ProgramExecutor.h"
+#include "Data.h"
+#include "ExecutionState.h"
+#include "RunSummary.h"
 
 #include "Program.h"
 
@@ -39,7 +39,7 @@ struct SearchSettings {
     bool disableNoExitHangDetection;
 };
 
-class ExhaustiveSearcher : public ProgramExecutor {
+class ExhaustiveSearcher : public ExecutionState {
     SearchSettings _settings;
 
     Program _program;
@@ -118,7 +118,7 @@ public:
     const Program& getProgram() const { return _program; }
 
     //----------------------------------------------------------------------------------------------
-    // Implement ProgramExecutor interface
+    // Implement ExecutionState interface
 
     const InterpretedProgram& getInterpretedProgram() const override {
         return _interpretedProgramBuilder;
@@ -153,5 +153,3 @@ public:
     void dumpSettings();
     void dump();
 };
-
-#endif /* ExhaustiveSearcher_h */

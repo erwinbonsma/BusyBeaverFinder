@@ -39,7 +39,7 @@ protected:
     Trilian proofHang() override;
 
 public:
-    PeriodicHangDetector(const ProgramExecutor& executor);
+    PeriodicHangDetector(const ExecutionState& execution);
 
     HangType hangType() const override { return HangType::PERIODIC; }
 

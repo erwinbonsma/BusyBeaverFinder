@@ -1,16 +1,19 @@
 //
-//  ProgramExecutor.cpp
+//  ExecutionState.cpp
 //  BusyBeaverFinder
 //
 //  Created by Erwin on 25/10/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include "ProgramExecutor.h"
+#include "ExecutionState.h"
+
+#include "Data.h"
+#include "RunSummary.h"
 
 #include <iostream>
 
-void ProgramExecutor::dumpExecutionState() const {
+void ExecutionState::dumpExecutionState() const {
     getData().dump();
 
     std::cout << "Run summary: ";
