@@ -196,14 +196,21 @@ void ExhaustiveSearcher::branch(int depth) {
 
 void ExhaustiveSearcher::fastExecution() {
     _tracker->reportFastExecution();
-    int numSteps = _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(),
-                                         _settings.maxSteps);
-    if (numSteps < 0) {
-        _tracker->reportError();
-    } else if (numSteps >= _settings.maxSteps) {
-        _tracker->reportAssumedHang();
-    } else {
-        _tracker->reportLateEscape(numSteps);
+    RunResult result = _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock(),
+                                             _settings.maxSteps);
+    switch (result) {
+        case RunResult::SUCCESS:
+        case RunResult::PROGRAM_ERROR:
+            _tracker->reportLateEscape(_fastExecutor.numSteps());
+            break;
+        case RunResult::DATA_ERROR:
+            _tracker->reportError();
+            break;
+        case RunResult::ASSUMED_HANG:
+            _tracker->reportAssumedHang();
+            break;
+        case RunResult::DETECTED_HANG:
+            assert(false);
     }
 }
 

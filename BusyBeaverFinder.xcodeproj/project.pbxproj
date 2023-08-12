@@ -163,6 +163,7 @@
 		AACC273A254589CF007E83C3 /* ExecutionState.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ExecutionState.cpp; sourceTree = "<group>"; };
 		AACC274325458F5D007E83C3 /* InterpretedProgram.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InterpretedProgram.cpp; sourceTree = "<group>"; };
 		AACC274425458F5D007E83C3 /* InterpretedProgram.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InterpretedProgram.h; sourceTree = "<group>"; };
+		AACE849D2A87B7A3006341E7 /* ProgramExecutor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProgramExecutor.h; sourceTree = "<group>"; };
 		AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SearchOrchestration.cpp; sourceTree = "<group>"; };
 		AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestration.h; sourceTree = "<group>"; };
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
@@ -241,6 +242,7 @@
 				AA4F450A224ABF320069FF36 /* InterpretedProgramBuilder.h */,
 				AA37E6C92295D62200117A85 /* FastExecutor.cpp */,
 				AA37E6CA2295D62200117A85 /* FastExecutor.h */,
+				AACE849D2A87B7A3006341E7 /* ProgramExecutor.h */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";

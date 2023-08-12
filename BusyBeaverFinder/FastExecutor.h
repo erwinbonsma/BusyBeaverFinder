@@ -5,15 +5,11 @@
 //  Created by Erwin on 22/05/19.
 //  Copyright © 2019 Erwin Bonsma
 //
+#pragma once
 
-#ifndef FastExecutor_h
-#define FastExecutor_h
+#include "ProgramExecutor.h"
 
-#include <stdio.h>
-
-class ProgramBlock;
-
-class FastExecutor {
+class FastExecutor : public ProgramExecutor {
     int* _data;
     int _dataBufSize;
 
@@ -22,16 +18,14 @@ class FastExecutor {
     int* _maxDataP;
 
     int* _dataP;
+    int _numSteps;
 
 public:
     FastExecutor(int dataSize);
     ~FastExecutor();
 
-    // Returns the number of executed steps. Returns -1 in case of an error (data full). When it is
-    // equal or larger than maxSteps, it is an assumed hang.
-    int execute(const ProgramBlock *programBlock, int maxSteps);
+    RunResult execute(const ProgramBlock *programBlock, int maxSteps) override;
+    int numSteps() const override { return _numSteps; }
 
     void dump();
 };
-
-#endif /* FastExecutor_h */

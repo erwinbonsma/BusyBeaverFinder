@@ -28,15 +28,15 @@ FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-int FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) {
-    int numSteps = 0;
+RunResult FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) {
+    _numSteps = 0;
 
     // Clear data
     memset(_data, 0, _dataBufSize * sizeof(int));
 
     _dataP = _midDataP;
 
-    while (numSteps < maxSteps && programBlock->isFinalized()) {
+    while (true) {
         int amount = programBlock->getInstructionAmount();
 
         if (programBlock->isDelta()) {
@@ -44,16 +44,24 @@ int FastExecutor::execute(const ProgramBlock *programBlock, int maxSteps) {
         } else {
             _dataP += amount;
             if (_dataP < _minDataP || _dataP >= _maxDataP) {
-                return -1;
+                return RunResult::DATA_ERROR;
             }
         }
 
-        numSteps += programBlock->getNumSteps();
+        _numSteps += programBlock->getNumSteps();
+        if (_numSteps > maxSteps) {
+            return RunResult::ASSUMED_HANG;
+        }
+
+        if (programBlock->isExit()) {
+            return RunResult::SUCCESS;
+        }
 
         programBlock = (*_dataP == 0) ? programBlock->zeroBlock() : programBlock->nonZeroBlock();
+        if (!programBlock->isFinalized()) {
+            return RunResult::PROGRAM_ERROR;
+        }
     }
-
-    return numSteps;
 }
 
 void FastExecutor::dump() {
