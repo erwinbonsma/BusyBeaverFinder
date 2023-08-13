@@ -29,67 +29,25 @@ Ins targetStack[] = {
 const ProgramPointer backtrackProgramPointer =
     ProgramPointer { .p = InstructionPointer { .col = -1, .row = -1 }, .dir = Dir::UP };
 
-ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, int dataSize) :
+ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
+    _settings(settings),
     _program(width, height),
-    _data(dataSize),
-    _runSummary(),
-    _exitFinder(_program, _interpretedProgramBuilder),
-    _fastExecutor(dataSize)
+    _exitFinder(_program, _programBuilder),
+    _hangExecutor(settings.dataSize, settings.maxHangDetectionSteps),
+    _fastExecutor(settings.dataSize)
 {
     initInstructionStack(width * height);
 
-    _hangDetectors.push_back(new PeriodicHangDetector(*this));
-    _hangDetectors.push_back(new MetaPeriodicHangDetector(*this));
-    _hangDetectors.push_back(new GliderHangDetector(*this));
-    _hangDetectors.push_back(new PeriodicSweepHangDetector(*this));
-    _hangDetectors.push_back(new IrregularSweepHangDetector(*this));
-
-    _zArrayHelperBuf = nullptr;
+    _fastExecutor.setMaxSteps(_settings.maxSteps);
+    _hangExecutor.setMaxSteps(_settings.maxSteps);
 
     // Set default search mode
     _searchMode = SearchMode::FULL_TREE;
     _delayHangDetection = false;
-
-    // Set default search settings
-    _settings.maxSteps = 1024;
-    _settings.maxHangDetectionSteps = _settings.maxSteps;
-    _settings.undoCapacity = 1024;
-    _settings.testHangDetection = false;
-    _settings.disableNoExitHangDetection = false;
-    reconfigure();
 }
 
 ExhaustiveSearcher::~ExhaustiveSearcher() {
     delete[] _instructionStack;
-
-    for (auto hangDetector : _hangDetectors) {
-        delete hangDetector;
-    }
-
-    delete[] _zArrayHelperBuf;
-}
-
-void ExhaustiveSearcher::configure(SearchSettings settings) {
-    _settings = settings;
-    reconfigure();
-}
-
-void ExhaustiveSearcher::reconfigure() {
-    _data.setStackSize(_settings.undoCapacity);
-
-    _fastExecutor.setMaxSteps(_settings.maxSteps);
-
-    int capacity = _settings.maxHangDetectionSteps;
-    if (_zArrayHelperBuf == nullptr || _runSummary[1].getCapacity() != capacity) {
-        // The arrays need to be re-allocated
-
-        delete[] _zArrayHelperBuf; // okay to delete when null
-
-        _zArrayHelperBuf = new int[capacity / 2];
-
-        _runSummary[0].setCapacity(capacity, _zArrayHelperBuf);
-        _runSummary[1].setCapacity(capacity, _zArrayHelperBuf);
-    }
 }
 
 void ExhaustiveSearcher::initInstructionStack(int size) {
@@ -123,22 +81,15 @@ void ExhaustiveSearcher::dumpInstructionStack() const {
 void ExhaustiveSearcher::dumpSettings() {
     std::cout
     << "Size = " << _program.getWidth() << "x" << _program.getHeight()
-    << ", DataSize = " << _data.getSize()
+    << ", DataSize = " << _settings.dataSize
     << ", MaxSteps = " << _settings.maxHangDetectionSteps << "/" << _settings.maxSteps
     << ", UndoCapacity = " << _settings.undoCapacity
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }
 
-void ExhaustiveSearcher::dumpExecutionState() const {
-    std::cout << "Num steps: " << _numSteps << std::endl;
-    dumpInstructionStack();
-    ExecutionState::dumpExecutionState();
-}
-
 void ExhaustiveSearcher::dump() {
     _program.dump(_pp.p);
-    _data.dump();
 }
 
 void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
@@ -198,7 +149,7 @@ void ExhaustiveSearcher::branch(int depth) {
 
 void ExhaustiveSearcher::fastExecution() {
     _tracker->reportFastExecution();
-    RunResult result = _fastExecutor.execute(_interpretedProgramBuilder.getEntryBlock());
+    RunResult result = _fastExecutor.execute(_programBuilder.getEntryBlock());
     switch (result) {
         case RunResult::SUCCESS:
         case RunResult::PROGRAM_ERROR:
@@ -264,12 +215,12 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithBacktracking() {
         }
     }
 
-    _interpretedProgramBuilder.enterBlock(_block);
-    return _interpretedProgramBuilder.getStartProgramPointer(_block, _program);
+    _programBuilder.enterBlock(_block);
+    return _programBuilder.getStartProgramPointer(_block, _program);
 }
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
-    const ProgramBlock* entryBlock = _interpretedProgramBuilder.getEntryBlock();
+    const ProgramBlock* entryBlock = _programBuilder.getEntryBlock();
 
     _runSummary[0].reset();
     _runSummary[1].reset();
@@ -326,8 +277,8 @@ ProgramPointer ExhaustiveSearcher::executeCompiledBlocksWithHangDetection() {
         }
     }
 
-    _interpretedProgramBuilder.enterBlock(_block);
-    return _interpretedProgramBuilder.getStartProgramPointer(_block, _program);
+    _programBuilder.enterBlock(_block);
+    return _programBuilder.getStartProgramPointer(_block, _program);
 }
 
 ProgramPointer ExhaustiveSearcher::executeCompiledBlocks() {
@@ -347,7 +298,7 @@ void ExhaustiveSearcher::run(int depth) {
     const UndoOp* initialDataUndoP = _data.getUndoStackPointer();
     int initialSteps = _numSteps;
 
-    _interpretedProgramBuilder.push();
+    _programBuilder.push();
 
     while (1) { // Run until branch, termination or error
 processInstruction:
@@ -366,29 +317,29 @@ processInstruction:
                 switch (_pp.dir) {
                     case Dir::UP:
                         _data.inc();
-                        _interpretedProgramBuilder.setInstruction(true);
-                        _interpretedProgramBuilder.incAmount();
+                        _programBuilder.setInstruction(true);
+                        _programBuilder.incAmount();
                         break;
                     case Dir::DOWN:
                         _data.dec();
-                        _interpretedProgramBuilder.setInstruction(true);
-                        _interpretedProgramBuilder.decAmount();
+                        _programBuilder.setInstruction(true);
+                        _programBuilder.decAmount();
                         break;
                     case Dir::RIGHT:
                         if (! _data.shr()) {
                             _tracker->reportError();
                             goto backtrack;
                         }
-                        _interpretedProgramBuilder.setInstruction(false);
-                        _interpretedProgramBuilder.incAmount();
+                        _programBuilder.setInstruction(false);
+                        _programBuilder.incAmount();
                         break;
                     case Dir::LEFT:
                         if (! _data.shl()) {
                             _tracker->reportError();
                             goto backtrack;
                         }
-                        _interpretedProgramBuilder.setInstruction(false);
-                        _interpretedProgramBuilder.decAmount();
+                        _programBuilder.setInstruction(false);
+                        _programBuilder.decAmount();
                         break;
                 }
                 break;
@@ -398,8 +349,8 @@ processInstruction:
                 } else {
                     _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
                 }
-                if (_interpretedProgramBuilder.isInstructionSet()) {
-                    _block = _interpretedProgramBuilder.finalizeBlock(_pp.p);
+                if (_programBuilder.isInstructionSet()) {
+                    _block = _programBuilder.finalizeBlock(_pp.p);
 
                     // Check if it is possible to exit
                     if (
@@ -415,7 +366,7 @@ processInstruction:
                         goto backtrack;
                     }
 
-                    _block = _interpretedProgramBuilder.enterBlock(
+                    _block = _programBuilder.enterBlock(
                         _pp.p,
                         _data.val()==0 ? TurnDirection::COUNTERCLOCKWISE : TurnDirection::CLOCKWISE
                     );
@@ -430,7 +381,7 @@ processInstruction:
                 goto processInstruction;
         }
 
-        if (_interpretedProgramBuilder.incSteps() > 64) {
+        if (_programBuilder.incSteps() > 64) {
             // Never test hang detection for this trivial hang
             _tracker->reportDetectedHang(HangType::NO_DATA_LOOP, false);
             goto backtrack;
@@ -442,7 +393,7 @@ processInstruction:
 backtrack:
     _data.undo(initialDataUndoP);
     _numSteps = initialSteps;
-    _interpretedProgramBuilder.pop();
+    _programBuilder.pop();
 }
 
 void ExhaustiveSearcher::initSearch() {

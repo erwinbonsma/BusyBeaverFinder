@@ -10,20 +10,15 @@
 #include <stdint.h>
 #include <vector>
 
-#include "Data.h"
-#include "ExecutionState.h"
-#include "RunSummary.h"
-
 #include "Program.h"
 
 #include "InterpretedProgramBuilder.h"
 #include "FastExecutor.h"
+#include "HangExecutor.h"
 
 #include "ProgressTracker.h"
 
 #include "ExitFinder.h"
-
-class HangDetector;
 
 enum class SearchMode : int8_t {
     FULL_TREE = 0,
@@ -32,6 +27,7 @@ enum class SearchMode : int8_t {
 };
 
 struct SearchSettings {
+    int dataSize;
     int maxHangDetectionSteps;
     int maxSteps;
     int undoCapacity;
@@ -39,19 +35,20 @@ struct SearchSettings {
     bool disableNoExitHangDetection;
 };
 
-class ExhaustiveSearcher : public ExecutionState {
+SearchSettings defaultSettings() {
+    return SearchSettings {
+        .maxSteps = 1024,
+        .maxHangDetectionSteps = 1024,
+        .undoCapacity = 1024,
+        .testHangDetection = false,
+        .disableNoExitHangDetection = false
+    };
+}
+
+class ExhaustiveSearcher {
     SearchSettings _settings;
 
     Program _program;
-    Data _data;
-
-    // Nested run summaries. The first summarizes the program execution, identifying loops along the
-    // way. The second summarizes the first run summary. In particular, it signals repeated patterns
-    // in the first summary.
-    RunSummary _runSummary[2];
-
-    // Helper buffer to store temporary Z-Array that is needed by some utility functions
-    int* _zArrayHelperBuf;
 
     // Determines when to abort the search
     SearchMode _searchMode;
@@ -67,26 +64,25 @@ class ExhaustiveSearcher : public ExecutionState {
     // UNSET.
     Ins* _resumeFrom;
 
-    ProgramPointer _pp;
-    ProgramBlock* _block;
-    int _numSteps;
+//    ProgramPointer _pp;
+//    ProgramBlock* _block;
+//    int _numSteps;
 
     // Stack of instructions built up by the exhaustive search
     Ins* _instructionStack;
 
     // An interpreted representation of the program
-    InterpretedProgramBuilder _interpretedProgramBuilder;
+    InterpretedProgramBuilder _programBuilder;
 
     FastExecutor _fastExecutor;
+    HangExecutor _hangExecutor;
 
-    std::vector<HangDetector*> _hangDetectors;
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;
 
     void initInstructionStack(int size);
 
-    void reconfigure();
     void initSearch();
 
     bool executeCurrentBlock();
@@ -102,13 +98,10 @@ class ExhaustiveSearcher : public ExecutionState {
     void run(int depth);
     void branch(int depth);
 public:
-    ExhaustiveSearcher(int width, int height, int dataSize);
+    ExhaustiveSearcher(int width, int height, SearchSettings settings);
     ~ExhaustiveSearcher();
 
     SearchSettings getSettings() { return _settings; }
-
-    // Updates settings. It changes buffer allocations as needed.
-    void configure(SearchSettings settings);
 
     bool getHangDetectionTestMode() { return _settings.testHangDetection; }
 
@@ -116,20 +109,6 @@ public:
     void setProgressTracker(ProgressTracker* tracker);
 
     const Program& getProgram() const { return _program; }
-
-    //----------------------------------------------------------------------------------------------
-    // Implement ExecutionState interface
-
-    const InterpretedProgram* getInterpretedProgram() const override {
-        return &_interpretedProgramBuilder;
-    }
-
-    const Data& getData() const override { return _data; }
-
-    const RunSummary& getRunSummary() const override { return _runSummary[0]; }
-    const RunSummary& getMetaRunSummary() const override { return _runSummary[1]; }
-
-    void dumpExecutionState() const override;
 
     //----------------------------------------------------------------------------------------------
 

@@ -7,8 +7,35 @@
 //
 #include "HangExecutor.h"
 
-#include "HangDetector.h"
+#include "GliderHangDetector.h"
+#include "IrregularSweepHangDetector.h"
+#include "MetaPeriodicHangDetector.h"
+#include "PeriodicSweepHangDetector.h"
+
 #include "ProgramBlock.h"
+
+HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
+    _data(dataSize),
+    _runSummary()
+{
+    _hangDetectors.push_back(new PeriodicHangDetector(*this));
+    _hangDetectors.push_back(new MetaPeriodicHangDetector(*this));
+    _hangDetectors.push_back(new GliderHangDetector(*this));
+    _hangDetectors.push_back(new PeriodicSweepHangDetector(*this));
+    _hangDetectors.push_back(new IrregularSweepHangDetector(*this));
+
+    _zArrayHelperBuf = new int[maxHangDetectionSteps / 2];
+    _runSummary[0].setCapacity(maxHangDetectionSteps, _zArrayHelperBuf);
+    _runSummary[1].setCapacity(maxHangDetectionSteps, _zArrayHelperBuf);
+}
+
+HangExecutor::~HangExecutor() {
+    for (auto hangDetector : _hangDetectors) {
+        delete hangDetector;
+    }
+
+    delete[] _zArrayHelperBuf;
+}
 
 RunResult HangExecutor::executeBlock() {
     if (_block->isDelta()) {

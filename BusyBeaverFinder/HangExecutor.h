@@ -24,20 +24,22 @@ class HangExecutor : public ExecutionState {
 
     const InterpretedProgram *_program;
 
+    Data _data;
+    const ProgramBlock* _block;
+    int _numSteps;
+
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
     // in the first summary.
     RunSummary _runSummary[2];
-    int _numSteps;
+    int* _zArrayHelperBuf;
 
-    Data _data;
-    const ProgramBlock* _block;
 
     RunResult executeBlock();
     RunResult executeWithoutHangDetection();
 
 public:
-    HangExecutor();
+    HangExecutor(int dataSize, int maxHangDetectionSteps);
     ~HangExecutor();
 
     void setMaxSteps(int steps) { _maxSteps = steps; }
