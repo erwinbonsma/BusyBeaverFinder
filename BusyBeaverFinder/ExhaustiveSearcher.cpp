@@ -78,7 +78,6 @@ void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
 }
 
 void ExhaustiveSearcher::extendBlock() {
-    _program.dump();
     while (true) {
         InstructionPointer ip;
         Ins ins;
@@ -160,9 +159,9 @@ void ExhaustiveSearcher::branch() {
         _programBuilder.push();
         ProgramPointer pp0 = _pp;
 
-        if (atTargetProgram()) {
-            _program.dump();
-        }
+//        if (atTargetProgram()) {
+//            _program.dump();
+//        }
 
         extendBlock();
 
@@ -178,7 +177,7 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    _programExecutor = &_fastExecutor;
+    _programExecutor = &_hangExecutor;
 //    _delayHangDetection
 //    ? _fastExecutor.execute(&_programBuilder)
 //    : _hangExecutor.execute(&_programBuilder));

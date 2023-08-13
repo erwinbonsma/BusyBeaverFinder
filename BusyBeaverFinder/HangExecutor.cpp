@@ -38,12 +38,15 @@ HangExecutor::~HangExecutor() {
 }
 
 RunResult HangExecutor::executeBlock() {
-    if (_block->isDelta()) {
-        _data.delta(_block->getInstructionAmount());
-    } else {
-        if (!_data.shift(_block->getInstructionAmount())) {
-            return RunResult::DETECTED_HANG;
-        }
+//    _block->dump();
+
+    if (!_block->isFinalized()) {
+        return RunResult::PROGRAM_ERROR;
+    }
+
+    if (_block->isHang()) {
+        _detectedHangType = HangType::NO_DATA_LOOP;
+        return RunResult::DETECTED_HANG;
     }
 
     _numSteps += _block->getNumSteps();
@@ -52,10 +55,15 @@ RunResult HangExecutor::executeBlock() {
         return RunResult::SUCCESS;
     }
 
-    _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
-    if (!_block->isFinalized()) {
-        return RunResult::PROGRAM_ERROR;
+    if (_block->isDelta()) {
+        _data.delta(_block->getInstructionAmount());
+    } else {
+        if (!_data.shift(_block->getInstructionAmount())) {
+            return RunResult::DATA_ERROR;
+        }
     }
+
+    _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
 
     if (_numSteps >= _maxSteps) {
         return RunResult::ASSUMED_HANG;
@@ -76,9 +84,11 @@ RunResult HangExecutor::executeWithoutHangDetection() {
 
 RunResult HangExecutor::execute(const InterpretedProgram* program) {
     _program = program;
+//    _program->dump();
 
     _runSummary[0].reset();
     _runSummary[1].reset();
+    _data.reset();
 
     for (auto hangDetector : _hangDetectors) {
         hangDetector->reset();
