@@ -38,7 +38,6 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings set
 
     // Set default search mode
     _searchMode = SearchMode::FULL_TREE;
-    _delayHangDetection = false;
 }
 
 bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) const {
@@ -164,9 +163,9 @@ void ExhaustiveSearcher::branch() {
         _programBuilder.push();
         ProgramPointer pp0 = _pp;
 
-        if (atTargetProgram()) {
-            _program.dump();
-        }
+//        if (atTargetProgram()) {
+//            _program.dump();
+//        }
 
         extendBlock();
 
@@ -182,10 +181,9 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    _programExecutor = &_hangExecutor;
-//    _delayHangDetection
-//    ? _fastExecutor.execute(&_programBuilder)
-//    : _hangExecutor.execute(&_programBuilder));
+    _programExecutor = (*_resumeFrom != Ins::UNSET
+                        ? (ProgramExecutor *)&_fastExecutor
+                        : (ProgramExecutor *)&_hangExecutor);
 
     RunResult result = _programExecutor->execute(&_programBuilder);
     switch (result) {
@@ -212,7 +210,11 @@ void ExhaustiveSearcher::run() {
             bool testHang = _settings.testHangDetection && (hangType == HangType::REGULAR_SWEEP ||
                                                             hangType == HangType::IRREGULAR_SWEEP ||
                                                             hangType == HangType::APERIODIC_GLIDER);
-            _tracker->reportDetectedHang(hangType, testHang);
+            if (hangType == HangType::NO_DATA_LOOP) {
+                _tracker->reportDetectedHang(hangType, testHang);
+            } else {
+                _tracker->reportDetectedHang(_hangExecutor.detectedHang(), testHang);
+            }
             if (testHang) {
                 // TODO: fastExecution();
             }
@@ -223,24 +225,15 @@ void ExhaustiveSearcher::run() {
     }
 }
 
-void ExhaustiveSearcher::initSearch() {
-    _pp = _program.getStartProgramPointer();
-//    _hangDetectionEnd = _settings.maxHangDetectionSteps;
-    _delayHangDetection = true;
-}
-
-
 Ins noResumeStack[] = { Ins::UNSET };
 void ExhaustiveSearcher::search() {
     _resumeFrom = noResumeStack;
-    initSearch();
 
     run();
 }
 
 void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _resumeFrom = resumeFrom;
-    initSearch();
 
     std::cout << "Resuming from: ";
     ::dumpInstructionStack(_resumeFrom);
@@ -250,9 +243,7 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
 
 void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom, bool delayHangDetection) {
     _searchMode = SearchMode::SUB_TREE;
-    _delayHangDetection = delayHangDetection;
     search(resumeFrom);
-    _delayHangDetection = false;
     _searchMode = SearchMode::FULL_TREE;
 }
 

@@ -15,6 +15,7 @@
 #include "ProgramBlock.h"
 
 HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
+    _maxHangDetectionSteps(maxHangDetectionSteps),
     _data(dataSize),
     _runSummary()
 {
@@ -37,6 +38,10 @@ HangExecutor::~HangExecutor() {
     delete[] _zArrayHelperBuf;
 }
 
+HangType HangExecutor::detectedHangType() const {
+    return _detectedHang ? _detectedHang->hangType() : HangType::NO_DATA_LOOP;
+}
+
 RunResult HangExecutor::executeBlock() {
 //    _block->dump();
 
@@ -45,7 +50,6 @@ RunResult HangExecutor::executeBlock() {
     }
 
     if (_block->isHang()) {
-        _detectedHangType = HangType::NO_DATA_LOOP;
         return RunResult::DETECTED_HANG;
     }
 
@@ -65,40 +69,30 @@ RunResult HangExecutor::executeBlock() {
 
     _block = (_data.val() == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
 
-    if (_numSteps >= _maxSteps) {
-        return RunResult::ASSUMED_HANG;
-    }
-
     return RunResult::UNKNOWN;
 }
 
-RunResult HangExecutor::executeWithoutHangDetection() {
-    RunResult result;
+RunResult HangExecutor::executeWithoutHangDetection(int stepLimit) {
+    RunResult result = RunResult::UNKNOWN;
 
-    do {
+    while (result == RunResult::UNKNOWN && _numSteps < stepLimit) {
         result = executeBlock();
-    } while (result == RunResult::UNKNOWN);
+    }
 
     return result;
 }
 
-RunResult HangExecutor::execute(const InterpretedProgram* program) {
-    _program = program;
-//    _program->dump();
-
+RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
     _runSummary[0].reset();
     _runSummary[1].reset();
-    _data.reset();
 
     for (auto hangDetector : _hangDetectors) {
         hangDetector->reset();
     }
+    _detectedHang = nullptr;
 
     const ProgramBlock *entryBlock = _program->getEntryBlock();
-    _block = entryBlock;
-    _numSteps = 0;
-
-    while (true) {
+    while (_numSteps < stepLimit) {
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
         int numRunBlocks = _runSummary[0].getNumRunBlocks();
@@ -110,7 +104,7 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
 
             if (!_runSummary[0].hasSpaceRemaining()) {
                 // Stop hang detection as history buffer is full
-                return executeWithoutHangDetection();
+                return RunResult::UNKNOWN;
             }
         }
 
@@ -123,12 +117,39 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
             bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
-                    _detectedHangType = hangDetector->hangType();
+                    _detectedHang = hangDetector;
                     return RunResult::DETECTED_HANG;
                 }
             }
         }
     }
+
+    return RunResult::UNKNOWN;
+}
+
+RunResult HangExecutor::execute(const InterpretedProgram* program, int hangDetectionStart) {
+    _program = program;
+    //    _program->dump();
+
+    const ProgramBlock *entryBlock = _program->getEntryBlock();
+    _block = entryBlock;
+    _numSteps = 0;
+    _data.reset();
+
+    RunResult result = executeWithoutHangDetection(hangDetectionStart);
+    if (result != RunResult::UNKNOWN) return result;
+
+    result = executeWithHangDetection(std::min(_numSteps + _maxHangDetectionSteps, _maxSteps));
+    if (result != RunResult::UNKNOWN) return result;
+
+    result = executeWithoutHangDetection(_maxSteps);
+    if (result != RunResult::UNKNOWN) return result;
+
+    return RunResult::ASSUMED_HANG;
+}
+
+RunResult HangExecutor::execute(const InterpretedProgram* program) {
+    return execute(program, 0);
 }
 
 void HangExecutor::dump() const {

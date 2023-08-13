@@ -52,13 +52,6 @@ class ExhaustiveSearcher {
     // Determines when to abort the search
     SearchMode _searchMode;
 
-    // When set, hang detection is delayed until search has reached resume point. This is typically
-    // used to investigate late escapes
-    bool _delayHangDetection;
-
-//    // The number of steps when to disable hang detection
-//    int _hangDetectionEnd;
-
     // Pointer to array that can be used to resume a previous search. The last operation must be
     // UNSET.
     Ins* _resumeFrom;
@@ -80,8 +73,6 @@ class ExhaustiveSearcher {
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;
-
-    void initSearch();
 
     void run();
     void branch();

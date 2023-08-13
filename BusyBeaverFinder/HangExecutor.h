@@ -20,12 +20,12 @@ class HangDetector;
 class HangExecutor : public ProgramExecutor, public ExecutionState {
     std::vector<HangDetector*> _hangDetectors;
 
-    int _hangDetectionEnd;
+    int _maxHangDetectionSteps;
 
     const InterpretedProgram *_program;
 
     Data _data;
-    HangType _detectedHangType;
+    const HangDetector* _detectedHang;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
@@ -35,15 +35,19 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
 
 
     RunResult executeBlock();
-    RunResult executeWithoutHangDetection();
+
+    RunResult executeWithoutHangDetection(int stepLimit);
+    RunResult executeWithHangDetection(int stepLimit);
 
 public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
     ~HangExecutor();
 
-    HangType detectedHangType() const override { return _detectedHangType; }
+    HangType detectedHangType() const override;
+    const HangDetector* detectedHang() const { return _detectedHang; }
 
     RunResult execute(const InterpretedProgram* program) override;
+    RunResult execute(const InterpretedProgram* program, int hangDetectionStart);
     void dump() const override;
 
     //----------------------------------------------------------------------------------------------
