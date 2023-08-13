@@ -21,9 +21,7 @@
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
-    // 5x5 InfSeqExtendingBothWays2
-    Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-    Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+    Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
 };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
@@ -50,7 +48,7 @@ bool ExhaustiveSearcher::instructionStackEquals(Ins* reference) const {
         p2++;
     }
 
-    return (*p1 == *p2);
+    return (p1 == _instructionStack.end() && *p2 == Ins::UNSET);
 }
 
 bool ExhaustiveSearcher::atTargetProgram() {
@@ -80,36 +78,50 @@ void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
 }
 
 void ExhaustiveSearcher::extendBlock() {
+    _program.dump();
     while (true) {
-        InstructionPointer insP = nextInstructionPointer(_pp);
-        Ins ins = _program.getInstruction(insP);
+        InstructionPointer ip;
+        Ins ins;
+        do {
+            ip = nextInstructionPointer(_pp);
+            ins = _program.getInstruction(ip);
 
-        switch (ins) {
-            case Ins::DONE:
-                _programBuilder.finalizeExitBlock();
-                run();
-                return;
-            case Ins::UNSET:
-                branch();
-                return;
-            case Ins::DATA:
-                _programBuilder.addDataInstruction(_pp.dir);
-                break;
-            case Ins::TURN:
-                if (_programBuilder.isInstructionSet()) {
-                    _programBuilder.finalizeBlock(insP);
+            switch (ins) {
+                case Ins::DONE:
+                    _programBuilder.incSteps();
+                    _programBuilder.finalizeExitBlock();
                     run();
                     return;
-                } else {
-                    if (_td == TurnDirection::COUNTERCLOCKWISE) {
-                        _pp.dir = (Dir)(((int)_pp.dir + 3) % 4);
+                case Ins::UNSET:
+                    branch();
+                    return;
+                case Ins::DATA:
+                    _programBuilder.addDataInstruction(_pp.dir);
+                    break;
+                case Ins::TURN:
+                    if (_programBuilder.isInstructionSet()) {
+                        _programBuilder.finalizeBlock(_pp.p);
+                        run();
+                        return;
                     } else {
-                        _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
+                        if (_td == TurnDirection::COUNTERCLOCKWISE) {
+                            _pp.dir = (Dir)(((int)_pp.dir + 3) % 4);
+                        } else {
+                            _pp.dir = (Dir)(((int)_pp.dir + 1) % 4);
+                        }
                     }
-                }
-                break;
-            case Ins::NOOP:
-                break;
+                    break;
+                case Ins::NOOP:
+                    break;
+            }
+        } while (ins == Ins::TURN);
+        _pp.p = ip;
+        _programBuilder.incSteps();
+
+        if (_programBuilder.getNumSteps() > 64) {
+            _programBuilder.finalizeHangBlock();
+            run();
+            return;
         }
     }
 }
@@ -128,6 +140,7 @@ void ExhaustiveSearcher::branch() {
     bool resuming = *_resumeFrom != Ins::UNSET;
     bool abortSearch = (_searchMode == SearchMode::FIND_ONE
                         || (_searchMode == SearchMode::SUB_TREE && resuming));
+    InstructionPointer ip = nextInstructionPointer(_pp);
 
     for (int i = 0; i < 3; i++) {
         Ins ins = validInstructions[i];
@@ -142,15 +155,21 @@ void ExhaustiveSearcher::branch() {
             }
         }
 
-        _program.setInstruction(_pp.p, ins);
+        _program.setInstruction(ip, ins);
         _instructionStack.push_back(ins);
         _programBuilder.push();
+        ProgramPointer pp0 = _pp;
+
+        if (atTargetProgram()) {
+            _program.dump();
+        }
 
         extendBlock();
 
-        _program.clearInstruction(_pp.p);
+        _program.clearInstruction(ip);
         _instructionStack.pop_back();
         _programBuilder.pop();
+        _pp = pp0;
 
         if (abortSearch) {
             break;
@@ -159,19 +178,19 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    RunResult result = (_delayHangDetection
-    ? _fastExecutor.execute(&_programBuilder)
-    : _hangExecutor.execute(&_programBuilder));
+    _programExecutor = &_fastExecutor;
+//    _delayHangDetection
+//    ? _fastExecutor.execute(&_programBuilder)
+//    : _hangExecutor.execute(&_programBuilder));
 
+    RunResult result = _programExecutor->execute(&_programBuilder);
     switch (result) {
         case RunResult::SUCCESS: {
-            _tracker->reportDone(_hangExecutor.numSteps());
+            _tracker->reportDone(_programExecutor->numSteps());
             return;
         }
         case RunResult::PROGRAM_ERROR: {
-            const ProgramBlock* block = (_delayHangDetection
-                                         ? _fastExecutor.lastProgramBlock()
-                                         : _hangExecutor.lastProgramBlock());
+            const ProgramBlock* block = _programExecutor->lastProgramBlock();
 
             buildBlock(block);
             break;
@@ -203,6 +222,7 @@ void ExhaustiveSearcher::run() {
 void ExhaustiveSearcher::initSearch() {
     _pp = _program.getStartProgramPointer();
 //    _hangDetectionEnd = _settings.maxHangDetectionSteps;
+    _delayHangDetection = true;
 }
 
 

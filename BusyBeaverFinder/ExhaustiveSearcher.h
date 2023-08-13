@@ -36,6 +36,7 @@ struct SearchSettings {
 };
 
 const SearchSettings defaultSearchSettings = {
+    .dataSize = 1024,
     .maxSteps = 1024,
     .maxHangDetectionSteps = 1024,
     .undoCapacity = 1024,
@@ -62,8 +63,8 @@ class ExhaustiveSearcher {
     // UNSET.
     Ins* _resumeFrom;
 
-    ProgramPointer _pp;
     TurnDirection _td;
+    ProgramPointer _pp;
 
     // Stack of instructions built up by the exhaustive search
     std::vector<Ins> _instructionStack;
@@ -73,6 +74,8 @@ class ExhaustiveSearcher {
 
     FastExecutor _fastExecutor;
     HangExecutor _hangExecutor;
+    // Points to the active executor
+    ProgramExecutor* _programExecutor;
 
     ExitFinder _exitFinder;
 
@@ -95,6 +98,9 @@ public:
     void setProgressTracker(ProgressTracker* tracker);
 
     const Program& getProgram() const { return _program; }
+    const InterpretedProgram& getInterpretedProgram() const { return _programBuilder; }
+
+    const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 
     //----------------------------------------------------------------------------------------------
 

@@ -39,6 +39,18 @@ RunResult FastExecutor::execute(const InterpretedProgram* program) {
     _block = program->getEntryBlock();
 
     while (true) {
+        if (!_block->isFinalized()) {
+            return RunResult::PROGRAM_ERROR;
+        }
+        if (_block->isHang()) {
+            return RunResult::DETECTED_HANG;
+        }
+
+        _numSteps += _block->getNumSteps();
+        if (_block->isExit()) {
+            return RunResult::SUCCESS;
+        }
+
         int amount = _block->getInstructionAmount();
 
         if (_block->isDelta()) {
@@ -50,23 +62,15 @@ RunResult FastExecutor::execute(const InterpretedProgram* program) {
             }
         }
 
-        _numSteps += _block->getNumSteps();
         if (_numSteps > _maxSteps) {
             return RunResult::ASSUMED_HANG;
         }
 
-        if (_block->isExit()) {
-            return RunResult::SUCCESS;
-        }
-
         _block = (*_dataP == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
-        if (!_block->isFinalized()) {
-            return RunResult::PROGRAM_ERROR;
-        }
     }
 }
 
-void FastExecutor::dump() {
+void FastExecutor::dump() const {
     // Find end
     int *max = _maxDataP - 1;
     while (max > _dataP && *max == 0) {

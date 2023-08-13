@@ -139,7 +139,6 @@ void InterpretedProgramBuilder::checkState() {
     }
 }
 
-
 void InterpretedProgramBuilder::push() {
     ProgramStack* oldStateP = _stateP++;
 
@@ -172,8 +171,8 @@ void InterpretedProgramBuilder::pop() {
 
 InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(const ProgramBlock* block) {
     int val = block->getStartIndex() >> 1;
-    int col = val % maxWidth;
-    int row = (val - col) / maxWidth;
+    int8_t col = val % maxWidth;
+    int8_t row = (val - col) / maxWidth;
 
     return InstructionPointer { .col = col, .row = row };
 }

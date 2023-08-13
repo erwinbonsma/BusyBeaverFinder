@@ -22,8 +22,10 @@ void ProgramBlock::reset() {
 
     // Unregister the block as entry for its continuation blocks
     ProgramBlock* check;
-    check = _nonZeroBlock->popEntry();
-    assert(check == this);
+    if (_nonZeroBlock != nullptr) {
+        check = _nonZeroBlock->popEntry();
+        assert(check == this);
+    }
 
     if (_zeroBlock != nullptr) {
         check = _zeroBlock->popEntry();
@@ -35,12 +37,16 @@ void ProgramBlock::finalizeHang() {
     _isFinalized = true;
     _instructionAmount = 0;
     _numSteps = -1;
+    _zeroBlock = nullptr;
+    _nonZeroBlock = nullptr;
 }
 
 void ProgramBlock::finalizeExit(int numSteps) {
     _isFinalized = true;
     _numSteps = numSteps;
     _instructionAmount = 0;
+    _zeroBlock = nullptr;
+    _nonZeroBlock = nullptr;
 }
 
 void ProgramBlock::finalize(bool isDelta, int amount, int numSteps,

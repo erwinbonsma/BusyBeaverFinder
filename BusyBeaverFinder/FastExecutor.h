@@ -7,12 +7,10 @@
 //
 #pragma once
 
+#include "ProgramExecutor.h"
 #include "Types.h"
 
-class InterpretedProgram;
-class ProgramBlock;
-
-class FastExecutor {
+class FastExecutor : public ProgramExecutor {
     int* _data;
     int _dataBufSize;
 
@@ -22,21 +20,12 @@ class FastExecutor {
 
     int* _dataP;
 
-    int _maxSteps;
-    int _numSteps;
-
-    const ProgramBlock* _block;
-
 public:
     FastExecutor(int dataSize);
     ~FastExecutor();
 
-    void setMaxSteps(int steps) { _maxSteps = steps; }
-    int numSteps() const { return _numSteps; }
+    RunResult execute(const InterpretedProgram* program) override;
+    HangType detectedHangType() const override { return HangType::NO_DATA_LOOP; }
 
-    const ProgramBlock* lastProgramBlock() { return _block; }
-
-    RunResult execute(const InterpretedProgram* program);
-
-    void dump();
+    void dump() const override;
 };

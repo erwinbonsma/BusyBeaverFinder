@@ -11,23 +11,21 @@
 
 #include "Data.h"
 #include "ExecutionState.h"
+#include "ProgramExecutor.h"
 #include "RunSummary.h"
 #include "Types.h"
 
 class HangDetector;
 
-class HangExecutor : public ExecutionState {
+class HangExecutor : public ProgramExecutor, public ExecutionState {
     std::vector<HangDetector*> _hangDetectors;
 
-    int _maxSteps;
     int _hangDetectionEnd;
 
     const InterpretedProgram *_program;
 
     Data _data;
-    const ProgramBlock* _block;
     HangType _detectedHangType;
-    int _numSteps;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
@@ -43,12 +41,10 @@ public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
     ~HangExecutor();
 
-    void setMaxSteps(int steps) { _maxSteps = steps; }
-    int numSteps() const { return _numSteps; }
-    const ProgramBlock* lastProgramBlock() { return _block; }
-    HangType detectedHangType() { return _detectedHangType; }
+    HangType detectedHangType() const override { return _detectedHangType; }
 
-    RunResult execute(const InterpretedProgram* program);
+    RunResult execute(const InterpretedProgram* program) override;
+    void dump() const override;
 
     //----------------------------------------------------------------------------------------------
     // Implement ExecutionState interface

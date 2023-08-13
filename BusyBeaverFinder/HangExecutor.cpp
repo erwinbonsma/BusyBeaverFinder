@@ -121,6 +121,10 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
     }
 }
 
+void HangExecutor::dump() const {
+    // TODO
+}
+
 void HangExecutor::dumpExecutionState() const {
     // TODO
 }

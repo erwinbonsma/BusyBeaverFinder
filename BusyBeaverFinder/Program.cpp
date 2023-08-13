@@ -20,10 +20,10 @@ char charForVal(int v) {
 
 Program Program::fromString(std::string s) {
     auto chars = s.begin();
-    int w = (*chars++ - '0');
-    int h = (*chars++ - '0');
+    int8_t w = (*chars++ - '0');
+    int8_t h = (*chars++ - '0');
     std::vector<Ins> v;
-    InstructionPointer insP = { .col = 0, .row = h - 1 };
+    InstructionPointer insP = { .col = 0, .row = (int8_t)(h - 1) };
     Program prog = Program(w, h);
 
     while (insP.row >= 0) {
