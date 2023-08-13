@@ -31,7 +31,8 @@ ExitFinder::ExitFinder(Program& program, InterpretedProgramBuilder& interpretedP
     _maxSteps = (program.getWidth() - 1) * (program.getHeight() - 1);
 }
 
-bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int delta, int depth) {
+bool ExitFinder::isPossibleExitValue(const ProgramBlock* block, bool zeroValue, int delta,
+                                     int depth) {
     if ( !block->isDelta() ) {
         // The block performs a shift. We cannot conclude anything about its exit value
         return true;
@@ -44,7 +45,7 @@ bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int de
     delta -= block->getInstructionAmount();
 
     for (int i = block->numEntryBlocks(); --i >= 0; ) {
-        ProgramBlock* entryBlock = block->entryBlock(i);
+        const ProgramBlock* entryBlock = block->entryBlock(i);
 
         if (entryBlock->nonZeroBlock() == block) {
             if (zeroValue && delta == 0) {
@@ -72,9 +73,9 @@ bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int de
     return false;
 }
 
-bool ExitFinder::isReachable(ProgramBlock* block) {
+bool ExitFinder::isReachable(const ProgramBlock* block) {
     for (int i = block->numEntryBlocks(); --i >= 0; ) {
-        ProgramBlock* entryBlock = block->entryBlock(i);
+        const ProgramBlock* entryBlock = block->entryBlock(i);
 
         if (entryBlock->nonZeroBlock() == block) {
             if (isPossibleExitValue(entryBlock, false, 0, 0)) {
@@ -92,80 +93,44 @@ bool ExitFinder::isReachable(ProgramBlock* block) {
     return false;
 }
 
-bool ExitFinder::finalizeBlock(ProgramBlock* block) {
-    _programBuilder.enterBlock(block);
-
-    ProgramPointer pp = _programBuilder.getStartProgramPointer(block, _program);
-    int steps = 0;
-
-    // Rotation delta
-    int delta = (_programBuilder.turnDirectionForBlock(block) == TurnDirection::CLOCKWISE)
-        ? 1 : 3;
-
-    while (1) {
-processInstruction:
-        InstructionPointer insP = nextInstructionPointer(pp);
-
-        switch (_program.getInstruction(insP)) {
-            case Ins::DATA:
-                _programBuilder.addDataInstruction(pp.dir);
-                break;
-            case Ins::NOOP:
-                break;
-            case Ins::DONE:
-            case Ins::UNSET:
-                // Escaped from loop. So cannot conclude that program hangs
-                return false;
-            case Ins::TURN:
-                if (_programBuilder.isInstructionSet()) {
-                    _programBuilder.finalizeBlock(pp.p);
-                    return true;
-                } else {
-                    pp.dir = (Dir)(((int)pp.dir + delta) % 4);
-                    goto processInstruction;
-                }
-                break;
-        }
-
-        if (steps++ > _maxSteps) {
-            // Apparently the block itself is in an endless loop. For purposes of No Exit hang
-            // detection, just finalize it. We cannot conclude here that the program hangs, as there
-            // is no guarantee that this block will be entered.
-            _programBuilder.finalizeHangBlock();
-        }
-        _programBuilder.incSteps();
-        pp.p = insP;
-    }
-}
-
-bool ExitFinder::visitBlock(ProgramBlock* block) {
-    if (block == nullptr) {
-        // This is a block that cannot be entered
-        return false;
+void ExitFinder::visitBlock(const ProgramBlock* block) {
+    if (block == nullptr                         // This is a block that cannot be entered
+        || _visited[block->getStartIndex()]) {   // Already visited this block
+        return;
     }
 
-    if (_visited[block->getStartIndex()]) {
-        // Already visited this block
-        return false;
-    }
+    std::cout << "visitBlock: ";
+    block->dump();
 
     _visited[block->getStartIndex()] = true;
 
     if (!block->isFinalized()) {
-        if (!finalizeBlock(block)) {
-            _exits[_numExits++] = block;
+        _programBuilder.enterBlock(block);
+        const ProgramBlock *finalizedBlock = _programBuilder.buildActiveBlock(_program);
 
-            return false;
+        if (finalizedBlock == nullptr) {
+            // Can escape from this block
+            _exits[_numExits++] = block;
+            return;
+        }
+        if (block->isExit()) {
+            _exits[_numExits++] = finalizedBlock;
+            return;
+        }
+        if (block->isHang()) {
+            // No children to visit
+            return;
         }
     }
 
     // Add to stack of blocks whose children should be visited
     *(_topP++) = block;
-
-    return false;
 }
 
-bool ExitFinder::canExitFrom(ProgramBlock* block) {
+bool ExitFinder::canExitFrom(const ProgramBlock* block) {
+    assert(block->isFinalized());
+    _program.dump();
+
     _nextP = _pendingStack;
     _topP = _pendingStack;
 
@@ -173,7 +138,7 @@ bool ExitFinder::canExitFrom(ProgramBlock* block) {
 
     visitBlock(block);
     while (_nextP < _topP) {
-        ProgramBlock* block = *_nextP++;
+        const ProgramBlock* block = *_nextP++;
 
         visitBlock(block->zeroBlock());
         visitBlock(block->nonZeroBlock());
@@ -187,7 +152,7 @@ bool ExitFinder::canExitFrom(ProgramBlock* block) {
     bool canEscape = false;
 
     for (int i = _numExits; --i >= 0; ) {
-        if (isReachable(_exits[i])) {
+        if (!canEscape && isReachable(_exits[i])) {
             canEscape = true;
         }
 

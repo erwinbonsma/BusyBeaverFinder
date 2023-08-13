@@ -14,7 +14,7 @@
 #include "Program.h"
 #include "InterpretedProgramBuilder.h"
 
-typedef ProgramBlock* ProgramBlockP;
+typedef const ProgramBlock* ProgramBlockP;
 
 class ExitFinder {
     Program& _program;
@@ -35,17 +35,12 @@ class ExitFinder {
 
     // Recursively checks if a given value (zero or non-zero) can be obtained via at least one
     // possible entry path.
-    bool isPossibleExitValue(ProgramBlock* block, bool zeroValue, int delta, int depth);
+    bool isPossibleExitValue(const ProgramBlock* block, bool zeroValue, int delta, int depth);
 
     // Performs a simple analysis to check if the given block can be reached.
-    bool isReachable(ProgramBlock* block);
+    bool isReachable(const ProgramBlock* block);
 
-    // Tries to finalize the current block.
-    // Returns "true" if the block could be finalized (based on the currently set instructions)
-    bool finalizeBlock(ProgramBlock* block);
-
-    // Returns "true" if escape from this block is possible
-    bool visitBlock(ProgramBlock* block);
+    void visitBlock(const ProgramBlock* block);
 
 public:
     ExitFinder(Program& program, InterpretedProgramBuilder& programBuilder);
@@ -56,7 +51,7 @@ public:
     //
     // Returns "true" if escape from this block is possible (i.e. blocks can be reached that are
     // not yet finalized)
-    bool canExitFrom(ProgramBlock* block);
+    bool canExitFrom(const ProgramBlock* block);
 };
 
 #endif /* ExitFinder_h */

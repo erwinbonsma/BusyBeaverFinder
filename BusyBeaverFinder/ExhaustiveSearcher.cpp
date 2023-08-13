@@ -21,9 +21,8 @@
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
-    Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-    Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-    Ins::TURN, Ins::UNSET
+    Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
+    Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
 };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
@@ -90,7 +89,7 @@ void ExhaustiveSearcher::extendBlock() {
                 case Ins::DONE:
                     _programBuilder.incSteps();
                     _programBuilder.finalizeExitBlock();
-                    run();
+                    run(); // TODO: Avoid run
                     return;
                 case Ins::UNSET:
                     branch();
@@ -100,8 +99,21 @@ void ExhaustiveSearcher::extendBlock() {
                     break;
                 case Ins::TURN:
                     if (_programBuilder.isInstructionSet()) {
-                        _programBuilder.finalizeBlock(_pp.p);
-                        run();
+                        const ProgramBlock *block = _programBuilder.finalizeBlock(_pp.p);
+                        if (!_settings.disableNoExitHangDetection &&
+                            !_exitFinder.canExitFrom(block)) {
+                            dumpInstructionStack();
+                            _program.dump();
+                            _programBuilder.dump();
+                            _program.dumpWeb();
+                            _tracker->reportDetectedHang(HangType::NO_EXIT,
+                                                         _settings.testHangDetection);
+//                            _settings.disableNoExitHangDetection = true;
+
+                            // TODO: Re-enable testHangDetection
+                        } else {
+                            run();
+                        }
                         return;
                     } else {
                         if (_td == TurnDirection::COUNTERCLOCKWISE) {
@@ -120,7 +132,7 @@ void ExhaustiveSearcher::extendBlock() {
 
         if (_programBuilder.getNumSteps() > 64) {
             _programBuilder.finalizeHangBlock();
-            run();
+            run(); // TODO: Avoid run
             return;
         }
     }
@@ -185,7 +197,9 @@ void ExhaustiveSearcher::run() {
                         ? (ProgramExecutor *)&_fastExecutor
                         : (ProgramExecutor *)&_hangExecutor);
 
-    RunResult result = _programExecutor->execute(&_programBuilder);
+    RunResult result = (_programExecutor == &_fastExecutor
+                        ? _fastExecutor.execute(&_programBuilder)
+                        : _hangExecutor.execute(&_programBuilder, _hangDetectionStart));
     switch (result) {
         case RunResult::SUCCESS: {
             _tracker->reportDone(_programExecutor->numSteps());
@@ -194,7 +208,9 @@ void ExhaustiveSearcher::run() {
         case RunResult::PROGRAM_ERROR: {
             const ProgramBlock* block = _programExecutor->lastProgramBlock();
 
+            _hangDetectionStart = _programExecutor->numSteps();
             buildBlock(block);
+
             break;
         }
         case RunResult::DATA_ERROR: {
@@ -228,7 +244,7 @@ void ExhaustiveSearcher::run() {
 Ins noResumeStack[] = { Ins::UNSET };
 void ExhaustiveSearcher::search() {
     _resumeFrom = noResumeStack;
-
+    _hangDetectionStart = 0;
     run();
 }
 
@@ -241,7 +257,7 @@ void ExhaustiveSearcher::search(Ins* resumeFrom) {
     run();
 }
 
-void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom, bool delayHangDetection) {
+void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom) {
     _searchMode = SearchMode::SUB_TREE;
     search(resumeFrom);
     _searchMode = SearchMode::FULL_TREE;

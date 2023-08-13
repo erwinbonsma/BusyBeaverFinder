@@ -40,7 +40,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom, true);
+        searcher.searchSubTree(resumeFrom);
 
         REQUIRE(tracker.getTotalSuccess() == 1);
         REQUIRE(tracker.getMaxStepsFound() == 3152126);
@@ -59,7 +59,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom, true);
+        searcher.searchSubTree(resumeFrom);
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
         REQUIRE(tracker.getTotalSuccess() == 2);
@@ -87,7 +87,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom, true);
+        searcher.searchSubTree(resumeFrom);
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_DATA_LOOP) == 1);
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 2);

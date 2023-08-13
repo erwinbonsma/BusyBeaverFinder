@@ -97,8 +97,7 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
                 case Ins::DONE:
                     return finalizeExitBlock();
                 case Ins::UNSET:
-                    assert(false);
-                    break;
+                    return nullptr;
                 case Ins::NOOP:
                     break;
                 case Ins::DATA:

@@ -58,6 +58,7 @@ class ExhaustiveSearcher {
 
     TurnDirection _td;
     ProgramPointer _pp;
+    int _hangDetectionStart;
 
     // Stack of instructions built up by the exhaustive search
     std::vector<Ins> _instructionStack;
@@ -100,7 +101,7 @@ public:
     void search();
     void search(Ins* resumeFrom);
 
-    void searchSubTree(Ins* resumeFrom, bool delayHangDetection = false);
+    void searchSubTree(Ins* resumeFrom);
 
     void findOne();
     void findOne(Ins* resumeFrom);

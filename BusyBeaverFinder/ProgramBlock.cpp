@@ -15,6 +15,8 @@ void ProgramBlock::init(int startIndex) {
     _startIndex = startIndex;
     _isFinalized = false;
     _numEntries = 0;
+    _zeroBlock = nullptr;
+    _nonZeroBlock = nullptr;
 }
 
 void ProgramBlock::reset() {
@@ -25,11 +27,13 @@ void ProgramBlock::reset() {
     if (_nonZeroBlock != nullptr) {
         check = _nonZeroBlock->popEntry();
         assert(check == this);
+        _nonZeroBlock = nullptr;
     }
 
     if (_zeroBlock != nullptr) {
         check = _zeroBlock->popEntry();
         assert(check == this);
+        _zeroBlock = nullptr;
     }
 }
 
@@ -37,16 +41,12 @@ void ProgramBlock::finalizeHang() {
     _isFinalized = true;
     _instructionAmount = 0;
     _numSteps = -1;
-    _zeroBlock = nullptr;
-    _nonZeroBlock = nullptr;
 }
 
 void ProgramBlock::finalizeExit(int numSteps) {
     _isFinalized = true;
     _numSteps = numSteps;
     _instructionAmount = 0;
-    _zeroBlock = nullptr;
-    _nonZeroBlock = nullptr;
 }
 
 void ProgramBlock::finalize(bool isDelta, int amount, int numSteps,
