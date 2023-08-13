@@ -21,7 +21,9 @@
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
-    Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
+    Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
+    Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
+    Ins::TURN, Ins::UNSET
 };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
@@ -127,12 +129,15 @@ void ExhaustiveSearcher::extendBlock() {
 
 void ExhaustiveSearcher::buildBlock(const ProgramBlock* block) {
     assert(!block->isFinalized());
+    TurnDirection td0 = _td;
 
     _pp = _programBuilder.getStartProgramPointer(block, _program);
     _td = _programBuilder.turnDirectionForBlock(block);
 
     _programBuilder.enterBlock(block);
     extendBlock();
+
+    _td = td0;
 }
 
 void ExhaustiveSearcher::branch() {
@@ -159,9 +164,9 @@ void ExhaustiveSearcher::branch() {
         _programBuilder.push();
         ProgramPointer pp0 = _pp;
 
-//        if (atTargetProgram()) {
-//            _program.dump();
-//        }
+        if (atTargetProgram()) {
+            _program.dump();
+        }
 
         extendBlock();
 
