@@ -47,8 +47,8 @@ RunResult HangExecutor::executeWithoutHangDetection() {
     return result;
 }
 
-RunResult HangExecutor::execute(const ProgramBlock *block) {
-    const ProgramBlock *entryBlock = block;
+RunResult HangExecutor::execute(const InterpretedProgram* program) {
+    _program = program;
 
     _runSummary[0].reset();
     _runSummary[1].reset();
@@ -56,8 +56,10 @@ RunResult HangExecutor::execute(const ProgramBlock *block) {
     for (auto hangDetector : _hangDetectors) {
         hangDetector->reset();
     }
+
+    const ProgramBlock *entryBlock = _program->getEntryBlock();
+    _block = entryBlock;
     _numSteps = 0;
-    _block = block;
 
     while (true) {
         // Record block before executing it. This way, when signalling a loop exit, the value
@@ -81,7 +83,7 @@ RunResult HangExecutor::execute(const ProgramBlock *block) {
         }
 
         if (_runSummary[0].isInsideLoop()) {
-            bool loopContinues = _runSummary[0].loopContinues((int)(block - entryBlock));
+            bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
                     return RunResult::DETECTED_HANG;

@@ -106,12 +106,12 @@ bool SequenceAnalysis::analyzeSequence(const ProgramBlock* entryBlock, int numBl
     return true;
 }
 
-bool SequenceAnalysis::analyzeSequence(const InterpretedProgram& program,
+bool SequenceAnalysis::analyzeSequence(const InterpretedProgram* program,
                                        const RunSummary& runSummary, int startIndex, int length) {
     _programBlocks.clear();
     for (int i = startIndex, end = startIndex + length; i < end; ++i) {
         int pb_index = runSummary.programBlockIndexAt(i);
-        _programBlocks.push_back(program.programBlockAt(pb_index));
+        _programBlocks.push_back(program->programBlockAt(pb_index));
     }
 
     analyzeSequence();

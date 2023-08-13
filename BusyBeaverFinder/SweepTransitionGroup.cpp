@@ -205,13 +205,13 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sla) {
 bool SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
                                                      const ExecutionState& execution) {
     const RunSummary& runSummary = execution.getRunSummary();
-    const InterpretedProgram& interpretedProgram = execution.getInterpretedProgram();
+    const InterpretedProgram* program = execution.getInterpretedProgram();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
     int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
 
-    if (!analyzeSequence(interpretedProgram, runSummary, pbStart, numProgramBlocks)) {
+    if (!analyzeSequence(program, runSummary, pbStart, numProgramBlocks)) {
         return transitionGroupFailure(execution);
     }
 
@@ -221,7 +221,7 @@ bool SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endInde
 bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
                                                const ExecutionState& execution) const {
     const RunSummary& runSummary = execution.getRunSummary();
-    const InterpretedProgram& program = execution.getInterpretedProgram();
+    const InterpretedProgram* program = execution.getInterpretedProgram();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
@@ -232,7 +232,7 @@ bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
     }
 
     for (int i = numProgramBlocks; --i >= 0; ) {
-        if (program.indexOf(programBlockAt(i)) != runSummary.programBlockIndexAt(pbStart + i)) {
+        if (program->indexOf(programBlockAt(i)) != runSummary.programBlockIndexAt(pbStart + i)) {
             return false;
         }
     }

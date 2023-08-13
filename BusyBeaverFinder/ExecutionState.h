@@ -16,7 +16,7 @@ class RunSummary;
 class ExecutionState {
 
 public:
-    virtual const InterpretedProgram& getInterpretedProgram() const = 0;
+    virtual const InterpretedProgram* getInterpretedProgram() const = 0;
 
     virtual const Data& getData() const = 0;
 

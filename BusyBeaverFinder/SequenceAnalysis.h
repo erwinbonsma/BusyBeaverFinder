@@ -90,7 +90,7 @@ public:
     bool anyDataDeltasUpUntil(int index) const;
 
     bool analyzeSequence(const ProgramBlock* entryBlock, int numBlocks);
-    bool analyzeSequence(const InterpretedProgram& program, const RunSummary& runSummary,
+    bool analyzeSequence(const InterpretedProgram* program, const RunSummary& runSummary,
                          int startIndex, int length);
 
     void dump() const { std::cout << *this << std::endl; }

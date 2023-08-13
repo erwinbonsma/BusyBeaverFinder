@@ -120,8 +120,8 @@ public:
     //----------------------------------------------------------------------------------------------
     // Implement ExecutionState interface
 
-    const InterpretedProgram& getInterpretedProgram() const override {
-        return _interpretedProgramBuilder;
+    const InterpretedProgram* getInterpretedProgram() const override {
+        return &_interpretedProgramBuilder;
     }
 
     const Data& getData() const override { return _data; }
