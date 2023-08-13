@@ -26,6 +26,7 @@ class HangExecutor : public ExecutionState {
 
     Data _data;
     const ProgramBlock* _block;
+    HangType _detectedHangType;
     int _numSteps;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
@@ -44,6 +45,8 @@ public:
 
     void setMaxSteps(int steps) { _maxSteps = steps; }
     int numSteps() const { return _numSteps; }
+    const ProgramBlock* lastProgramBlock() { return _block; }
+    HangType detectedHangType() { return _detectedHangType; }
 
     RunResult execute(const InterpretedProgram* program);
 

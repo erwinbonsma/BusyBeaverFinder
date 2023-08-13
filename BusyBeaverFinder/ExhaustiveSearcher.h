@@ -35,15 +35,13 @@ struct SearchSettings {
     bool disableNoExitHangDetection;
 };
 
-SearchSettings defaultSettings() {
-    return SearchSettings {
-        .maxSteps = 1024,
-        .maxHangDetectionSteps = 1024,
-        .undoCapacity = 1024,
-        .testHangDetection = false,
-        .disableNoExitHangDetection = false
-    };
-}
+const SearchSettings defaultSearchSettings = {
+    .maxSteps = 1024,
+    .maxHangDetectionSteps = 1024,
+    .undoCapacity = 1024,
+    .testHangDetection = false,
+    .disableNoExitHangDetection = false
+};
 
 class ExhaustiveSearcher {
     SearchSettings _settings;
@@ -57,19 +55,18 @@ class ExhaustiveSearcher {
     // used to investigate late escapes
     bool _delayHangDetection;
 
-    // The number of steps when to disable hang detection
-    int _hangDetectionEnd;
+//    // The number of steps when to disable hang detection
+//    int _hangDetectionEnd;
 
     // Pointer to array that can be used to resume a previous search. The last operation must be
     // UNSET.
     Ins* _resumeFrom;
 
-//    ProgramPointer _pp;
-//    ProgramBlock* _block;
-//    int _numSteps;
+    ProgramPointer _pp;
+    TurnDirection _td;
 
     // Stack of instructions built up by the exhaustive search
-    Ins* _instructionStack;
+    std::vector<Ins> _instructionStack;
 
     // An interpreted representation of the program
     InterpretedProgramBuilder _programBuilder;
@@ -81,25 +78,14 @@ class ExhaustiveSearcher {
 
     ProgressTracker* _tracker;
 
-    void initInstructionStack(int size);
-
     void initSearch();
 
-    bool executeCurrentBlock();
-
-    // Executes current program (from start) until the maximum number of steps is reached (an
-    // assumed hang), or it escapes the current program.
-    void fastExecution();
-
-    ProgramPointer executeCompiledBlocksWithBacktracking();
-    ProgramPointer executeCompiledBlocksWithHangDetection();
-    ProgramPointer executeCompiledBlocks();
-
-    void run(int depth);
-    void branch(int depth);
+    void run();
+    void branch();
+    void extendBlock();
+    void buildBlock(const ProgramBlock* block);
 public:
     ExhaustiveSearcher(int width, int height, SearchSettings settings);
-    ~ExhaustiveSearcher();
 
     SearchSettings getSettings() { return _settings; }
 
@@ -111,10 +97,6 @@ public:
     const Program& getProgram() const { return _program; }
 
     //----------------------------------------------------------------------------------------------
-
-    int getNumSteps() { return _numSteps; }
-
-    ProgramBlock* getProgramBlock() { return _block; }
 
     bool atTargetProgram();
 

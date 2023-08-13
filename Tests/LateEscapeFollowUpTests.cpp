@@ -11,15 +11,15 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 16384;
+    settings.maxSteps = 10000000;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 10000000;
-    searcher.configure(settings);
 
     SECTION( "EscapeIntoSuccess" ) {
         // After "escape" terminates without encountering unset instructions. This is therefore

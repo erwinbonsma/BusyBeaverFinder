@@ -12,7 +12,8 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
-    ExhaustiveSearcher searcher(3, 3, 16);
+    SearchSettings settings = defaultSearchSettings;
+    ExhaustiveSearcher searcher(3, 3, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
@@ -33,15 +34,14 @@ TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
 }
 
 TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
-    ExhaustiveSearcher searcher(4, 4, 32);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxSteps = 1024;
+
+    ExhaustiveSearcher searcher(4, 4, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1024;
-    searcher.configure(settings);
 
     SECTION("Find all") {
         searcher.search();
@@ -54,16 +54,15 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
 }
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
-    ExhaustiveSearcher searcher(5, 5, 128);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxSteps = 2048;
+
+    ExhaustiveSearcher searcher(5, 5, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     tracker.setDumpUndetectedHangs(true);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 2048;
-    searcher.configure(settings);
 
     SECTION("Find all") {
         searcher.search();

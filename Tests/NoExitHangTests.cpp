@@ -12,13 +12,11 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
+    SearchSettings settings = defaultSearchSettings;
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    searcher.configure(settings);
 
     SECTION( "6x6-SweepWithBinaryCounter" ) {
         // Irregular sweep hang. At the left it extends normally, one cell per sweep. At the right

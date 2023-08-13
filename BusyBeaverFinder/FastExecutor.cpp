@@ -11,6 +11,7 @@
 #include <string.h>
 #include <iostream>
 
+#include "InterpretedProgram.h"
 #include "ProgramBlock.h"
 
 const int sentinelSize = 8;
@@ -28,18 +29,19 @@ FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-RunResult FastExecutor::execute(const ProgramBlock *programBlock) {
+RunResult FastExecutor::execute(const InterpretedProgram* program) {
     _numSteps = 0;
 
     // Clear data
     memset(_data, 0, _dataBufSize * sizeof(int));
 
     _dataP = _midDataP;
+    _block = program->getEntryBlock();
 
     while (true) {
-        int amount = programBlock->getInstructionAmount();
+        int amount = _block->getInstructionAmount();
 
-        if (programBlock->isDelta()) {
+        if (_block->isDelta()) {
             *_dataP += amount;
         } else {
             _dataP += amount;
@@ -48,17 +50,17 @@ RunResult FastExecutor::execute(const ProgramBlock *programBlock) {
             }
         }
 
-        _numSteps += programBlock->getNumSteps();
+        _numSteps += _block->getNumSteps();
         if (_numSteps > _maxSteps) {
             return RunResult::ASSUMED_HANG;
         }
 
-        if (programBlock->isExit()) {
+        if (_block->isExit()) {
             return RunResult::SUCCESS;
         }
 
-        programBlock = (*_dataP == 0) ? programBlock->zeroBlock() : programBlock->nonZeroBlock();
-        if (!programBlock->isFinalized()) {
+        _block = (*_dataP == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
+        if (!_block->isFinalized()) {
             return RunResult::PROGRAM_ERROR;
         }
     }

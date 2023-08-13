@@ -245,8 +245,8 @@
 				AA4F450A224ABF320069FF36 /* InterpretedProgramBuilder.h */,
 				AA37E6C92295D62200117A85 /* FastExecutor.cpp */,
 				AA37E6CA2295D62200117A85 /* FastExecutor.h */,
-				AACE849E2A87C2A7006341E7 /* HangExecutor.h */,
 				AACE849F2A87C568006341E7 /* HangExecutor.cpp */,
+				AACE849E2A87C2A7006341E7 /* HangExecutor.h */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";

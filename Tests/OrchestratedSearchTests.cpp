@@ -13,15 +13,14 @@
 #include "SearchOrchestration.h"
 
 TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
-    ExhaustiveSearcher searcher(5, 5, 128);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxSteps = 2048;
+
+    ExhaustiveSearcher searcher(5, 5, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 2048;
-    searcher.configure(settings);
 
     SECTION("Find all") {
         orchestratedSearch(searcher);
@@ -36,20 +35,20 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
 }
 
 TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
-    ExhaustiveSearcher searcher(6, 6, 4096);
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 4096;
+    settings.maxHangDetectionSteps = 20000;
+    settings.maxSteps = 100000;
+    settings.undoCapacity = settings.maxSteps;
+//    settings.testHangDetection = true;
+
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpUndetectedHangs(true);
     tracker.setDumpStatsPeriod(10000000);
     tracker.setDumpStackPeriod(10000000);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 100000;
-    settings.undoCapacity = settings.maxSteps;
-//    settings.testHangDetection = true;
-    searcher.configure(settings);
 
     SECTION ("Find all") {
         orchestratedSearch(searcher);

@@ -9,6 +9,7 @@
 
 #include "Types.h"
 
+class InterpretedProgram;
 class ProgramBlock;
 
 class FastExecutor {
@@ -24,6 +25,8 @@ class FastExecutor {
     int _maxSteps;
     int _numSteps;
 
+    const ProgramBlock* _block;
+
 public:
     FastExecutor(int dataSize);
     ~FastExecutor();
@@ -31,7 +34,9 @@ public:
     void setMaxSteps(int steps) { _maxSteps = steps; }
     int numSteps() const { return _numSteps; }
 
-    RunResult execute(const ProgramBlock *programBlock);
+    const ProgramBlock* lastProgramBlock() { return _block; }
+
+    RunResult execute(const InterpretedProgram* program);
 
     void dump();
 };

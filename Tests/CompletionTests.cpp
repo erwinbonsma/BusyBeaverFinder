@@ -11,17 +11,16 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
-    ExhaustiveSearcher searcher(6, 6, 32);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxHangDetectionSteps = 10000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+    settings.disableNoExitHangDetection = true;
+
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 10000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.disableNoExitHangDetection = true;
-    searcher.configure(settings);
 
     SECTION( "DivergingDeltaYetNoHang" ) {
         // A diverging change after 102 steps, however, not a hang as one value change touched zero
@@ -95,13 +94,8 @@ TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
 }
 
 TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
-    ProgressTracker tracker(searcher);
-
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 16384;
     settings.maxHangDetectionSteps = 1000000;
     settings.maxSteps = 40000000;
 
@@ -109,7 +103,11 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
     // instruction from resume stack is encountered (to avoid late-escape).
     settings.undoCapacity = 32;
 
-    searcher.configure(settings);
+    ExhaustiveSearcher searcher(7, 7, settings);
+    ProgressTracker tracker(searcher);
+
+    tracker.setDumpBestSofarLimit(INT_MAX);
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "BB 7x7 #117273" ) {
         Ins resumeFrom[] = {

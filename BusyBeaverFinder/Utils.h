@@ -11,6 +11,7 @@
 
 #include <set>
 #include <string>
+#include <vector>
 #include <istream>
 
 #include "Types.h"
@@ -56,6 +57,7 @@ Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
 
 void dumpDataBuffer(int* buf, int* dataP, int size);
 void dumpInstructionStack(Ins* stack);
+void dumpInstructionStack(std::vector<Ins> stack);
 
 template <class T>
 class ProxyIterator {

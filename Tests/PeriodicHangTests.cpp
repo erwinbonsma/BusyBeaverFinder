@@ -12,16 +12,15 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
-    ExhaustiveSearcher searcher(5, 5, 64);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
+    SearchSettings settings = defaultSearchSettings;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Periodic Hang Detector
     settings.disableNoExitHangDetection = true;
-    searcher.configure(settings);
+
+    ExhaustiveSearcher searcher(5, 5, settings);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "BasicLoop" ) {
         // Classification: Periodic, Constant, Uniform, Stationary
@@ -233,18 +232,17 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
 }
 
 TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
+    SearchSettings settings = defaultSearchSettings;
     settings.maxHangDetectionSteps = 2048;
     settings.maxSteps = settings.maxHangDetectionSteps;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Periodic Hang Detector
     settings.disableNoExitHangDetection = true;
-    searcher.configure(settings);
+
+    ExhaustiveSearcher searcher(6, 6, settings);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "6x6-DelayedHang") {
         // Classification: Periodic, Constant, Non-Uniform(?), Travelling
@@ -552,14 +550,13 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
 }
 
 TEST_CASE( "7x7 Periodic Hang tests", "[hang][periodic][7x7]" ) {
-    ExhaustiveSearcher searcher(7, 7, 256);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxSteps = 1000000;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1000000;
-    searcher.configure(settings);
 
     SECTION( "7x7-DelayedPeriodicHang") {
         // Program that enters a periodic hang after around 800 steps. Earlier versions of the

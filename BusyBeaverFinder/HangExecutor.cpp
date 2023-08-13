@@ -113,9 +113,14 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
             bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
+                    _detectedHangType = hangDetector->hangType();
                     return RunResult::DETECTED_HANG;
                 }
             }
         }
     }
+}
+
+void HangExecutor::dumpExecutionState() const {
+    // TODO
 }

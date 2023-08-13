@@ -12,15 +12,14 @@
 #include "SweepHangDetector.h"
 
 TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxHangDetectionSteps = 20000;
+    settings.maxSteps = 1000000;
+
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 1000000;
-    searcher.configure(settings);
 
     SECTION( "6x6-IrregularSweepWhereIncomingLoopClears" ) {
         // Irregular sweep with an a-periodically growing appendix at its right end. The incoming

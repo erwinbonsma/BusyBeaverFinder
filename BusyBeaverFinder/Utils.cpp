@@ -291,3 +291,10 @@ void dumpInstructionStack(Ins* stack) {
     }
     std::cout << std::endl;
 }
+
+void dumpInstructionStack(std::vector<Ins> stack) {
+    for (Ins& ins : stack) {
+        std::cout << (int)ins << ",";
+    }
+    std::cout << std::endl;
+}

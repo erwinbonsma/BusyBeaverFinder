@@ -13,17 +13,17 @@
 #include "SweepHangDetector.h"
 
 TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]" ) {
-    ExhaustiveSearcher searcher(5, 5, 64);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
+    SearchSettings settings = defaultSearchSettings;
     settings.maxSteps = 2048;
+
     // Prevent No Exit hang detection from also catching some of the hangs below as this test case
     // is testing the Regular Sweep Hang Detector
     settings.disableNoExitHangDetection = true;
-    searcher.configure(settings);
+
+    ExhaustiveSearcher searcher(5, 5, settings);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "InfSeqExtendingBothWays1" ) {
         //     *
@@ -69,18 +69,18 @@ TEST_CASE( "5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]" ) {
 }
 
 TEST_CASE( "6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
-    ProgressTracker tracker(searcher);
+    SearchSettings settings = defaultSearchSettings;
 
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
     settings.maxHangDetectionSteps = 16384;
     settings.maxSteps = settings.maxHangDetectionSteps;
     // Prevent No Exit hang detection from also catching some of the hangs below as is test case
     // is testing the Regular Sweep Hang Detector
     settings.disableNoExitHangDetection = true;
-    searcher.configure(settings);
+
+    ExhaustiveSearcher searcher(6, 6, settings);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "6x6-SweepExtendingLeftwards") {
         // This program sweeps over the entire data sequence, which causes the hang cycle to

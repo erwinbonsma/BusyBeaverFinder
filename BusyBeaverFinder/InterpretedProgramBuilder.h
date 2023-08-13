@@ -5,9 +5,7 @@
 //  Created by Erwin on 26/03/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef InterpretedProgramBuilder_h
-#define InterpretedProgramBuilder_h
+#pragma once
 
 #include <stdio.h>
 
@@ -46,9 +44,11 @@ class InterpretedProgramBuilder : public InterpretedProgram {
     ProgramStack* _stateP;
 
     ProgramBlock* getBlock(InstructionPointer insP, TurnDirection turn);
-    InstructionPointer startInstructionForBlock(ProgramBlock* block);
+    InstructionPointer startInstructionForBlock(const ProgramBlock* block);
 
     void checkState();
+
+    bool isDeltaInstruction();
 
 public:
     static InterpretedProgramBuilder fromProgram(Program& program);
@@ -70,29 +70,24 @@ public:
     void push();
     void pop();
 
-    // Update the active program block
+    // Update current block
+    void addDataInstruction(Dir dir);
     int incSteps() { return _stateP->activeBlock.numSteps++; }
-    void incAmount() { _stateP->activeBlock.amount++; }
-    void decAmount() { _stateP->activeBlock.amount--; }
-    void setInstruction(bool isDelta);
 
-    bool isDeltaInstruction();
     bool isInstructionSet();
     int getAmount();
     int getNumSteps();
 
-    ProgramBlock* buildActiveBlock(Program& program);
+    const ProgramBlock* buildActiveBlock(Program& program);
 
-    ProgramBlock* finalizeExitBlock();
-    ProgramBlock* finalizeHangBlock();
-    ProgramBlock* finalizeBlock(InstructionPointer endP);
+    const ProgramBlock* finalizeExitBlock();
+    const ProgramBlock* finalizeHangBlock();
+    const ProgramBlock* finalizeBlock(InstructionPointer endP);
 
-    ProgramBlock* enterBlock(ProgramBlock* block);
-    ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
+    const ProgramBlock* enterBlock(const ProgramBlock* block);
+    const ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
     ProgramBlock* getBlock(int startIndex) { return _blocks + _blockIndexLookup[startIndex]; }
 
-    TurnDirection turnDirectionForBlock(ProgramBlock* block);
-    ProgramPointer getStartProgramPointer(ProgramBlock* block, Program& program);
+    TurnDirection turnDirectionForBlock(const ProgramBlock* block);
+    ProgramPointer getStartProgramPointer(const ProgramBlock* block, Program& program);
 };
-
-#endif /* InterpretedProgramBuilder_h */

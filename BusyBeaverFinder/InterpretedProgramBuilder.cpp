@@ -23,10 +23,10 @@ const uint8_t INSTRUCTION_TYPE_BIT = 0x02;
 
 InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& program) {
     InterpretedProgramBuilder  builder;
-    std::vector<ProgramBlock*> stack;
+    std::vector<const ProgramBlock*> stack;
 
     while (true) {
-        ProgramBlock* block = builder.buildActiveBlock(program);
+        const ProgramBlock* block = builder.buildActiveBlock(program);
 
         // Add new continuation blocks to stack
         if (!block->isExit()) {
@@ -61,7 +61,25 @@ InterpretedProgramBuilder::InterpretedProgramBuilder() {
     enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
 }
 
-ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program) {
+void InterpretedProgramBuilder::addDataInstruction(Dir dir) {
+    MutableProgramBlock &activeBlock = _stateP->activeBlock;
+
+    activeBlock.flags |= INSTRUCTION_SET_BIT;
+    switch (dir) {
+        case Dir::UP:
+        case Dir::DOWN:
+            activeBlock.flags |= INSTRUCTION_TYPE_BIT;
+            activeBlock.amount += 1 - (int)dir;
+            break;
+        case Dir::RIGHT:
+        case Dir::LEFT:
+            activeBlock.flags &= ~INSTRUCTION_TYPE_BIT;
+            activeBlock.amount += 2 - (int)dir;
+            break;
+    }
+}
+
+const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program) {
     ProgramBlock *block = _blocks + _stateP->activeBlockIndex;
     MutableProgramBlock &activeBlock = _stateP->activeBlock;
 
@@ -84,19 +102,7 @@ ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program) {
                 case Ins::NOOP:
                     break;
                 case Ins::DATA:
-                    activeBlock.flags |= INSTRUCTION_SET_BIT;
-                    switch (pp.dir) {
-                        case Dir::UP:
-                        case Dir::DOWN:
-                            activeBlock.flags |= INSTRUCTION_TYPE_BIT;
-                            activeBlock.amount += 1 - (int)pp.dir;
-                            break;
-                        case Dir::RIGHT:
-                        case Dir::LEFT:
-                            activeBlock.flags &= ~INSTRUCTION_TYPE_BIT;
-                            activeBlock.amount += 2 - (int)pp.dir;
-                            break;
-                    }
+                    addDataInstruction(pp.dir);
                     break;
                 case Ins::TURN:
                     if (activeBlock.flags & INSTRUCTION_SET_BIT) {
@@ -164,7 +170,7 @@ void InterpretedProgramBuilder::pop() {
 //    checkState();
 }
 
-InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(ProgramBlock* block) {
+InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(const ProgramBlock* block) {
     int val = block->getStartIndex() >> 1;
     int col = val % maxWidth;
     int row = (val - col) / maxWidth;
@@ -172,11 +178,11 @@ InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(ProgramBl
     return InstructionPointer { .col = col, .row = row };
 }
 
-TurnDirection InterpretedProgramBuilder::turnDirectionForBlock(ProgramBlock* block) {
+TurnDirection InterpretedProgramBuilder::turnDirectionForBlock(const ProgramBlock* block) {
     return (TurnDirection)(block->getStartIndex() & 0x01);
 }
 
-ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(ProgramBlock* block,
+ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(const ProgramBlock* block,
                                                                  Program& program) {
     ProgramPointer pp;
 
@@ -217,15 +223,6 @@ ProgramBlock* InterpretedProgramBuilder::getBlock(InstructionPointer insP, TurnD
     return block;
 }
 
-void InterpretedProgramBuilder::setInstruction(bool isDelta) {
-    _stateP->activeBlock.flags |= INSTRUCTION_SET_BIT;
-    if (isDelta) {
-        _stateP->activeBlock.flags |= INSTRUCTION_TYPE_BIT;
-    } else {
-        _stateP->activeBlock.flags &= ~INSTRUCTION_TYPE_BIT;
-    }
-}
-
 bool InterpretedProgramBuilder::isInstructionSet() {
     return (_stateP->activeBlock.flags & INSTRUCTION_SET_BIT) != 0;
 }
@@ -243,7 +240,7 @@ int InterpretedProgramBuilder::getNumSteps() {
     return _stateP->activeBlock.numSteps;
 }
 
-ProgramBlock* InterpretedProgramBuilder::finalizeExitBlock() {
+const ProgramBlock* InterpretedProgramBuilder::finalizeExitBlock() {
     ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
     assert( !block->isFinalized() );
 
@@ -253,7 +250,7 @@ ProgramBlock* InterpretedProgramBuilder::finalizeExitBlock() {
     return block;
 }
 
-ProgramBlock* InterpretedProgramBuilder::finalizeHangBlock() {
+const ProgramBlock* InterpretedProgramBuilder::finalizeHangBlock() {
     ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
     assert( !block->isFinalized() );
 
@@ -263,7 +260,7 @@ ProgramBlock* InterpretedProgramBuilder::finalizeHangBlock() {
     return block;
 }
 
-ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer endP) {
+const ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer endP) {
     ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
     assert( !block->isFinalized() );
 
@@ -288,7 +285,7 @@ ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer endP) 
     return block;
 }
 
-ProgramBlock* InterpretedProgramBuilder::enterBlock(ProgramBlock* block) {
+const ProgramBlock* InterpretedProgramBuilder::enterBlock(const ProgramBlock* block) {
     _stateP->activeBlockIndex = (int)(block - _blocks);
 
     if (!block->isFinalized()) {
@@ -306,7 +303,7 @@ ProgramBlock* InterpretedProgramBuilder::enterBlock(ProgramBlock* block) {
     return block;
 }
 
-ProgramBlock* InterpretedProgramBuilder::enterBlock(InstructionPointer startP,
-                                                    TurnDirection turnDir) {
+const ProgramBlock* InterpretedProgramBuilder::enterBlock(InstructionPointer startP,
+                                                          TurnDirection turnDir) {
     return enterBlock(getBlock(startP, turnDir));
 }

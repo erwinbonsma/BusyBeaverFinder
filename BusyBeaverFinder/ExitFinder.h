@@ -18,7 +18,7 @@ typedef ProgramBlock* ProgramBlockP;
 
 class ExitFinder {
     Program& _program;
-    InterpretedProgramBuilder& _interpretedProgramBuilder;
+    InterpretedProgramBuilder& _programBuilder;
     int _maxSteps;
 
     // Tracks if the block with the given index has been visited already
@@ -48,7 +48,7 @@ class ExitFinder {
     bool visitBlock(ProgramBlock* block);
 
 public:
-    ExitFinder(Program& program, InterpretedProgramBuilder& interpretedProgramBuilder);
+    ExitFinder(Program& program, InterpretedProgramBuilder& programBuilder);
 
     // Checks if it is possible to exit from the loop that starts with the given block. It will
     // finalize blocks that are not yet finalized but which can be finalized given the instructions
