@@ -37,10 +37,6 @@ Data::Data(int size) {
 
 Data::~Data() {
     delete[] _data;
-
-    if (_undoStack != nullptr) {
-        delete[] _undoStack;
-    }
 }
 
 void Data::reset() {
@@ -52,24 +48,6 @@ void Data::reset() {
 
     _minBoundP = _midDataP;
     _maxBoundP = _minBoundP - 1; // Empty bounds
-
-    _undoP = _undoStack;
-    _undoEnabled = true;
-}
-
-void Data::setStackSize(int size) {
-    if (_undoStack != nullptr) {
-        if (_maxUndoP - _undoP == size) {
-            // Nothing needs doing. Stack size is unchanged
-            return;
-        }
-
-        delete[] _undoStack;
-    }
-
-    _undoStack = new UndoOp[size];
-    _undoP = _undoStack;
-    _maxUndoP = _undoStack + size;
 }
 
 void Data::updateBounds() {
@@ -143,58 +121,6 @@ bool Data::shift(int shift) {
     return _dataP > _minDataP && _dataP < _maxDataP;
 }
 
-void Data::inc(uint8_t delta) {
-    (*_dataP) += delta;
-
-    if (_undoEnabled) {
-        *(_undoP++) = delta | (uint8_t)DataOp::INC;
-    }
-
-    updateBounds();
-}
-
-void Data::dec(uint8_t delta) {
-    (*_dataP) -= delta;
-
-    if (_undoEnabled) {
-        *(_undoP++) = delta | (uint8_t)DataOp::DEC;
-    }
-
-    updateBounds();
-}
-
-bool Data::shr(uint8_t shift) {
-    _dataP += shift;
-
-    if (_undoEnabled) {
-        *(_undoP++) = shift | (uint8_t)DataOp::SHR;
-    }
-
-    return _dataP < _maxDataP;
-}
-
-bool Data::shl(uint8_t shift) {
-    _dataP -= shift;
-
-    if (_undoEnabled) {
-        *(_undoP++) = shift | (uint8_t)DataOp::SHL;
-    }
-
-    return _dataP > _minDataP;
-}
-
-void Data::undo(const UndoOp* _targetUndoP) {
-    while (_undoP != _targetUndoP) {
-        UndoOp undo = *(--_undoP);
-        switch (undo & 0xc0) {
-            case (int)DataOp::INC: (*_dataP) -= undo & 0x3f; updateBounds(); break;
-            case (int)DataOp::DEC: (*_dataP) += undo & 0x3f; updateBounds(); break;
-            case (int)DataOp::SHR: _dataP -= undo & 0x3f; break;
-            case (int)DataOp::SHL: _dataP += undo & 0x3f; break;
-        }
-    }
-}
-
 void Data::dumpWithCursor(DataPointer cursor) const {
     // Find end
     int *max = _maxDataP - 1;
@@ -228,17 +154,6 @@ void Data::dumpWithCursor(DataPointer cursor) const {
         }
     }
     std::cout << std::endl;
-}
-
-void Data::dumpStack() const {
-    UndoOp *p = &_undoStack[0];
-    while (p < _undoP) {
-        if (p != &_undoStack[0]) {
-            std::cout << ",";
-        }
-        std::cout << *p;
-        p++;
-    }
 }
 
 void Data::dumpHangInfo() const {
