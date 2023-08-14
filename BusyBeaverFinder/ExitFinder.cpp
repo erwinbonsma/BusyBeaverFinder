@@ -99,28 +99,31 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
         return;
     }
 
-    std::cout << "visitBlock: ";
-    block->dump();
+//    std::cout << "visitBlock: ";
+//    block->dump();
 
     _visited[block->getStartIndex()] = true;
 
     if (!block->isFinalized()) {
         _programBuilder.enterBlock(block);
-        const ProgramBlock *finalizedBlock = _programBuilder.buildActiveBlock(_program);
+        const ProgramBlock* finalizedBlock = _programBuilder.buildActiveBlock(_program);
 
         if (finalizedBlock == nullptr) {
             // Can escape from this block
             _exits[_numExits++] = block;
             return;
         }
-        if (block->isExit()) {
-            _exits[_numExits++] = finalizedBlock;
-            return;
-        }
-        if (block->isHang()) {
-            // No children to visit
-            return;
-        }
+
+        block = finalizedBlock;
+    }
+
+    if (block->isExit()) {
+        _exits[_numExits++] = block;
+        return;
+    }
+    if (block->isHang()) {
+        // No children to visit
+        return;
     }
 
     // Add to stack of blocks whose children should be visited
@@ -129,7 +132,8 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
 
 bool ExitFinder::canExitFrom(const ProgramBlock* block) {
     assert(block->isFinalized());
-    _program.dump();
+//    _program.dump();
+//    _programBuilder.dump();
 
     _nextP = _pendingStack;
     _topP = _pendingStack;
@@ -159,6 +163,10 @@ bool ExitFinder::canExitFrom(const ProgramBlock* block) {
         // Reset tracking state for exit
         _visited[ _exits[i]->getStartIndex() ] = false;
     }
+
+//    if (!canEscape) {
+//        _programBuilder.dump();
+//    }
 
     return canEscape;
 }
