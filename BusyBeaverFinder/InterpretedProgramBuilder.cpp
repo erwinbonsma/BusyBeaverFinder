@@ -95,6 +95,7 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
 
             switch (ins) {
                 case Ins::DONE:
+                    activeBlock.numSteps++;
                     return finalizeExitBlock();
                 case Ins::UNSET:
                     return nullptr;
