@@ -75,6 +75,8 @@ class ExhaustiveSearcher {
 
     ProgressTracker* _tracker;
 
+    void verifyHang();
+
     void run();
     void branch();
     void extendBlock();

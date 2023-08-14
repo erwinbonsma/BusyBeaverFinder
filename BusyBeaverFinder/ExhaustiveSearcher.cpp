@@ -22,7 +22,7 @@ Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
     Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-    Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+    Ins::TURN, Ins::NOOP,  Ins::UNSET
 };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
@@ -77,6 +77,28 @@ void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
     _tracker = tracker;
 }
 
+void ExhaustiveSearcher::verifyHang() {
+    RunResult result = _fastExecutor.execute(&_programBuilder);
+    switch (result) {
+        case RunResult::SUCCESS:
+            _tracker->reportDone(_fastExecutor.numSteps());
+            break;
+        case RunResult::PROGRAM_ERROR:
+            _tracker->reportLateEscape(_fastExecutor.numSteps());
+            break;
+        case RunResult::DATA_ERROR:
+            _tracker->reportError();
+            break;
+        case RunResult::DETECTED_HANG:
+        case RunResult::ASSUMED_HANG:
+            _tracker->reportAssumedHang();
+            break;
+        case RunResult::UNKNOWN:
+            assert(false);
+    }
+}
+
+
 void ExhaustiveSearcher::extendBlock() {
     while (true) {
         InstructionPointer ip;
@@ -101,16 +123,11 @@ void ExhaustiveSearcher::extendBlock() {
                     if (_programBuilder.isInstructionSet()) {
                         const ProgramBlock *block = _programBuilder.finalizeBlock(_pp.p);
                         if (!_settings.disableNoExitHangDetection &&
-                            !_exitFinder.canExitFrom(block)) {
-                            dumpInstructionStack();
-                            _program.dump();
-                            _programBuilder.dump();
-                            _program.dumpWeb();
+                            !_exitFinder.canExitFrom(block)
+                        ) {
                             _tracker->reportDetectedHang(HangType::NO_EXIT,
                                                          _settings.testHangDetection);
-//                            _settings.disableNoExitHangDetection = true;
-
-                            // TODO: Re-enable testHangDetection
+                            if (_settings.testHangDetection) verifyHang();
                         } else {
                             run();
                         }
@@ -232,7 +249,7 @@ void ExhaustiveSearcher::run() {
                 _tracker->reportDetectedHang(_hangExecutor.detectedHang(), testHang);
             }
             if (testHang) {
-                // TODO: fastExecution();
+                verifyHang();
             }
             break;
         }
