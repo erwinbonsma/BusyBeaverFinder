@@ -99,9 +99,6 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
         return;
     }
 
-//    std::cout << "visitBlock: ";
-//    block->dump();
-
     _visited[block->getStartIndex()] = true;
 
     if (!block->isFinalized()) {
@@ -110,7 +107,7 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
 
         if (finalizedBlock == nullptr) {
             // Can escape from this block
-            _exits[_numExits++] = block;
+            _exits.push_back(block);
             return;
         }
 
@@ -118,7 +115,7 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
     }
 
     if (block->isExit()) {
-        _exits[_numExits++] = block;
+        _exits.push_back(block);
         return;
     }
     if (block->isHang()) {
@@ -127,46 +124,39 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
     }
 
     // Add to stack of blocks whose children should be visited
-    *(_topP++) = block;
+    _visitStack.push_back(block);
 }
 
 bool ExitFinder::canExitFrom(const ProgramBlock* block) {
     assert(block->isFinalized());
-//    _program.dump();
-//    _programBuilder.dump();
 
-    _nextP = _pendingStack;
-    _topP = _pendingStack;
-
-    _numExits = 0;
+    _visitStack.clear();
+    _exits.clear();
 
     visitBlock(block);
-    while (_nextP < _topP) {
-        const ProgramBlock* block = *_nextP++;
+    int i = 0;
+    while (i < _visitStack.size()) {
+        const ProgramBlock* block = _visitStack[i++];
 
         visitBlock(block->zeroBlock());
         visitBlock(block->nonZeroBlock());
     }
 
     // Reset tracking state for finalized blocks
-    while (_topP > _pendingStack) {
-        _visited[ (*--_topP)->getStartIndex() ] = false;
+    for (auto visited : _visitStack) {
+        _visited[ visited->getStartIndex() ] = false;
     }
 
     bool canEscape = false;
 
-    for (int i = _numExits; --i >= 0; ) {
-        if (!canEscape && isReachable(_exits[i])) {
+    for (auto exitBlock : _exits) {
+        if (!canEscape && isReachable(exitBlock)) {
             canEscape = true;
         }
 
         // Reset tracking state for exit
-        _visited[ _exits[i]->getStartIndex() ] = false;
+        _visited[ exitBlock->getStartIndex() ] = false;
     }
-
-//    if (!canEscape) {
-//        _programBuilder.dump();
-//    }
 
     return canEscape;
 }

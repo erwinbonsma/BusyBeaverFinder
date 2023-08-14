@@ -5,16 +5,12 @@
 //  Created by Erwin on 29/03/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
+#pragma once
 
-#ifndef ExitFinder_h
-#define ExitFinder_h
-
-#include <stdio.h>
+#include <vector>
 
 #include "Program.h"
 #include "InterpretedProgramBuilder.h"
-
-typedef const ProgramBlock* ProgramBlockP;
 
 class ExitFinder {
     Program& _program;
@@ -25,13 +21,10 @@ class ExitFinder {
     bool _visited[maxProgramBlocks];
 
     // The blocks still to visit
-    ProgramBlockP _pendingStack[maxProgramBlocks];
-    ProgramBlockP *_nextP;
-    ProgramBlockP *_topP;
+    std::vector<const ProgramBlock*> _visitStack;
 
     // The possible exits
-    ProgramBlockP _exits[maxProgramBlocks];
-    int _numExits;
+    std::vector<const ProgramBlock*> _exits;
 
     // Recursively checks if a given value (zero or non-zero) can be obtained via at least one
     // possible entry path.
@@ -53,5 +46,3 @@ public:
     // not yet finalized)
     bool canExitFrom(const ProgramBlock* block);
 };
-
-#endif /* ExitFinder_h */
