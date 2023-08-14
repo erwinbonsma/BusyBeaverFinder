@@ -79,7 +79,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
             Ins::DATA, Ins::TURN, Ins::TURN,
             Ins::NOOP, Ins::TURN, Ins::TURN,
             Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
+            Ins::DATA, Ins::TURN,
             Ins::UNSET
         };
         searcher.findOne(resumeFrom);
@@ -102,7 +102,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
             Ins::DATA, Ins::TURN,
             Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
             Ins::UNSET
         };
         searcher.findOne(resumeFrom);
@@ -125,7 +125,6 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
             Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN,
             Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN,
             Ins::UNSET
         };
         searcher.findOne(resumeFrom);
@@ -173,7 +172,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
             Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
             Ins::UNSET
         };
         searcher.findOne(resumeFrom);
@@ -195,7 +194,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
             Ins::NOOP, Ins::TURN,
             Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
             Ins::UNSET
         };
         searcher.findOne(resumeFrom);
@@ -222,7 +221,7 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
             Ins::NOOP, Ins::TURN, Ins::TURN,
             Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
+            Ins::NOOP, Ins::TURN,
             Ins::UNSET
         };
         searcher.findOne(resumeFrom);
