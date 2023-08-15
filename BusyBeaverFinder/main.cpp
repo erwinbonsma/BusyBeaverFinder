@@ -45,7 +45,6 @@ void init(int argc, char * argv[]) {
 
     int width = 4;
     int height = 4;
-    int dataSize = 1024;
 
     if (result.count("w")) {
         width = result["w"].as<int>();
@@ -53,13 +52,12 @@ void init(int argc, char * argv[]) {
     if (result.count("h")) {
         height = result["h"].as<int>();
     }
+
+    SearchSettings settings = defaultSearchSettings;
+
     if (result.count("d")) {
-        dataSize = result["d"].as<int>();
+        settings.dataSize = result["d"].as<int>();
     }
-
-    searcher = new ExhaustiveSearcher(width, height, dataSize);
-
-    SearchSettings settings = searcher->getSettings();
 
     // Set max total steps
     if (result.count("max-steps")) {
@@ -81,7 +79,7 @@ void init(int argc, char * argv[]) {
         settings.testHangDetection = true;
     }
 
-    searcher->configure(settings);
+    searcher = new ExhaustiveSearcher(width, height, settings);
 
     // Load resume stack
     if (result.count("resume-from")) {
