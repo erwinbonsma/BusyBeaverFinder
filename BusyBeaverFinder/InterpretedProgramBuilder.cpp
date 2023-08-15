@@ -30,7 +30,7 @@ InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& progra
 
         // Add new continuation blocks to stack
         if (!block->isExit()) {
-            if (!block->nonZeroBlock()->isFinalized()) {
+            if (block->nonZeroBlock() && !block->nonZeroBlock()->isFinalized()) {
                 stack.push_back(block->nonZeroBlock());
             }
             if (block->zeroBlock() && !block->zeroBlock()->isFinalized()) {
@@ -38,11 +38,15 @@ InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& progra
             }
         }
 
-        // Select a new block to finalize
-        if (stack.empty()) break;
+        // Select a new block to finalize. Popped blocks may meanwhile be finalized as
+        // they can be added to the stack more than once.
+        do {
+            if (stack.empty()) return builder;
 
-        block = stack.back();
-        stack.pop_back();
+            block = stack.back();
+            stack.pop_back();
+        } while (block->isFinalized());
+
         builder.enterBlock(block);
     }
 
