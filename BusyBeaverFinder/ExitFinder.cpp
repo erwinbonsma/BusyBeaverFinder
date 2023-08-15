@@ -118,10 +118,6 @@ void ExitFinder::visitBlock(const ProgramBlock* block) {
         _exits.push_back(block);
         return;
     }
-    if (block->isHang()) {
-        // No children to visit
-        return;
-    }
 
     // Add to stack of blocks whose children should be visited
     _visitStack.push_back(block);
