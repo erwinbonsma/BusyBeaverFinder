@@ -64,7 +64,6 @@ void ExhaustiveSearcher::dumpSettings() {
     << "Size = " << _program.getWidth() << "x" << _program.getHeight()
     << ", DataSize = " << _settings.dataSize
     << ", MaxSteps = " << _settings.maxHangDetectionSteps << "/" << _settings.maxSteps
-    << ", UndoCapacity = " << _settings.undoCapacity
     << ", TestHangDetection = " << _settings.testHangDetection
     << std::endl;
 }

@@ -70,10 +70,6 @@ void init(int argc, char * argv[]) {
         settings.maxSteps = settings.maxHangDetectionSteps;
     }
 
-    if (result.count("undo-capacity")) {
-        settings.undoCapacity = result["undo-capacity"].as<int>();
-    }
-
     // Enable testing of hang detection?
     if (result.count("t")) {
         settings.testHangDetection = true;

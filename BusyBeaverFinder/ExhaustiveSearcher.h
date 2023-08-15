@@ -30,7 +30,6 @@ struct SearchSettings {
     int dataSize;
     int maxHangDetectionSteps;
     int maxSteps;
-    int undoCapacity;
     bool testHangDetection;
     bool disableNoExitHangDetection;
 };
@@ -39,7 +38,6 @@ const SearchSettings defaultSearchSettings = {
     .dataSize = 1024,
     .maxSteps = 1024,
     .maxHangDetectionSteps = 1024,
-    .undoCapacity = 1024,
     .testHangDetection = false,
     .disableNoExitHangDetection = false
 };

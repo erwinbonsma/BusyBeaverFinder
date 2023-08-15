@@ -214,7 +214,6 @@ TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
     settings.dataSize = 16384;
     settings.maxHangDetectionSteps = 100000;
     settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.undoCapacity = settings.maxSteps;
 
     ExhaustiveSearcher searcher(7, 7, settings);
 
@@ -322,7 +321,6 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
     settings.dataSize = 16384;
     settings.maxHangDetectionSteps = 100000;
     settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.undoCapacity = settings.maxSteps;
 
     ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);

@@ -99,10 +99,6 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
     settings.maxHangDetectionSteps = 1000000;
     settings.maxSteps = 40000000;
 
-    // Can be small, it should only be big enough to let program reach completion after last
-    // instruction from resume stack is encountered (to avoid late-escape).
-    settings.undoCapacity = 32;
-
     ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 

@@ -39,7 +39,6 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     settings.dataSize = 4096;
     settings.maxHangDetectionSteps = 20000;
     settings.maxSteps = 100000;
-    settings.undoCapacity = settings.maxSteps;
 //    settings.testHangDetection = true;
 
     ExhaustiveSearcher searcher(6, 6, settings);
