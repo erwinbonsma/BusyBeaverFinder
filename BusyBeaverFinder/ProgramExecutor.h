@@ -28,5 +28,6 @@ public:
     virtual HangType detectedHangType() const = 0;
 
     virtual RunResult execute(const InterpretedProgram* program) = 0;
+    virtual RunResult resume() = 0;
     virtual void dump() const = 0;
 };

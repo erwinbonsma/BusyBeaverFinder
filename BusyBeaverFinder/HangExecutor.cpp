@@ -46,6 +46,7 @@ RunResult HangExecutor::executeBlock() {
 //    _block->dump();
 
     if (!_block->isFinalized()) {
+        _canResume = true;
         return RunResult::PROGRAM_ERROR;
     }
 
@@ -127,14 +128,8 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
     return RunResult::UNKNOWN;
 }
 
-RunResult HangExecutor::execute(const InterpretedProgram* program, int hangDetectionStart) {
-    _program = program;
-    //    _program->dump();
-
-    const ProgramBlock *entryBlock = _program->getEntryBlock();
-    _block = entryBlock;
-    _numSteps = 0;
-    _data.reset();
+RunResult HangExecutor::run(int hangDetectionStart) {
+    _canResume = false;
 
     RunResult result = executeWithoutHangDetection(hangDetectionStart);
     if (result != RunResult::UNKNOWN) return result;
@@ -148,8 +143,26 @@ RunResult HangExecutor::execute(const InterpretedProgram* program, int hangDetec
     return RunResult::ASSUMED_HANG;
 }
 
+RunResult HangExecutor::execute(const InterpretedProgram* program, int hangDetectionStart) {
+    _program = program;
+    //    _program->dump();
+
+    const ProgramBlock *entryBlock = _program->getEntryBlock();
+    _block = entryBlock;
+    _numSteps = 0;
+    _data.reset();
+
+    return run(hangDetectionStart);
+}
+
 RunResult HangExecutor::execute(const InterpretedProgram* program) {
     return execute(program, 0);
+}
+
+RunResult HangExecutor::resume() {
+    assert(_canResume);
+
+    return run(0);
 }
 
 void HangExecutor::dump() const {

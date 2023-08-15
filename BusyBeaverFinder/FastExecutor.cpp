@@ -29,17 +29,12 @@ FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-RunResult FastExecutor::execute(const InterpretedProgram* program) {
-    _numSteps = 0;
-
-    // Clear data
-    memset(_data, 0, _dataBufSize * sizeof(int));
-
-    _dataP = _midDataP;
-    _block = program->getEntryBlock();
+RunResult FastExecutor::run() {
+    _canResume = false;
 
     while (true) {
         if (!_block->isFinalized()) {
+            _canResume = true;
             return RunResult::PROGRAM_ERROR;
         }
         if (_block->isHang()) {
@@ -68,6 +63,24 @@ RunResult FastExecutor::execute(const InterpretedProgram* program) {
 
         _block = (*_dataP == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
     }
+}
+
+RunResult FastExecutor::execute(const InterpretedProgram* program) {
+    _numSteps = 0;
+
+    // Clear data
+    memset(_data, 0, _dataBufSize * sizeof(int));
+
+    _dataP = _midDataP;
+    _block = program->getEntryBlock();
+
+    return run();
+}
+
+RunResult FastExecutor::resume() {
+    assert(_canResume);
+
+    return run();
 }
 
 void FastExecutor::dump() const {

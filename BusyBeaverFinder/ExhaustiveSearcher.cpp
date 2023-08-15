@@ -110,7 +110,7 @@ void ExhaustiveSearcher::extendBlock() {
                 case Ins::DONE:
                     _programBuilder.incSteps();
                     _programBuilder.finalizeExitBlock();
-                    run(); // TODO: Avoid run
+                    run();
                     return;
                 case Ins::UNSET:
                     branch();
@@ -148,7 +148,7 @@ void ExhaustiveSearcher::extendBlock() {
 
         if (_programBuilder.getNumSteps() > 64) {
             _programBuilder.finalizeHangBlock();
-            run(); // TODO: Avoid run
+            run();
             return;
         }
     }
@@ -201,6 +201,7 @@ void ExhaustiveSearcher::branch() {
         _instructionStack.pop_back();
         _programBuilder.pop();
         _pp = pp0;
+        _programExecutor = nullptr; // Force execution from start
 
         if (abortSearch) {
             break;
@@ -209,13 +210,22 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    _programExecutor = (*_resumeFrom != Ins::UNSET
-                        ? (ProgramExecutor *)&_fastExecutor
-                        : (ProgramExecutor *)&_hangExecutor);
+    ProgramExecutor *executor = (*_resumeFrom != Ins::UNSET
+                                 ? (ProgramExecutor *)&_fastExecutor
+                                 : (ProgramExecutor *)&_hangExecutor);
+    RunResult result;
+    if (executor == _programExecutor) {
+        // We're continuing a run after a PROGRAM_ERROR, with the current block now finalized
+        result = _programExecutor->resume();
+    } else {
+        // Parts of the program have changed since the last run. Run from the start
+        result = (executor == &_fastExecutor
+                  ? _fastExecutor.execute(&_programBuilder)
+                  // However, delay hang detection until the point where execution diverges
+                  : _hangExecutor.execute(&_programBuilder, _hangDetectionStart));
+        _programExecutor = executor;
+    }
 
-    RunResult result = (_programExecutor == &_fastExecutor
-                        ? _fastExecutor.execute(&_programBuilder)
-                        : _hangExecutor.execute(&_programBuilder, _hangDetectionStart));
     switch (result) {
         case RunResult::SUCCESS: {
             _tracker->reportDone(_programExecutor->numSteps());
@@ -261,11 +271,14 @@ Ins noResumeStack[] = { Ins::UNSET };
 void ExhaustiveSearcher::search() {
     _resumeFrom = noResumeStack;
     _hangDetectionStart = 0;
+    _programExecutor = nullptr;
+
     run();
 }
 
 void ExhaustiveSearcher::search(Ins* resumeFrom) {
     _resumeFrom = resumeFrom;
+    _programExecutor = nullptr;
 
     std::cout << "Resuming from: ";
     ::dumpInstructionStack(_resumeFrom);

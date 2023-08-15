@@ -26,6 +26,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
 
     Data _data;
     const HangDetector* _detectedHang;
+    bool _canResume;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
@@ -33,11 +34,12 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     RunSummary _runSummary[2];
     int* _zArrayHelperBuf;
 
-
     RunResult executeBlock();
 
     RunResult executeWithoutHangDetection(int stepLimit);
     RunResult executeWithHangDetection(int stepLimit);
+
+    RunResult run(int hangDetectionStart);
 
 public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
@@ -48,6 +50,8 @@ public:
 
     RunResult execute(const InterpretedProgram* program) override;
     RunResult execute(const InterpretedProgram* program, int hangDetectionStart);
+    RunResult resume() override;
+
     void dump() const override;
 
     //----------------------------------------------------------------------------------------------

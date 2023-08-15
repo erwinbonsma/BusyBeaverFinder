@@ -20,11 +20,17 @@ class FastExecutor : public ProgramExecutor {
 
     int* _dataP;
 
+    bool _canResume;
+
+    RunResult run();
+
 public:
     FastExecutor(int dataSize);
     ~FastExecutor();
 
     RunResult execute(const InterpretedProgram* program) override;
+    RunResult resume() override;
+
     HangType detectedHangType() const override { return HangType::NO_DATA_LOOP; }
 
     void dump() const override;
