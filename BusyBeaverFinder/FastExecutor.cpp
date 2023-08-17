@@ -66,19 +66,16 @@ RunResult FastExecutor::run() {
 }
 
 RunResult FastExecutor::execute(const InterpretedProgram* program) {
-    _numSteps = 0;
+    if (!_canResume) {
+        // Start execution form the start
+        _numSteps = 0;
 
-    // Clear data
-    memset(_data, 0, _dataBufSize * sizeof(int));
+        // Clear data
+        memset(_data, 0, _dataBufSize * sizeof(int));
 
-    _dataP = _midDataP;
-    _block = program->getEntryBlock();
-
-    return run();
-}
-
-RunResult FastExecutor::resume() {
-    assert(_canResume);
+        _dataP = _midDataP;
+        _block = program->getEntryBlock();
+    }
 
     return run();
 }

@@ -48,9 +48,11 @@ public:
     HangType detectedHangType() const override;
     const HangDetector* detectedHang() const { return _detectedHang; }
 
+    void pop() override { _canResume = false; };
+
     RunResult execute(const InterpretedProgram* program) override;
     RunResult execute(const InterpretedProgram* program, int hangDetectionStart);
-    RunResult resume() override;
+    RunResult resume();
 
     void dump() const override;
 

@@ -56,7 +56,7 @@ class ExhaustiveSearcher {
 
     TurnDirection _td;
     ProgramPointer _pp;
-    int _hangDetectionStart;
+    int _lastNumSteps;
 
     // Stack of instructions built up by the exhaustive search
     std::vector<Ins> _instructionStack;
@@ -91,8 +91,6 @@ public:
 
     const Program& getProgram() const { return _program; }
     const InterpretedProgram& getInterpretedProgram() const { return _programBuilder; }
-
-    const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 
     //----------------------------------------------------------------------------------------------
 

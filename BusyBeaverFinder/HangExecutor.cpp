@@ -156,13 +156,11 @@ RunResult HangExecutor::execute(const InterpretedProgram* program, int hangDetec
 }
 
 RunResult HangExecutor::execute(const InterpretedProgram* program) {
-    return execute(program, 0);
-}
-
-RunResult HangExecutor::resume() {
-    assert(_canResume);
-
-    return run(0);
+    if (!_canResume) {
+        return execute(program, 0);
+    } else {
+        return run(0);
+    }
 }
 
 void HangExecutor::dump() const {

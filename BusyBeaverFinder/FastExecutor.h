@@ -28,8 +28,9 @@ public:
     FastExecutor(int dataSize);
     ~FastExecutor();
 
+    void pop() override { _canResume = false; };
+
     RunResult execute(const InterpretedProgram* program) override;
-    RunResult resume() override;
 
     HangType detectedHangType() const override { return HangType::NO_DATA_LOOP; }
 
