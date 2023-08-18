@@ -56,7 +56,6 @@ class ExhaustiveSearcher {
 
     TurnDirection _td;
     ProgramPointer _pp;
-    int _lastNumSteps;
 
     // Stack of instructions built up by the exhaustive search
     std::vector<Ins> _instructionStack;

@@ -23,6 +23,8 @@ FastExecutor::FastExecutor(int dataSize) {
     _minDataP = &_data[sentinelSize]; // Inclusive
     _maxDataP = _minDataP + dataSize; // Exclusive
     _midDataP = &_data[_dataBufSize / 2];
+
+    _canResume = false;
 }
 
 FastExecutor::~FastExecutor() {

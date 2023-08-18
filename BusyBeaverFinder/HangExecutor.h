@@ -20,6 +20,7 @@ class HangDetector;
 class HangExecutor : public ProgramExecutor, public ExecutionState {
     std::vector<HangDetector*> _hangDetectors;
 
+    int _hangDetectionStart;
     int _maxHangDetectionSteps;
 
     const InterpretedProgram *_program;
@@ -39,11 +40,14 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     RunResult executeWithoutHangDetection(int stepLimit);
     RunResult executeWithHangDetection(int stepLimit);
 
-    RunResult run(int hangDetectionStart);
+    RunResult run();
 
 public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
     ~HangExecutor();
+
+    // Only applies to the next invocation of execute, after which it is reset to zero.
+    void setHangDetectionStart(int numSteps) { _hangDetectionStart = numSteps; }
 
     HangType detectedHangType() const override;
     const HangDetector* detectedHang() const { return _detectedHang; }
@@ -51,8 +55,6 @@ public:
     void pop() override { _canResume = false; };
 
     RunResult execute(const InterpretedProgram* program) override;
-    RunResult execute(const InterpretedProgram* program, int hangDetectionStart);
-    RunResult resume();
 
     void dump() const override;
 

@@ -210,30 +210,25 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    ProgramExecutor *executor = (*_resumeFrom != Ins::UNSET
-                                 ? (ProgramExecutor *)&_fastExecutor
-                                 : (ProgramExecutor *)&_hangExecutor);
-    RunResult result;
-    if (executor == _programExecutor) {
-        executor->push();
-        result = executor->execute(&_programBuilder);
-    } else {
+    if (_programExecutor == &_fastExecutor && *_resumeFrom == Ins::UNSET) {
         // We're done resuming and switching to the hang executor. Pass how many steps of the
         // current program have already been executed by the fast executor. Hang detection can be
         // disabled up till then. We are about to execute a new program block, so up till this
         // point we cannot detect any hangs.
-        result = ((HangExecutor *)executor)->execute(&_programBuilder, _lastNumSteps);
-        _programExecutor = executor;
+        _programExecutor = &_hangExecutor;
+        _hangExecutor.setHangDetectionStart(_fastExecutor.numSteps());
     }
 
-    switch (result) {
+    ProgramExecutor *executor = _programExecutor;
+
+    executor->push();
+    switch (executor->execute(&_programBuilder)) {
         case RunResult::SUCCESS: {
             _tracker->reportDone(executor->numSteps());
             break;
         }
         case RunResult::PROGRAM_ERROR: {
             const ProgramBlock* block = executor->lastProgramBlock();
-            _lastNumSteps = executor->numSteps();
 
             buildBlock(block);
             break;
@@ -247,7 +242,7 @@ void ExhaustiveSearcher::run() {
             break;
         }
         case RunResult::DETECTED_HANG: {
-            HangType hangType = _hangExecutor.detectedHangType();
+            HangType hangType = executor->detectedHangType();
             bool testHang = _settings.testHangDetection && (hangType == HangType::REGULAR_SWEEP ||
                                                             hangType == HangType::IRREGULAR_SWEEP ||
                                                             hangType == HangType::APERIODIC_GLIDER);
@@ -264,7 +259,6 @@ void ExhaustiveSearcher::run() {
         case RunResult::UNKNOWN:
             assert(false);
     }
-
     executor->pop();
 }
 
@@ -272,6 +266,10 @@ Ins noResumeStack[] = { Ins::UNSET };
 void ExhaustiveSearcher::search() {
     _resumeFrom = noResumeStack;
     _programExecutor = &_hangExecutor;
+
+    // Note: Even though the searcher can carry out multiple searches, there is no need to reset
+    // the program executors or program builder before the search. Their state is restored when the
+    // search backtracks.
 
     run();
 }

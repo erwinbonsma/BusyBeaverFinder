@@ -15,8 +15,10 @@
 #include "ProgramBlock.h"
 
 HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
+    _hangDetectionStart(0),
     _maxHangDetectionSteps(maxHangDetectionSteps),
     _data(dataSize),
+    _canResume(false),
     _runSummary()
 {
     _hangDetectors.push_back(new PeriodicHangDetector(*this));
@@ -128,10 +130,11 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
     return RunResult::UNKNOWN;
 }
 
-RunResult HangExecutor::run(int hangDetectionStart) {
+RunResult HangExecutor::run() {
     _canResume = false;
 
-    RunResult result = executeWithoutHangDetection(hangDetectionStart);
+    RunResult result = executeWithoutHangDetection(_hangDetectionStart);
+    _hangDetectionStart = 0; // Only used once
     if (result != RunResult::UNKNOWN) return result;
 
     result = executeWithHangDetection(std::min(_numSteps + _maxHangDetectionSteps, _maxSteps));
@@ -143,24 +146,17 @@ RunResult HangExecutor::run(int hangDetectionStart) {
     return RunResult::ASSUMED_HANG;
 }
 
-RunResult HangExecutor::execute(const InterpretedProgram* program, int hangDetectionStart) {
-    _program = program;
-    //    _program->dump();
-
-    const ProgramBlock *entryBlock = _program->getEntryBlock();
-    _block = entryBlock;
-    _numSteps = 0;
-    _data.reset();
-
-    return run(hangDetectionStart);
-}
-
 RunResult HangExecutor::execute(const InterpretedProgram* program) {
     if (!_canResume) {
-        return execute(program, 0);
-    } else {
-        return run(0);
+        _numSteps = 0;
+        _data.reset();
+
+        _program = program;
+        const ProgramBlock *entryBlock = _program->getEntryBlock();
+        _block = entryBlock;
     }
+
+    return run();
 }
 
 void HangExecutor::dump() const {
