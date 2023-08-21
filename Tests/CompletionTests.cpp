@@ -8,116 +8,68 @@
 
 #include "catch.hpp"
 
-#include "ExhaustiveSearcher.h"
+#include "HangExecutor.h"
 
-TEST_CASE( "6x6 Completion tests", "[success][6x6]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxHangDetectionSteps = 10000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.disableNoExitHangDetection = true;
+TEST_CASE("6x6 Completion tests", "[success][6x6]") {
+    HangExecutor hangExecutor(1024, 10000);
+    hangExecutor.setMaxSteps(10000);
 
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "DivergingDeltaYetNoHang" ) {
+    SECTION("DivergingDeltaYetNoHang") {
         // A diverging change after 102 steps, however, not a hang as one value change touched zero
         // (it changed from one, to zero, back to one). At Step 102 this value is two (a diverging
         // delta) but it does not touch zero anymore, which means that subsequent program flow
         // diverges.
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bfrniujnpbbf");
 
-        REQUIRE(tracker.getTotalSuccess() == 1);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 116);
     }
-    SECTION( "IdenticalSnapshotDeltaButNonZeroNewlyVisited" ) {
+    SECTION("IdenticalSnapshotDeltaButNonZeroNewlyVisited") {
         // An example where after 220 steps the snapshot delta is the same, but a newly visited
         // value was not zero. This hang was not detected, as there was an error in the check for
         // sequences extending to the left.
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxgkdosirenx");
 
-        REQUIRE(tracker.getTotalSuccess() == 1);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 373);
     }
-    SECTION( "ComplexCountToNine" ) {
+    SECTION("ComplexCountToNine") {
         // Program that was wrongly reported as hanging by an early version of the Periodic Hang
         // Detector refactored to use RunSummary.
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66hfvkrcjuockf");
 
-        REQUIRE(tracker.getTotalSuccess() == 1);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 148);
     }
-    SECTION( "PreviouslyAFalsePositiveOfExitFinder" ) {
+    SECTION("PreviouslyAFalsePositiveOfExitFinder") {
         // Program that was wrongly reported as hanging by an early version of the Exit Finder with
         // reachability analysis. It failed due to a missing call to InterpretedProgram::enterBlock.
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66f_cf_nskrunf");
 
-        REQUIRE(tracker.getTotalSuccess() == 1);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 24);
     }
-    SECTION( "FakeSweeper" ) {
+    SECTION("FakeSweeper") {
         // Program that was wrongly reported as hanging by an earlier version of the Sweep Hang
         // detector
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxfnf__ovonr");
 
-        REQUIRE(tracker.getTotalSuccess() == 1);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 171);
     }
 }
 
-TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.dataSize = 16384;
-    settings.maxHangDetectionSteps = 1000000;
-    settings.maxSteps = 40000000;
+TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
+    HangExecutor hangExecutor(16384, 1000000);
+    hangExecutor.setMaxSteps(40000000);
 
-    ExhaustiveSearcher searcher(7, 7, settings);
-    ProgressTracker tracker(searcher);
+    SECTION("BB 7x7 #117273") {
+        RunResult result = hangExecutor.execute("77brbmhdxtcudrro_x_");
 
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "BB 7x7 #117273" ) {
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getMaxStepsFound() == 117273);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 117273);
     }
-    SECTION( "BB 7x7 #140164" ) {
+    SECTION("BB 7x7 #140164") {
         //   *   * * *
         // * o . . o . *
         // o o * o o .
@@ -125,30 +77,18 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // .   . * o .
         // . * . . . . *
         // .       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET,
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fzgagpifn_g_rb_f_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 140164);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 140164);
     }
-    SECTION( "BB 7x7 #177557" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #177557") {
+        RunResult result = hangExecutor.execute("77btbjhmrea_vqafnr_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 177557);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 177557);
     }
-    SECTION( "BB 7x7 #422155" ) {
+    SECTION("BB 7x7 #422155") {
         // This caries out a sweep but one that eventually terminates. Properties:
         // - Rightwards sweep shifts one each iteration and does not change the sequence.
         //   It ends on zero, changing it to 1, thereby extending the sequence (steady growth).
@@ -174,18 +114,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // _ o _ o o *
         // _ * _ o _ o *
         // _   * * * _
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77_rbchcrklsdrsebx_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 422155);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 422155);
     }
-    SECTION( "BB 7x7 #582562" ) {
+    SECTION("BB 7x7 #582562") {
         //   *   * * *
         // * o _ _ o _ *
         // o o * o o _
@@ -193,94 +127,48 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // o   _ * o _
         // _ * _ _ _ _ *
         // _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fzgagpioncg_rb_f_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 582562);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 582562);
     }
-    SECTION( "BB 7x7 #690346" ) {
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #690346") {
+        RunResult result = hangExecutor.execute("77frgk_pkvnco_sobf_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 690346);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 690346);
     }
-    SECTION( "BB 7x7 #706369" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #706369") {
+        RunResult result = hangExecutor.execute("77hhgifunawfmto_nf_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 706369);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 706369);
     }
-    SECTION( "BB 7x7 #847273" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #847273") {
+        RunResult result = hangExecutor.execute("77b_birv_axfmqh_ie_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 847273);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 847273);
     }
-    SECTION( "BB 7x7 #874581" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #874581") {
+        RunResult result = hangExecutor.execute("77btbmhmrspavqafnr_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 874581);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 874581);
     }
-    SECTION( "BB 7x7 #950175" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #950175") {
+        RunResult result = hangExecutor.execute("77hbgkfeegmxdhgein_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 950175);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 950175);
     }
-    SECTION( "BB 7x7 #951921" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #951921") {
+        RunResult result = hangExecutor.execute("77hhgafviawfmtoknf_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 951921);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 951921);
     }
-    SECTION( "BB 7x7 #1237792" ) {
+    SECTION("BB 7x7 #1237792") {
         // Notable because it ends with DP on a high value: 31985.
         //
         //   *       *
@@ -290,18 +178,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // o _ _ o o *
         // _ *   * _
         // _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fb_hqmntjcdrt__f_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 1237792);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 1237792);
     }
-    SECTION( "BB 7x7 #1659389" ) {
+    SECTION("BB 7x7 #1659389") {
         //   *   * *
         // * o _ o _ *
         //   * * o o _ *
@@ -309,30 +191,18 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // * _ _ o o o *
         // * _   * _ _
         // o _ _ _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fxgcrykaofdqb_ie_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 1659389);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 1659389);
     }
-    SECTION( "BB 7x7 #1842683" ) {
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+    SECTION("BB 7x7 #1842683") {
+        RunResult result = hangExecutor.execute("77b_birvbayfmqq_nb_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 1842683);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 1842683);
     }
-    SECTION( "BB 7x7 #3007569" ) {
+    SECTION("BB 7x7 #3007569") {
         //   *       _
         //   _ _ _ * _
         // * _ o o o _ *
@@ -340,18 +210,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // o _ _ o o *
         // _ * _ _ o *
         // _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77f__bbdkzucdrro_f_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 3007569);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 3007569);
     }
-    SECTION( "BB 7x7 #8447143" ) {
+    SECTION("BB 7x7 #8447143") {
         //   *       *
         //   _ _ * * _
         // * o o o o _ *
@@ -359,18 +223,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // o _ _ o o *
         // _ * _ _ o *
         // _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fb_hbmktucdrro_f_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 8447143);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 8447143);
     }
-    SECTION( "BB 7x7 #9408043" ) {
+    SECTION("BB 7x7 #9408043") {
         //   *   * *
         // * o _ o _ *
         //   * * o o _ *
@@ -378,18 +236,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // * _ _ o o o *
         // o _ o * _ _
         // o _       *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fxgcrykaofdpe_ib_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 9408043);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 9408043);
     }
-    SECTION( "BB 7x7 #9607923" ) {
+    SECTION("BB 7x7 #9607923") {
         //       * * *
         //     * o o _ *
         //   * o o o *
@@ -397,18 +249,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // * _ o o o _ *
         // * _ * _ _ _ *
         // o _ _ o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77_z_vfvoaufmhfbiq_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 9607923);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 9607923);
     }
-    SECTION( "BB 7x7 #10981971" ) {
+    SECTION("BB 7x7 #10981971") {
         // Very similar to BB 22.6M. The main logic is identical. Only the bootstrap differs.
         //
         //   *   * *
@@ -418,18 +264,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // * _ _ o o o *
         // * _   * _ _
         // o _ _ o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fxgcrykaofdqb_in_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 10981971);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 10981971);
     }
-    SECTION( "BB 7x7 #22606881" ) {
+    SECTION("BB 7x7 #22606881") {
         //   *   * *
         // * o _ o _ *
         //   * * o o _ *
@@ -437,18 +277,12 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // * _ _ o o o *
         // o o o * _ _
         // _ _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fxgcrykaofdpn__b_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 22606881);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 22606881);
     }
-    SECTION( "BB 7x7 #33207907" ) {
+    SECTION("BB 7x7 #33207907") {
         //   * *   *
         // * o o _ _ *
         //   * o o _ _ *
@@ -456,16 +290,9 @@ TEST_CASE( "7x7 One-Shot Completion tests", "[success][7x7]" ) {
         // * _ o o o o *
         // * _ * _ _ o *
         // o _ _ _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77hfgirvbaxfmqfeie_");
 
-        REQUIRE(tracker.getMaxStepsFound() == 33207907);
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 33207907);
     }
 }
