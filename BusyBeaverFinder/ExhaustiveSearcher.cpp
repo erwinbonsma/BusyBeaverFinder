@@ -221,7 +221,6 @@ void ExhaustiveSearcher::run() {
 
     ProgramExecutor *executor = _programExecutor;
 
-    executor->push();
     switch (executor->execute(&_programBuilder)) {
         case RunResult::SUCCESS: {
             _tracker->reportDone(executor->numSteps());

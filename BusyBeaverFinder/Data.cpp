@@ -125,6 +125,8 @@ bool Data::shift(int shift) {
 }
 
 void Data::undo(size_t targetSize) {
+    assert(targetSize <= _undoStack.size());
+
     while (_undoStack.size() > targetSize) {
         int8_t undo = _undoStack.back();
         _undoStack.pop_back();

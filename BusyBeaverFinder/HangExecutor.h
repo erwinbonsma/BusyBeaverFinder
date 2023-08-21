@@ -17,8 +17,15 @@
 
 class HangDetector;
 
+struct ExecutionStackFrame {
+    const ProgramBlock* programBlock;
+    size_t dataStackSize;
+    int numSteps;
+};
+
 class HangExecutor : public ProgramExecutor, public ExecutionState {
     std::vector<HangDetector*> _hangDetectors;
+    std::vector<ExecutionStackFrame> _executionStack;
 
     int _hangDetectionStart;
     int _maxHangDetectionSteps;
@@ -27,7 +34,6 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
 
     Data _data;
     const HangDetector* _detectedHang;
-    bool _canResume;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
@@ -52,7 +58,7 @@ public:
     HangType detectedHangType() const override;
     const HangDetector* detectedHang() const { return _detectedHang; }
 
-    void pop() override { _canResume = false; };
+    void pop() override;
 
     RunResult execute(const InterpretedProgram* program) override;
 

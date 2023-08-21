@@ -18,7 +18,6 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _hangDetectionStart(0),
     _maxHangDetectionSteps(maxHangDetectionSteps),
     _data(dataSize),
-    _canResume(false),
     _runSummary()
 {
     _hangDetectors.push_back(new PeriodicHangDetector(*this));
@@ -48,7 +47,6 @@ RunResult HangExecutor::executeBlock() {
 //    _block->dump();
 
     if (!_block->isFinalized()) {
-        _canResume = true;
         return RunResult::PROGRAM_ERROR;
     }
 
@@ -131,8 +129,6 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
 }
 
 RunResult HangExecutor::run() {
-    _canResume = false;
-
     RunResult result = executeWithoutHangDetection(_hangDetectionStart);
     _hangDetectionStart = 0; // Only used once
     if (result != RunResult::UNKNOWN) return result;
@@ -146,17 +142,37 @@ RunResult HangExecutor::run() {
     return RunResult::ASSUMED_HANG;
 }
 
+void HangExecutor::pop() {
+    _executionStack.pop_back();
+}
+
 RunResult HangExecutor::execute(const InterpretedProgram* program) {
-    if (!_canResume) {
+    if (_executionStack.size() > 0) {
+        assert(program == _program);
+
+        ExecutionStackFrame& frame = _executionStack.back();
+        _numSteps = frame.numSteps;
+        _block = frame.programBlock;
+        _data.undo(frame.dataStackSize);
+    } else {
+        _program = program;
+
         _numSteps = 0;
         _data.reset();
-
-        _program = program;
-        const ProgramBlock *entryBlock = _program->getEntryBlock();
-        _block = entryBlock;
+        _block = _program->getEntryBlock();
     }
 
-    return run();
+    RunResult result = run();
+
+    // Push result on stack
+    ExecutionStackFrame frame = {
+        .programBlock = _block,
+        .dataStackSize = _data.undoStackSize(),
+        .numSteps = _numSteps
+    };
+    _executionStack.push_back(frame);
+
+    return result;
 }
 
 void HangExecutor::dump() const {
