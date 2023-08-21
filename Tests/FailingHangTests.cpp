@@ -12,14 +12,13 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxSteps = 1000000;
+
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 1000000;
-    searcher.configure(settings);
 
     SECTION( "6x6-SweepWithInSequenceOscillatingZeros" ) {
         // The body of the sweep consists of alternating -1 and 0 values. The left side is a fixed
@@ -114,15 +113,14 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
 }
 
 TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][fail]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxHangDetectionSteps = 20000;
+    settings.maxSteps = 1000000;
+
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 1000000;
-    searcher.configure(settings);
 
     SECTION( "6x6-IrregularSweepWithZeroesInAppendix" ) {
         // A truly binary counter. It actually uses ones and zeros, and also properly generates
@@ -148,15 +146,14 @@ TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6
 }
 
 TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxHangDetectionSteps = 20000;
+    settings.maxSteps = 1000000;
+
+    ExhaustiveSearcher searcher(6, 6, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 1000000;
-    searcher.configure(settings);
 
     SECTION( "6x6-IrregularHopScotch" ) {
         // This program executes a curious sweep. The sweep does not have a sweep body. At the left
@@ -213,17 +210,17 @@ TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" )
 }
 
 TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 16384;
+    settings.maxHangDetectionSteps = 100000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
+
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 100000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.undoCapacity = settings.maxSteps;
-    searcher.configure(settings);
 
     SECTION( "7x7-UndetectedHang1" ) {
         // *   *   * *
@@ -320,17 +317,16 @@ TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
 }
 
 TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 16384;
+    settings.maxHangDetectionSteps = 100000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 100000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.undoCapacity = settings.maxSteps;
-    searcher.configure(settings);
 
     SECTION( "7x7-FalsePositive1" ) {
         // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic

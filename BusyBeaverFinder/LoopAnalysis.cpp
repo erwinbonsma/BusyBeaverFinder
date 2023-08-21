@@ -391,7 +391,7 @@ bool LoopAnalysis::analyzeLoop(const ProgramBlock* entryBlock, int numBlocks) {
     return SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
 }
 
-bool LoopAnalysis::analyzeLoop(const InterpretedProgram& program, const RunSummary& runSummary,
+bool LoopAnalysis::analyzeLoop(const InterpretedProgram* program, const RunSummary& runSummary,
                                int startIndex, int period) {
     if (period > maxLoopSize) {
         // This loop is too large to analyse
@@ -401,7 +401,7 @@ bool LoopAnalysis::analyzeLoop(const InterpretedProgram& program, const RunSumma
     _programBlocks.clear();
     for (int i = startIndex, end = startIndex + period; i < end; ++i) {
         int pb_index = runSummary.programBlockIndexAt(i);
-        _programBlocks.push_back(program.programBlockAt(pb_index));
+        _programBlocks.push_back(program->programBlockAt(pb_index));
     }
 
     analyzeSequence();

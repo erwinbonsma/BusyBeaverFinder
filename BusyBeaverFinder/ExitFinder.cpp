@@ -18,7 +18,7 @@ const int maxBacktrackDepth = 4;
 
 ExitFinder::ExitFinder(Program& program, InterpretedProgramBuilder& interpretedProgramBuilder) :
     _program(program),
-    _interpretedProgramBuilder(interpretedProgramBuilder)
+    _programBuilder(interpretedProgramBuilder)
 {
     for (int i = 0; i < maxProgramBlocks; i++) {
         _visited[i] = false;
@@ -31,7 +31,8 @@ ExitFinder::ExitFinder(Program& program, InterpretedProgramBuilder& interpretedP
     _maxSteps = (program.getWidth() - 1) * (program.getHeight() - 1);
 }
 
-bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int delta, int depth) {
+bool ExitFinder::isPossibleExitValue(const ProgramBlock* block, bool zeroValue, int delta,
+                                     int depth) {
     if ( !block->isDelta() ) {
         // The block performs a shift. We cannot conclude anything about its exit value
         return true;
@@ -44,7 +45,7 @@ bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int de
     delta -= block->getInstructionAmount();
 
     for (int i = block->numEntryBlocks(); --i >= 0; ) {
-        ProgramBlock* entryBlock = block->entryBlock(i);
+        const ProgramBlock* entryBlock = block->entryBlock(i);
 
         if (entryBlock->nonZeroBlock() == block) {
             if (zeroValue && delta == 0) {
@@ -72,9 +73,9 @@ bool ExitFinder::isPossibleExitValue(ProgramBlock* block, bool zeroValue, int de
     return false;
 }
 
-bool ExitFinder::isReachable(ProgramBlock* block) {
+bool ExitFinder::isReachable(const ProgramBlock* block) {
     for (int i = block->numEntryBlocks(); --i >= 0; ) {
-        ProgramBlock* entryBlock = block->entryBlock(i);
+        const ProgramBlock* entryBlock = block->entryBlock(i);
 
         if (entryBlock->nonZeroBlock() == block) {
             if (isPossibleExitValue(entryBlock, false, 0, 0)) {
@@ -92,127 +93,65 @@ bool ExitFinder::isReachable(ProgramBlock* block) {
     return false;
 }
 
-bool ExitFinder::finalizeBlock(ProgramBlock* block) {
-    _interpretedProgramBuilder.enterBlock(block);
-
-    ProgramPointer pp = _interpretedProgramBuilder.getStartProgramPointer(block, _program);
-    int steps = 0;
-
-    // Rotation delta
-    int delta = (_interpretedProgramBuilder.turnDirectionForBlock(block) == TurnDirection::CLOCKWISE)
-        ? 1 : 3;
-
-    while (1) {
-processInstruction:
-        InstructionPointer insP = nextInstructionPointer(pp);
-
-        switch (_program.getInstruction(insP)) {
-            case Ins::DATA:
-                switch (pp.dir) {
-                    case Dir::UP:
-                        _interpretedProgramBuilder.setInstruction(true);
-                        _interpretedProgramBuilder.incAmount();
-                        break;
-                    case Dir::DOWN:
-                        _interpretedProgramBuilder.setInstruction(true);
-                        _interpretedProgramBuilder.decAmount();
-                        break;
-                    case Dir::RIGHT:
-                        _interpretedProgramBuilder.setInstruction(false);
-                        _interpretedProgramBuilder.incAmount();
-                        break;
-                    case Dir::LEFT:
-                        _interpretedProgramBuilder.setInstruction(false);
-                        _interpretedProgramBuilder.decAmount();
-                        break;
-                }
-                break;
-            case Ins::NOOP:
-                break;
-            case Ins::DONE:
-            case Ins::UNSET:
-                // Escaped from loop. So cannot conclude that program hangs
-                return false;
-            case Ins::TURN:
-                if (_interpretedProgramBuilder.isInstructionSet()) {
-                    _interpretedProgramBuilder.finalizeBlock(pp.p);
-                    return true;
-                } else {
-                    pp.dir = (Dir)(((int)pp.dir + delta) % 4);
-                    goto processInstruction;
-                }
-                break;
-        }
-
-        if (steps++ > _maxSteps) {
-            // Apparently the block itself is in an endless loop. For purposes of No Exit hang
-            // detection, just finalize it. We cannot conclude here that the program hangs, as there
-            // is no guarantee that this block will be entered.
-            //
-            // Note, setting an instruction so that the next TURN will finalize the block. This
-            // ensures that the block is finalized at a TURN, as it should.
-            _interpretedProgramBuilder.setInstruction(true);
-        }
-        _interpretedProgramBuilder.incSteps();
-        pp.p = insP;
-    }
-}
-
-bool ExitFinder::visitBlock(ProgramBlock* block) {
-    if (block == nullptr) {
-        // This is a block that cannot be entered
-        return false;
-    }
-
-    if (_visited[block->getStartIndex()]) {
-        // Already visited this block
-        return false;
+void ExitFinder::visitBlock(const ProgramBlock* block) {
+    if (block == nullptr                         // This is a block that cannot be entered
+        || _visited[block->getStartIndex()]) {   // Already visited this block
+        return;
     }
 
     _visited[block->getStartIndex()] = true;
 
     if (!block->isFinalized()) {
-        if (!finalizeBlock(block)) {
-            _exits[_numExits++] = block;
+        _programBuilder.enterBlock(block);
+        const ProgramBlock* finalizedBlock = _programBuilder.buildActiveBlock(_program);
 
-            return false;
+        if (finalizedBlock == nullptr) {
+            // Can escape from this block
+            _exits.push_back(block);
+            return;
         }
+
+        block = finalizedBlock;
+    }
+
+    if (block->isExit()) {
+        _exits.push_back(block);
+        return;
     }
 
     // Add to stack of blocks whose children should be visited
-    *(_topP++) = block;
-
-    return false;
+    _visitStack.push_back(block);
 }
 
-bool ExitFinder::canExitFrom(ProgramBlock* block) {
-    _nextP = _pendingStack;
-    _topP = _pendingStack;
+bool ExitFinder::canExitFrom(const ProgramBlock* block) {
+    assert(block->isFinalized());
 
-    _numExits = 0;
+    _visitStack.clear();
+    _exits.clear();
 
     visitBlock(block);
-    while (_nextP < _topP) {
-        ProgramBlock* block = *_nextP++;
+    int i = 0;
+    while (i < _visitStack.size()) {
+        const ProgramBlock* block = _visitStack[i++];
 
         visitBlock(block->zeroBlock());
         visitBlock(block->nonZeroBlock());
     }
 
     // Reset tracking state for finalized blocks
-    while (_topP > _pendingStack) {
-        _visited[ (*--_topP)->getStartIndex() ] = false;
+    for (auto visited : _visitStack) {
+        _visited[ visited->getStartIndex() ] = false;
     }
 
     bool canEscape = false;
 
-    for (int i = _numExits; --i >= 0; ) {
-        if (isReachable(_exits[i])) {
+    for (auto exitBlock : _exits) {
+        if (!canEscape && isReachable(exitBlock)) {
             canEscape = true;
         }
 
         // Reset tracking state for exit
-        _visited[ _exits[i]->getStartIndex() ] = false;
+        _visited[ exitBlock->getStartIndex() ] = false;
     }
 
     return canEscape;

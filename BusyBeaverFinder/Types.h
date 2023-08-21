@@ -19,12 +19,12 @@ enum class Ins : int8_t {
 };
 
 struct InstructionPointer {
-    int col;
-    int row;
+    int8_t col;
+    int8_t row;
 };
 
 // Program pointer directions
-enum class Dir : int {
+enum class Dir : int8_t {
     UP = 0,
     RIGHT = 1,
     DOWN = 2,

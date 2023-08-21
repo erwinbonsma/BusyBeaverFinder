@@ -12,17 +12,16 @@
 #include "SweepHangDetector.h"
 
 TEST_CASE( "7x7 sweep hangs", "[hang][7x7][sweep][irregular]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 16384;
+    settings.maxHangDetectionSteps = 100000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 100000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    settings.undoCapacity = settings.maxSteps;
-    searcher.configure(settings);
 
     SECTION( "7x7-IrregularSweep1" ) {
         // Sweep detected after 7480 steps. The transition at the right is fairly complex. It's

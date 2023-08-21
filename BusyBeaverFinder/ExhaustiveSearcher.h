@@ -10,20 +10,15 @@
 #include <stdint.h>
 #include <vector>
 
-#include "Data.h"
-#include "ExecutionState.h"
-#include "RunSummary.h"
-
 #include "Program.h"
 
 #include "InterpretedProgramBuilder.h"
 #include "FastExecutor.h"
+#include "HangExecutor.h"
 
 #include "ProgressTracker.h"
 
 #include "ExitFinder.h"
-
-class HangDetector;
 
 enum class SearchMode : int8_t {
     FULL_TREE = 0,
@@ -32,83 +27,61 @@ enum class SearchMode : int8_t {
 };
 
 struct SearchSettings {
+    int dataSize;
     int maxHangDetectionSteps;
     int maxSteps;
-    int undoCapacity;
     bool testHangDetection;
     bool disableNoExitHangDetection;
 };
 
-class ExhaustiveSearcher : public ExecutionState {
+const SearchSettings defaultSearchSettings = {
+    .dataSize = 1024,
+    .maxSteps = 1024,
+    .maxHangDetectionSteps = 1024,
+    .testHangDetection = false,
+    .disableNoExitHangDetection = false
+};
+
+class ExhaustiveSearcher {
     SearchSettings _settings;
 
     Program _program;
-    Data _data;
-
-    // Nested run summaries. The first summarizes the program execution, identifying loops along the
-    // way. The second summarizes the first run summary. In particular, it signals repeated patterns
-    // in the first summary.
-    RunSummary _runSummary[2];
-
-    // Helper buffer to store temporary Z-Array that is needed by some utility functions
-    int* _zArrayHelperBuf;
 
     // Determines when to abort the search
     SearchMode _searchMode;
-
-    // When set, hang detection is delayed until search has reached resume point. This is typically
-    // used to investigate late escapes
-    bool _delayHangDetection;
-
-    // The number of steps when to disable hang detection
-    int _hangDetectionEnd;
 
     // Pointer to array that can be used to resume a previous search. The last operation must be
     // UNSET.
     Ins* _resumeFrom;
 
+    TurnDirection _td;
     ProgramPointer _pp;
-    ProgramBlock* _block;
-    int _numSteps;
 
     // Stack of instructions built up by the exhaustive search
-    Ins* _instructionStack;
+    std::vector<Ins> _instructionStack;
 
     // An interpreted representation of the program
-    InterpretedProgramBuilder _interpretedProgramBuilder;
+    InterpretedProgramBuilder _programBuilder;
 
     FastExecutor _fastExecutor;
+    HangExecutor _hangExecutor;
+    // Points to the active executor
+    ProgramExecutor* _programExecutor;
 
-    std::vector<HangDetector*> _hangDetectors;
     ExitFinder _exitFinder;
 
     ProgressTracker* _tracker;
 
-    void initInstructionStack(int size);
+    void verifyHang();
 
-    void reconfigure();
-    void initSearch();
-
-    bool executeCurrentBlock();
-
-    // Executes current program (from start) until the maximum number of steps is reached (an
-    // assumed hang), or it escapes the current program.
-    void fastExecution();
-
-    ProgramPointer executeCompiledBlocksWithBacktracking();
-    ProgramPointer executeCompiledBlocksWithHangDetection();
-    ProgramPointer executeCompiledBlocks();
-
-    void run(int depth);
-    void branch(int depth);
+    void run();
+    void branch();
+    void extendBlock();
+    void buildBlock(const ProgramBlock* block);
 public:
-    ExhaustiveSearcher(int width, int height, int dataSize);
-    ~ExhaustiveSearcher();
+    ExhaustiveSearcher(int width, int height, SearchSettings settings);
 
     SearchSettings getSettings() { return _settings; }
-
-    // Updates settings. It changes buffer allocations as needed.
-    void configure(SearchSettings settings);
 
     bool getHangDetectionTestMode() { return _settings.testHangDetection; }
 
@@ -116,33 +89,16 @@ public:
     void setProgressTracker(ProgressTracker* tracker);
 
     const Program& getProgram() const { return _program; }
+    const InterpretedProgram& getInterpretedProgram() const { return _programBuilder; }
 
     //----------------------------------------------------------------------------------------------
-    // Implement ExecutionState interface
-
-    const InterpretedProgram& getInterpretedProgram() const override {
-        return _interpretedProgramBuilder;
-    }
-
-    const Data& getData() const override { return _data; }
-
-    const RunSummary& getRunSummary() const override { return _runSummary[0]; }
-    const RunSummary& getMetaRunSummary() const override { return _runSummary[1]; }
-
-    void dumpExecutionState() const override;
-
-    //----------------------------------------------------------------------------------------------
-
-    int getNumSteps() { return _numSteps; }
-
-    ProgramBlock* getProgramBlock() { return _block; }
 
     bool atTargetProgram();
 
     void search();
     void search(Ins* resumeFrom);
 
-    void searchSubTree(Ins* resumeFrom, bool delayHangDetection = false);
+    void searchSubTree(Ins* resumeFrom);
 
     void findOne();
     void findOne(Ins* resumeFrom);

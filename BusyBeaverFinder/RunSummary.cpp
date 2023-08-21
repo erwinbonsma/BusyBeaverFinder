@@ -407,13 +407,13 @@ void RunSummary::dump() const {
 }
 
 int getDpDeltaOfProgramBlockSequence(const RunSummary &runSummary,
-                                     const InterpretedProgram &program,
+                                     const InterpretedProgram *program,
                                      int pbStartIndex, int pbEndIndex) {
     int dpDelta = 0;
 
     for (int i = pbStartIndex; i < pbEndIndex; ++i) {
         int pbIndex = runSummary.programBlockIndexAt(i);
-        const ProgramBlock *pb = program.programBlockAt(pbIndex);
+        const ProgramBlock *pb = program->programBlockAt(pbIndex);
         if (!pb->isDelta()) {
             dpDelta += pb->getInstructionAmount();
         }
@@ -422,7 +422,7 @@ int getDpDeltaOfProgramBlockSequence(const RunSummary &runSummary,
     return dpDelta;
 }
 
-int getDpDelta(const RunSummary &runSummary, const InterpretedProgram &program,
+int getDpDelta(const RunSummary &runSummary, const InterpretedProgram *program,
                int firstRunBlock, int lastRunBlock) {
     int dpDelta = 0;
     int runBlockIndex = firstRunBlock;

@@ -89,7 +89,7 @@ void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile
 
         if (iss >> numSteps) {
             resumeStack = loadResumeStackFromStream(iss, maxSize);
-            searcher.searchSubTree(resumeStack, true);
+            searcher.searchSubTree(resumeStack);
         }
     }
 }

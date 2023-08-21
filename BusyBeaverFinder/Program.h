@@ -26,7 +26,7 @@ class Program {
     std::vector<Ins> _instructions;
 
     InstructionPointer getInstructionP(int col, int row) const {
-        return InstructionPointer { .col = col, .row = row };
+        return InstructionPointer { .col = (int8_t)col, .row = (int8_t)row };
     }
     Ins getInstruction(int col, int row) const;
 

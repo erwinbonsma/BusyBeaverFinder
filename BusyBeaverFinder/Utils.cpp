@@ -33,8 +33,8 @@ int makePowerOfTwo(int val) {
 
 InstructionPointer nextInstructionPointer(ProgramPointer pp) {
     return InstructionPointer {
-        .col = pp.p.col + dx[(int)pp.dir],
-        .row = pp.p.row + dy[(int)pp.dir]
+        .col = (int8_t)(pp.p.col + dx[(int)pp.dir]),
+        .row = (int8_t)(pp.p.row + dy[(int)pp.dir])
     };
 }
 
@@ -288,6 +288,13 @@ void dumpInstructionStack(Ins* stack) {
     while (*stack != Ins::UNSET) {
         std::cout << (int)*stack << ",";
         stack++;
+    }
+    std::cout << std::endl;
+}
+
+void dumpInstructionStack(std::vector<Ins> stack) {
+    for (Ins& ins : stack) {
+        std::cout << (int)ins << ",";
     }
     std::cout << std::endl;
 }

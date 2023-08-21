@@ -156,6 +156,7 @@
 		AA90A5862200EB9D00242D3D /* ProgressTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProgressTracker.h; sourceTree = "<group>"; };
 		AA90A5882201052900242D3D /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Utils.cpp; sourceTree = "<group>"; };
 		AA90A5892201052900242D3D /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
+		AAADA6D42A89111D00F1C442 /* ProgramExecutor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProgramExecutor.h; sourceTree = "<group>"; };
 		AABDCBAE253B197B0009516B /* SweepHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SweepHangDetector.cpp; sourceTree = "<group>"; };
 		AABDCBAF253B197B0009516B /* SweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SweepHangDetector.h; sourceTree = "<group>"; };
 		AAC19FF4258F6C8400F18A7C /* SweepHangTests-7x7.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "SweepHangTests-7x7.cpp"; sourceTree = "<group>"; };
@@ -243,10 +244,11 @@
 				AACC274425458F5D007E83C3 /* InterpretedProgram.h */,
 				AA4F4509224ABF320069FF36 /* InterpretedProgramBuilder.cpp */,
 				AA4F450A224ABF320069FF36 /* InterpretedProgramBuilder.h */,
+				AAADA6D42A89111D00F1C442 /* ProgramExecutor.h */,
 				AA37E6C92295D62200117A85 /* FastExecutor.cpp */,
 				AA37E6CA2295D62200117A85 /* FastExecutor.h */,
-				AACE849E2A87C2A7006341E7 /* HangExecutor.h */,
 				AACE849F2A87C568006341E7 /* HangExecutor.cpp */,
+				AACE849E2A87C2A7006341E7 /* HangExecutor.h */,
 			);
 			path = BusyBeaverFinder;
 			sourceTree = "<group>";

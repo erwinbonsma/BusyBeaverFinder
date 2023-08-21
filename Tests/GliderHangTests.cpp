@@ -13,16 +13,15 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
-    ExhaustiveSearcher searcher(6, 6, 256);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
+    SearchSettings settings = defaultSearchSettings;
     settings.maxHangDetectionSteps = 1000000;
     settings.maxSteps = settings.maxHangDetectionSteps;
     settings.disableNoExitHangDetection = true;
-    searcher.configure(settings);
+
+    ExhaustiveSearcher searcher(6, 6, settings);
+    ProgressTracker tracker(searcher);
+
+    searcher.setProgressTracker(&tracker);
 
     SECTION( "6x6-Glider1") {
         // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
@@ -305,15 +304,14 @@ TEST_CASE( "6x6 Glider Hang tests", "[hang][glider][6x6]" ) {
 }
 
 TEST_CASE( "7x7 Glider Hang tests", "[hang][glider][7x7]" ) {
-    ExhaustiveSearcher searcher(7, 7, 1024);
+    SearchSettings settings = defaultSearchSettings;
+    settings.maxHangDetectionSteps = 1000000;
+    settings.maxSteps = settings.maxHangDetectionSteps;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxHangDetectionSteps = 1000000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    searcher.configure(settings);
 
     SECTION( "7x7-GliderWithLargeRunBlocks") {
         // After a fairly chaotic start (which creates various one-off run blocks that contain many

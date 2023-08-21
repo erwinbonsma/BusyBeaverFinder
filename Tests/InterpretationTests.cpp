@@ -14,13 +14,11 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "7x7 Interpretation Tests", "[interpretation][7x7]" ) {
-    ExhaustiveSearcher searcher(7, 7, 256);
+    SearchSettings settings = defaultSearchSettings;
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    searcher.configure(settings);
 
     SECTION( "ProgramBlockWithManyEntries" ) {
         // An interpreted program with a program block that has eight entries. This is the non-zero

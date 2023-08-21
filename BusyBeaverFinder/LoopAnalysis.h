@@ -145,7 +145,7 @@ public:
 
     // Analyses the loop. Returns true if analysis was successful.
     bool analyzeLoop(const ProgramBlock* entryBlock, int numBlocks);
-    bool analyzeLoop(const InterpretedProgram& program, const RunSummary& runSummary,
+    bool analyzeLoop(const InterpretedProgram* program, const RunSummary& runSummary,
                      int startIndex, int period);
 
     void dump() const;

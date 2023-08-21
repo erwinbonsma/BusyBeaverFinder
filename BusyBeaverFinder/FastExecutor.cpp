@@ -11,6 +11,7 @@
 #include <string.h>
 #include <iostream>
 
+#include "InterpretedProgram.h"
 #include "ProgramBlock.h"
 
 const int sentinelSize = 8;
@@ -22,24 +23,34 @@ FastExecutor::FastExecutor(int dataSize) {
     _minDataP = &_data[sentinelSize]; // Inclusive
     _maxDataP = _minDataP + dataSize; // Exclusive
     _midDataP = &_data[_dataBufSize / 2];
+
+    _canResume = false;
 }
 
 FastExecutor::~FastExecutor() {
     delete[] _data;
 }
 
-RunResult FastExecutor::execute(const ProgramBlock *programBlock) {
-    _numSteps = 0;
-
-    // Clear data
-    memset(_data, 0, _dataBufSize * sizeof(int));
-
-    _dataP = _midDataP;
+RunResult FastExecutor::run() {
+    _canResume = false;
 
     while (true) {
-        int amount = programBlock->getInstructionAmount();
+        if (!_block->isFinalized()) {
+            _canResume = true;
+            return RunResult::PROGRAM_ERROR;
+        }
+        if (_block->isHang()) {
+            return RunResult::DETECTED_HANG;
+        }
 
-        if (programBlock->isDelta()) {
+        _numSteps += _block->getNumSteps();
+        if (_block->isExit()) {
+            return RunResult::SUCCESS;
+        }
+
+        int amount = _block->getInstructionAmount();
+
+        if (_block->isDelta()) {
             *_dataP += amount;
         } else {
             _dataP += amount;
@@ -48,23 +59,30 @@ RunResult FastExecutor::execute(const ProgramBlock *programBlock) {
             }
         }
 
-        _numSteps += programBlock->getNumSteps();
         if (_numSteps > _maxSteps) {
             return RunResult::ASSUMED_HANG;
         }
 
-        if (programBlock->isExit()) {
-            return RunResult::SUCCESS;
-        }
-
-        programBlock = (*_dataP == 0) ? programBlock->zeroBlock() : programBlock->nonZeroBlock();
-        if (!programBlock->isFinalized()) {
-            return RunResult::PROGRAM_ERROR;
-        }
+        _block = (*_dataP == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
     }
 }
 
-void FastExecutor::dump() {
+RunResult FastExecutor::execute(const InterpretedProgram* program) {
+    if (!_canResume) {
+        // Start execution form the start
+        _numSteps = 0;
+
+        // Clear data
+        memset(_data, 0, _dataBufSize * sizeof(int));
+
+        _dataP = _midDataP;
+        _block = program->getEntryBlock();
+    }
+
+    return run();
+}
+
+void FastExecutor::dump() const {
     // Find end
     int *max = _maxDataP - 1;
     while (max > _dataP && *max == 0) {

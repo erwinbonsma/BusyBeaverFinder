@@ -83,7 +83,7 @@ void ProgressTracker::reportDone(int totalSteps) {
             std::cout << "Best sofar = " << _maxStepsSofar << std::endl;
             _bestProgram.dump();
             _searcher.dumpInstructionStack();
-            _searcher.getData().dump();
+//            _searcher.getData().dump();
             dumpStats();
         }
     }
@@ -125,12 +125,12 @@ void ProgressTracker::reportAssumedHang() {
 
         if (_dumpUndetectedHangs) {
             std::cout << "Undetected hang";
-            if (
-                _searcher.getMetaRunSummary().isInsideLoop() &&
-                _searcher.getMetaRunSummary().getNumRunBlocks() <= 4
-            ) {
-                std::cout << " (meta-loop)";
-            }
+//            if (
+//                _searcher.getMetaRunSummary().isInsideLoop() &&
+//                _searcher.getMetaRunSummary().getNumRunBlocks() <= 4
+//            ) {
+//                std::cout << " (meta-loop)";
+//            }
             std::cout << ": ";
             _searcher.dumpInstructionStack();
         }
@@ -160,12 +160,12 @@ void ProgressTracker::reportLateEscape(int numSteps) {
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
-    if (_searcher.getNumSteps() > _maxStepsUntilHangDetection) {
-        _maxStepsUntilHangDetection = _searcher.getNumSteps();
-//        std::cout << "New step limit: ";
-//        _searcher.dumpInstructionStack();
-//        _searcher.getProgram().dumpWeb();
-    }
+//    if (_searcher.getNumSteps() > _maxStepsUntilHangDetection) {
+//        _maxStepsUntilHangDetection = _searcher.getNumSteps();
+////        std::cout << "New step limit: ";
+////        _searcher.dumpInstructionStack();
+////        _searcher.getProgram().dumpWeb();
+//    }
 
     if (executionWillContinue) {
         // Only signal it. Execution will continue to verify that the program indeed hangs.

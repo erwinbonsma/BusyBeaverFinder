@@ -10,34 +10,69 @@
 #include <vector>
 
 #include "Data.h"
+#include "ExecutionState.h"
+#include "ProgramExecutor.h"
 #include "RunSummary.h"
 #include "Types.h"
 
 class HangDetector;
 
-class HangExecutor {
-    std::vector<HangDetector*> _hangDetectors;
+struct ExecutionStackFrame {
+    const ProgramBlock* programBlock;
+    size_t dataStackSize;
+    int numSteps;
+};
 
-    int _numSteps;
-    int _maxSteps;
-    int _hangDetectionEnd;
+class HangExecutor : public ProgramExecutor, public ExecutionState {
+    std::vector<HangDetector*> _hangDetectors;
+    std::vector<ExecutionStackFrame> _executionStack;
+
+    int _hangDetectionStart;
+    int _maxHangDetectionSteps;
+
+    const InterpretedProgram *_program;
+
+    Data _data;
+    const HangDetector* _detectedHang;
 
     // Nested run summaries. The first summarizes the program execution, identifying loops along the
     // way. The second summarizes the first run summary. In particular, it signals repeated patterns
     // in the first summary.
     RunSummary _runSummary[2];
-    Data _data;
-    const ProgramBlock* _block;
+    int* _zArrayHelperBuf;
 
     RunResult executeBlock();
-    RunResult executeWithoutHangDetection();
+
+    RunResult executeWithoutHangDetection(int stepLimit);
+    RunResult executeWithHangDetection(int stepLimit);
+
+    RunResult run();
 
 public:
-    HangExecutor();
+    HangExecutor(int dataSize, int maxHangDetectionSteps);
     ~HangExecutor();
 
-    void setMaxSteps(int steps) { _maxSteps = steps; }
-    int numSteps() const { return _numSteps; }
+    // Only applies to the next invocation of execute, after which it is reset to zero.
+    void setHangDetectionStart(int numSteps) { _hangDetectionStart = numSteps; }
 
-    RunResult execute(const ProgramBlock *block);
+    HangType detectedHangType() const override;
+    const HangDetector* detectedHang() const { return _detectedHang; }
+
+    void pop() override;
+
+    RunResult execute(const InterpretedProgram* program) override;
+
+    void dump() const override;
+
+    //----------------------------------------------------------------------------------------------
+    // Implement ExecutionState interface
+
+    const InterpretedProgram* getInterpretedProgram() const override { return _program; }
+
+    const Data& getData() const override { return _data; }
+
+    const RunSummary& getRunSummary() const override { return _runSummary[0]; }
+    const RunSummary& getMetaRunSummary() const override { return _runSummary[1]; }
+
+    void dumpExecutionState() const override;
 };

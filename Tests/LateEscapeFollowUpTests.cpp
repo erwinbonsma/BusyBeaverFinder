@@ -11,15 +11,15 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
-    ExhaustiveSearcher searcher(7, 7, 16384);
+    SearchSettings settings = defaultSearchSettings;
+    settings.dataSize = 16384;
+    settings.maxSteps = 10000000;
+
+    ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpBestSofarLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
-
-    SearchSettings settings = searcher.getSettings();
-    settings.maxSteps = 10000000;
-    searcher.configure(settings);
 
     SECTION( "EscapeIntoSuccess" ) {
         // After "escape" terminates without encountering unset instructions. This is therefore
@@ -40,7 +40,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom, true);
+        searcher.searchSubTree(resumeFrom);
 
         REQUIRE(tracker.getTotalSuccess() == 1);
         REQUIRE(tracker.getMaxStepsFound() == 3152126);
@@ -59,7 +59,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom, true);
+        searcher.searchSubTree(resumeFrom);
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
         REQUIRE(tracker.getTotalSuccess() == 2);
@@ -87,7 +87,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
             Ins::UNSET
         };
 
-        searcher.searchSubTree(resumeFrom, true);
+        searcher.searchSubTree(resumeFrom);
 
         REQUIRE(tracker.getTotalHangs(HangType::NO_DATA_LOOP) == 1);
         REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 2);
