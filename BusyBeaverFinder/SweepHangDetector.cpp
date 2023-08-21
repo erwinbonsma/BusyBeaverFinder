@@ -9,8 +9,10 @@
 #include "SweepHangDetector.h"
 
 #include <iostream>
-#include "Utils.h"
+
+#include "HangExecutor.h"
 #include "RunSummary.h"
+#include "Utils.h"
 
 const int MAX_ITERATIONS_TRANSITION_LOOPS = 3;
 const int MIN_ITERATIONS_LAST_SWEEP_LOOP = 5;
@@ -481,4 +483,17 @@ SweepEndType rightSweepEndType(const ProgressTracker &tracker) {
 
 SweepEndType leftSweepEndType(const ProgressTracker &tracker) {
     return sweepEndType(tracker, false);
+}
+
+SweepEndType sweepEndType(const HangExecutor& executor, bool atRight) {
+    return ((const SweepHangDetector *)executor.detectedHang()
+            )->transitionGroup(atRight).endType();
+}
+
+SweepEndType rightSweepEndType(const HangExecutor& executor) {
+    return sweepEndType(executor, true);
+}
+
+SweepEndType leftSweepEndType(const HangExecutor& executor) {
+    return sweepEndType(executor, false);
 }

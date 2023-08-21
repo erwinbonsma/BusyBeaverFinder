@@ -5,9 +5,7 @@
 //  Created by Erwin on 17/10/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef SweepHangDetector_h
-#define SweepHangDetector_h
+#pragma once
 
 #include "HangDetector.h"
 #include "SweepTransitionGroup.h"
@@ -105,5 +103,5 @@ std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector);
 // Helper functions for testing. These rely on the last detected hang being a sweep hang
 SweepEndType rightSweepEndType(const ProgressTracker &tracker);
 SweepEndType leftSweepEndType(const ProgressTracker &tracker);
-
-#endif /* SweepHangDetector_h */
+SweepEndType rightSweepEndType(const HangExecutor& executor);
+SweepEndType leftSweepEndType(const HangExecutor& executor);
