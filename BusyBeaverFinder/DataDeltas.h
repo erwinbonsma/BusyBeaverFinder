@@ -5,9 +5,7 @@
 //  Created by Erwin on 22/10/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef DataDeltas_h
-#define DataDeltas_h
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -59,5 +57,3 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const DataDeltas& dataDeltas);
-
-#endif /* DataDeltas_h */

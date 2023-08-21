@@ -5,9 +5,7 @@
 //  Created by Erwin on 07/04/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef RunSummary_h
-#define RunSummary_h
+#pragma once
 
 #include <map>
 
@@ -188,5 +186,3 @@ class InterpretedProgram;
 // lastRunBlock (exclusive).
 int getDpDelta(const RunSummary &runSummary, const InterpretedProgram *program,
                int firstRunBlock, int lastRunBlock);
-
-#endif /* RunSummary_h */

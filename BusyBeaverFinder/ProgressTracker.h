@@ -5,9 +5,7 @@
 //  Created by Erwin on 29/01/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef ProgressTracker_h
-#define ProgressTracker_h
+#pragma once
 
 #include <time.h>
 #include <stdio.h>
@@ -89,5 +87,3 @@ public:
     void dumpHangStats();
     void dumpFinalStats();
 };
-
-#endif /* ProgressTracker_h */

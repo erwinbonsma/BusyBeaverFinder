@@ -5,9 +5,7 @@
 //  Created by Erwin on 25/03/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef ProgramBlock_h
-#define ProgramBlock_h
+#pragma once
 
 #include <iostream>
 #include <assert.h>
@@ -75,4 +73,3 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const ProgramBlock &pb);
 
-#endif /* ProgramBlock_h */

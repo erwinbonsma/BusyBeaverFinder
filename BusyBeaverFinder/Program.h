@@ -5,9 +5,7 @@
 //  Created by Erwin on 19/01/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef Program_h
-#define Program_h
+#pragma once
 
 #include <string>
 #include <vector>
@@ -75,5 +73,3 @@ public:
     void dumpWeb() const;
     void dump(InstructionPointer insP) const;
 };
-
-#endif /* Program_h */

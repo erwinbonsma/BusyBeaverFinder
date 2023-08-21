@@ -5,9 +5,10 @@
 //  Created by Erwin on 13/11/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
+#pragma once
 
-#ifndef SweepTransitionGroup_h
-#define SweepTransitionGroup_h
+#include <map>
+#include <set>
 
 #include "LoopAnalysis.h"
 #include "Utils.h"
@@ -15,9 +16,6 @@
 
 class Data;
 class ExecutionState;
-
-#include <map>
-#include <set>
 
 /* Different types of behaviour at one end of the sweep. These are determined during analysis and
  * require different checks to proof that the program is indeed hanging.
@@ -344,5 +342,3 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepTransitionGroup &group);
-
-#endif /* SweepTransitionGroup_h */

@@ -5,9 +5,7 @@
 //  Created by Erwin on 06/02/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef GliderHangDetector_h
-#define GliderHangDetector_h
+#pragma once
 
 #include "HangDetector.h"
 
@@ -58,5 +56,3 @@ public:
 
     virtual HangType hangType() const override { return HangType::APERIODIC_GLIDER; }
 };
-
-#endif /* GliderHangDetector_h */

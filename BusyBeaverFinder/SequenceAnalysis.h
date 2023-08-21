@@ -5,9 +5,7 @@
 //  Created by Erwin on 06/02/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef SequenceAnalysis_h
-#define SequenceAnalysis_h
+#pragma once
 
 #include <iostream>
 #include <map>
@@ -97,5 +95,3 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa);
-
-#endif /* SequenceAnalysis_h */

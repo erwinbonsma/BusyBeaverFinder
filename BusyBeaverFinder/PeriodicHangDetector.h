@@ -5,9 +5,7 @@
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef PeriodicHangDetector_h
-#define PeriodicHangDetector_h
+#pragma once
 
 #include "HangDetector.h"
 
@@ -45,5 +43,3 @@ public:
 
     void reset() override;
 };
-
-#endif /* PeriodicHangDetector_h */

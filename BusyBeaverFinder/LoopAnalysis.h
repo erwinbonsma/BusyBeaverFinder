@@ -5,9 +5,7 @@
 //  Created by Erwin on 14/01/20.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef LoopAnalysis_h
-#define LoopAnalysis_h
+#pragma once
 
 #include <iostream>
 #include <stdint.h>
@@ -152,5 +150,3 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la);
-
-#endif /* LoopAnalysis_h */

@@ -5,9 +5,7 @@
 //  Created by Erwin on 06/12/2020.
 //  Copyright © 2020 Erwin. All rights reserved.
 //
-
-#ifndef PeriodicSweepHangDetector_h
-#define PeriodicSweepHangDetector_h
+#pragma once
 
 #include "SweepHangDetector.h"
 
@@ -74,5 +72,3 @@ public:
 
     virtual HangType hangType() const override { return HangType::REGULAR_SWEEP; }
 };
-
-#endif /* PeriodicSweepHangDetector_h */

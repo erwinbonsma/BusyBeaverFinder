@@ -5,9 +5,7 @@
 //  Created by Erwin on 29/01/19.
 //  Copyright © 2019 Erwin Bonsma.
 //
-
-#ifndef Utils_h
-#define Utils_h
+#pragma once
 
 #include <set>
 #include <string>
@@ -108,5 +106,3 @@ template <class MapType>
 MapKeyIterator<MapType> makeKeyIterator(MapType& m) {
     return MapKeyIterator<MapType>(m);
 }
-
-#endif /* Utils_h */
