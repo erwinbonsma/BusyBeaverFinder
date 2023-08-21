@@ -8,20 +8,14 @@
 
 #include "catch.hpp"
 
-#include "ExhaustiveSearcher.h"
+#include "HangExecutor.h"
 #include "SweepHangDetector.h"
 
-TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 1000000;
+TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
+    HangExecutor hangExecutor(1024, 20000);
+    hangExecutor.setMaxSteps(1000000);
 
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "6x6-IrregularSweepWhereIncomingLoopClears" ) {
+    SECTION("6x6-IrregularSweepWhereIncomingLoopClears") {
         // Irregular sweep with an a-periodically growing appendix at its right end. The incoming
         // loop exits on 1 and then converts this value to the non-exit 2. The incoming loop also
         // resets all 2 values it passes back to 1.
@@ -32,20 +26,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         // * o _ o *
         // * _ o *
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxgkaouosrn_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepWhereIncomingLoopClears2" ) {
+    SECTION("6x6-IrregularSweepWhereIncomingLoopClears2") {
         // Very similar in behavior to the previous two programs. Also an appendix at its right,
         // with the same exit and non-exit values.
         //
@@ -55,19 +44,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         // o _ _ o *
         // o * _ o *
         // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_r_ktlioooir");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepWhereIncomingLoopClears3" ) {
+    SECTION("6x6-IrregularSweepWhereIncomingLoopClears3") {
         // The behavior of this program is very similar to the previous two programs, but reversed.
         // The appendix is on its left, and the sign of the appendix values is inverted.
         //
@@ -77,19 +62,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         //   o o *
         // * _ o
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66b_gfg_drs_n_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-IrregularSweepWhereIncomingLoopOscillates" ) {
+    SECTION("6x6-IrregularSweepWhereIncomingLoopOscillates") {
         // Exit value is 1, non-exit is 2. The incoming loop oscillates the non-exit value (2) to
         // the exit value (1) and restores it to the non-exit unless the loop was exited. In the
         // latter case the value that neighbours the exit remains at 1, and becomes the new exit.
@@ -100,20 +81,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         // * _ o o *
         // * _ o *
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxgkdososrn_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepWhereIncomingLoopOscillates2" ) {
+    SECTION("6x6-IrregularSweepWhereIncomingLoopOscillates2") {
         // Very similar to the previous two hanging programs. It was incorrectly classified as a
         // meta-periodic hang by an earlier verion of the sweep hang detection.
         //
@@ -123,20 +99,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         //   o o o *
         // * _ o o *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxgkgfdosonr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepWhereIncomingLoopOscillates3") {
+    SECTION("6x6-IrregularSweepWhereIncomingLoopOscillates3") {
         // Very similar to previous three irregular sweep hangs. However, it has an interesting
         // feature that next to the binary counter, inside the sweep sequence, is a value that is
         // decreased only when the left-most binary counter bit flips. So it effectively counts the
@@ -148,20 +119,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         //   o o o *
         // * _ o o *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66brgbgodosonr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix" ) {
+    SECTION("6x6-IrregularSweepHangWithPollutedAppendix") {
         // This sweep hang has an a-periodically growing appendix at its left. The exit value is
         // -1, the non-exit value is -2. However, the appendix is polluted by a positive value
         // that increased each time the incoming sweep loop passes it.
@@ -172,19 +138,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         //     o o *
         // * * _ o
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_rbkbiaoximr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix2" ) {
+    SECTION("6x6-IrregularSweepHangWithPollutedAppendix2") {
         // This is very similar in behavior to the previous program.
         //
         //       *
@@ -193,19 +155,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         // o o o o *
         // o * _ o
         // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_rbktimooiir");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix3" ) {
+    SECTION("6x6-IrregularSweepHangWithPollutedAppendix3") {
         // The sweep hang has an a-periodically growing appendix at its right side. The exit value
         // is 1, the non-exit 2. The appendix is polluted with a negative value that is decremented
         // each time it is passed by the incoming loop.
@@ -216,20 +174,15 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         // _ _ _ o *
         // _ * _ o _ *
         // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66frwkno_ofk_r");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
-    SECTION( "6x6-IrregularSweepHangWithPollutedAppendix4" ) {
+    SECTION("6x6-IrregularSweepHangWithPollutedAppendix4") {
         // Sweep hang with a relatively complex shifts by the sweep loops. The incoming loop to the
         // irregular appendix includes a SHR 2 and a SHL so that DP still moves only one unit each
         // iteration. The outgoing loop is similar as it includes a SHL2 and SHR but is more simple
@@ -241,17 +194,12 @@ TEST_CASE( "6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]" ) {
         //   _ * _
         // * _ o o *
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66brgksob_somr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
 }

@@ -8,22 +8,14 @@
 
 #include "catch.hpp"
 
-#include "ExhaustiveSearcher.h"
+#include "HangExecutor.h"
 #include "SweepHangDetector.h"
 
-TEST_CASE( "7x7 sweep hangs", "[hang][7x7][sweep][irregular]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.dataSize = 16384;
-    settings.maxHangDetectionSteps = 100000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
+TEST_CASE("7x7 sweep hangs", "[hang][7x7][sweep][irregular]") {
+    HangExecutor hangExecutor(16384, 100000);
+    hangExecutor.setMaxSteps(100000);
 
-    ExhaustiveSearcher searcher(7, 7, settings);
-    ProgressTracker tracker(searcher);
-
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "7x7-IrregularSweep1" ) {
+    SECTION("7x7-IrregularSweep1") {
         // Sweep detected after 7480 steps. The transition at the right is fairly complex. It's
         // an aperiodic appendix (to be confirmed after more detailed analysis) where the
         // transition sequence can include itself loops of varying length. This is something the
@@ -39,18 +31,12 @@ TEST_CASE( "7x7 sweep hangs", "[hang][7x7][sweep][irregular]" ) {
         // _ o _ o *
         // _ * _ o *
         // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77rfcyfaobnae_sr_r_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::IRREGULAR_SWEEP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-        REQUIRE(leftSweepEndType(tracker) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(tracker) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
 }
