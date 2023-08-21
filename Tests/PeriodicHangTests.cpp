@@ -10,58 +10,38 @@
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"
+#include "HangExecutor.h"
 
-TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    // Prevent No Exit hang detection from also catching some of the hangs below as is test case
-    // is testing the Periodic Hang Detector
-    settings.disableNoExitHangDetection = true;
+TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
+    HangExecutor hangExecutor(1024, 1024);
+    hangExecutor.setMaxSteps(1024);
 
-    ExhaustiveSearcher searcher(5, 5, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "BasicLoop" ) {
-        // Classification: Periodic, Constant, Uniform, Stationary
+    SECTION("BasicLoop") {
+        // Loop without any data instructions
         //
         // *   *
         // o . . . *
         // . * . .
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55_bfcbf_b_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_DATA_LOOP) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NO_DATA_LOOP);
     }
-    SECTION( "CountingLoop" ) {
-        // Classification: Periodic, Changing, Uniform, Stationary
+    SECTION("CountingLoop") {
+        // Simple periodic loop with a counter.
         //
         // *   *
         // o . . . *
         // . . o .
         // . * . .
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55ta_rif_b_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "NonUniformCountingLoop1" ) {
+    SECTION("NonUniformCountingLoop1") {
         // Classification: Periodic, Changing, Non-uniform, Sentry Go
         //
         // Loop that increases counter, but with some instructions executed more frequently than
@@ -73,20 +53,12 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . o *
         // . * o . *
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55btduegfb_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "NonUniformCountingLoop2" ) {
+    SECTION("NonUniformCountingLoop2") {
         // Classification: Periodic, Changing, Non-uniform, Sentry Go
         //
         //     * *
@@ -94,22 +66,12 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         //   . o o *
         // * * o . *
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55btmrnygn_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "InfSeq1" ) {
+    SECTION("InfSeq1") {
         // Classification: Periodic, Changing, Uniform, Travelling
         //
         // Sequence that extends leftwards
@@ -119,19 +81,12 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // . * o .
         // .   . *
         // .   *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55ta_ti_rf_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "InfSeq2" ) {
+    SECTION("InfSeq2") {
         // Classification: Periodic, Changing, Uniform, Travelling
         //
         // Sequence that extends rightwards
@@ -141,20 +96,12 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . o *
         // . * . o
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55_tguefib_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "InfSeqNonUniform1" ) {
+    SECTION("InfSeqNonUniform1") {
         // Classification: Periodic, Changing, Non-Uniform, Travelling
         //
         // Loop that generates an infinite sequence where some instructions are executed more
@@ -165,21 +112,12 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . . . *
         // . * . .
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55htdubf_b_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "InfSeqNonUniform2" ) {
+    SECTION("InfSeqNonUniform2") {
         // Classification: Periodic, Changing, Non-Uniform, Travelling
         //
         //   * * *
@@ -187,21 +125,12 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . o . *
         // . * . . *
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55htdukf_b_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "InfSeqNonUniform3" ) {
+    SECTION("InfSeqNonUniform3") {
         // Classification: Periodic, Changing, Non-Uniform, Travelling
         //
         // The period of this hang loop is a multiple of the period of the evaluated instructions.
@@ -214,19 +143,10 @@ TEST_CASE( "5x5 Periodic Hang tests", "[hang][periodic][5x5]" ) {
         // o . o o *
         // . * . . *
         // .     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("55htdunffb_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
 }
 

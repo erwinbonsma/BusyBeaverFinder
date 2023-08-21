@@ -175,6 +175,15 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
     return result;
 }
 
+RunResult HangExecutor::execute(std::string programSpec) {
+    Program program = Program::fromString(programSpec);
+    InterpretedProgramBuilder programBuilder = InterpretedProgramBuilder::fromProgram(program);
+
+    std::cout << "Executing: " << programSpec << std::endl;
+
+    return execute(&programBuilder);
+}
+
 void HangExecutor::dump() const {
     // TODO
 }

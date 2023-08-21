@@ -61,6 +61,7 @@ public:
     void pop() override;
 
     RunResult execute(const InterpretedProgram* program) override;
+    RunResult execute(std::string programSpec);
 
     void dump() const override;
 
