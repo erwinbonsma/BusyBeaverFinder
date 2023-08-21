@@ -6,21 +6,15 @@
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#include <stdio.h>
 #include "catch.hpp"
 
-#include "ExhaustiveSearcher.h"
+#include "HangExecutor.h"
 
-TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxSteps = 1000000;
+TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
+    HangExecutor hangExecutor(1024, 1000000);
+    hangExecutor.setMaxSteps(1000000);
 
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "6x6-SweepWithInSequenceOscillatingZeros" ) {
+    SECTION("6x6-SweepWithInSequenceOscillatingZeros") {
         // The body of the sweep consists of alternating -1 and 0 values. The left side is a fixed
         // but increasing value, the right side of the sequence steadily grows. The leftward sweep
         // inverts the entire sweep body. The -1 values become zeroes, and vice versa. Even though
@@ -33,18 +27,12 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // * _ _ _ _ *
         // * * o _ *
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_xhkskrbyfmr");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION( "6x6-SweepWithInSequenceOscillatingValues" ) {
+    SECTION("6x6-SweepWithInSequenceOscillatingValues") {
         // Similar to the previous program, but here the sequence body consists of -1 and -2
         // values. The leftward sweep swaps these values every sweep.
         //
@@ -54,18 +42,12 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // * o _ _ _ *
         // *   * o o
         // o _ _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxfngoubtlio");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION( "6x6-SweepWithIrregularFixedPointGrowingValue" ) {
+    SECTION("6x6-SweepWithIrregularFixedPointGrowingValue") {
         // The right end of the sequence looks as follows: [body] 1 X 1 0 0 0
         // The rightward sweep loop moves DP two units. Half of the sweeps it ends on the first 1.
         // In that case, the loop exits and returns without making any modifications. The other
@@ -78,18 +60,12 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         // * o o _ _
         // * * _ o _ *
         // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_rhksov_xkjr");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::DATA_ERROR);
     }
-    SECTION( "6x6-LateStartingPeriodicSweepWithTwoFastGrowingEnds" ) {
+    SECTION("6x6-LateStartingPeriodicSweepWithTwoFastGrowingEnds") {
         // This program executes a complex sweep that looks to be irregular but seems to becomes
         // regular eventually. TODO: Check why the meta-run summary does not reflect this.
         //
@@ -99,30 +75,18 @@ TEST_CASE( "6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]" ) {
         //   _ o o *
         // * _ _ o _ *
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxgkhiaorkmr");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::DATA_ERROR);
     }
 }
 
-TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][fail]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 1000000;
+TEST_CASE("6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][fail]") {
+    HangExecutor hangExecutor(1024, 20000);
+    hangExecutor.setMaxSteps(1000000);
 
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "6x6-IrregularSweepWithZeroesInAppendix" ) {
+    SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
         // A truly binary counter. It actually uses ones and zeros, and also properly generates
         // binary numbers (only with most-significant bit at the right).
         //
@@ -132,30 +96,18 @@ TEST_CASE( "6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6
         // o   * o *
         // _ * _ o *
         // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66fxubnnkofo_r");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::DATA_ERROR);
     }
 }
 
-TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxHangDetectionSteps = 20000;
-    settings.maxSteps = 1000000;
+TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
+    HangExecutor hangExecutor(1024, 20000);
+    hangExecutor.setMaxSteps(1000000);
 
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "6x6-IrregularHopScotch" ) {
+    SECTION("6x6-IrregularHopScotch") {
         // This program executes a curious sweep. The sweep does not have a sweep body. At the left
         // there's a fixed, ever-increasing exit. Directly attached is an a-periodically growing
         // appendix which consists of three values: 0, -1 and -2.
@@ -172,18 +124,12 @@ TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" )
         // * _ _ _ _ *
         // * * o o *
         // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_xhkvkrbyojr");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION( "6x6-IrregularSweepHangWithHeavilyPollutedAppendix" ) {
+    SECTION("6x6-IrregularSweepHangWithHeavilyPollutedAppendix") {
         // A non-standard irregular sweep. The leftward sweep loop moves DP two cells and creates
         // a heavily polluted a-periodically growing appendix. The sweep loops exits on -1 cells,
         // which it then converts to the limbo value -2, which the sweep can convert to the -1
@@ -197,32 +143,18 @@ TEST_CASE( "6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]" )
         //   o o * *
         // * _ o _ *
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66b_gbgidxsfn_");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::DATA_ERROR);
     }
 }
 
-TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.dataSize = 16384;
-    settings.maxHangDetectionSteps = 100000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
+TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
+    HangExecutor hangExecutor(16384, 100000);
+    hangExecutor.setMaxSteps(100000);
 
-    ExhaustiveSearcher searcher(7, 7, settings);
-
-    ProgressTracker tracker(searcher);
-
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "7x7-UndetectedHang1" ) {
+    SECTION("7x7-UndetectedHang1") {
         // *   *   * *
         // o _ _ _ _ _ *
         // _   _ * _ _
@@ -230,19 +162,12 @@ TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
         // _   * o o o *
         // _ * _ o o *
         // _   * * *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77thc_fb_gmrvosobx_");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION( "7x7-UndetectedHang2" ) {
+    SECTION("7x7-UndetectedHang2") {
         // Irregular sweep.
         //
         // TODO: Analyze why hang is not detected with current logic.
@@ -254,19 +179,12 @@ TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
         // _ o _ * o _
         // _ * * _ o o *
         // _       * *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77rfcsfhiakag_xn_h_");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION( "7x7-UndetectedHang3" ) {
+    SECTION("7x7-UndetectedHang3") {
         // Program that causes Periodic Sweep Hang Detector to create transition-groups with
         // unique transitions. This caused an assertion to fail, which after analysis, has been
         // removed.
@@ -278,19 +196,12 @@ TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
         // _   _ o _
         // _ * _ _ _ o *
         // _   * * * *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77rxc_ffign_c_rebz_");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION( "7x7-UndetectedHang4" ) {
+    SECTION("7x7-UndetectedHang4") {
         // Sweep hang, where the sweep body oscillates each sweep. After the rightward sweep it
         // consists of only zeroes. After the leftward sweep it consists of alternativing zeros and
         // ones.
@@ -302,33 +213,18 @@ TEST_CASE( "7x7 undetected hangs", "[hang][7x7][fail]" ) {
         // _ * _ _ _ _
         // _ * o _ o o *
         // _   *   *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77bffmg_f_eb__unbf_");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(tracker.getTotalDetectedHangs() == 0);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
 }
 
-TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.dataSize = 16384;
-    settings.maxHangDetectionSteps = 100000;
-    settings.maxSteps = settings.maxHangDetectionSteps;
+TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
+    HangExecutor hangExecutor(16384, 100000);
+    hangExecutor.setMaxSteps(100000);
 
-    ExhaustiveSearcher searcher(7, 7, settings);
-    ProgressTracker tracker(searcher);
-
-    tracker.setDumpBestSofarLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "7x7-FalsePositive1" ) {
+    SECTION("7x7-FalsePositive1") {
         // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
         // appendix at its right. However, the leftwards sweep moves DP by two cells each
         // iteration. All leftward sweeps, however, seem to end on the first zero at the left. This
@@ -345,19 +241,12 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
         // _ o _ o _ *
         // _ * _ o o *
         // _   * * *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77rxcrfgianacrsobx_");
 
         // TEMP: Should not actually be detected as hanging
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
-    SECTION( "7x7-FalsePositive2" ) {
+    SECTION("7x7-FalsePositive2") {
         // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
         // appendix at its right. However, the sequence that changes a -1 bit in the binary
         // appendix to a -2 requires that the cell located two cells to its left has a non-zero
@@ -373,19 +262,12 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
         // o o o * o *
         // _   * _ o *
         // _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77bbbbqdkrudprfo_f_");
 
         // TEMP: Should not actually be detected as hanging
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
-    SECTION( "7x7-FalsePositive3" ) {
+    SECTION("7x7-FalsePositive3") {
         // Program exhibits a behavior that resembles a simple hang. Steady growth at its right,
         // and a fixed point at its left. However, this fixed point is classified incorrectly. The
         // transition sequence (plus subsequent bootstrap of the outgoing loop) actually moves one
@@ -401,19 +283,12 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
         // o o o o * o
         // _ * _ o _ o
         // _     *   *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fh_ghjnzpdnisc_t_");
 
         // TEMP: Should not actually be detected as hanging
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
-    SECTION( "7x7-FalsePositive4" ) {
+    SECTION("7x7-FalsePositive4") {
         // Program exhibits a behavior that resembles a simple hang. Steady growth at both sides.
         // However, there is an isolated one at the left of the sequence that breaks the leftward
         // growth and causes the program to terminate.
@@ -427,20 +302,12 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
         // o o o o o o *
         // _ * _ _ _ o
         // _     *   *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77_r_urgtrpdmorc_t_");
 
         // TEMP: Should not actually be detected as hanging
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-
-        //REQUIRE(tracker.getMaxStepsFound() == 257);
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
-    SECTION( "7x7-FalsePositive5" ) {
+    SECTION("7x7-FalsePositive5") {
         // Very similar in behavior to the previous program.
         //
         // Fix: Same as previous
@@ -452,19 +319,12 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
         // o o o o o o *
         // _ * _ o o o *
         // _   * *   *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77fxgirgorovmosnbt_");
 
         // TEMP: Should not actually be detected as hanging
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
-    SECTION( "7x7-FalsePositive6" ) {
+    SECTION("7x7-FalsePositive6") {
         // Very similar in behavior to the previous program. Possibly a bit more subtle.
         //
         //       *
@@ -474,17 +334,9 @@ TEST_CASE( "7x7 false positives", "[success][7x7][fail]" ) {
         // o o o o o o *
         // _ * _ _ _ o
         // _     *   *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77_r_ufgfrodmorc_t_");
 
         // TEMP: Should not actually be detected as hanging
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
-
-        //REQUIRE(tracker.getMaxStepsFound() == 317);
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
 }
