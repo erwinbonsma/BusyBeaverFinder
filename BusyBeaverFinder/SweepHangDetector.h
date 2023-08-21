@@ -101,7 +101,5 @@ public:
 std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector);
 
 // Helper functions for testing. These rely on the last detected hang being a sweep hang
-SweepEndType rightSweepEndType(const ProgressTracker &tracker);
-SweepEndType leftSweepEndType(const ProgressTracker &tracker);
 SweepEndType rightSweepEndType(const HangExecutor& executor);
 SweepEndType leftSweepEndType(const HangExecutor& executor);

@@ -472,19 +472,6 @@ std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
     return os;
 }
 
-SweepEndType sweepEndType(const ProgressTracker &tracker, bool atRight) {
-    return ((const SweepHangDetector *)tracker.getLastDetectedHang()
-            )->transitionGroup(atRight).endType();
-}
-
-SweepEndType rightSweepEndType(const ProgressTracker &tracker) {
-    return sweepEndType(tracker, true);
-}
-
-SweepEndType leftSweepEndType(const ProgressTracker &tracker) {
-    return sweepEndType(tracker, false);
-}
-
 SweepEndType sweepEndType(const HangExecutor& executor, bool atRight) {
     return ((const SweepHangDetector *)executor.detectedHang()
             )->transitionGroup(atRight).endType();
