@@ -6,10 +6,8 @@
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#include <stdio.h>
 #include "catch.hpp"
 
-#include "ExhaustiveSearcher.h"
 #include "HangExecutor.h"
 
 TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
@@ -150,20 +148,11 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
     }
 }
 
-TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxHangDetectionSteps = 2048;
-    settings.maxSteps = settings.maxHangDetectionSteps;
-    // Prevent No Exit hang detection from also catching some of the hangs below as is test case
-    // is testing the Periodic Hang Detector
-    settings.disableNoExitHangDetection = true;
+TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
+    HangExecutor hangExecutor(1024, 2048);
+    hangExecutor.setMaxSteps(2048);
 
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "6x6-DelayedHang") {
+    SECTION("6x6-DelayedHang") {
         // Classification: Periodic, Constant, Non-Uniform(?), Travelling
         //
         //   * *   *
@@ -175,17 +164,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         //
         // For this program it takes a relatively long time before the hang is started. The hang
         // only starts at Step 158.
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::TURN,Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66hfvkgnsxw_n_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangWithInnerLoop" ) {
+    SECTION("6x6-PeriodicHangWithInnerLoop") {
         // Periodic hang which generates a sequence that extends to the right. It was not detected
         // by an earlier version of the Run Summary-based Periodic Hang Detector as the hang loop
         // contains itself a loop.
@@ -201,16 +185,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // o * o _ *
         // o   * *
         // o
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66fxsnjfpfkri_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangWithInnerLoop2" ) {
+    SECTION("6x6-PeriodicHangWithInnerLoop2") {
         // Another periodic hang with an inner loop.
         //
         //   * * *
@@ -219,17 +199,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // o _ _ _ _ *
         // o * _ o o
         // _       *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66hrsojribol_f");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangWithInnerLoop3" ) {
+    SECTION("6x6-PeriodicHangWithInnerLoop3") {
         // Another periodic hang with an inner loop.
         //
         //   *   * *
@@ -238,16 +213,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // o * * _ o
         // o       *
         // _
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66fxsninqcif__");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-NonUniformCountingLoop1" ) {
+    SECTION("6x6-NonUniformCountingLoop1") {
         // Classification: Periodic, Changing, Non-Uniform, Sentry Go
         //
         // Two values oscillate between zero and non-zero values. A third value is changing by one
@@ -259,23 +230,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         //   _ * o _ *
         // * _ o o *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_xhecnbksonr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-NonUniformCountingLoop2" ) {
+    SECTION("6x6-NonUniformCountingLoop2") {
         // Periodic hang which changes two values. One value is decreased by one each iteration,
         // another is increased by three each iteration. A third value oscillates between -3 and 0.
         //
@@ -288,17 +248,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         //   _ * o o *
         // * _ o o *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::TURN,Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_xhecnblsonr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-DelayedHang2" ) {
+    SECTION("6x6-DelayedHang2") {
         // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
         // around step 410, and every period it extends the sequence with three cells.
         // It generates the following sequence: -2 4 2 -2 4 2 -2 4 2 -2 4 2 -1 3 2 -2 3 1 -1 3 2 0
@@ -320,16 +275,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         //   _ o o *
         // * _ _ o
         // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_rfkhiaorijr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-DelayedHang3" ) {
+    SECTION("6x6-DelayedHang3") {
         // Variant of the previous hang. However, it is sufficiently different that it revealed a
         // bug in the Sweep Hang detector, which was not detected by the previous test.
         //
@@ -339,17 +290,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         //   o o * *
         // * _ o _ _ *
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66b_sbgidxsbn_");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-DelayedHang4" ) {
+    SECTION("6x6-DelayedHang4") {
         // Another variant of the previous hang. It is added as this program set the record in the
         // 6x6 search for requiring the most hang detection attempts before being successfully
         // detected.
@@ -360,16 +306,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         //   _ o o *
         // * _ _ o
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66_rbkhiaorimr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangWithThreeInnerLoops" ) {
+    SECTION("6x6-PeriodicHangWithThreeInnerLoops") {
         // Periodic hang with a period of 136 steps. Each iteration it extends the sequence to the
         // left with four values "1 4 4 1".
         //
@@ -388,17 +330,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // * o _ o _
         // * _ _ _ _ *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66bxgkdouirbnr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::META_PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop" ) {
+    SECTION("6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop") {
         // A periodic hang at the low-level run summary which initially looks like a hang at the
         // meta-run level, but this assumed endless meta-loop is exited. This caused an earlier
         // periodic hang detection implementation to hang.
@@ -409,17 +346,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // * _ _ o o *
         // * * _ * o
         // o o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66ffubecrnxumx");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop2" ) {
+    SECTION("6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop2") {
         // Another program that enters a loop at meta-level but switches enters an endless
         // (periodic) loop at the lower-level without breaking out of the meta-level loop. It
         // caused earlier versions of the Glider and Meta Periodic hang detectors to hang.
@@ -436,17 +368,12 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // * o o _ _ *
         // * * _   *
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66ffbednvbxfmr");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
-    SECTION( "6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop3" ) {
+    SECTION("6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop3") {
         // Initially this program appears to carry out an irregular sweep. However, after about 280
         // steps, it gets locked into a simple periodic loop.
         //
@@ -456,28 +383,18 @@ TEST_CASE( "6x6 Periodic Hang tests", "[hang][periodic][6x6]" ) {
         // o * * _
         // o * _ o *
         // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("66frvkjoq_ooir");
 
-        REQUIRE(tracker.getTotalHangs(HangType::PERIODIC) == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
 }
 
-TEST_CASE( "7x7 Periodic Hang tests", "[hang][periodic][7x7]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxSteps = 1000000;
+TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
+    HangExecutor hangExecutor(1024, 2048);
+    hangExecutor.setMaxSteps(1000000);
 
-    ExhaustiveSearcher searcher(7, 7, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
-    SECTION( "7x7-DelayedPeriodicHang") {
+    SECTION("7x7-DelayedPeriodicHang") {
         // Program that enters a periodic hang after around 800 steps. Earlier versions of the
         // hang detection failed to detect it, as it filled the run history buffer, forcing a
         // premature abort of the hang detection.
@@ -489,14 +406,10 @@ TEST_CASE( "7x7 Periodic Hang tests", "[hang][periodic][7x7]" ) {
         //   o _ o *
         // * _ _ o *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        RunResult result = hangExecutor.execute("77_f_yf_oglsebarnr_");
 
-        REQUIRE(tracker.getTotalDetectedHangs() == 1);
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+
     }
 }
