@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 
-#include <stdio.h>
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"

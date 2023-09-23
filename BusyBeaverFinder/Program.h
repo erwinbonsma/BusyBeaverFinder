@@ -28,6 +28,7 @@ class Program {
     }
     Ins getInstruction(int col, int row) const;
 
+    std::string toSimpleString(const char* charEncoding, bool addLineBreaks = false) const;
 public:
     static Program fromString(std::string s);
 
@@ -66,6 +67,7 @@ public:
      */
     ulonglong getEquivalenceNumber();
 
+    std::string toPlainString() const;
     std::string toWebString() const;
     std::string toString() const;
 

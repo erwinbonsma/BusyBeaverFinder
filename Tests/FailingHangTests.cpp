@@ -162,7 +162,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _   * o o o *
         // _ * _ o o *
         // _   * * *
-        RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqAA");
+        RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -179,7 +179,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _ o _ * o _
         // _ * * _ o o *
         // _       * *
-        RunResult result = hangExecutor.execute("d4CBISCkAUgSQKFgCgA");
+        RunResult result = hangExecutor.execute("d4CBISCkAUgSQKFgCg");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -196,7 +196,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _   _ o _
         // _ * _ _ _ o *
         // _   * * * *
-        RunResult result = hangExecutor.execute("d4KBACCECVgBAIBgqgA");
+        RunResult result = hangExecutor.execute("d4KBACCECVgBAIBgqg");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -213,7 +213,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _ * _ _ _ _
         // _ * o _ o o *
         // _   *   *
-        RunResult result = hangExecutor.execute("dwiCFSQCABggAJFgiAA");
+        RunResult result = hangExecutor.execute("dwiCFSQCABggAJFgiA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -241,7 +241,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // _ o _ o _ *
         // _ * _ o o *
         // _   * * *
-        RunResult result = hangExecutor.execute("d4KBICCUAVgRIIWAqAA");
+        RunResult result = hangExecutor.execute("d4KBICCUAVgRIIWAqA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -262,7 +262,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o * o *
         // _   * _ o *
         // _       *
-        RunResult result = hangExecutor.execute("dwgggmhUoJBWYCGACAA");
+        RunResult result = hangExecutor.execute("dwgggmhUoJBWYCGACA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -283,7 +283,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o * o
         // _ * _ o _ o
         // _     *   *
-        RunResult result = hangExecutor.execute("dyCgCSkVqmRVkIRAIgA");
+        RunResult result = hangExecutor.execute("dyCgCSkVqmRVkIRAIg");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -302,7 +302,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o o o *
         // _ * _ _ _ o
         // _     *   *
-        RunResult result = hangExecutor.execute("dwIAJICYoGRVWIBAIgA");
+        RunResult result = hangExecutor.execute("dwIAJICYoGRVWIBAIg");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -319,7 +319,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o o o *
         // _ * _ o o o *
         // _   * *   *
-        RunResult result = hangExecutor.execute("dyKCUICWIGJVWIVgogA");
+        RunResult result = hangExecutor.execute("dyKCUICWIGJVWIVgog");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -334,7 +334,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o o o *
         // _ * _ _ _ o
         // _     *   *
-        RunResult result = hangExecutor.execute("dwIAJCCSIGBVWIBAIgA");
+        RunResult result = hangExecutor.execute("dwIAJCCSIGBVWIBAIg");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);

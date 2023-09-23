@@ -246,7 +246,7 @@ TEST_CASE("7x7 Glider Hang tests", "[hang][glider][7x7]") {
         //   _ _ * o
         // * _ o * _ *
         // o o *   *
-        RunResult result = hangExecutor.execute("dwgCEoIVpUgCQhiFiAA");
+        RunResult result = hangExecutor.execute("dwgCEoIVpUgCQhiFiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);

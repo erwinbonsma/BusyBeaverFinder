@@ -21,7 +21,7 @@ TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
         // * . o *
         // * o *
         // o o *
-        RunResult result = hangExecutor.execute("VQgJKGJgWAA");
+        RunResult result = hangExecutor.execute("VQgJKGJgWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -34,7 +34,7 @@ TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
         //   o o *
         // * . o *
         // o o *
-        RunResult result = hangExecutor.execute("VQgJIWIYWAA");
+        RunResult result = hangExecutor.execute("VQgJIWIYWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
