@@ -25,7 +25,7 @@ TEST_CASE("6x6 Fast Executor tests", "[6x6][fast-exec]") {
         // _ * _ _ _
         // _ * o _ _ *
         // _   *
-        Program program = Program::fromString("66hfseixf_gbb_");
+        Program program = Program::fromString("ZiiIRkKCACQggA");
         InterpretedProgramBuilder programBuilder =
             InterpretedProgramBuilder::fromProgram(program);
 

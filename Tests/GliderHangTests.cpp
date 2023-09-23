@@ -26,7 +26,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         //   _ * o o
         // * _ o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66_xfecnblsonr");
+        RunResult result = hangExecutor.execute("ZgKCBhFglIWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -40,7 +40,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // o * o o _ *
         // o   _ *
         // o   *
-        RunResult result = hangExecutor.execute("66b_soifpkirk_");
+        RunResult result = hangExecutor.execute("ZggIWECGUkIEgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -54,7 +54,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // o _ o * _
         // o * _ o o *
         // _   *   *
-        RunResult result = hangExecutor.execute("66bfvkibjronbf");
+        RunResult result = hangExecutor.execute("ZgiJUkAkYGFgiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -68,7 +68,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // o * o o _ *
         // o * o *
         // o   *
-        RunResult result = hangExecutor.execute("66brsojfpkprk_");
+        RunResult result = hangExecutor.execute("ZgoIWESGUmYEgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -82,7 +82,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // * _ o * _
         // * * * o o *
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66frvfuksrznio");
+        RunResult result = hangExecutor.execute("ZiIJSJEoYKlkGA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -98,7 +98,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // o * _   o
         // _ * _ o o *
         // _   *   *
-        RunResult result = hangExecutor.execute("66bfvkinocfnbf");
+        RunResult result = hangExecutor.execute("ZgiJUkFmBCFgiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -112,7 +112,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // o _ o * o
         // o * _ _ o *
         // o   *   *
-        RunResult result = hangExecutor.execute("66hfvkiujuoekf");
+        RunResult result = hangExecutor.execute("ZiiJUkJEZGBkiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -128,7 +128,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // o _ o * _
         // o * _ o o *
         // o   *   *
-        RunResult result = hangExecutor.execute("66bfvkjkjronkf");
+        RunResult result = hangExecutor.execute("ZgiJUkUkYGFkiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -144,7 +144,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         //   _ * _ *
         // * *   _
         // o _ o o *
-        RunResult result = hangExecutor.execute("66ffdwvkbfx_jo");
+        RunResult result = hangExecutor.execute("ZiCBZpUgiKAEWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -159,7 +159,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // * _ _ o *
         // * * _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66hfvkvnroxrjr");
+        RunResult result = hangExecutor.execute("ZiiJUpVoGKIEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -174,7 +174,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // * _ o o *
         // * * _ _
         // o _ o *
-        RunResult result = hangExecutor.execute("66hfvkvnsox_jr");
+        RunResult result = hangExecutor.execute("ZiiJUpVoWKAEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -187,7 +187,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         // * _ o   _
         // * * o _ o *
         // o _ o * *
-        RunResult result = hangExecutor.execute("66hfvkd_s_yejx");
+        RunResult result = hangExecutor.execute("ZiiJUhQIQKRkaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -204,7 +204,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
         //   _ * *
         // * *   o o *
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66f_dovkbrxnio");
+        RunResult result = hangExecutor.execute("ZiABWJUgoKFkGA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -246,7 +246,7 @@ TEST_CASE("7x7 Glider Hang tests", "[hang][glider][7x7]") {
         //   _ _ * o
         // * _ o * _ *
         // o o *   *
-        RunResult result = hangExecutor.execute("77b_fkrsnvk_gbefnf_");
+        RunResult result = hangExecutor.execute("dwgCEoIVpUgCQhiFiAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);

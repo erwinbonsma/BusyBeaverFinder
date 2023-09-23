@@ -21,7 +21,7 @@ TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
         // * . o *
         // * o *
         // o o *
-        RunResult result = hangExecutor.execute("55b_uxowao_");
+        RunResult result = hangExecutor.execute("VQgJKGJgWAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -34,7 +34,7 @@ TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
         //   o o *
         // * . o *
         // o o *
-        RunResult result = hangExecutor.execute("55b_usosso_");
+        RunResult result = hangExecutor.execute("VQgJIWIYWAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -55,7 +55,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ _ o *
         // * _ _ _ _ *
         // o o * * *
-        RunResult result = hangExecutor.execute("66brgbco_erbnx");
+        RunResult result = hangExecutor.execute("ZgoCQhGABoAlqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -74,7 +74,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ o *
         // * * * _ _
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66_ff__rvez_io");
+        RunResult result = hangExecutor.execute("ZgCCAAIJRqgEGA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -92,7 +92,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o * *
         // o o *
         // o
-        RunResult result = hangExecutor.execute("66brgkrowrn_i_");
+        RunResult result = hangExecutor.execute("ZgoCUoGJoFgEAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -111,7 +111,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ * * o _
         // _ * _ o o *
         // _     * *
-        RunResult result = hangExecutor.execute("66rrkkcfhifn_x");
+        RunResult result = hangExecutor.execute("ZoIEkhCCkCFgKA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -129,7 +129,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * _ _ o *
         // * _ o *
         // o o *
-        RunResult result = hangExecutor.execute("66brgbdfrosrn_");
+        RunResult result = hangExecutor.execute("ZgoCQhSIGIYFgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -148,7 +148,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o
         // * _ _ _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66brgbdfairfnr");
+        RunResult result = hangExecutor.execute("ZgoCQhSAUICFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -167,7 +167,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ * _ o _ *
         // _     *
         // _
-        RunResult result = hangExecutor.execute("66rrkkcofk_r__");
+        RunResult result = hangExecutor.execute("ZoIEkhGCEgIAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -185,7 +185,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ o _ _ *
         // _ * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66rrkkaocffk_r");
+        RunResult result = hangExecutor.execute("ZoIEkgWBCCEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -204,7 +204,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ o _ o *
         // _ * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66rrkkblcofk_r");
+        RunResult result = hangExecutor.execute("ZoIEkglBGCEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -223,7 +223,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ _ _ o *
         // _ * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66frwknl_ofk_r");
+        RunResult result = hangExecutor.execute("ZiIJkllAGCEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -243,7 +243,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o * * o o *
         // o * _ o *
         // o     *
-        RunResult result = hangExecutor.execute("66fxvbjbqnooir");
+        RunResult result = hangExecutor.execute("ZiKJQkQmlmGEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -260,7 +260,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ * _ o _ *
         // _     *
         // _
-        RunResult result = hangExecutor.execute("66_rtklofk_r__");
+        RunResult result = hangExecutor.execute("ZgIIklGCEgIAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -279,7 +279,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * _ _ o *
         // * _ o *
         // o o *
-        RunResult result = hangExecutor.execute("66_rtklofk_r__");
+        RunResult result = hangExecutor.execute("ZgIIklGCEgIAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -298,7 +298,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o o *
         // * * _ o
         // o _ o *
-        RunResult result = hangExecutor.execute("66frskbivoxijr");
+        RunResult result = hangExecutor.execute("ZiIIUgkJWKEEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -316,7 +316,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * _ _ o _
         // * o o o _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxfncorivknr");
+        RunResult result = hangExecutor.execute("ZgqCFhGIEJUloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -334,7 +334,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   * _ o _
         // * _ _ o o *
         // o _ o * *
-        RunResult result = hangExecutor.execute("66_rbkaofirnjx");
+        RunResult result = hangExecutor.execute("ZgIAkgWCEIFkaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -353,7 +353,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o   * o o *
         // o * _ o *
         // o     *
-        RunResult result = hangExecutor.execute("66_frrmbknooir");
+        RunResult result = hangExecutor.execute("ZgCIIFQklmGEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -369,7 +369,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o *
         // * _ _ _
         // o o o *
-        RunResult result = hangExecutor.execute("66___rhkaor_mr");
+        RunResult result = hangExecutor.execute("ZgAAICkgWIAFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -386,7 +386,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ _ _ _ _ *
         // _ * o _ o
         // _       *
-        RunResult result = hangExecutor.execute("66hrrojr_bgc_f");
+        RunResult result = hangExecutor.execute("ZioIGEYAAiRACA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -403,7 +403,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o * * *
         // * o _
         // o o _ *
-        RunResult result = hangExecutor.execute("66bxgksoeru_lr");
+        RunResult result = hangExecutor.execute("ZgqCUoWBoJAFIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -422,7 +422,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ * _ _
         // * o _ o _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxgksob_uknr");
+        RunResult result = hangExecutor.execute("ZgqCUoWAgJEloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -440,7 +440,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ _ o *
         // _ * _ _
         // _     *
-        RunResult result = hangExecutor.execute("66_ruktiiof__r");
+        RunResult result = hangExecutor.execute("ZgIJEokEGCAAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -460,7 +460,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ _ *
         // * * _ o _ *
         // o o o * *
-        RunResult result = hangExecutor.execute("66_rbkfovbxkmx");
+        RunResult result = hangExecutor.execute("ZgIAkiGJQqElaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -479,7 +479,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o o o _ *
         // o * _ o *
         // o _ _ *
-        RunResult result = hangExecutor.execute("66_rhkvomfooir");
+        RunResult result = hangExecutor.execute("ZgICkpWFSGGEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -494,7 +494,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o _ *
         // * _ _ o _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rbkhiafrkjr");
+        RunResult result = hangExecutor.execute("ZgIAkikASIEkYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -518,7 +518,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o o o
         // * _ _ _ o *
         // o o * * *
-        RunResult result = hangExecutor.execute("66brgbcodirenx");
+        RunResult result = hangExecutor.execute("ZgoCQhGBUIBlqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -537,7 +537,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ o o *
         // _ * _ o *
         // _     *
-        RunResult result = hangExecutor.execute("66fxuktljofo_r");
+        RunResult result = hangExecutor.execute("ZiKJEolEWCGAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -554,7 +554,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ o _
         // * _ _ _ o *
         // o _ o * *
-        RunResult result = hangExecutor.execute("66_rhkdfuirejx");
+        RunResult result = hangExecutor.execute("ZgICkhSJEIBkaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -569,7 +569,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   * * o o *
         // * _ o o *
         // o o o *
-        RunResult result = hangExecutor.execute("66fxvbanhnsomr");
+        RunResult result = hangExecutor.execute("ZiKJQgViloWFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -588,7 +588,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ o _
         // * _ _ _ o *
         // o o * * *
-        RunResult result = hangExecutor.execute("66brgkdfuirenx");
+        RunResult result = hangExecutor.execute("ZgoCUhSJEIBlqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -612,7 +612,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o o o *
         // * _ o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxgkgodosonr");
+        RunResult result = hangExecutor.execute("ZgqCUiWBWIWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
 
@@ -632,7 +632,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ o *
         // * o o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66___xhe_ovonr");
+        RunResult result = hangExecutor.execute("ZgAAKChgGJWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -649,7 +649,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o *
         // * _
         // o o *
-        RunResult result = hangExecutor.execute("66bfgksxe_r_n_");
+        RunResult result = hangExecutor.execute("ZgiCUoaBgIAFgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -667,7 +667,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * * _ *
         // o _ o *
         // _
-        RunResult result = hangExecutor.execute("66_rhksoxrjr__");
+        RunResult result = hangExecutor.execute("ZgICkoWKIEYAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -686,7 +686,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ o o *
         // o * _ o
         // _     *
-        RunResult result = hangExecutor.execute("66_rvktijooi_r");
+        RunResult result = hangExecutor.execute("ZgIJUokEWGEAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -715,7 +715,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ o o *
         // o * _ o
         // o     *
-        RunResult result = hangExecutor.execute("66_rvktijooiir");
+        RunResult result = hangExecutor.execute("ZgIJUokEWGEEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -732,7 +732,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ _ o *
         // _ * _ _
         // _     *
-        RunResult result = hangExecutor.execute("66_ruktliof__r");
+        RunResult result = hangExecutor.execute("ZgIJEolEGCAAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -752,7 +752,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o o *
         // * * _ _ _ *
         // o _ o * *
-        RunResult result = hangExecutor.execute("66_rbksoanxbjx");
+        RunResult result = hangExecutor.execute("ZgIAkoWAVqAkaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -770,7 +770,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ o *
         // * * * _ _
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66ff_wrnvez_io");
+        RunResult result = hangExecutor.execute("ZiCAJoFpRqgEGA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -788,7 +788,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o o *
         // * _ o _ _ *
         // o o * * *
-        RunResult result = hangExecutor.execute("66bxgkdoansbnx");
+        RunResult result = hangExecutor.execute("ZgqCUhWAVoQlqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -809,7 +809,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o *
         // * * _ o
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rukbiaoxijr");
+        RunResult result = hangExecutor.execute("ZgIJEgkAWKEEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -828,7 +828,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ o o *
         // o * _ o
         // _     *
-        RunResult result = hangExecutor.execute("66_rrktijooi_r");
+        RunResult result = hangExecutor.execute("ZgIIEokEWGEAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -847,7 +847,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ o o *
         // o * _ o *
         // _     *
-        RunResult result = hangExecutor.execute("66fxuktljooo_r");
+        RunResult result = hangExecutor.execute("ZiKJEolEWGGAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -866,7 +866,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ * _ _ *
         // o * o _ *
         // _   * *
-        RunResult result = hangExecutor.execute("66_xteinkbpfbr");
+        RunResult result = hangExecutor.execute("ZgKIhkFkgmSAoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -885,7 +885,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o o _ *
         // * * * _ _
         // o o o o *
-        RunResult result = hangExecutor.execute("66ff_rrevkz_mo");
+        RunResult result = hangExecutor.execute("ZiCAIIBpUqgFWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -906,7 +906,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o o _ *
         // * * _ _ _ *
         // o _ o * *
-        RunResult result = hangExecutor.execute("66_rhkrovkxbjx");
+        RunResult result = hangExecutor.execute("ZgICkoGJUqAkaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -925,7 +925,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ _ *
         // *   * o _
         // o o o o *
-        RunResult result = hangExecutor.execute("66bxfnffvbtimo");
+        RunResult result = hangExecutor.execute("ZgqCFiCJQokFWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -942,7 +942,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ _ *
         // * * o o
         // o o o *
-        RunResult result = hangExecutor.execute("66_rhfse_fyimr");
+        RunResult result = hangExecutor.execute("ZgICiIRgCKUFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -961,7 +961,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ o _ *
         // * o * o o
         // o o *   *
-        RunResult result = hangExecutor.execute("66bxfngfukwlnf");
+        RunResult result = hangExecutor.execute("ZgqCFiSJEplFiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -979,7 +979,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ _ *
         // * o o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxfn_fvonr__");
+        RunResult result = hangExecutor.execute("ZgqCFgCJWFoAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -997,7 +997,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ _ _ *
         // o o * o _
         // _       *
-        RunResult result = hangExecutor.execute("66bxfngfubni_f");
+        RunResult result = hangExecutor.execute("ZgqCFiSJAlkACA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1014,7 +1014,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ _ _ *
         // * o * o _
         // o o *   *
-        RunResult result = hangExecutor.execute("66bxfegoubwinf");
+        RunResult result = hangExecutor.execute("ZgqCBiWJApkFiA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1031,7 +1031,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o _ _ o *
         // o * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66frwbniiook_r");
+        RunResult result = hangExecutor.execute("ZiIJglkEGGEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1051,7 +1051,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o o o o *
         // o * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66_rbksomook_r");
+        RunResult result = hangExecutor.execute("ZgIAkoWFWGEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1069,7 +1069,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o o * o o *
         // o * _ o *
         // o     *
-        RunResult result = hangExecutor.execute("66_xfbvbnnooir");
+        RunResult result = hangExecutor.execute("ZgKCApQllmGEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1089,7 +1089,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o *
         // * _ _ o
         // o _ o *
-        RunResult result = hangExecutor.execute("66frskbiaorijr");
+        RunResult result = hangExecutor.execute("ZiIIUgkAWIEEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1106,7 +1106,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ _ *
         // * o _ o *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxfngc_fuonr");
+        RunResult result = hangExecutor.execute("ZgqCFiRACJGFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1124,7 +1124,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ _ *
         // * * * _ o
         // o o o o *
-        RunResult result = hangExecutor.execute("66f__xrevbzcmo");
+        RunResult result = hangExecutor.execute("ZiAAKIBpQqhFWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1141,7 +1141,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ o *
         // * * _ o _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66fxubbnuoxkjr");
+        RunResult result = hangExecutor.execute("ZiKJAglpGKEkYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1163,7 +1163,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ o *
         // * * * _ o
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66_ff_crvezcio");
+        RunResult result = hangExecutor.execute("ZgCCABIJRqhEGA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1182,7 +1182,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o _ o *
         // * * * _ _
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66ff_wrnvez_io");
+        RunResult result = hangExecutor.execute("ZiCAJoFpRqgEGA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1201,7 +1201,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ o _ o *
         // _ * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66rrkk_ocofk_r");
+        RunResult result = hangExecutor.execute("ZoIEkgGBGCEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1219,7 +1219,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o * * o _
         // o * _ o *
         // _     *
-        RunResult result = hangExecutor.execute("66_xukikqioo_r");
+        RunResult result = hangExecutor.execute("ZgKJEkEmkGGAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1238,7 +1238,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ o
         // * _ _ o
         // o o o *
-        RunResult result = hangExecutor.execute("66_rhkao_irimr");
+        RunResult result = hangExecutor.execute("ZgICkgWAEIEFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1259,7 +1259,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o o _ *
         // * * * _ o
         // o _ o o *
-        RunResult result = hangExecutor.execute("66ff_rrnvkzcjo");
+        RunResult result = hangExecutor.execute("ZiCAIIFpUqhEWA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1278,7 +1278,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * _ _ o *
         // * * _ o
         // o o o *
-        RunResult result = hangExecutor.execute("66_r_kbiroximr");
+        RunResult result = hangExecutor.execute("ZgIAEgkIGKEFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1295,7 +1295,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ o _ o *
         // _ * _ o
         // _     *
-        RunResult result = hangExecutor.execute("66rrkkbicofi_r");
+        RunResult result = hangExecutor.execute("ZoIEkgkBGCEAIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1315,7 +1315,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ o
         // * * _ o
         // o o o *
-        RunResult result = hangExecutor.execute("66_rhksouiximr");
+        RunResult result = hangExecutor.execute("ZgICkoWJEKEFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1342,7 +1342,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o *
         // * * _ o _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rbkroaoxkjr");
+        RunResult result = hangExecutor.execute("ZgIAkoGAWKEkYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1368,7 +1368,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o _ o *
         // * _ _ o _ *
         // o o * * *
-        RunResult result = hangExecutor.execute("66bxgkdoaerknx");
+        RunResult result = hangExecutor.execute("ZgqCUhWARoElqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1398,7 +1398,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o o o o *
         // * _ _ o *
         // o o * *
-        RunResult result = hangExecutor.execute("66b_gfaxvnronr");
+        RunResult result = hangExecutor.execute("ZggCSAaJVoGFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1415,7 +1415,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ o o *
         // * _ _ o _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rhkaoaorkjr");
+        RunResult result = hangExecutor.execute("ZgICkgWAWIEkYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1436,7 +1436,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * o _ o _
         // * _ _ o _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxgkdouirknr");
+        RunResult result = hangExecutor.execute("ZgqCUhWJEIEloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1456,7 +1456,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ * o o *
         // * o _ _ _ *
         // o o * * *
-        RunResult result = hangExecutor.execute("66bxgksobnubnx");
+        RunResult result = hangExecutor.execute("ZgqCUoWAlpAlqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1473,7 +1473,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * * _ o o *
         // o o _ * *
         // _   *
-        RunResult result = hangExecutor.execute("66_rbkaoxnlxb_");
+        RunResult result = hangExecutor.execute("ZgIAkgWKFlKAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1491,7 +1491,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o o _ o *
         // o * o _ *
         // o   * *
-        RunResult result = hangExecutor.execute("66_xhevflopfkr");
+        RunResult result = hangExecutor.execute("ZgKChpSFGGSEoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1511,7 +1511,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ * _ o o *
         // _   _ * *
         // _   *
-        RunResult result = hangExecutor.execute("66_xhevflopfkr");
+        RunResult result = hangExecutor.execute("ZgKChpSFGGSEoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1532,7 +1532,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ _ _ o *
         // * _ _ o _ *
         // o o o * *
-        RunResult result = hangExecutor.execute("66_rhkao_erkmx");
+        RunResult result = hangExecutor.execute("ZgICkgWABoElaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1550,7 +1550,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ * _ o o *
         // _   _ * *
         // _   *
-        RunResult result = hangExecutor.execute("66_rtkmofn_xb_");
+        RunResult result = hangExecutor.execute("ZgIIklWCFgKAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1577,7 +1577,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o   o *
         // * _ _ o _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66_rhkdocorknr");
+        RunResult result = hangExecutor.execute("ZgICkhWBGIEloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1597,7 +1597,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o o o *
         // * _ _ o _ *
         // o o o *
-        RunResult result = hangExecutor.execute("66_rhkdodorkmr");
+        RunResult result = hangExecutor.execute("ZgICkhWBWIElYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1615,7 +1615,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o o o *
         // * _ _ o _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rbkhodorkjr");
+        RunResult result = hangExecutor.execute("ZgIAkimBWIEkYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1634,7 +1634,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   o _ o o *
         // * _ _ _ _ *
         // o o * * *
-        RunResult result = hangExecutor.execute("66bxgkdocnrbnx");
+        RunResult result = hangExecutor.execute("ZgqCUhWBFoAlqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1654,7 +1654,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //   _ * o _
         // * o _ _ _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxgksobiubnr");
+        RunResult result = hangExecutor.execute("ZgqCUoWAkJAloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1672,7 +1672,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // o o o o *
         // - * o _ *
         // _   * *
-        RunResult result = hangExecutor.execute("66_xheufmogfbr");
+        RunResult result = hangExecutor.execute("ZgKChpCFWCSAoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -1702,7 +1702,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // ? o * _ _ ?
         // * _ _ o _ *
         // o o * * ? ?
-        RunResult result = hangExecutor.execute("66brgkcoe_rknr");
+        RunResult result = hangExecutor.execute("ZgoCUhGBgIEloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);

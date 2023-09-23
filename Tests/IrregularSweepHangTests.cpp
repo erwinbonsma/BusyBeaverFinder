@@ -26,7 +26,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         // * o _ o *
         // * _ o *
         // o o *
-        RunResult result = hangExecutor.execute("66bxgkaouosrn_");
+        RunResult result = hangExecutor.execute("ZgqCUgWJGIYFgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -44,7 +44,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         // o _ _ o *
         // o * _ o *
         // o     *
-        RunResult result = hangExecutor.execute("66_r_ktlioooir");
+        RunResult result = hangExecutor.execute("ZgIAEolEGGGEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -62,7 +62,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         //   o o *
         // * _ o
         // o o *
-        RunResult result = hangExecutor.execute("66b_gfg_drs_n_");
+        RunResult result = hangExecutor.execute("ZggCSCQBYIQFgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -81,7 +81,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         // * _ o o *
         // * _ o *
         // o o *
-        RunResult result = hangExecutor.execute("66bxgkdososrn_");
+        RunResult result = hangExecutor.execute("ZgqCUhWIWIYFgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -99,7 +99,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         //   o o o *
         // * _ o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxgkgfdosonr");
+        RunResult result = hangExecutor.execute("ZgqCUiSBWIWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -119,7 +119,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         //   o o o *
         // * _ o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66brgbgodosonr");
+        RunResult result = hangExecutor.execute("ZgoCQiWBWIWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -138,7 +138,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         //     o o *
         // * * _ o
         // o o o *
-        RunResult result = hangExecutor.execute("66_rbkbiaoximr");
+        RunResult result = hangExecutor.execute("ZgIAkgkAWKEFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -155,7 +155,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         // o o o o *
         // o * _ o
         // o     *
-        RunResult result = hangExecutor.execute("66_rbktimooiir");
+        RunResult result = hangExecutor.execute("ZgIAkokFWGEEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -174,7 +174,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         // _ _ _ o *
         // _ * _ o _ *
         // _     *
-        RunResult result = hangExecutor.execute("66frwkno_ofk_r");
+        RunResult result = hangExecutor.execute("ZiIJklmAGCEgIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
@@ -194,7 +194,7 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         //   _ * _
         // * _ o o *
         // o o o *
-        RunResult result = hangExecutor.execute("66brgksob_somr");
+        RunResult result = hangExecutor.execute("ZgoCUoWAgIWFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);

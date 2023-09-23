@@ -27,7 +27,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
         // * _ _ _ _ *
         // * * o _ *
         // o o o *
-        RunResult result = hangExecutor.execute("66_xhkskrbyfmr");
+        RunResult result = hangExecutor.execute("ZgKCkoUoAqSFYA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -42,7 +42,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
         // * o _ _ _ *
         // *   * o o
         // o _ _ o *
-        RunResult result = hangExecutor.execute("66bxfngoubtlio");
+        RunResult result = hangExecutor.execute("ZgqCFiWJAolEGA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -60,7 +60,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
         // * o o _ _
         // * * _ o _ *
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rhksov_xkjr");
+        RunResult result = hangExecutor.execute("ZgICkoWJQKEkYA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::DATA_ERROR);
@@ -75,7 +75,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
         //   _ o o *
         // * _ _ o _ *
         // o o o *
-        RunResult result = hangExecutor.execute("66bxgkhiaorkmr");
+        RunResult result = hangExecutor.execute("ZgqCUikAWIElYA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::DATA_ERROR);
@@ -96,7 +96,7 @@ TEST_CASE("6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x
         // o   * o *
         // _ * _ o *
         // _     *
-        RunResult result = hangExecutor.execute("66fxubnnkofo_r");
+        RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::DATA_ERROR);
@@ -124,7 +124,7 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // * _ _ _ _ *
         // * * o o *
         // o _ o *
-        RunResult result = hangExecutor.execute("66_xhkvkrbyojr");
+        RunResult result = hangExecutor.execute("ZgKCkpUoAqWEYA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -143,7 +143,7 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         //   o o * *
         // * _ o _ *
         // o o *
-        RunResult result = hangExecutor.execute("66b_gbgidxsfn_");
+        RunResult result = hangExecutor.execute("ZggCQiUBaISFgA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::DATA_ERROR);
@@ -162,7 +162,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _   * o o o *
         // _ * _ o o *
         // _   * * *
-        RunResult result = hangExecutor.execute("77thc_fb_gmrvosobx_");
+        RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqAA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -179,7 +179,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _ o _ * o _
         // _ * * _ o o *
         // _       * *
-        RunResult result = hangExecutor.execute("77rfcsfhiakag_xn_h_");
+        RunResult result = hangExecutor.execute("d4CBISCkAUgSQKFgCgA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -196,7 +196,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _   _ o _
         // _ * _ _ _ o *
         // _   * * * *
-        RunResult result = hangExecutor.execute("77rxc_ffign_c_rebz_");
+        RunResult result = hangExecutor.execute("d4KBACCECVgBAIBgqgA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -213,7 +213,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _ * _ _ _ _
         // _ * o _ o o *
         // _   *   *
-        RunResult result = hangExecutor.execute("77bffmg_f_eb__unbf_");
+        RunResult result = hangExecutor.execute("dwiCFSQCABggAJFgiAA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
@@ -241,7 +241,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // _ o _ o _ *
         // _ * _ o o *
         // _   * * *
-        RunResult result = hangExecutor.execute("77rxcrfgianacrsobx_");
+        RunResult result = hangExecutor.execute("d4KBICCUAVgRIIWAqAA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -262,7 +262,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o * o *
         // _   * _ o *
         // _       *
-        RunResult result = hangExecutor.execute("77bbbbqdkrudprfo_f_");
+        RunResult result = hangExecutor.execute("dwgggmhUoJBWYCGACAA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -283,7 +283,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o * o
         // _ * _ o _ o
         // _     *   *
-        RunResult result = hangExecutor.execute("77fh_ghjnzpdnisc_t_");
+        RunResult result = hangExecutor.execute("dyCgCSkVqmRVkIRAIgA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -302,7 +302,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o o o *
         // _ * _ _ _ o
         // _     *   *
-        RunResult result = hangExecutor.execute("77_r_urgtrpdmorc_t_");
+        RunResult result = hangExecutor.execute("dwIAJICYoGRVWIBAIgA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -319,7 +319,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o o o *
         // _ * _ o o o *
         // _   * *   *
-        RunResult result = hangExecutor.execute("77fxgirgorovmosnbt_");
+        RunResult result = hangExecutor.execute("dyKCUICWIGJVWIVgogA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -334,7 +334,7 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // o o o o o o *
         // _ * _ _ _ o
         // _     *   *
-        RunResult result = hangExecutor.execute("77_r_ufgfrodmorc_t_");
+        RunResult result = hangExecutor.execute("dwIAJCCSIGBVWIBAIgA");
 
         // TEMP: Should not actually be detected as hanging
         REQUIRE(result == RunResult::DETECTED_HANG);

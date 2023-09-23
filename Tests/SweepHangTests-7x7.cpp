@@ -31,7 +31,7 @@ TEST_CASE("7x7 sweep hangs", "[hang][7x7][sweep][irregular]") {
         // _ o _ o *
         // _ * _ o *
         // _     *
-        RunResult result = hangExecutor.execute("77rfcyfaobnae_sr_r_");
+        RunResult result = hangExecutor.execute("d4CBKSAWAlgRgIYAIAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);

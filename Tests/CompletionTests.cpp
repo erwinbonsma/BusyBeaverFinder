@@ -19,7 +19,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
         // (it changed from one, to zero, back to one). At Step 102 this value is two (a diverging
         // delta) but it does not touch zero anymore, which means that subsequent program flow
         // diverges.
-        RunResult result = hangExecutor.execute("66bfrniujnpbbf");
+        RunResult result = hangExecutor.execute("ZgiIFkJEVmQgiA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 116);
@@ -28,7 +28,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
         // An example where after 220 steps the snapshot delta is the same, but a newly visited
         // value was not zero. This hang was not detected, as there was an error in the check for
         // sequences extending to the left.
-        RunResult result = hangExecutor.execute("66bxgkdosirenx");
+        RunResult result = hangExecutor.execute("ZgqCUhWIUIBlqA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 373);
@@ -36,7 +36,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
     SECTION("ComplexCountToNine") {
         // Program that was wrongly reported as hanging by an early version of the Periodic Hang
         // Detector refactored to use RunSummary.
-        RunResult result = hangExecutor.execute("66hfvkrcjuockf");
+        RunResult result = hangExecutor.execute("ZiiJUoBEZGBEiA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 148);
@@ -44,7 +44,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
     SECTION("PreviouslyAFalsePositiveOfExitFinder") {
         // Program that was wrongly reported as hanging by an early version of the Exit Finder with
         // reachability analysis. It failed due to a missing call to InterpretedProgram::enterBlock.
-        RunResult result = hangExecutor.execute("66f_cf_nskrunf");
+        RunResult result = hangExecutor.execute("ZiABCAFoUoJFiA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 24);
@@ -52,7 +52,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
     SECTION("FakeSweeper") {
         // Program that was wrongly reported as hanging by an earlier version of the Sweep Hang
         // detector
-        RunResult result = hangExecutor.execute("66bxfnf__ovonr");
+        RunResult result = hangExecutor.execute("ZgqCFiAAGJWFoA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 171);
@@ -64,7 +64,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
     hangExecutor.setMaxSteps(40000000);
 
     SECTION("BB 7x7 #117273") {
-        RunResult result = hangExecutor.execute("77brbmhdxtcudrro_x_");
+        RunResult result = hangExecutor.execute("dwoAlShaIhJBYIGAKAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 117273);
@@ -77,13 +77,13 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // .   . * o .
         // . * . . . . *
         // .       *
-        RunResult result = hangExecutor.execute("77fzgagpifn_g_rb_f_");
+        RunResult result = hangExecutor.execute("dyKiQSWUCFgCQIAgCAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 140164);
     }
     SECTION("BB 7x7 #177557") {
-        RunResult result = hangExecutor.execute("77btbjhmrea_vqafnr_");
+        RunResult result = hangExecutor.execute("dwogkSlYBgQJWgSFoAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 177557);
@@ -114,7 +114,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // _ o _ o o *
         // _ * _ o _ o *
         // _   * * * _
-        RunResult result = hangExecutor.execute("77_rbchcrklsdrsebx_");
+        RunResult result = hangExecutor.execute("dwIAhChIElIRYIRgqAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 422155);
@@ -127,43 +127,43 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // o   _ * o _
         // _ * _ _ _ _ *
         // _       *
-        RunResult result = hangExecutor.execute("77fzgagpioncg_rb_f_");
+        RunResult result = hangExecutor.execute("dyKiQSWUGFhCQIAgCAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 582562);
     }
     SECTION("BB 7x7 #690346") {
-        RunResult result = hangExecutor.execute("77frgk_pkvnco_sobf_");
+        RunResult result = hangExecutor.execute("dyICUgGUpVhGAIWAiAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 690346);
     }
     SECTION("BB 7x7 #706369") {
-        RunResult result = hangExecutor.execute("77hhgifunawfmto_nf_");
+        RunResult result = hangExecutor.execute("dyiiUCJFgZiFYmAFiAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 706369);
     }
     SECTION("BB 7x7 #847273") {
-        RunResult result = hangExecutor.execute("77b_birv_axfmqh_ie_");
+        RunResult result = hangExecutor.execute("dwgAkIJQAaCFWigEBgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 847273);
     }
     SECTION("BB 7x7 #874581") {
-        RunResult result = hangExecutor.execute("77btbmhmrspavqafnr_");
+        RunResult result = hangExecutor.execute("dwoglSlYIWQZWgSFoAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 874581);
     }
     SECTION("BB 7x7 #950175") {
-        RunResult result = hangExecutor.execute("77hbgkfeegmxdhgein_");
+        RunResult result = hangExecutor.execute("dygiUiBhiVaBSiRkFgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 950175);
     }
     SECTION("BB 7x7 #951921") {
-        RunResult result = hangExecutor.execute("77hhgafviawfmtoknf_");
+        RunResult result = hangExecutor.execute("dyiiQSJUAZiFYmEliAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 951921);
@@ -178,7 +178,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // o _ _ o o *
         // _ *   * _
         // _       *
-        RunResult result = hangExecutor.execute("77fb_hqmntjcdrt__f_");
+        RunResult result = hangExecutor.execute("dyAgCmlVokRBYIgACAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 1237792);
@@ -191,13 +191,13 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // * _ _ o o o *
         // * _   * _ _
         // o _ _ _ o *
-        RunResult result = hangExecutor.execute("77fxgcrykaofdqb_ie_");
+        RunResult result = hangExecutor.execute("dyKCRIKUgWCBWggEBgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 1659389);
     }
     SECTION("BB 7x7 #1842683") {
-        RunResult result = hangExecutor.execute("77b_birvbayfmqq_nb_");
+        RunResult result = hangExecutor.execute("dwgAkIJQgaSFWmgFggA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 1842683);
@@ -210,7 +210,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // o _ _ o o *
         // _ * _ _ o *
         // _       *
-        RunResult result = hangExecutor.execute("77f__bbdkzucdrro_f_");
+        RunResult result = hangExecutor.execute("dyAAAghUqpBBYIGACAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 3007569);
@@ -223,7 +223,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // o _ _ o o *
         // _ * _ _ o *
         // _       *
-        RunResult result = hangExecutor.execute("77fb_hbmktucdrro_f_");
+        RunResult result = hangExecutor.execute("dyAgCglUopBBYIGACAA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 8447143);
@@ -236,7 +236,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // * _ _ o o o *
         // o _ o * _ _
         // o _       *
-        RunResult result = hangExecutor.execute("77fxgcrykaofdpe_ib_");
+        RunResult result = hangExecutor.execute("dyKCRIKUgWCBWRgEAgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 9408043);
@@ -249,7 +249,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // * _ o o o _ *
         // * _ * _ _ _ *
         // o _ _ o * *
-        RunResult result = hangExecutor.execute("77_z_vfvoaufmhfbiq_");
+        RunResult result = hangExecutor.execute("dwKgJSJWAZCFSiAkGgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 9607923);
@@ -264,7 +264,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // * _ _ o o o *
         // * _   * _ _
         // o _ _ o o *
-        RunResult result = hangExecutor.execute("77fxgcrykaofdqb_in_");
+        RunResult result = hangExecutor.execute("dyKCRIKUgWCBWggEFgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 10981971);
@@ -277,7 +277,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // * _ _ o o o *
         // o o o * _ _
         // _ _       *
-        RunResult result = hangExecutor.execute("77fxgcrykaofdpn__b_");
+        RunResult result = hangExecutor.execute("dyKCRIKUgWCBWVgAAgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 22606881);
@@ -290,7 +290,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         // * _ o o o o *
         // * _ * _ _ o *
         // o _ _ _ o *
-        RunResult result = hangExecutor.execute("77hfgirvbaxfmqfeie_");
+        RunResult result = hangExecutor.execute("dyiCUIJQgaCFWiBkBgA");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 33207907);

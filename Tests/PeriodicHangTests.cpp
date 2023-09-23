@@ -21,7 +21,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // o . . . *
         // . * . .
         // .     *
-        RunResult result = hangExecutor.execute("55_bfcbf_b_");
+        RunResult result = hangExecutor.execute("VQAiBAiAAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::NO_DATA_LOOP);
@@ -34,7 +34,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // . . o .
         // . * . .
         // .     *
-        RunResult result = hangExecutor.execute("55ta_rif_b_");
+        RunResult result = hangExecutor.execute("VYgQIECAAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -51,7 +51,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // o . . o *
         // . * o . *
         // .     *
-        RunResult result = hangExecutor.execute("55btduegfb_");
+        RunResult result = hangExecutor.execute("VQohZBiSAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -64,7 +64,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         //   . o o *
         // * * o . *
         // o o o *
-        RunResult result = hangExecutor.execute("55btmrnygn_");
+        RunResult result = hangExecutor.execute("VQolYFqSVgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -79,7 +79,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // . * o .
         // .   . *
         // .   *
-        RunResult result = hangExecutor.execute("55ta_ti_rf_");
+        RunResult result = hangExecutor.execute("VYgQIkAICAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -94,7 +94,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // o . . o *
         // . * . o
         // .     *
-        RunResult result = hangExecutor.execute("55_tguefib_");
+        RunResult result = hangExecutor.execute("VQIiZBiEAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -110,7 +110,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // o . . . *
         // . * . .
         // .     *
-        RunResult result = hangExecutor.execute("55htdubf_b_");
+        RunResult result = hangExecutor.execute("VSohZAiAAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -123,7 +123,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // o . o . *
         // . * . . *
         // .     *
-        RunResult result = hangExecutor.execute("55htdukf_b_");
+        RunResult result = hangExecutor.execute("VSohZEiAAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -141,7 +141,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
         // o . o o *
         // . * . . *
         // .     *
-        RunResult result = hangExecutor.execute("55htdunffb_");
+        RunResult result = hangExecutor.execute("VSohZFiCAgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -164,7 +164,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         //
         // For this program it takes a relatively long time before the hang is started. The hang
         // only starts at Step 158.
-        RunResult result = hangExecutor.execute("66hfvkgnsxw_n_");
+        RunResult result = hangExecutor.execute("ZiiJUiVoaJgFgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -185,7 +185,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // o * o _ *
         // o   * *
         // o
-        RunResult result = hangExecutor.execute("66fxsnjfpfkri_");
+        RunResult result = hangExecutor.execute("ZiKIVkSGSEoEAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -199,7 +199,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // o _ _ _ _ *
         // o * _ o o
         // _       *
-        RunResult result = hangExecutor.execute("66hrsojribol_f");
+        RunResult result = hangExecutor.execute("ZioIWEYEAmFACA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -213,7 +213,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // o * * _ o
         // o       *
         // _
-        RunResult result = hangExecutor.execute("66fxsninqcif__");
+        RunResult result = hangExecutor.execute("ZiKIVkFmhECAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -230,7 +230,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         //   _ * o _ *
         // * _ o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66_xhecnbksonr");
+        RunResult result = hangExecutor.execute("ZgKChhFgkoWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -248,7 +248,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         //   _ * o o *
         // * _ o o *
         // o o * *
-        RunResult result = hangExecutor.execute("66_xhecnblsonr");
+        RunResult result = hangExecutor.execute("ZgKChhFglIWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -275,7 +275,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         //   _ o o *
         // * _ _ o
         // o _ o *
-        RunResult result = hangExecutor.execute("66_rfkhiaorijr");
+        RunResult result = hangExecutor.execute("ZgICEikAWIEEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -290,7 +290,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         //   o o * *
         // * _ o _ _ *
         // o o *
-        RunResult result = hangExecutor.execute("66b_sbgidxsbn_");
+        RunResult result = hangExecutor.execute("ZggIQiUBaIQlgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -306,7 +306,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         //   _ o o *
         // * _ _ o
         // o o o *
-        RunResult result = hangExecutor.execute("66_rbkhiaorimr");
+        RunResult result = hangExecutor.execute("ZgIAkikAWIEFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -330,7 +330,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // * o _ o _
         // * _ _ _ _ *
         // o o * *
-        RunResult result = hangExecutor.execute("66bxgkdouirbnr");
+        RunResult result = hangExecutor.execute("ZgqCUhWJEIAloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
@@ -346,7 +346,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // * _ _ o o *
         // * * _ * o
         // o o o * *
-        RunResult result = hangExecutor.execute("66ffubecrnxumx");
+        RunResult result = hangExecutor.execute("ZiCJAhhIFqJFaA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -368,7 +368,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // * o o _ _ *
         // * * _   *
         // o o o *
-        RunResult result = hangExecutor.execute("66ffbednvbxfmr");
+        RunResult result = hangExecutor.execute("ZiCAhhVpQqCFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -383,7 +383,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         // o * * _
         // o * _ o *
         // o     *
-        RunResult result = hangExecutor.execute("66frvkjoq_ooir");
+        RunResult result = hangExecutor.execute("ZiIJUkWGgGGEIA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
@@ -406,7 +406,7 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         //   o _ o *
         // * _ _ o *
         // o o * *
-        RunResult result = hangExecutor.execute("77_f_yf_oglsebarnr_");
+        RunResult result = hangExecutor.execute("dwCAKSAGCVIRggYFoAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
