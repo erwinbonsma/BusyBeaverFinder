@@ -81,15 +81,17 @@ class ExhaustiveSearcher {
 public:
     ExhaustiveSearcher(int width, int height, SearchSettings settings);
 
-    SearchSettings getSettings() { return _settings; }
+    SearchSettings getSettings() const { return _settings; }
 
-    bool getHangDetectionTestMode() { return _settings.testHangDetection; }
+    bool getHangDetectionTestMode() const { return _settings.testHangDetection; }
 
-    ProgressTracker* getProgressTracker() { return _tracker; }
+    ProgressTracker* getProgressTracker() const { return _tracker; }
     void setProgressTracker(ProgressTracker* tracker);
 
     const Program& getProgram() const { return _program; }
     const InterpretedProgram& getInterpretedProgram() const { return _programBuilder; }
+
+    const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 
     //----------------------------------------------------------------------------------------------
 

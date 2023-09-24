@@ -29,7 +29,7 @@ InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& progra
         const ProgramBlock* block = builder.buildActiveBlock(program);
 
         // Add new continuation blocks to stack
-        if (!block->isExit()) {
+        if (block && !block->isExit()) {
             if (block->nonZeroBlock() && !block->nonZeroBlock()->isFinalized()) {
                 stack.push_back(block->nonZeroBlock());
             }

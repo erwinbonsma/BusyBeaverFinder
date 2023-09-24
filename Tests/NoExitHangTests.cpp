@@ -11,13 +11,21 @@
 
 #include "ExhaustiveSearcher.h"
 
+bool canExitFromBlock(std::string programSpec, int numSteps) {
+    Program program = Program::fromString(programSpec);
+    InterpretedProgramBuilder interpretedProgram = InterpretedProgramBuilder::fromProgram(program);
+
+    FastExecutor fastExecutor(1024);
+    fastExecutor.setMaxSteps(numSteps);
+    RunResult result = fastExecutor.execute(&interpretedProgram);
+
+    REQUIRE(result == RunResult::ASSUMED_HANG);
+
+    ExitFinder exitFinder(program, interpretedProgram);
+    return exitFinder.canExitFrom(fastExecutor.lastProgramBlock());
+}
+
 TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
-    SearchSettings settings = defaultSearchSettings;
-    ExhaustiveSearcher searcher(6, 6, settings);
-    ProgressTracker tracker(searcher);
-
-    searcher.setProgressTracker(&tracker);
-
     SECTION( "6x6-SweepWithBinaryCounter" ) {
         // Irregular sweep hang. At the left it extends normally, one cell per sweep. At the right
         // side it maintains a binary counter, and extends when it overflows.
@@ -28,14 +36,9 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // _ o _ o *
         // _ * _ o *
         // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zr/0r1khGyGz7w", 19);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-ThreeWidthGlider" ) {
         // Generates an irregular glider that has a width of three data cells.
@@ -46,15 +49,9 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // * _ o o *
         // * * _ *
         // o o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zuq5UpVoW6L1bw", 58);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-Glider-PpOnlyReverses" ) {
         // Generates another glider. Here the program logic is intereseting. Once in the hang loop,
@@ -67,15 +64,9 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // * _ o _ o *
         // * *   o *
         // o _ _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP,
-            Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zu65Etw4Rq20Gw", 26);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-ForcedTurn" ) {
         // Program that contains a forced turn, i.e. a block that is entered with a zero value and
@@ -104,14 +95,9 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // * _ o * *
         // * o *
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zvv/AuU4a5v1vw", 19);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-PreviouslyUndetected1" ) {
         // Hang that was not detected by the old NoExitHangDetector. It was not investigated why,
@@ -123,35 +109,11 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // o   _ o *
         // o * _ o *
         // o     *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP,
-            Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zr70Ank3G2G37w", 47);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-PreviouslyUndetected2" ) {
-        // Hang that was not detected by the old NoExitHangDetector. It was not investigated why,
-        // as it suffices that the new ExitFinder correclty detects it.
-        //
-        //     *
-        //     _ _ _ *
-        //   * o o _
-        // * _ o * *
-        // * o *
-        // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::TURN, Ins::DATA, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
-
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
-    }
-    SECTION( "6x6-PreviouslyUndetected3" ) {
         // Hang that was not detected by the old NoExitHangDetector. It was not investigated why,
         // as it suffices that the new ExitFinder correclty detects it.
         //
@@ -161,14 +123,9 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // o _ _ o *
         // _ * _ o *
         // _     *
-        Ins resumeFrom[] = {
-            Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zv7/wrk0GyGz7w", 21);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-IrregularSweep") {
         // An irregular sweep. Its turning point at one end of the sequence varies. The reason is
@@ -186,15 +143,9 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         //   _ o _
         // * _ _ o *
         // o o * *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zvq+UtW8T4G1rw", 29);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
     SECTION( "6x6-IrregularSweep2") {
         // Another irregular sweep.
@@ -211,16 +162,11 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         // * _ _ o *
         // * _   *
         // o o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zv7+ktW4G471vw", 36);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
-    SECTION( "6x6-IrregularSweep4" ) {
+    SECTION( "6x6-IrregularSweep3" ) {
         // An irregular sweep that was wrongly found by an early version of the Regular Sweep Hang
         // detector. Moving right, it shifts DP two positions each time. As a result, it skips over
         // some values. Initially, the sequence seems to have balanced grow, but it is broken up by
@@ -251,14 +197,8 @@ TEST_CASE( "6x6 No Exit Hang Tests", "[hang][6x6][noexit]" ) {
         //   - o o *
         // * _ _ o *
         // o _ o *
-        Ins resumeFrom[] = {
-            Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN,
-            Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
-            Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::TURN,
-            Ins::TURN, Ins::TURN, Ins::UNSET
-        };
-        searcher.findOne(resumeFrom);
+        bool canExit = canExitFromBlock("Zu65Uuk8W4G0bw", 419);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(!canExit);
     }
 }
