@@ -223,49 +223,35 @@ bool deltasCanSumTo(std::set<int> deltas, int target) {
     return false;
 }
 
-// Returns nullptr when input did not contain any instructions (this could be a comment line)
-Ins* loadResumeStackFromStream(std::istream &input, int maxSize) {
-    Ins* resumeStack = nullptr;
+void loadResumeStackFromStream(std::istream &input, std::vector<Ins> &resumeStack) {
     int intVal;
-    int numInstructions = 0;
 
+    resumeStack.clear();
     while (input >> intVal) {
-        if (resumeStack == nullptr) {
-            // Lazily allocate it
-            resumeStack = new Ins[maxSize + 1];
-        }
-        resumeStack[numInstructions++] = (Ins)intVal;
-        assert(numInstructions < maxSize);
+        resumeStack.push_back((Ins)intVal);
     }
-
-    if (resumeStack != nullptr) {
-        resumeStack[numInstructions] = Ins::UNSET;
-    }
-
-    return resumeStack;
 }
 
 // Loads a resume stack from file. It expects the stack to be on a single line, but will skip
 // comment lines.
-Ins* loadResumeStackFromFile(std::string inputFile, int maxSize) {
+bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStack) {
     std::cout << "Resuming from " << inputFile << std::endl;
 
     std::ifstream input(inputFile);
     if (!input) {
         std::cout << "Could not read file" << std::endl;
-        return nullptr;
+        return false;
     }
 
-    Ins* resumeStack = nullptr;
     std::string line;
-    while (resumeStack == nullptr && getline(input, line)) {
+    while (resumeStack.empty() && getline(input, line)) {
         std::replace(line.begin(), line.end(), ',', ' ');
 
         std::istringstream iss(line);
-        resumeStack = loadResumeStackFromStream(iss, maxSize);
+        loadResumeStackFromStream(iss, resumeStack);
     }
 
-    return resumeStack;
+    return !resumeStack.empty();
 }
 
 void dumpDataBuffer(int* buf, int* dataP, int size) {
@@ -284,16 +270,8 @@ void dumpDataBuffer(int* buf, int* dataP, int size) {
     std::cout << std::endl;
 }
 
-void dumpInstructionStack(Ins* stack) {
-    while (*stack != Ins::UNSET) {
-        std::cout << (int)*stack << ",";
-        stack++;
-    }
-    std::cout << std::endl;
-}
-
-void dumpInstructionStack(std::vector<Ins> stack) {
-    for (Ins& ins : stack) {
+void dumpInstructionStack(const std::vector<Ins> &stack) {
+    for (const Ins& ins : stack) {
         std::cout << (int)ins << ",";
     }
     std::cout << std::endl;

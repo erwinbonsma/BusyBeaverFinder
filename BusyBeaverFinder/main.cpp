@@ -18,7 +18,7 @@
 ExhaustiveSearcher* searcher;
 ProgressTracker* tracker;
 
-Ins* resumeStack = nullptr;
+std::vector<Ins> resumeStack;
 std::string lateEscapeFile;
 
 void init(int argc, char * argv[]) {
@@ -81,7 +81,9 @@ void init(int argc, char * argv[]) {
     if (result.count("resume-from")) {
         std::string resumeFile = result["resume-from"].as<std::string>();
 
-        resumeStack = loadResumeStackFromFile(resumeFile, width * height);
+        if (!loadResumeStackFromFile(resumeFile, resumeStack)) {
+            std::cerr << "Failed to read resume stack from " << resumeFile << std::endl;
+        }
     }
 
     tracker = new ProgressTracker(*searcher);
@@ -105,8 +107,8 @@ int main(int argc, char * argv[]) {
     init(argc, argv);
 
     searcher->dumpSettings();
-    if (resumeStack != nullptr) {
-        searcher->search((Ins*)resumeStack);
+    if (!resumeStack.empty()) {
+        searcher->search(resumeStack);
     }
     else if (!lateEscapeFile.empty()) {
         searchLateEscapes(*searcher, lateEscapeFile);

@@ -169,7 +169,7 @@ void ExhaustiveSearcher::buildBlock(const ProgramBlock* block) {
 }
 
 void ExhaustiveSearcher::branch() {
-    bool resuming = *_resumeFrom != Ins::UNSET;
+    bool resuming = _resumeIns != _resumeEnd;
     bool abortSearch = (_searchMode == SearchMode::FIND_ONE
                         || (_searchMode == SearchMode::SUB_TREE && resuming));
     InstructionPointer ip = nextInstructionPointer(_pp);
@@ -178,8 +178,8 @@ void ExhaustiveSearcher::branch() {
         Ins ins = validInstructions[i];
 
         if (resuming) {
-            if (ins == *_resumeFrom) {
-                _resumeFrom++;
+            if (ins == *_resumeIns) {
+                _resumeIns++;
 
                 resuming = false; // Let search continue in FULL_TREE search mode
             } else {
@@ -210,7 +210,7 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    if (_programExecutor == &_fastExecutor && *_resumeFrom == Ins::UNSET) {
+    if (_programExecutor == &_fastExecutor && _resumeIns == _resumeEnd) {
         // We're done resuming and switching to the hang executor. Pass how many steps of the
         // current program have already been executed by the fast executor. Hang detection can be
         // disabled up till then. We are about to execute a new program block, so up till this
@@ -261,9 +261,11 @@ void ExhaustiveSearcher::run() {
     executor->pop();
 }
 
-Ins noResumeStack[] = { Ins::UNSET };
+std::vector<Ins> emptyStack;
 void ExhaustiveSearcher::search() {
-    _resumeFrom = noResumeStack;
+    _resumeIns = emptyStack.cbegin();
+    _resumeEnd = emptyStack.cend();
+
     _programExecutor = &_hangExecutor;
 
     // Note: Even though the searcher can carry out multiple searches, there is no need to reset
@@ -273,17 +275,18 @@ void ExhaustiveSearcher::search() {
     run();
 }
 
-void ExhaustiveSearcher::search(Ins* resumeFrom) {
-    _resumeFrom = resumeFrom;
+void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom) {
+    _resumeIns = resumeFrom.cbegin();
+    _resumeEnd = resumeFrom.cend();
     _programExecutor = &_fastExecutor;
 
     std::cout << "Resuming from: ";
-    ::dumpInstructionStack(_resumeFrom);
+    ::dumpInstructionStack(resumeFrom);
 
     run();
 }
 
-void ExhaustiveSearcher::searchSubTree(Ins* resumeFrom) {
+void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom) {
     _searchMode = SearchMode::SUB_TREE;
     search(resumeFrom);
     _searchMode = SearchMode::FULL_TREE;
@@ -295,7 +298,7 @@ void ExhaustiveSearcher::findOne() {
     _searchMode = SearchMode::FULL_TREE;
 }
 
-void ExhaustiveSearcher::findOne(Ins* resumeFrom) {
+void ExhaustiveSearcher::findOne(const std::vector<Ins> &resumeFrom) {
     _searchMode = SearchMode::FIND_ONE;
     search(resumeFrom);
     _searchMode = SearchMode::FULL_TREE;

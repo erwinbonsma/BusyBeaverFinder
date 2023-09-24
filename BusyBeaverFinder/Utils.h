@@ -49,13 +49,11 @@ int findRepeatedSequence(const int* input, int* buf, int len);
 // Returns true if any combination of deltas (with repeats) can sum to target value.
 bool deltasCanSumTo(std::set<int> deltas, int target);
 
-Ins* loadResumeStackFromStream(std::istream &input, int maxSize);
-
-Ins* loadResumeStackFromFile(std::string inputFile, int maxSize);
+void loadResumeStackFromStream(std::istream &input, std::vector<Ins> &resumeStack);
+bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStack);
 
 void dumpDataBuffer(int* buf, int* dataP, int size);
-void dumpInstructionStack(Ins* stack);
-void dumpInstructionStack(std::vector<Ins> stack);
+void dumpInstructionStack(const std::vector<Ins> &stack);
 
 template <class T>
 class ProxyIterator {

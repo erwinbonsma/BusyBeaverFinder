@@ -15,23 +15,20 @@
 #include "ExhaustiveSearcher.h"
 #include "Utils.h"
 
-Ins* addInstructionsUntilTurn(Ins* topP, int numNoop, int numData) {
+void addInstructionsUntilTurn(std::vector<Ins> &stack, int numNoop, int numData) {
     while (numNoop-- > 0) {
-        *(topP++) = Ins::NOOP;
+        stack.push_back(Ins::NOOP);
     }
     while (numData-- > 0) {
-        *(topP++) = Ins::DATA;
+        stack.push_back(Ins::DATA);
     }
-    *(topP++) = Ins::TURN;
-
-    return topP;
+    stack.push_back(Ins::TURN);
 }
 
 void orchestratedSearch(ExhaustiveSearcher& searcher) {
     int h = searcher.getProgram().getHeight();
     int w = searcher.getProgram().getWidth();
-    int maxInstructions = (h + 1 > w + 2) ? h + 1 : w + 2;
-    Ins startFrom[maxInstructions];
+    std::vector<Ins> resumeStack;
 
     // Only the number of DATA instructions before the first TURN matters, not their position, as
     // they will only be visited once at the very start of the program (and possibly as final
@@ -45,7 +42,8 @@ void orchestratedSearch(ExhaustiveSearcher& searcher) {
     // the first TURN. Therefore: numData > 0
     for (int numNoop = h - 1; --numNoop >= 0; ) {
         for (int numData = h - numNoop; --numData >= 1; ) {
-            Ins* topP = addInstructionsUntilTurn(startFrom, numNoop, numData);
+            resumeStack.clear();
+            addInstructionsUntilTurn(resumeStack, numNoop, numData);
 
             if (numData == 1 && numNoop == 0) {
                 // When the first TURN is at the second row, the program pointer traverses the first
@@ -57,15 +55,19 @@ void orchestratedSearch(ExhaustiveSearcher& searcher) {
                 //            the single data instruction before the first TURN
                 for (int numNoop2 = w - 1; --numNoop2 >= 0; ) {
                     for (int numData2 = w - numNoop2 - 1; --numData2 >= 1; ) {
-                        Ins* topP2 = addInstructionsUntilTurn(topP, numNoop2, numData2);
+                        auto sizeBefore = resumeStack.size();
 
-                        (*topP2) = Ins::UNSET;
-                        searcher.searchSubTree(startFrom);
+                        addInstructionsUntilTurn(resumeStack, numNoop2, numData2);
+
+                        searcher.searchSubTree(resumeStack);
+
+                        while (resumeStack.size() > sizeBefore) {
+                            resumeStack.pop_back();
+                        }
                     }
                 }
             } else {
-                (*topP) = Ins::UNSET;
-                searcher.searchSubTree(startFrom);
+                searcher.searchSubTree(resumeStack);
             }
         }
     }
@@ -78,18 +80,17 @@ void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile
         return;
     }
 
-    Ins* resumeStack = nullptr;
-    const Program& program = searcher.getProgram();
-    int maxSize = program.getWidth() * program.getHeight();
-
+    std::vector<Ins> resumeStack;
     std::string line;
     while (getline(input, line)) {
         std::istringstream iss(line);
         int numSteps;
 
         if (iss >> numSteps) {
-            resumeStack = loadResumeStackFromStream(iss, maxSize);
-            searcher.searchSubTree(resumeStack);
+            loadResumeStackFromStream(iss, resumeStack);
+            if (!resumeStack.empty()) {
+                searcher.searchSubTree(resumeStack);
+            }
         }
     }
 }

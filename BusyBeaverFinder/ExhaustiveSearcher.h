@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <iterator>
 #include <vector>
 
 #include "Program.h"
@@ -50,9 +51,8 @@ class ExhaustiveSearcher {
     // Determines when to abort the search
     SearchMode _searchMode;
 
-    // Pointer to array that can be used to resume a previous search. The last operation must be
-    // UNSET.
-    Ins* _resumeFrom;
+    std::vector<Ins>::const_iterator _resumeIns;
+    std::vector<Ins>::const_iterator _resumeEnd;
 
     TurnDirection _td;
     ProgramPointer _pp;
@@ -98,12 +98,12 @@ public:
     bool atTargetProgram();
 
     void search();
-    void search(Ins* resumeFrom);
+    void search(const std::vector<Ins> &resumeFrom);
 
-    void searchSubTree(Ins* resumeFrom);
+    void searchSubTree(const std::vector<Ins> &resumeFrom);
 
     void findOne();
-    void findOne(Ins* resumeFrom);
+    void findOne(const std::vector<Ins> &resumeFrom);
 
     void dumpInstructionStack() const;
     bool instructionStackEquals(Ins* reference) const;

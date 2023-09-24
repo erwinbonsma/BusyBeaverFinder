@@ -32,12 +32,12 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
         // o _ o o o *
         // o * _ _ o *
         // o       *
-        Ins resumeFrom[] = {
+        std::vector<Ins> resumeFrom = {
             Ins::DATA, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::DATA, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::NOOP,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::TURN, Ins::UNSET
+            Ins::NOOP, Ins::TURN, Ins::TURN
         };
 
         searcher.searchSubTree(resumeFrom);
@@ -51,12 +51,12 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
         //
         // After escape encounters a single unset instructions, which results in three possible
         // programs
-        Ins resumeFrom[] = {
+        std::vector<Ins> resumeFrom = {
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::DATA, Ins::NOOP, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::NOOP, Ins::DATA,
-            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN, Ins::UNSET
+            Ins::TURN, Ins::TURN, Ins::TURN, Ins::TURN
         };
 
         searcher.searchSubTree(resumeFrom);
@@ -79,12 +79,11 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
         // o _ _ o o *
         // _ * _ _ o *
         // _       *
-        Ins resumeFrom[] = {
+        std::vector<Ins>  resumeFrom = {
             Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA, Ins::DATA,
             Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN,
             Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::DATA, Ins::DATA,
-            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN,
-            Ins::UNSET
+            Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN
         };
 
         searcher.searchSubTree(resumeFrom);
