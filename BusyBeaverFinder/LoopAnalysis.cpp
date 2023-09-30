@@ -388,7 +388,9 @@ void LoopAnalysis::analyzeSequence() {
 }
 
 bool LoopAnalysis::analyzeLoop(const ProgramBlock* entryBlock, int numBlocks) {
-    return SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
+    SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
+
+    return true;
 }
 
 bool LoopAnalysis::analyzeLoop(const InterpretedProgram* program, const RunSummary& runSummary,

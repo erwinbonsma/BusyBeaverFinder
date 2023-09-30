@@ -136,9 +136,7 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
         SweepTransitionAnalysis *sta = &(_sweepHangDetector.
                                          _transitionAnalysisPool[_numUniqueTransitions++]);
 
-        if (!sta->analyzeSweepTransition(transitionStartIndex, _nextLoopIndex, execution)) {
-            return sweepTransitionScanFailure(execution);
-        }
+        sta->analyzeSweepTransition(transitionStartIndex, _nextLoopIndex, execution);
 
         SweepTransition newTransition(sta, _nextLoopStartInstructionIndex);
         st = group[j]->addTransitionForExit(exitIndex, newTransition);
@@ -224,10 +222,8 @@ bool SweepHangDetector::analyzeMidSweepTransitionIfAny(int runBlockIndexOutgoing
     SweepTransitionAnalysis *sta =
         &_transitionAnalysisPool[_transitionGroups[1]->midSweepTransition() ? 1 : 0];
 
-    if (!sta->analyzeSweepTransition(runBlockIndexOutgoingLoop + 1,
-                                     runBlockIndexIncomingLoop, _execution)) {
-        return sweepTransitionScanFailure(_execution);
-    }
+    sta->analyzeSweepTransition(runBlockIndexOutgoingLoop + 1,
+                                runBlockIndexIncomingLoop, _execution);
 
     _transitionGroups[isFirstSweep ? 1 : 0]->setMidSweepTransition(sta);
 
@@ -245,6 +241,7 @@ bool SweepHangDetector::analyzeLoops() {
         int nextIndex = runBlockIndex;
         runBlockIndex = findPreviousSweepLoop(runBlockIndex);
         if (runBlockIndex < 0) {
+            //TODO: return Trilian::MAYBE;
             return false;
         }
         const RunBlock *runBlock = runSummary.runBlockAt(runBlockIndex);

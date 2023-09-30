@@ -137,7 +137,7 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 class SweepTransitionAnalysis : public SequenceAnalysis {
 public:
     // The indexes are run block indices. The end index is exclusive.
-    bool analyzeSweepTransition(int startIndex, int endIndex, const ExecutionState& execution);
+    void analyzeSweepTransition(int startIndex, int endIndex, const ExecutionState& execution);
 
     bool transitionEquals(int startIndex, int endIndex, const ExecutionState& execution) const;
 

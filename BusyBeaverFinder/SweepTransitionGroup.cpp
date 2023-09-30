@@ -202,7 +202,7 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sla) {
     return os;
 }
 
-bool SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
+void SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
                                                      const ExecutionState& execution) {
     const RunSummary& runSummary = execution.getRunSummary();
     const InterpretedProgram* program = execution.getInterpretedProgram();
@@ -211,11 +211,7 @@ bool SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endInde
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
     int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
 
-    if (!analyzeSequence(program, runSummary, pbStart, numProgramBlocks)) {
-        return transitionGroupFailure(execution);
-    }
-
-    return true;
+    analyzeSequence(program, runSummary, pbStart, numProgramBlocks);
 }
 
 bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,

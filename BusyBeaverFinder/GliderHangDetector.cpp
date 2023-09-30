@@ -208,10 +208,8 @@ bool GliderHangDetector::analyzeTransitionSequence() {
     runSummary.runBlockAt(runSummary.getNumRunBlocks() - metaPeriod)->getStartIndex();
     int endIndex = _loopRunBlock->getStartIndex();
 
-    if (!_transitionSequence.analyzeSequence(program, runSummary,
-                                             startIndex, endIndex - startIndex)) {
-        return false;
-    }
+    _transitionSequence.analyzeSequence(program, runSummary,
+                                        startIndex, endIndex - startIndex);
 
     if (!determineCounterQueueSize()) {
         return false;

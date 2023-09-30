@@ -95,18 +95,16 @@ void SequenceAnalysis::analyzeSequence() {
     }
 }
 
-bool SequenceAnalysis::analyzeSequence(const ProgramBlock* entryBlock, int numBlocks) {
+void SequenceAnalysis::analyzeSequence(const ProgramBlock* entryBlock, int numBlocks) {
     _programBlocks.clear();
     for (int i = 0; i < numBlocks; ++i) {
         _programBlocks.push_back(entryBlock + i);
     }
 
     analyzeSequence();
-
-    return true;
 }
 
-bool SequenceAnalysis::analyzeSequence(const InterpretedProgram* program,
+void SequenceAnalysis::analyzeSequence(const InterpretedProgram* program,
                                        const RunSummary& runSummary, int startIndex, int length) {
     _programBlocks.clear();
     for (int i = startIndex, end = startIndex + length; i < end; ++i) {
@@ -115,8 +113,6 @@ bool SequenceAnalysis::analyzeSequence(const InterpretedProgram* program,
     }
 
     analyzeSequence();
-
-    return true;
 }
 
 bool SequenceAnalysis::hasPreCondition(int dpOffset, PreCondition preCondition) const {
