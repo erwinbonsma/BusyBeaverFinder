@@ -142,7 +142,7 @@ PeriodicSweepHangDetector::PeriodicSweepHangDetector(const ExecutionState& execu
     }
 }
 
-bool PeriodicSweepHangDetector::checkLineairIncrease(int start1, int start2, int start3) const {
+bool PeriodicSweepHangDetector::checkLinearIncrease(int start1, int start2, int start3) const {
     const RunSummary &runSummary = _execution.getRunSummary();
 
     assert(start3 - start2 == start2 - start1);
@@ -152,7 +152,7 @@ bool PeriodicSweepHangDetector::checkLineairIncrease(int start1, int start2, int
         int len3 = runSummary.getRunBlockLength(start3 + i);
 
         // Verify that the run block lengths remain constant (for transition sequences and
-        // associated small loops) or increase lineairly (for sweep loops).
+        // associated small loops) or increase linearly (for sweep loops).
         if (len2 - len1 != len3 - len2) {
             return false;
         }
@@ -180,7 +180,7 @@ bool PeriodicSweepHangDetector::analyzeSweepIterations() {
 
         if (
             (lenLoop2 - lenLoop1) == (lenLoop3 - lenLoop2) &&
-            checkLineairIncrease(startLoop1, startLoop2, startLoop3)
+            checkLinearIncrease(startLoop1, startLoop2, startLoop3)
         ) {
             return true;
         }

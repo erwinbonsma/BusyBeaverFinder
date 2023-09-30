@@ -50,13 +50,13 @@ public:
  */
 class PeriodicSweepHangDetector : public SweepHangDetector {
 
-    // The number of meta-loop iterations that comparise a fully-repeating sweep loop. A requirement
+    // The number of meta-loop iterations that comprise a fully-repeating sweep loop. A requirement
     // for a fully-repeating sweep loop is that the number of execution steps increases linearly
     // each iteration. The sweep repetition period is typically one, but can be larger when the
     // sweep has multiple fixed turning points at a given end of the sweep.
     int _sweepRepetitionPeriod;
 
-    bool checkLineairIncrease(int start1, int start2, int start3) const;
+    bool checkLinearIncrease(int start1, int start2, int start3) const;
     bool analyzeSweepIterations();
 
 protected:

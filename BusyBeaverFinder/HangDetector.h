@@ -38,7 +38,7 @@ protected:
     // Clears results of analysis. It is invoked when a hang check failed.
     virtual void clearAnalysis() { _analysisCheckPoint = -1; }
 
-    // Returns true results of a previous analysis are still available. This is the case when the
+    // Returns true if results of a previous analysis are still available. This is the case when the
     // program might hang, but this cannot yet be proven. When analysing the hang behavior in
     // analyzeHangBehavior a hang detector may want to re-use the old analysis (and verify that it
     // is still valid) instead of redoing it. This is not only a possible optimization, but may be
@@ -48,7 +48,8 @@ protected:
     bool oldAnalysisAvailable() const { return _analysisCheckPoint != -1; }
 
     // Checks if it can be proven that the program hang. Returns YES if this is the case. Can
-    // return MAYBE if it is not yet clear yet.
+    // return MAYBE if it is not yet clear yet but a later check _at the same check point_ may
+    // succeed.
     virtual Trilian proofHang() = 0;
 
 public:
