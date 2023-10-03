@@ -270,7 +270,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
     }
     SECTION("6x6-SweepWithMidSweepNonZeroFixedPointThatOscillatesDuringTurn2") {
         // Similar in behaviour to the previous program. Furthermore, when sweeping leftwards, it
-        // shifts left twice, which prevented it from being detected by an early hang detection
+        // shifts left twice, which prevented it from being detected by an earlier hang detection
         // algorithm.
         //
         //     * *
@@ -279,7 +279,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // * _ _ o *
         // * _ o *
         // o o *
-        RunResult result = hangExecutor.execute("ZgIIklGCEgIAAA");
+        RunResult result = hangExecutor.execute("Zvr+UtS4G4b1vw");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -764,6 +764,10 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // The sweep turn on the right is complex. The turn value changes as follows:
         // 0 => 1 => -1 => 0 => -1 => -2
         //
+        // The left sweep decreases all values in the sweep sequence by one. The transition at the
+        // left, however, undoes this change for one of the changes in the sequence. This prevented
+        // an earlier, more strict, version of the hang detector to detect the hang.
+        //
         //   *     *
         //   _ _ * o *
         // * _ _ o o *
@@ -1171,25 +1175,6 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
-    SECTION("6x6-SweepHangWhereTransitionUndoesSweepLoopChange") {
-        // The left sweep decreases all values in the sweep sequence by one. The transition at the
-        // left, however, undoes this change for one of the changes in the sequence. This prevented
-        // an earlier, more strict, version of the hang detector to detect the hang.
-        //
-        //   *     *
-        //   _ _ * o *
-        // * _ _ o o *
-        // * o o _ o *
-        // * * * _ _
-        // o _ _ o *
-        RunResult result = hangExecutor.execute("ZiCAJoFpRqgEGA");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
-
-        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
-        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-    }
     SECTION("6x6-SweepWithSignMismatchForExtensionAndCombinedSweepValueChange") {
         // Dual-headed sweep. At the right, the sweep is extended with value 1. This has a
         // different sign than the combined sweep value change, which is -2. However, this is okay,
@@ -1482,8 +1467,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
     SECTION("6x6-SweepHangWithMidSweepLoopSwitchWithoutTransition3") {
-        // Detection fails during proof due to flawed only zeroes ahead check. Should not be hard
-        // to fix.
+        // Detection failed during proof due to flawed only zeroes ahead check.
         //
         //       * *
         //   * * _ o *
@@ -1511,7 +1495,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // _ * _ o o *
         // _   _ * *
         // _   *
-        RunResult result = hangExecutor.execute("ZgKChpSFGGSEoA");
+        RunResult result = hangExecutor.execute("Zv77kkWyFjKzvw");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
