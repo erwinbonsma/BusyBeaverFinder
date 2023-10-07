@@ -68,7 +68,7 @@ void SweepLoopAnalysis::collectInsweepDeltasAfterExit(int exitInstruction,
     for (int iteration = 0; iteration <= maxIteration; iteration++) {
         // Execute the last iteration until (inclusive) the exit instruction
         for (int instruction = 0; instruction < loopSize(); instruction++) {
-            const ProgramBlock *pb = programBlockAt(instruction);
+            const ProgramBlock* pb = _sequence->start[instruction];
 
             if (pb->isDelta()) {
                 dataDeltas.updateDelta(dpDelta, pb->getInstructionAmount());
@@ -119,10 +119,10 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
                                          const ExecutionState& execution) {
     _loopRunBlock = runBlock;
 
-    if (!analyzeLoop(execution.getInterpretedProgram(),
-                     execution.getRunSummary(),
-                     runBlock->getStartIndex(),
-                     runBlock->getLoopPeriod())) {
+    auto runHistory = execution.getRunHistory();
+    auto startPb = &runHistory[_loopRunBlock->getStartIndex()];
+    ProgramBlockSequence sequence(startPb, _loopRunBlock->getLoopPeriod());
+    if (!analyzeLoop(sequence)) {
         return transitionGroupFailure(execution);
     }
 
@@ -205,19 +205,18 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sla) {
 void SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
                                                      const ExecutionState& execution) {
     const RunSummary& runSummary = execution.getRunSummary();
-    const InterpretedProgram* program = execution.getInterpretedProgram();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
     int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
+    ProgramBlockSequence sequence(&execution.getRunHistory()[pbStart], numProgramBlocks);
 
-    analyzeSequence(program, runSummary, pbStart, numProgramBlocks);
+    analyzeSequence(sequence);
 }
 
 bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
                                                const ExecutionState& execution) const {
-    const RunSummary& runSummary = execution.getRunSummary();
-    const InterpretedProgram* program = execution.getInterpretedProgram();
+    auto runSummary = execution.getRunSummary();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
@@ -227,10 +226,10 @@ bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
         return false;
     }
 
-    for (int i = numProgramBlocks; --i >= 0; ) {
-        if (program->indexOf(programBlockAt(i)) != runSummary.programBlockIndexAt(pbStart + i)) {
-            return false;
-        }
+    auto pb1 = _sequence->start;
+    auto pb2 = &execution.getRunHistory()[pbStart];
+    while (pb1 != _sequence->end) {
+        if (pb1++ != pb2++) return false;
     }
 
     return true;
@@ -880,7 +879,7 @@ std::ostream& SweepTransitionGroup::dumpExitDeltas(std::ostream &os) const {
 }
 
 std::ostream& SweepTransitionGroup::dump(std::ostream &os) const {
-    os << "Incoming Loop: #" << _incomingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
+    os << "Incoming Loop: #" << _incomingLoop->loopRunBlock()->getSequenceId() << std::endl;
     os << *_incomingLoop;
 
     auto iter = _transitionMap.begin();
@@ -893,7 +892,7 @@ std::ostream& SweepTransitionGroup::dump(std::ostream &os) const {
         ++iter;
     }
 
-    os << "Outgoing Loop: #" << _outgoingLoop->loopRunBlock()->getSequenceIndex() << std::endl;
+    os << "Outgoing Loop: #" << _outgoingLoop->loopRunBlock()->getSequenceId() << std::endl;
     os << *_outgoingLoop;
     if (_midSweepTransition != nullptr) {
         os << "  Mid-sweep transition: " << *_midSweepTransition << std::endl;

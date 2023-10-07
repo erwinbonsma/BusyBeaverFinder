@@ -18,7 +18,8 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _hangDetectionStart(0),
     _maxHangDetectionSteps(maxHangDetectionSteps),
     _data(dataSize),
-    _runSummary()
+    _runSummary(_runHistory),
+    _metaRunSummary(_runSummary.getRunBlocks())
 {
     _hangDetectors.push_back(new PeriodicHangDetector(*this));
     _hangDetectors.push_back(new MetaPeriodicHangDetector(*this));
@@ -27,8 +28,8 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _hangDetectors.push_back(new IrregularSweepHangDetector(*this));
 
     _zArrayHelperBuf = new int[maxHangDetectionSteps / 2];
-    _runSummary[0].setCapacity(maxHangDetectionSteps, _zArrayHelperBuf);
-    _runSummary[1].setCapacity(maxHangDetectionSteps, _zArrayHelperBuf);
+    _runSummary.setHelperBuffer(_zArrayHelperBuf);
+    _metaRunSummary.setHelperBuffer(_zArrayHelperBuf);
 }
 
 HangExecutor::~HangExecutor() {
@@ -84,29 +85,20 @@ RunResult HangExecutor::executeWithoutHangDetection(int stepLimit) {
 }
 
 RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
-    _runSummary[0].reset();
-    _runSummary[1].reset();
+    _runSummary.reset();
+    _metaRunSummary.reset();
 
     for (auto hangDetector : _hangDetectors) {
         hangDetector->reset();
     }
     _detectedHang = nullptr;
 
-    const ProgramBlock *entryBlock = _program->getEntryBlock();
     while (_numSteps < stepLimit) {
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
-        int numRunBlocks = _runSummary[0].getNumRunBlocks();
-        if (_runSummary[0].recordProgramBlock((int)(_block - entryBlock))) {
-            for (int i = numRunBlocks; i < _runSummary[0].getNumRunBlocks(); i++) {
-                const RunBlock* runBlock = _runSummary[0].runBlockAt(i);
-                _runSummary[1].recordProgramBlock(runBlock->getSequenceIndex());
-            }
-
-            if (!_runSummary[0].hasSpaceRemaining()) {
-                // Stop hang detection as history buffer is full
-                return RunResult::UNKNOWN;
-            }
+        _runHistory.push_back(_block);
+        if (_runSummary.processNewRunUnits()) {
+            _metaRunSummary.processNewRunUnits();
         }
 
         RunResult result = executeBlock();
@@ -114,8 +106,8 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
             return result;
         }
 
-        if (_runSummary[0].isInsideLoop()) {
-            bool loopContinues = _runSummary[0].loopContinues((int)(_block - entryBlock));
+        if (_runSummary.isInsideLoop()) {
+            bool loopContinues = _runSummary.loopContinues(_block->getStartIndex());
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
                     _detectedHang = hangDetector;
@@ -185,8 +177,8 @@ RunResult HangExecutor::execute(std::string programSpec) {
 }
 
 void HangExecutor::dump() const {
-    _runSummary[0].dump();
-    _runSummary[1].dump();
+    _runSummary.dump();
+    _metaRunSummary.dump();
 }
 
 void HangExecutor::dumpExecutionState() const {

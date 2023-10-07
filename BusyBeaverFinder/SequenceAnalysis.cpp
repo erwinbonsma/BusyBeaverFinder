@@ -59,60 +59,57 @@ void SequenceAnalysis::addPreCondition(int dpOffset, PreCondition preCondition) 
     _preConditions.insert({dpOffset, preCondition});
 }
 
-void SequenceAnalysis::analyzeSequence() {
+void SequenceAnalysis::startAnalysis() {
     _dpDelta = 0;
     _dataDeltas.clear();
     _effectiveResult.clear();
     _preConditions.clear();
 
-    // Determine the intermediate results and final results of a single loop iteration
-    _minDp =
-        (sequenceSize() == 0 || _programBlocks[0]->isDelta())
-        ? 0 : _programBlocks[0]->getInstructionAmount();
+    _sequenceSize = (int)(_sequence->end - _sequence->start);
+    _minDp = (_sequenceSize == 0 || _sequence->start[0]->isDelta())
+             ? 0 : _sequence->start[0]->getInstructionAmount();
     _maxDp = _minDp;
 
-    const ProgramBlock* prevProgramBlock = nullptr;
-    for (const ProgramBlock* programBlock : _programBlocks) {
-        if (prevProgramBlock != nullptr) {
-            // Add pre-condition
-            addPreCondition(_dpDelta, PreCondition(-_dataDeltas.deltaAt(_dpDelta),
-                                                   prevProgramBlock->zeroBlock() == programBlock));
-        }
-        prevProgramBlock = programBlock;
+    _prevProgramBlock = nullptr;
+}
 
-        int amount = programBlock->getInstructionAmount();
-        if (programBlock->isDelta()) {
-            int effectiveDelta = _dataDeltas.updateDelta(_dpDelta, amount);
+void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
+    if (_prevProgramBlock != nullptr) {
+        // Add pre-condition
+        addPreCondition(_dpDelta, PreCondition(-_dataDeltas.deltaAt(_dpDelta),
+                                               _prevProgramBlock->zeroBlock() == pb));
+    }
+    _prevProgramBlock = pb;
 
-            _effectiveResult.push_back(DataDelta(_dpDelta, effectiveDelta));
-        } else {
-            _dpDelta += amount;
-            _minDp = std::min(_minDp, _dpDelta);
-            _maxDp = std::max(_maxDp, _dpDelta);
+    int amount = pb->getInstructionAmount();
+    if (pb->isDelta()) {
+        int effectiveDelta = _dataDeltas.updateDelta(_dpDelta, amount);
 
-            _effectiveResult.push_back(DataDelta(_dpDelta, _dataDeltas.deltaAt(_dpDelta)));
-        }
+        _effectiveResult.emplace_back(_dpDelta, effectiveDelta);
+    } else {
+        _dpDelta += amount;
+        _minDp = std::min(_minDp, _dpDelta);
+        _maxDp = std::max(_maxDp, _dpDelta);
+
+        _effectiveResult.emplace_back(_dpDelta, _dataDeltas.deltaAt(_dpDelta));
     }
 }
 
-void SequenceAnalysis::analyzeSequence(const ProgramBlock* entryBlock, int numBlocks) {
-    _programBlocks.clear();
-    for (int i = 0; i < numBlocks; ++i) {
-        _programBlocks.push_back(entryBlock + i);
-    }
-
-    analyzeSequence();
+void SequenceAnalysis::finishAnalysis() {
 }
 
-void SequenceAnalysis::analyzeSequence(const InterpretedProgram* program,
-                                       const RunSummary& runSummary, int startIndex, int length) {
-    _programBlocks.clear();
-    for (int i = startIndex, end = startIndex + length; i < end; ++i) {
-        int pb_index = runSummary.programBlockIndexAt(i);
-        _programBlocks.push_back(program->programBlockAt(pb_index));
+void SequenceAnalysis::analyzeSequence(const ProgramBlockSequence& sequence) {
+    _sequence = &sequence;
+
+    startAnalysis();
+
+    for (auto pb = sequence.start; pb != sequence.end; ++pb) {
+        analyzeBlock(*pb);
     }
 
-    analyzeSequence();
+    finishAnalysis();
+
+    _sequence = nullptr;
 }
 
 bool SequenceAnalysis::hasPreCondition(int dpOffset, PreCondition preCondition) const {
@@ -126,23 +123,6 @@ bool SequenceAnalysis::hasPreCondition(int dpOffset, PreCondition preCondition) 
     }
 
     return false;
-}
-
-DataDeltas anyDeltasWorkArray;
-bool SequenceAnalysis::anyDataDeltasUpUntil(int index) const {
-    anyDeltasWorkArray.clear();
-
-    int dpDelta = 0;
-    for (const ProgramBlock* programBlock : _programBlocks) {
-        int amount = programBlock->getInstructionAmount();
-        if (programBlock->isDelta()) {
-            anyDeltasWorkArray.updateDelta(dpDelta, amount);
-        } else {
-            dpDelta += amount;
-        }
-    }
-
-    return anyDeltasWorkArray.numDeltas() > 0;
 }
 
 std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {

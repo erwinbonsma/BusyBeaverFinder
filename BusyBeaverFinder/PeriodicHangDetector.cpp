@@ -18,12 +18,13 @@ bool PeriodicHangDetector::shouldCheckNow(bool loopContinues) const {
 }
 
 bool PeriodicHangDetector::analyzeHangBehaviour() {
-    const RunSummary& runSummary = _execution.getRunSummary();
-    const RunBlock* loopRunBlock = runSummary.getLastRunBlock();
+    auto runHistory = _execution.getRunHistory();
+    auto runSummary = _execution.getRunSummary();
+    auto loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();
-    if (!_loop.analyzeLoop(_execution.getInterpretedProgram(), runSummary,
-                           _loopStart, loopRunBlock->getLoopPeriod())) {
+    ProgramBlockSequence sequence(&runHistory[_loopStart], loopRunBlock->getLoopPeriod());
+    if (!_loop.analyzeLoop(sequence)) {
         return false;
     }
 
@@ -73,7 +74,7 @@ bool PeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
 }
 
 Trilian PeriodicHangDetector::proofHangPhase1() {
-    int loopLen = _execution.getRunSummary().getNumProgramBlocks() - _loopStart;
+    int loopLen = (int)_execution.getRunHistory().size() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
         return Trilian::MAYBE;
@@ -121,7 +122,7 @@ Trilian PeriodicHangDetector::proofHangPhase1() {
 }
 
 Trilian PeriodicHangDetector::proofHangPhase2() {
-    int loopLen = _execution.getRunSummary().getNumProgramBlocks() - _loopStart;
+    int loopLen = (int)_execution.getRunHistory().size() - _loopStart;
 
     if (loopLen >= _targetLoopLen) {
         // The loop ran the required number of extra iterations without exiting. This means it

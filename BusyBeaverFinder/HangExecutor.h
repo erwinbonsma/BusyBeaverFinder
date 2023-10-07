@@ -35,10 +35,13 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     Data _data;
     const HangDetector* _detectedHang;
 
-    // Nested run summaries. The first summarizes the program execution, identifying loops along the
-    // way. The second summarizes the first run summary. In particular, it signals repeated patterns
+    // Program execution summaries at different levels. The run history is a log of executed
+    // program blocks. The run summary summarizes this by identifying (and collapsing) loops. The
+    // meta-summary summarizes the first run summary. In particular, it signals repeated patterns
     // in the first summary.
-    RunSummary _runSummary[2];
+    std::vector<const ProgramBlock *> _runHistory;
+    RunSummary _runSummary;
+    MetaRunSummary _metaRunSummary;
     int* _zArrayHelperBuf;
 
     RunResult executeBlock();
@@ -72,8 +75,9 @@ public:
 
     const Data& getData() const override { return _data; }
 
-    const RunSummary& getRunSummary() const override { return _runSummary[0]; }
-    const RunSummary& getMetaRunSummary() const override { return _runSummary[1]; }
+    const std::vector<const ProgramBlock *>& getRunHistory() const override { return _runHistory; }
+    const RunSummary& getRunSummary() const override { return _runSummary; }
+    const MetaRunSummary& getMetaRunSummary() const override { return _metaRunSummary; }
 
     void dumpExecutionState() const override;
 };

@@ -89,8 +89,8 @@ LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
 }
 
 bool LoopAnalysis::exitsOnZero(int index) {
-    const ProgramBlock* curBlock = _programBlocks[index];
-    const ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
+    const ProgramBlock* curBlock = _sequence->start[index];
+    const ProgramBlock* nxtBlock = _sequence->start[(index + 1) % loopSize()];
 
     return curBlock->nonZeroBlock() == nxtBlock;
 }
@@ -300,6 +300,7 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     // Establish the exit condition for each instruction
     for (int ii = 0 ; ii < loopSize(); ii++ ) {
         int i = indices[ii];
+        const ProgramBlock* pb = _sequence->start[i];
 
         int dp_i = _effectiveResult[i].dpOffset();
         int mod_i = normalizedMod(dp_i, _dpDelta);
@@ -310,7 +311,7 @@ void LoopAnalysis::initExitsForTravellingLoop() {
         loopExit.exitWindow = ExitWindow::ANYTIME; // Initial assumption
 
         fixedExitValue[i] = hasZeroExit ? UNSET_FIXED_VALUE : 0;
-        cumDelta[i] = _programBlocks[i]->isDelta() ? _programBlocks[i]->getInstructionAmount() : 0;
+        cumDelta[i] = pb->isDelta() ? pb->getInstructionAmount() : 0;
 
         bool foundPreceding = false;
         for (int jj = ii; --jj >= 0; ) {
@@ -335,8 +336,8 @@ void LoopAnalysis::initExitsForTravellingLoop() {
                     if (fixedExitValue[j] != UNSET_FIXED_VALUE) {
                         fixedExitValue[i] = fixedExitValue[j];
 
-                        if (_programBlocks[i]->isDelta()) {
-                            fixedExitValue[i] += _programBlocks[i]->getInstructionAmount();
+                        if (pb->isDelta()) {
+                            fixedExitValue[i] += pb->getInstructionAmount();
                         }
                     }
                 }
@@ -375,8 +376,8 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     }
 }
 
-void LoopAnalysis::analyzeSequence() {
-    SequenceAnalysis::analyzeSequence();
+void LoopAnalysis::finishAnalysis() {
+    SequenceAnalysis::finishAnalysis();
 
     // Collapse the results considering multiple loop iterations (only for non-stationary loops)
     if (_dpDelta != 0) {
@@ -387,26 +388,13 @@ void LoopAnalysis::analyzeSequence() {
     }
 }
 
-bool LoopAnalysis::analyzeLoop(const ProgramBlock* entryBlock, int numBlocks) {
-    SequenceAnalysis::analyzeSequence(entryBlock, numBlocks);
-
-    return true;
-}
-
-bool LoopAnalysis::analyzeLoop(const InterpretedProgram* program, const RunSummary& runSummary,
-                               int startIndex, int period) {
-    if (period > maxLoopSize) {
+bool LoopAnalysis::analyzeLoop(const ProgramBlockSequence& sequence) {
+    if (sequence.end - sequence.start > maxLoopSize) {
         // This loop is too large to analyse
         return false;
     }
 
-    _programBlocks.clear();
-    for (int i = startIndex, end = startIndex + period; i < end; ++i) {
-        int pb_index = runSummary.programBlockIndexAt(i);
-        _programBlocks.push_back(program->programBlockAt(pb_index));
-    }
-
-    analyzeSequence();
+    analyzeSequence(sequence);
 
     return true;
 }
@@ -419,7 +407,7 @@ std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
     os << (const SequenceAnalysis&)la << std::endl;
 
     for (int i = 0; i < la.sequenceSize(); i++) {
-        os << "Instruction #" << i << ": " << *(la.programBlockAt(i));
+        os << "Instruction #" << i;
         os << ", Exit: " << la.exit(i) << std::endl;
     }
 

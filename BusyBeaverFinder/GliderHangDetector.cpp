@@ -23,11 +23,8 @@ bool GliderHangDetector::shouldCheckNow(bool loopContinues) const {
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
 bool GliderHangDetector::identifyLoopCounter() {
-    const RunSummary& runSummary = _execution.getRunSummary();
-    const InterpretedProgram* program = _execution.getInterpretedProgram();
-
-    ProgramBlockIndex pbIndex = runSummary.getLastProgramBlockIndex();
-    const ProgramBlock* pb = program->programBlockAt(pbIndex);
+    auto runHistory = _execution.getRunHistory();
+    const ProgramBlock* pb = runHistory.back();
 
     if (!pb->isDelta()) {
         // The last instruction should be a delta
@@ -36,7 +33,7 @@ bool GliderHangDetector::identifyLoopCounter() {
 
     // Determine the DP offset of the loop counter (compared to the start of the loop)
     int instructionIndex =
-        (runSummary.getNumProgramBlocks() - _loopRunBlock->getStartIndex() - 1)
+        ((int)runHistory.size() - _loopRunBlock->getStartIndex() - 1)
         % _loopRunBlock->getLoopPeriod();
     _curCounterDpOffset = _loop.effectiveResultAt(instructionIndex).dpOffset();
 
@@ -84,8 +81,9 @@ bool GliderHangDetector::analyzeLoop() {
 
     _loopRunBlock = runSummary.getLastRunBlock();
 
-    if (!_loop.analyzeLoop(_execution.getInterpretedProgram(), runSummary,
-                           _loopRunBlock->getStartIndex(), _loopRunBlock->getLoopPeriod())) {
+    ProgramBlockSequence sequence(&_execution.getRunHistory()[_loopRunBlock->getStartIndex()],
+                                  _loopRunBlock->getLoopPeriod());
+    if (!_loop.analyzeLoop(sequence)) {
         return false;
     }
 
@@ -193,9 +191,9 @@ bool GliderHangDetector::checkTransitionDeltas() {
 }
 
 bool GliderHangDetector::analyzeTransitionSequence() {
-    const RunSummary& runSummary = _execution.getRunSummary();
-    const RunSummary& metaRunSummary = _execution.getMetaRunSummary();
-    const InterpretedProgram* program = _execution.getInterpretedProgram();
+    auto runHistory = _execution.getRunHistory();
+    auto runSummary = _execution.getRunSummary();
+    auto metaRunSummary = _execution.getMetaRunSummary();
 
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
@@ -204,12 +202,11 @@ bool GliderHangDetector::analyzeTransitionSequence() {
     // consists of more that one run block. That's okay, as long as its length remains the same.
 
     // The instructions comprising the (last) transition sequence
-    int startIndex =
-    runSummary.runBlockAt(runSummary.getNumRunBlocks() - metaPeriod)->getStartIndex();
+    int startIndex = runHistory[runHistory.size() - metaPeriod]->getStartIndex();
     int endIndex = _loopRunBlock->getStartIndex();
 
-    _transitionSequence.analyzeSequence(program, runSummary,
-                                        startIndex, endIndex - startIndex);
+    ProgramBlockSequence sequence(&runHistory[startIndex], endIndex - startIndex);
+    _transitionSequence.analyzeSequence(sequence);
 
     if (!determineCounterQueueSize()) {
         return false;
@@ -249,8 +246,8 @@ bool GliderHangDetector::isBootstrapping() {
 // Checks that the transition sequence is identical each time. I.e. if it contains loops, their
 // iteration count is always fixed. This in turn means that it always does the same thing.
 bool GliderHangDetector::transitionSequenceIsFixed() {
-    const RunSummary& runSummary = _execution.getRunSummary();
-    const RunSummary& metaRunSummary = _execution.getMetaRunSummary();
+    auto runSummary = _execution.getRunSummary();
+    auto metaRunSummary = _execution.getMetaRunSummary();
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
 

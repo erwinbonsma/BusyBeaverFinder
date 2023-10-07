@@ -112,13 +112,13 @@ class LoopAnalysis : public SequenceAnalysis {
 
     void initExitsForTravellingLoop();
 
-    void analyzeSequence() override;
-
 protected:
     // Returns true if the specified loop instruction exits the loop on a zero-value
     bool exitsOnZero(int index);
 
     const char* typeString() const override { return "LOOP"; }
+
+    void finishAnalysis() override;
 
 public:
     LoopAnalysis();
@@ -142,9 +142,7 @@ public:
     const LoopExit& exit(int index) const { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
-    bool analyzeLoop(const ProgramBlock* entryBlock, int numBlocks);
-    bool analyzeLoop(const InterpretedProgram* program, const RunSummary& runSummary,
-                     int startIndex, int period);
+    bool analyzeLoop(const ProgramBlockSequence& sequence);
 
     void dump() const;
 };

@@ -15,222 +15,120 @@
 #include "InterpretedProgram.h"
 #include "Utils.h"
 
-void RunBlockSequenceNode::init(ProgramBlockIndex programBlockIndex) {
-    _programBlockIndex = programBlockIndex;
-    _childIndex = 0;
-    _siblingIndex = 0;
-}
+void RunSummaryBase::reset() {
+    _runBlocks.clear();
 
-void RunBlock::init(int startIndex, int sequenceIndex, int loopPeriod) {
-    _startIndex = startIndex;
-    _sequenceIndex = sequenceIndex;
-    _loopPeriod = loopPeriod;
-}
+    _processed = 0;
+    _pending = 0;
+    _loop = -1;
 
-void RunSummary::freeDynamicArrays() {
-    if (_programBlockHistory != nullptr) {
-        delete[] _programBlockHistory;
-        _programBlockHistory = nullptr;
-    }
-}
-
-RunSummary::~RunSummary() {
-    freeDynamicArrays();
-}
-
-int RunSummary::getCapacity() const {
-    return (int)(_programBlockHistoryMaxP - _programBlockHistory);
-}
-
-void RunSummary::setCapacity(int capacity, int* helperBuf) {
-    if (_programBlockHistory != nullptr) {
-        if (getCapacity() == capacity) {
-            // Nothing needs doing. The buffers are already of the correct size
-            return;
-        }
-
-        freeDynamicArrays();
-    }
-
-    _programBlockHistory = new ProgramBlockIndex[capacity];
-    _programBlockHistoryMaxP = _programBlockHistory + capacity;
-
-    _helperBuf = helperBuf;
-
-    reset();
-}
-
-void RunSummary::reset() {
-    _programBlockHistoryP = _programBlockHistory;
-    _runBlockHistoryP = _runBlockHistory;
-
-    _programBlockPendingP = _programBlockHistory;
-    _loopP = nullptr;
-
-    _sequenceBlock[0].init(0);
-    _numSequenceBlocks = 1;
+    _sequenceBlocks.clear();
+    _sequenceBlocks.emplace_back(0);
 
     _rotationEqualityCache.clear();
 }
 
-RunBlockSequenceNode* RunSummary::getChildNode(
-    RunBlockSequenceNode* parent,
-    ProgramBlockIndex targetIndex
+RunBlockSequenceNode* RunSummaryBase::getChildNode(
+    RunBlockSequenceNode* parent, RunUnitId targetId
 ) {
     RunBlockSequenceNode* node = parent;
 
-    if (!node->_childIndex) {
+    if (node->_childIndex) {
         // This node does not yet have any children. Add the first.
-        assert(_numSequenceBlocks < maxNumSequenceBlocks);
-
-        node->_childIndex = _numSequenceBlocks;
-        node = _sequenceBlock + _numSequenceBlocks++;
-        node->init(targetIndex);
-
-        return node;
+        node->_childIndex = (int)_sequenceBlocks.size();
+        _sequenceBlocks.emplace_back(targetId);
+        return &_sequenceBlocks.back();
     }
 
-    node = _sequenceBlock + node->_childIndex;
-    if (node->getProgramBlockIndex() == targetIndex) {
+    node = &_sequenceBlocks[node->_childIndex];
+    if (node->getRunUnitId() == targetId) {
         // Found it!
         return node;
     }
 
-    // Check the siblings of the first child
+    // Check the siblings
     while (node->_siblingIndex) {
-        node = _sequenceBlock + node->_siblingIndex;
-        if (node->getProgramBlockIndex() == targetIndex) {
+        node = &_sequenceBlocks[node->_siblingIndex];
+        if (node->getRunUnitId() == targetId) {
             // Found it!
             return node;
         }
     }
 
-    // There's no sequence start yet for this program block. Create it
-    assert(_numSequenceBlocks < maxNumSequenceBlocks);
-
-    node->_siblingIndex = _numSequenceBlocks;
-    node = _sequenceBlock + _numSequenceBlocks++;
-    node->init(targetIndex);
-
-    return node;
+    node->_siblingIndex = (int)_sequenceBlocks.size();
+    _sequenceBlocks.emplace_back(targetId);
+    return &_sequenceBlocks.back();
 }
 
-int RunSummary::getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP) {
-    ProgramBlockIndex* blockP = startP;
-    RunBlockSequenceNode* sequenceNodeP = _sequenceBlock; // Start at root
+void RunSummaryBase::createRunBlock(int start, int end, int loopPeriod) {
+    RunBlockSequenceNode* rootP = &_sequenceBlocks[0];
+    RunBlockSequenceNode* sequenceNodeP = rootP;
 
-    while (blockP != endP) {
-        sequenceNodeP = getChildNode(sequenceNodeP, *blockP++);
+    for (int i = start; i < end; ++i) {
+        sequenceNodeP = getChildNode(sequenceNodeP, getRunUnitIdAt(i));
     }
 
-    return (int)(sequenceNodeP - _sequenceBlock);
+    int sequenceId = (int)(sequenceNodeP - rootP);
+
+    _runBlocks.emplace_back(start, sequenceId, loopPeriod);
 }
 
-void RunSummary::createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP,
-                                int loopPeriod) {
-    int sequenceIndex = getSequenceIndex(startP, endP);
-
-    assert(_runBlockHistoryP < _runBlockHistoryMaxP);
-    (_runBlockHistoryP++)->init((int)(startP - _programBlockHistory), sequenceIndex, loopPeriod);
-}
-
-bool RunSummary::recordProgramBlock(ProgramBlockIndex blockIndex) {
-//    std::cout << "recordProgramBlock #" << (int)blockIndex << std::endl;
-
-    assert(_programBlockHistoryP != _programBlockHistoryMaxP);
-    *_programBlockHistoryP = blockIndex;
-
-    bool newRunBlocks = false;
-
-    if (_loopP == nullptr) {
-        int loopPeriod = findRepeatedSequence(
-            _programBlockPendingP,
-            _helperBuf,
-            (int)(_programBlockHistoryP - _programBlockPendingP + 1)
-        );
-        if (loopPeriod > 0) {
-//            std::cout << "Loop detected (period = " << loopPeriod << ")" << std::endl;
-            ProgramBlockIndex* loopStartP = _programBlockHistoryP - loopPeriod * 2 + 1;
-
-            if (loopStartP != _programBlockPendingP) {
-                createRunBlock(_programBlockPendingP, loopStartP, 0);
-            }
-            createRunBlock(loopStartP, _programBlockHistoryP, loopPeriod);
-
-            _loopP = _programBlockHistoryP - loopPeriod + 1;
-            _programBlockPendingP = nullptr;
-            newRunBlocks = true;
-        }
-    } else {
-        if (*_loopP++ != *_programBlockHistoryP) {
-//            std::cout << "Loop exited!" << std::endl;
-            // Loop is broken
-            _programBlockPendingP = _programBlockHistoryP;
-            _loopP = nullptr;
-        }
-    }
-
-    _programBlockHistoryP++;
-
-    return newRunBlocks;
-}
-
-int RunSummary::getRunBlockLength(int startIndex, int endIndex) const {
+int RunSummaryBase::getRunBlockLength(int startIndex, int endIndex) const {
     bool isLast = endIndex == getNumRunBlocks();
-    const RunBlock* runBlockP = _runBlockHistory + startIndex;
-    int programBlockStartIndex = runBlockP->getStartIndex();
+    int runUnitStartIndex = _runBlocks[startIndex].getStartIndex();
 
     if (isLast) {
-        if (_programBlockPendingP != nullptr) {
-            // Last run is completed. There are still some unallocated program blocks though
-            return (int)(_programBlockPendingP - _programBlockHistory) - programBlockStartIndex;
+        if (_pending >= 0) {
+            // Last run block is completed. There are still some unassigned run units though
+            return _pending - runUnitStartIndex;
         } else {
-            return (int)(_programBlockHistoryP - _programBlockHistory) - programBlockStartIndex;
+            return getNumRunUnits() - runUnitStartIndex;
         }
     } else {
-        return (_runBlockHistory + endIndex)->getStartIndex() - programBlockStartIndex;
+        return _runBlocks[endIndex].getStartIndex() - runUnitStartIndex;
     }
 }
 
-int RunSummary::getLoopIteration() const {
-    assert(_loopP != nullptr);
+int RunSummaryBase::getLoopIteration() const {
+    assert(_loop >= 0);
 
-    int startIndex = (_runBlockHistoryP - 1)->getStartIndex();
-    int loopLength = (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+    auto loopBlock = _runBlocks.back();
+    int startIndex = loopBlock.getStartIndex();
+    int loopLength = getNumRunUnits() - startIndex;
 
-    return loopLength / getLoopPeriod();
+    return loopLength / loopBlock.getLoopPeriod();
 }
 
-bool RunSummary::isAtEndOfLoop() const {
-    assert(_loopP != nullptr);
-    assert(_programBlockPendingP == nullptr);
+bool RunSummaryBase::isAtEndOfLoop() const {
+    assert(_loop >= 0);
 
-    int startIndex = (_runBlockHistoryP - 1)->getStartIndex();
-    int loopLength = (int)(_programBlockHistoryP - _programBlockHistory) - startIndex;
+    auto loopBlock = _runBlocks.back();
+    int startIndex = loopBlock.getStartIndex();
+    int loopLength = getNumRunUnits() - startIndex;
 
-    return (loopLength % getLoopPeriod() == 0);
+    return loopLength % loopBlock.getLoopPeriod() == 0;
 }
 
 // Implements Booth's algorithm
 // See: https://en.wikipedia.org/wiki/Lexicographically_minimal_string_rotation#Booth's_Algorithm
-int RunSummary::calculateCanonicalLoopIndex(int startIndex, int len) const {
+int RunSummaryBase::calculateCanonicalLoopIndex(int startIndex, int len) const {
     // Initialize failure function
     std::vector<int> f(len, -1);
 
     int k = 0; // Least rotation of sequence found so far
 
     for (int j = 1; j < len; ++j) {
-        int sj = programBlockIndexAt(startIndex + j);
+        int sj = getRunUnitIdAt(startIndex + j);
         int i = f[j - k - 1];
-        while (i != -1 && sj != programBlockIndexAt(startIndex + k + i + 1)) {
-            if (sj < programBlockIndexAt(startIndex + k + i + 1)) {
+        while (i != -1 && sj != getRunUnitIdAt(startIndex + k + i + 1)) {
+            if (sj < getRunUnitIdAt(startIndex + k + i + 1)) {
                 k = j - i - 1;
             }
             i = f[i];
         }
-        if (sj != programBlockIndexAt(startIndex + k + i + 1)) {
+        if (sj != getRunUnitIdAt(startIndex + k + i + 1)) {
             assert(i == -1);
-            if (sj < programBlockIndexAt(startIndex + k)) { // k + i + 1 == k
+            if (sj < getRunUnitIdAt(startIndex + k)) { // k + i + 1 == k
                 k = j;
             }
             f[j - k] = -1;
@@ -242,12 +140,13 @@ int RunSummary::calculateCanonicalLoopIndex(int startIndex, int len) const {
     return startIndex + k;
 }
 
-bool RunSummary::determineRotationEquivalence(int index1, int index2, int len, int &offset) const {
+bool RunSummaryBase::determineRotationEquivalence(int index1, int index2, int len,
+                                                  int &offset) const {
     int ci1 = calculateCanonicalLoopIndex(index1, len);
     int ci2 = calculateCanonicalLoopIndex(index2, len);
 
     for (int i = len; --i >= 0; ) {
-        if (programBlockIndexAt(ci1 + i) != programBlockIndexAt(ci2 + i)) {
+        if (getRunUnitIdAt(ci1 + i) != getRunUnitIdAt(ci2 + i)) {
             return false;
         }
     }
@@ -260,10 +159,10 @@ bool RunSummary::determineRotationEquivalence(int index1, int index2, int len, i
 }
 
 
-int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
+int RunSummaryBase::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
                                       int &indexOffset) const {
-    int index1 = block1->getSequenceIndex();
-    int index2 = block2->getSequenceIndex();
+    int index1 = block1->getSequenceId();
+    int index2 = block2->getSequenceId();
     if (index1 == index2) {
         // Blocks are equal, even without rotating
         return true;
@@ -300,32 +199,33 @@ int RunSummary::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* bl
     return areEqual;
 }
 
-void RunSummary::dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const {
+void RunSummaryBase::dumpRunBlockSequenceNode(int nodeIndex, int level) const {
     for (int i = 0; i < level; i++) {
         std::cout << "  ";
     }
-    std::cout << (node - _sequenceBlock)
-    << " (" << node->getProgramBlockIndex() << ")" << std::endl;
+
+    auto &node = _sequenceBlocks[nodeIndex];
+    std::cout << nodeIndex << " (" << node.getRunUnitId() << ")" << std::endl;
 
     // Dump children
-    if (node->_childIndex) {
-        dumpRunBlockSequenceNode(_sequenceBlock + node->_childIndex, level + 1);
+    if (node._childIndex) {
+        dumpRunBlockSequenceNode(node._childIndex, level + 1);
     }
 
     // Dump siblings
-    if (node->_siblingIndex) {
-        dumpRunBlockSequenceNode(_sequenceBlock + node->_siblingIndex, level);
+    if (node._siblingIndex) {
+        dumpRunBlockSequenceNode(node._siblingIndex, level);
     }
 }
 
-void RunSummary::dumpSequenceTree() const {
-    dumpRunBlockSequenceNode(_sequenceBlock, 0);
+void RunSummaryBase::dumpSequenceTree() const {
+    dumpRunBlockSequenceNode(0, 0);
 }
 
-void RunSummary::dumpCondensed() const {
+void RunSummaryBase::dumpCondensed() const {
     for (int i = 0; i < getNumRunBlocks(); i++) {
         const RunBlock* runBlock = runBlockAt(i);
-        int sequenceIndex = runBlock->getSequenceIndex();
+        int sequenceIndex = runBlock->getSequenceId();
 
         if (i > 0) {
             std::cout << " ";
@@ -348,7 +248,7 @@ void RunSummary::dumpCondensed() const {
     std::cout << "with:" << std::endl;
     for (int i = 0; i < getNumRunBlocks(); i++) {
         const RunBlock* runBlock = runBlockAt(i);
-        int sequenceIndex = runBlock->getSequenceIndex();
+        int sequenceIndex = runBlock->getSequenceId();
 
         int j = 0;
         while (j < numUnique && helperArray[j] != sequenceIndex) {
@@ -364,9 +264,10 @@ void RunSummary::dumpCondensed() const {
                 len = runBlock->getLoopPeriod();
             }
 
-            ProgramBlockIndex* programBlockP = _programBlockHistory + runBlock->getStartIndex();
-            for (int k = 0; k < len; k++) {
-                std::cout << " " << *(programBlockP++);
+            int k = runBlock->getStartIndex();
+            int end = k + len;
+            while (k < end) {
+                std::cout << " " << getRunUnitIdAt(k++);
             }
             std::cout << std::endl;
 
@@ -378,80 +279,64 @@ void RunSummary::dumpCondensed() const {
     }
 }
 
-void RunSummary::dump() const {
-    ProgramBlockIndex* programBlockP = _programBlockHistory;
-    const RunBlock* runBlockP = _runBlockHistory;
+void RunSummaryBase::dump() const {
+    int runUnitIndex = 0;
+    int numRunUnits = getNumRunUnits();
+    auto runBlock = _runBlocks.cbegin();
     int numPendingBlocks = 0;
     bool isLoop = false;
 
-    while (programBlockP < _programBlockHistoryP) {
+    while (runUnitIndex < numRunUnits) {
         if (--numPendingBlocks == 0) {
             std::cout << (isLoop ? "] " : ") ");
         }
         if (
             numPendingBlocks <= 0 &&
-            runBlockP->getStartIndex() == (programBlockP - _programBlockHistory)
+            (*runBlock).getStartIndex() == runUnitIndex
         ) {
-            isLoop = runBlockP->isLoop();
-            std::cout << "#" << runBlockP->getSequenceIndex()
-            << (isLoop ? "[" : "(");
-            numPendingBlocks = getRunBlockLength((int)(runBlockP - _runBlockHistory));
+            isLoop = (*runBlock).isLoop();
+            std::cout << "#" << (*runBlock).getSequenceId() << (isLoop ? "[" : "(");
+            numPendingBlocks = getRunBlockLength(&*runBlock);
 
-            runBlockP++;
+            runBlock++;
         } else {
             std::cout << " ";
         }
-        std::cout << (int)*programBlockP++;
+        std::cout << getRunUnitIdAt(runUnitIndex++);
     }
     std::cout << std::endl;
 }
 
-int RunSummary::getDpDeltaOfProgramBlockSequence(const InterpretedProgram *program,
-                                                 ProgramBlockIndex* start,
-                                                 ProgramBlockIndex* end) const {
+int RunSummary::getDpDeltaOfProgramBlockSequence(int start, int end) const {
     int dpDelta = 0;
 
-    ProgramBlockIndex* pbIndex = start;
-    while (pbIndex < end) {
-        const ProgramBlock *pb = program->programBlockAt(*pbIndex);
-        if (!pb->isDelta()) {
-            dpDelta += pb->getInstructionAmount();
+    for (auto programBlock : makeRange(_runHistory, start, end)) {
+        if (!programBlock->isDelta()) {
+            dpDelta += programBlock->getInstructionAmount();
         }
-        pbIndex++;
     }
 
     return dpDelta;
 }
 
-int RunSummary::getDpDelta(const InterpretedProgram *program,
-                           int firstRunBlock, int lastRunBlock) const {
+int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
     int dpDelta = 0;
-    const RunBlock *runBlock = runBlockAt(firstRunBlock);
-    const RunBlock *endBlock = runBlockAt(lastRunBlock);
 
-    while (runBlock < endBlock) {
-        int runBlockLen = getRunBlockLength(runBlock);
-        ProgramBlockIndex* startP = _programBlockHistory + runBlock->getStartIndex();
+    for (auto runBlock : makeRange(_runBlocks, firstRunBlock, lastRunBlock)) {
+        int runBlockLen = getRunBlockLength(&runBlock);
+        int start = runBlock.getStartIndex();
 
-        if (runBlock->isLoop()) {
-            int loopPeriod = runBlock->getLoopPeriod();
-            int dpDeltaPerIteration = getDpDeltaOfProgramBlockSequence(program,
-                                                                       startP,
-                                                                       startP + loopPeriod);
+        if (runBlock.isLoop()) {
+            int loopPeriod = runBlock.getLoopPeriod();
+            int dpDeltaPerIteration = getDpDeltaOfProgramBlockSequence(start, start + loopPeriod);
             int numIterations = runBlockLen / loopPeriod;
             int lenFullSpins = loopPeriod * numIterations;
 
             dpDelta += numIterations * dpDeltaPerIteration;
-            dpDelta += getDpDeltaOfProgramBlockSequence(program,
-                                                        startP + lenFullSpins,
-                                                        startP + runBlockLen);
+            dpDelta += getDpDeltaOfProgramBlockSequence(start + lenFullSpins, start + runBlockLen);
         } else {
-            dpDelta += getDpDeltaOfProgramBlockSequence(program,
-                                                        startP,
-                                                        startP + runBlockLen);
+            dpDelta += getDpDeltaOfProgramBlockSequence(start, start + runBlockLen);
         }
-
-        ++runBlock;
     }
 
     return dpDelta;

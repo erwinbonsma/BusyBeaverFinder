@@ -12,12 +12,23 @@
 #include "ProgramBlock.h"
 
 const int dummySteps = 1;
-const int maxSequenceLen = 16;
+const int maxSequenceLen = 4;
 
 const int INC = true;
 const int MOV = false;
 const bool EQ = true;
 const bool NEQ = false;
+
+void analyzeSequence(SequenceAnalysis& sa, ProgramBlock* startBlock, int numBlocks) {
+    const ProgramBlock* blockP[maxSequenceLen];
+
+    for (int i = 0; i < numBlocks; ++i) {
+        blockP[i] = startBlock++;
+    }
+
+    ProgramBlockSequence sequence(blockP, numBlocks);
+    sa.analyzeSequence(sequence);
+}
 
 TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
     ProgramBlock exitBlock;
@@ -33,7 +44,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
     SECTION( "NoPreCondition" ) {
         seqBlock[0].finalize(INC, 1, dummySteps, &exitBlock, seqBlock + 0);
 
-        sa.analyzeSequence(seqBlock, 1);
+        analyzeSequence(sa, seqBlock, 1);
 
         REQUIRE(sa.preConditions().empty());
     }
@@ -41,7 +52,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[0].finalize(INC, 3, dummySteps, &exitBlock, seqBlock + 1);
         seqBlock[1].finalize(MOV, 2, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 2);
+        analyzeSequence(sa, seqBlock, 2);
 
         REQUIRE(sa.preConditions().count(0) == 1);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-3, NEQ)));
@@ -50,7 +61,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[0].finalize(INC, 3, dummySteps, seqBlock + 1, &exitBlock);
         seqBlock[1].finalize(MOV, 2, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 2);
+        analyzeSequence(sa, seqBlock, 2);
 
         REQUIRE(sa.preConditions().count(0) == 1);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-3, EQ)));
@@ -60,7 +71,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[1].finalize(INC, 2, dummySteps, &exitBlock, seqBlock + 2);
         seqBlock[2].finalize(MOV, 1, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 3);
+        analyzeSequence(sa, seqBlock, 3);
 
         REQUIRE(sa.preConditions().count(0) == 2);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-3, NEQ)));
@@ -71,7 +82,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[1].finalize(INC, 2, dummySteps, seqBlock + 2, &exitBlock);
         seqBlock[2].finalize(MOV, 1, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 3);
+        analyzeSequence(sa, seqBlock, 3);
 
         REQUIRE(sa.preConditions().count(0) == 1);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-5, EQ)));
@@ -81,7 +92,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[1].finalize(INC, 2, dummySteps, &exitBlock, seqBlock + 2);
         seqBlock[2].finalize(MOV, 1, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 3);
+        analyzeSequence(sa, seqBlock, 3);
 
         REQUIRE(sa.preConditions().count(0) == 1);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-3, EQ)));
@@ -92,7 +103,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[2].finalize(INC, 1, dummySteps, &exitBlock, seqBlock + 3);
         seqBlock[3].finalize(MOV, 1, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 4);
+        analyzeSequence(sa, seqBlock, 4);
 
         REQUIRE(sa.preConditions().count(0) == 2);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-1, NEQ)));
@@ -104,7 +115,7 @@ TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {
         seqBlock[2].finalize(INC, 2, dummySteps, &exitBlock, seqBlock + 3);
         seqBlock[3].finalize(MOV, -1, dummySteps, &exitBlock, &exitBlock);
 
-        sa.analyzeSequence(seqBlock, 4);
+        analyzeSequence(sa, seqBlock,4);
 
         REQUIRE(sa.preConditions().count(0) == 1);
         REQUIRE(sa.hasPreCondition(0, PreCondition(-3, NEQ)));

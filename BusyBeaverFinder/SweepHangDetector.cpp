@@ -148,8 +148,7 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     _nextLoopStartInstructionIndex = rotationEquivalenceOffset;
     _numSweeps++;
 
-    _lastSweepLength = abs(execution.getRunSummary().getDpDelta(execution.getInterpretedProgram(),
-                                                                transitionStartIndex,
+    _lastSweepLength = abs(execution.getRunSummary().getDpDelta(transitionStartIndex,
                                                                 lastLoopIndex + 1));
 
     return st;
@@ -315,7 +314,7 @@ bool SweepHangDetector::loopsAreEquivalent(const RunBlock* loop1, const RunBlock
     assert(loop2->isLoop());
 
     return (
-        loop1->getSequenceIndex() == loop2->getSequenceIndex() ||
+        loop1->getSequenceId() == loop2->getSequenceId() ||
         _execution.getRunSummary().areLoopsRotationEqual(loop1, loop2, rotationEquivalenceOffset)
     );
 }

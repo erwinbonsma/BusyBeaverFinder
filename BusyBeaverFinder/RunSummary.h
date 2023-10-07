@@ -8,45 +8,43 @@
 #pragma once
 
 #include <map>
+#include <vector>
+
+#include "InterpretedProgram.h"
+#include "Utils.h"
 
 class ProgramBlock;
 
-typedef int ProgramBlockIndex;
+typedef int RunUnitId;
 
-// The next to constants should be set such that it never is the limiting factor for hang detection
-// (instead, the logic of the available/implemented hang detectors should be)
-#ifdef DEBUG
-const int maxRunBlockHistoryLength = 32768;
-const int maxNumSequenceBlocks = 8192;
-#else
-const int maxRunBlockHistoryLength = 1000000; // TODO: Make dynamic
-const int maxNumSequenceBlocks = 65536;
-#endif
-
-
+/* Building block for constructing a tree of possible run unit sequences
+ */
 class RunBlockSequenceNode {
-    friend class RunSummary;
+    friend class RunSummaryBase;
 
-    ProgramBlockIndex _programBlockIndex;
+    RunUnitId _runUnitId;
 
+    // Run block sequence node indices
     int _childIndex;
     int _siblingIndex;
 
-    void init(ProgramBlockIndex programBlockIndex);
+public:
+    RunBlockSequenceNode(RunUnitId runUnitId) : _runUnitId(runUnitId) {}
 
-    ProgramBlockIndex getProgramBlockIndex() const { return _programBlockIndex; }
+    RunUnitId getRunUnitId() const { return _runUnitId; }
 };
 
+/* Groups a sequence of run units
+ */
 class RunBlock {
-    friend class RunSummary;
-
-    int _startIndex;
-    int _sequenceIndex;
-    int _loopPeriod;
-
-    void init(int startIndex, int sequenceIndex, int loopPeriod);
+    int _startIndex;  // Index into run unit history
+    int _sequenceId;  // Unique Id for this sequence of run units
+    int _loopPeriod;  // Loop period (in run units). Zero when sequence is not a loop.
 
 public:
+    RunBlock(int startIndex, int sequenceId, int loopPeriod)
+    : _startIndex(startIndex), _sequenceId(sequenceId), _loopPeriod(loopPeriod) {}
+
     bool isLoop() const { return _loopPeriod != 0; }
     int getLoopPeriod() const { return _loopPeriod; }
 
@@ -54,45 +52,32 @@ public:
     int getStartIndex() const { return _startIndex; }
 
     // Returns a unique identifier for this (type of) run block. Different run blocks have the same
-    // index when:
+    // identifier when:
     // - their execution sequences match exactly, or
     // - they represent the same loop. In this case, the number of loop iterations may differ
-    int getSequenceIndex() const { return _sequenceIndex; }
+    int getSequenceId() const { return _sequenceId; }
+
+    bool operator==(const RunBlock& other) const {
+        return _sequenceId == other._sequenceId;
+    }
+    bool operator!=(const RunBlock& other) const { return !(*this == other); }
 };
 
-class InterpretedProgram;
+/* Summarises a run history constisting of a sequence of run units into higher level run blocks.
+ */
+class RunSummaryBase {
 
-class RunSummary {
-    friend class RunBlock;
+    // Index to first run unit that is not yet part of a run block
+    int _pending;
 
-    // Stack of recently executed program blocks
-    ProgramBlockIndex* _programBlockHistory = nullptr;
-    ProgramBlockIndex* _programBlockHistoryMaxP = nullptr;
+    // Index into the current loop, if any. It is used to quickly check when loop is broken
+    int _loop;
 
-    // Pointer to current top of the stack
-    ProgramBlockIndex* _programBlockHistoryP = nullptr;
+    // The number of run units from the history that has been processed. Note, not all are
+    // necessarily part of a run block yet.
+    int _processed;
 
-    // Pointer to first program block that is not yet part of a run block
-    ProgramBlockIndex* _programBlockPendingP = nullptr;
-
-    // Pointer to the previous iteration of the loop when in a loop. Otherwise equals nullptr
-    ProgramBlockIndex* _loopP = nullptr;
-
-    // Stack of recently executed run blocks
-    RunBlock _runBlockHistory[maxRunBlockHistoryLength];
-
-    RunBlock* _runBlockHistoryMaxP = _runBlockHistory + maxRunBlockHistoryLength;
-
-    // Pointer to threshold where buffer is considered full. As a single invocation of
-    // recordProgramBlock can add multiple run blocks, there may still be a few empty spots after
-    // the threshold.
-    RunBlock* _runBlockHistoryThresholdP = _runBlockHistory + maxRunBlockHistoryLength - 1;
-
-    // Pointer to current top of the stack
-    RunBlock* _runBlockHistoryP = nullptr;
-
-    RunBlockSequenceNode _sequenceBlock[maxNumSequenceBlocks];
-    int _numSequenceBlocks;
+    std::vector<RunBlockSequenceNode> _sequenceBlocks;
 
     // Cache for areLoopsRotationEqual method.
     // Key: Pair of loop sequence indices (smallest first)
@@ -103,62 +88,49 @@ class RunSummary {
     // Note: It is not owned by this class (and should therefore not be freed by it)
     int* _helperBuf;
 
-    void freeDynamicArrays();
+    RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, RunUnitId targetId);
 
-    RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, ProgramBlockIndex targetIndex);
-    int getSequenceIndex(ProgramBlockIndex* startP, ProgramBlockIndex* endP);
+    virtual int getNumRunUnits() const = 0;
+    // Returns the identifier for the run unit at the given index in the run history
+    virtual int getRunUnitIdAt(int runUnitIndex) const = 0;
 
-    // Creates a run block for the programs blocks from startP (inclusive) to endP (exclusive)
-    void createRunBlock(ProgramBlockIndex* startP, ProgramBlockIndex* endP, int loopPeriod);
+    void createRunBlock(int start, int end, int loopPeriod);
 
-    void dumpRunBlockSequenceNode(const RunBlockSequenceNode* node, int level) const;
+    //--------------------------------------------------------------------------------------------
+
+    void dumpRunBlockSequenceNode(int nodeIndex, int level) const;
 
     int calculateCanonicalLoopIndex(int startIndex, int len) const;
     bool determineRotationEquivalence(int index1, int index2, int len, int &offset) const;
 
-    int getDpDeltaOfProgramBlockSequence(const InterpretedProgram *program,
-                                         ProgramBlockIndex* start,
-                                         ProgramBlockIndex* end) const;
-public:
-    ~RunSummary();
-
-    void reset();
-
-    // Set the capacity (in program blocks)
-    int getCapacity() const;
-    void setCapacity(int capacity, int* helperBuf);
+protected:
+    // Stack of recently executed run blocks
+    std::vector<RunBlock> _runBlocks;
 
     // Returns true if this resulted in the creation of one or more RunBlocks
-    bool recordProgramBlock(ProgramBlockIndex blockIndex);
+    template <class RunUnitHistory>
+    bool processNewHistory(const RunUnitHistory& history);
 
-    bool isInsideLoop() const { return _loopP != nullptr; }
-    int getLoopPeriod() const { return (int)(_programBlockHistoryP - _loopP); }
+public:
+    void setHelperBuffer(int* helperBuf) { _helperBuf = helperBuf; }
+
+    void reset();
+    virtual bool processNewRunUnits() = 0;
+
+    bool isInsideLoop() const { return _loop >= 0; }
+    int getLoopPeriod() const { return _runBlocks.back().getLoopPeriod(); }
     int getLoopIteration() const;
 
     // Returns true when the loop just completed an iteration
     bool isAtEndOfLoop() const;
 
-    // Returns true when the loop will start a next iteration
-    bool isAtStartOfLoop(ProgramBlockIndex nextBlockIndex) const {
-        return isAtEndOfLoop() && *_loopP == nextBlockIndex;
-    }
+    bool loopContinues(RunUnitId nextId) const { return getRunUnitIdAt(_loop) == nextId; }
 
-    bool loopContinues(ProgramBlockIndex nextBlockIndex) const {
-        return *_loopP == nextBlockIndex;
-    }
+    int getNumRunBlocks() const { return (int)_runBlocks.size(); }
+    const RunBlock* runBlockAt(int index) const { return &_runBlocks[index]; }
+    const RunBlock* getLastRunBlock() const { return &_runBlocks.back(); }
 
-    bool hasSpaceRemaining() const { return _runBlockHistoryP < _runBlockHistoryThresholdP; }
-
-    int getNumProgramBlocks() const { return (int)(_programBlockHistoryP - _programBlockHistory); }
-    ProgramBlockIndex programBlockIndexAt(int index) const { return _programBlockHistory[index]; }
-    ProgramBlockIndex getLastProgramBlockIndex() const { return *(_programBlockHistoryP - 1); }
-
-    int getNumRunBlocks() const { return (int)(_runBlockHistoryP - _runBlockHistory); }
-    const RunBlock* runBlockAt(int index) const { return _runBlockHistory + index; }
-    const RunBlock* getLastRunBlock() const { return (_runBlockHistoryP - 1); }
-
-    // Gets the length in program blocks of a sequence of one or more run blocks. The endIndex is
-    // exclusive
+    // Gets the length in run units of a sequence run blocks. The endIndex is exclusive.
     int getRunBlockLength(int startIndex, int endIndex) const;
 
     // Returns the length in program blocks of the given run block.
@@ -172,7 +144,7 @@ public:
     // => A B C A B C A B X => length = 8, where X is the program block that breaks the loop
     int getRunBlockLength(int index) const { return getRunBlockLength(index, index + 1); }
     int getRunBlockLength(const RunBlock* block) const {
-        return getRunBlockLength((int)(block - _runBlockHistory));
+        return getRunBlockLength((int)(block - &_runBlocks[0]));
     }
 
     // Returns "true" if both loop run blocks are equal when rotations are allowed. E.g. it returns
@@ -181,11 +153,80 @@ public:
     int areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
                               int &indexOffset) const;
 
-    // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
-    // to lastRunBlock (exclusive).
-    int getDpDelta(const InterpretedProgram *program, int firstRunBlock, int lastRunBlock) const;
+    auto cbegin() const { return _runBlocks.cbegin(); }
+    auto cend() const { return _runBlocks.cend(); }
 
     void dumpSequenceTree() const;
     void dumpCondensed() const;
     void dump() const;
 };
+
+class RunSummary : public RunSummaryBase {
+    const std::vector<const ProgramBlock *> &_runHistory;
+
+    int getDpDeltaOfProgramBlockSequence(int start, int end) const;
+
+    int getNumRunUnits() const override { return (int)_runHistory.size(); };
+    int getRunUnitIdAt(int runUnitIndex) const override {
+        return _runHistory[runUnitIndex]->getStartIndex();
+    };
+
+public:
+    RunSummary(const std::vector<const ProgramBlock *> &runHistory) : _runHistory(runHistory) {}
+
+    // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
+    // to lastRunBlock (exclusive).
+    int getDpDelta(int firstRunBlock, int lastRunBlock) const;
+
+    const std::vector<RunBlock>& getRunBlocks() const { return _runBlocks; }
+
+    bool processNewRunUnits() override { return processNewHistory(_runHistory); };
+};
+
+class MetaRunSummary : public RunSummaryBase {
+    const std::vector<RunBlock> &_runHistory;
+
+    int getNumRunUnits() const override { return (int)_runHistory.size(); };
+    int getRunUnitIdAt(int runUnitIndex) const override {
+        return _runHistory[runUnitIndex].getSequenceId();
+    };
+
+public:
+    MetaRunSummary(const std::vector<RunBlock> &runHistory) : _runHistory(runHistory) {}
+
+    bool processNewRunUnits() override { return processNewHistory(_runHistory); };
+};
+
+template <class RunUnitHistory>
+bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
+//    std::cout << "recordProgramBlock #" << (int)blockIndex << std::endl;
+
+    bool newRunBlocks = false;
+
+    while (_processed < history.size()) {
+        if (_loop < 0) {
+            int loopPeriod = findRepeatedSequence(&history[_pending], _helperBuf,
+                                                  _processed - _pending + 1);
+            if (loopPeriod > 0) {                       // Start of new loop
+                // std::cout << "Loop detected (period = " << loopPeriod << ")" << std::endl;
+                _loop = (int)history.size() - loopPeriod * 2;
+
+                if (_loop != _pending) {
+                    createRunBlock(_pending, _loop, 0);
+                }
+                createRunBlock(_loop, _processed + 1, loopPeriod);
+                _pending = -1;
+                newRunBlocks = true;
+            }
+        } else {
+            if (history[_loop++] != history.back()) {  // Loop is broken
+                // std::cout << "Loop exited!" << std::endl;
+                _pending = _processed;
+                _loop = -1;
+            }
+        }
+        ++_processed;
+    }
+
+    return newRunBlocks;
+}

@@ -18,7 +18,7 @@ class SweepHangDetector;
 class SweepTransitionScanner {
     const SweepHangDetector &_sweepHangDetector;
     const RunSummary &_runSummary;
-    const RunSummary &_metaRunSummary;
+    const MetaRunSummary &_metaRunSummary;
 
     int _nextLoopIndex;
     int _nextLoopStartInstructionIndex;

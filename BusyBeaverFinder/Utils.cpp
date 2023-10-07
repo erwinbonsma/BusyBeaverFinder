@@ -112,55 +112,6 @@ int findPeriod(const char* input, int* buf, int len) {
     return len;
 }
 
-// This implementation is very similar to that of findPeriod. The only three changes are:
-// - Reversed iteration direction over the input sequence (moving from end towards start)
-// - Changed termination criterion and return value
-// - Only iterate over half the sequence (as it will not find a match anymore beyond that)
-int findRepeatedSequence(const int* input, int* buf, int len) {
-    int lastpos = len - 1;
-    int halflen = len / 2;
-    int l, r;
-    l = r = 0;
-
-    buf[0] = 0; // Should not be used
-    int z;
-    for (int i = 1; i <= halflen; i++) {
-        if (i > r) {
-            l = r = i;
-            while (r < len && input[lastpos - (r - l)] == input[lastpos - r]) {
-                r++;
-            }
-            z = r - l;
-            r--;
-        } else {
-            int k = i - l;
-            if (buf[k] < r - i + 1) {
-                // z[k] is less than remaining interval
-                z = buf[k];
-            } else {
-                l = i;
-                while (r < len && input[lastpos - (r - l)] == input[lastpos - r]) {
-                    r++;
-                }
-                z = r - l;
-                r--;
-            }
-        }
-
-        if (z >= i) {
-            // Done. Found position where the substring at the end of the input sequence is
-            // immediately repeated
-            return i;
-        } else {
-            // Store z-value. It can potentially be used to determine later z-values (thereby
-            // ensuring the algorithm requires a minimal amount of comparisons).
-            buf[i] = z;
-        }
-    }
-
-    return 0;
-}
-
 std::set<int> deltasCanSumToSet1, deltasCanSumToSet2, deltasCanSumToSet3;
 std::vector<int> deltasCanSumToVector1, deltasCanSumToVector2;
 bool deltasCanSumTo(std::set<int> deltas, int target) {

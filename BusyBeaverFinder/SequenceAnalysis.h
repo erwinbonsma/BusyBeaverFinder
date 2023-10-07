@@ -12,9 +12,9 @@
 #include <vector>
 
 #include "DataDeltas.h"
+#include "ProgramBlock.h"
 
 class InterpretedProgram;
-class ProgramBlock;
 class RunSummary;
 
 class PreCondition {
@@ -34,13 +34,30 @@ public:
     }
 };
 
+/* Specifies the sequence of program blocks that should be analyzed.
+ *
+ * Note: The referenced program blocks should not be persisted (they are stored in a vector, and
+ * can change when the capacity grows). Instead, the range that is analyzed should be accessed via
+ * the corresponding RunBlock in the RunSummary (which specifies the range) and associated
+ * run history.
+ */
+struct ProgramBlockSequence {
+    const ProgramBlock *const * start;
+    const ProgramBlock *const * end;
+
+    ProgramBlockSequence(const ProgramBlock *const * start, const ProgramBlock *const * end)
+        : start(start), end(end) {}
+    ProgramBlockSequence(const ProgramBlock *const * start, int length)
+        : start(start), end(start + length) {}
+};
+
 class SequenceAnalysis {
     friend std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa);
 
+    const ProgramBlock* _prevProgramBlock;
 protected:
-    std::vector<const ProgramBlock*> _programBlocks;
-
     int _dpDelta, _minDp, _maxDp;
+    int _sequenceSize;
 
     // The result of executing one sequence.
     //
@@ -57,7 +74,12 @@ protected:
     // executed. Keys are DP offsets
     std::multimap<int, PreCondition> _preConditions;
 
-    virtual void analyzeSequence();
+    // The sequence that is analyzed. It is only valid while the sequence is analyzed.
+    const ProgramBlockSequence* _sequence;
+
+    void startAnalysis();
+    void analyzeBlock(const ProgramBlock* block);
+    virtual void finishAnalysis();
 
     void addPreCondition(int dpOffset, PreCondition preCondition);
 
@@ -66,8 +88,7 @@ protected:
 public:
     SequenceAnalysis();
 
-    int sequenceSize() const { return (int)_programBlocks.size(); }
-    const ProgramBlock* programBlockAt(int index) const { return _programBlocks[index]; }
+    int sequenceSize() const { return _sequenceSize; }
 
     int dataPointerDelta() const { return _dpDelta; }
     int minDp() const { return _minDp; }
@@ -83,13 +104,7 @@ public:
     const std::multimap<int, PreCondition> preConditions() const { return _preConditions; }
     bool hasPreCondition(int dpOffset, PreCondition preCondition) const;
 
-    // Returns "true" when there are any data deltas when the sequence is partially executed,
-    // up until (inclusive) the specified instruction.
-    bool anyDataDeltasUpUntil(int index) const;
-
-    void analyzeSequence(const ProgramBlock* entryBlock, int numBlocks);
-    void analyzeSequence(const InterpretedProgram* program, const RunSummary& runSummary,
-                         int startIndex, int length);
+    void analyzeSequence(const ProgramBlockSequence& sequence);
 
     void dump() const { std::cout << *this << std::endl; }
 };
