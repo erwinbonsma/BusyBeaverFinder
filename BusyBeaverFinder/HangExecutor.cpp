@@ -185,7 +185,8 @@ RunResult HangExecutor::execute(std::string programSpec) {
 }
 
 void HangExecutor::dump() const {
-    // TODO
+    _runSummary[0].dump();
+    _runSummary[1].dump();
 }
 
 void HangExecutor::dumpExecutionState() const {

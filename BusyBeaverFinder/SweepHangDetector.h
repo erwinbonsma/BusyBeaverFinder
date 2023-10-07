@@ -47,8 +47,7 @@ class SweepHangDetector : public HangDetector {
     friend std::ostream &operator<<(std::ostream&, const SweepHangDetector&);
     friend SweepTransitionScanner;
 
-    // Sweep lengths during analysis. Is used to populate exit deltas in transition groups by
-    //
+    // Sweep lengths during analysis. Is used to populate exit deltas in transition groups.
     std::vector<int> _sweepLengths;
 
 protected:

@@ -293,6 +293,11 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
         // However, there is an isolated one at the left of the sequence that breaks the leftward
         // growth and causes the program to terminate.
         //
+        // More specifically, the 1 is an exit value for the rightwards sweep, but the current
+        // check does not check for this as it initiates hang detection when the sweep is at the
+        // right side. It only scans the data with the leftwards sweep loop analysis, and correctly
+        // establishes that 1 is not an exit condition for it.
+        //
         // Fix: Correctly detect that this 1 value causes a different execution path.
         //
         //       *
