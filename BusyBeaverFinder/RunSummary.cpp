@@ -406,51 +406,52 @@ void RunSummary::dump() const {
     std::cout << std::endl;
 }
 
-int getDpDeltaOfProgramBlockSequence(const RunSummary &runSummary,
-                                     const InterpretedProgram *program,
-                                     int pbStartIndex, int pbEndIndex) {
+int RunSummary::getDpDeltaOfProgramBlockSequence(const InterpretedProgram *program,
+                                                 ProgramBlockIndex* start,
+                                                 ProgramBlockIndex* end) const {
     int dpDelta = 0;
 
-    for (int i = pbStartIndex; i < pbEndIndex; ++i) {
-        int pbIndex = runSummary.programBlockIndexAt(i);
-        const ProgramBlock *pb = program->programBlockAt(pbIndex);
+    ProgramBlockIndex* pbIndex = start;
+    while (pbIndex < end) {
+        const ProgramBlock *pb = program->programBlockAt(*pbIndex);
         if (!pb->isDelta()) {
             dpDelta += pb->getInstructionAmount();
         }
+        pbIndex++;
     }
 
     return dpDelta;
 }
 
-int getDpDelta(const RunSummary &runSummary, const InterpretedProgram *program,
-               int firstRunBlock, int lastRunBlock) {
+int RunSummary::getDpDelta(const InterpretedProgram *program,
+                           int firstRunBlock, int lastRunBlock) const {
     int dpDelta = 0;
-    int runBlockIndex = firstRunBlock;
+    const RunBlock *runBlock = runBlockAt(firstRunBlock);
+    const RunBlock *endBlock = runBlockAt(lastRunBlock);
 
-    while (runBlockIndex < lastRunBlock) {
-        const RunBlock *runBlock = runSummary.runBlockAt(runBlockIndex);
-        int runBlockLen = runSummary.getRunBlockLength(runBlockIndex);
-        int startIndex = runBlock->getStartIndex();
+    while (runBlock < endBlock) {
+        int runBlockLen = getRunBlockLength(runBlock);
+        ProgramBlockIndex* startP = _programBlockHistory + runBlock->getStartIndex();
 
         if (runBlock->isLoop()) {
             int loopPeriod = runBlock->getLoopPeriod();
-            int dpDeltaPerIteration = getDpDeltaOfProgramBlockSequence(runSummary, program,
-                                                                       startIndex,
-                                                                       startIndex + loopPeriod);
+            int dpDeltaPerIteration = getDpDeltaOfProgramBlockSequence(program,
+                                                                       startP,
+                                                                       startP + loopPeriod);
             int numIterations = runBlockLen / loopPeriod;
             int lenFullSpins = loopPeriod * numIterations;
 
             dpDelta += numIterations * dpDeltaPerIteration;
-            dpDelta += getDpDeltaOfProgramBlockSequence(runSummary, program,
-                                                        startIndex + lenFullSpins,
-                                                        startIndex + runBlockLen);
+            dpDelta += getDpDeltaOfProgramBlockSequence(program,
+                                                        startP + lenFullSpins,
+                                                        startP + runBlockLen);
         } else {
-            dpDelta += getDpDeltaOfProgramBlockSequence(runSummary, program,
-                                                        startIndex,
-                                                        startIndex + runBlockLen);
+            dpDelta += getDpDeltaOfProgramBlockSequence(program,
+                                                        startP,
+                                                        startP + runBlockLen);
         }
 
-        ++runBlockIndex;
+        ++runBlock;
     }
 
     return dpDelta;

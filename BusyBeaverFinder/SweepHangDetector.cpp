@@ -148,8 +148,9 @@ const SweepTransition* SweepTransitionScanner::analyzePreviousSweepTransition() 
     _nextLoopStartInstructionIndex = rotationEquivalenceOffset;
     _numSweeps++;
 
-    _lastSweepLength = abs(getDpDelta(execution.getRunSummary(), execution.getInterpretedProgram(),
-                                      transitionStartIndex, lastLoopIndex + 1));
+    _lastSweepLength = abs(execution.getRunSummary().getDpDelta(execution.getInterpretedProgram(),
+                                                                transitionStartIndex,
+                                                                lastLoopIndex + 1));
 
     return st;
 }

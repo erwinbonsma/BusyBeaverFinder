@@ -60,6 +60,8 @@ public:
     int getSequenceIndex() const { return _sequenceIndex; }
 };
 
+class InterpretedProgram;
+
 class RunSummary {
     friend class RunBlock;
 
@@ -114,6 +116,9 @@ class RunSummary {
     int calculateCanonicalLoopIndex(int startIndex, int len) const;
     bool determineRotationEquivalence(int index1, int index2, int len, int &offset) const;
 
+    int getDpDeltaOfProgramBlockSequence(const InterpretedProgram *program,
+                                         ProgramBlockIndex* start,
+                                         ProgramBlockIndex* end) const;
 public:
     ~RunSummary();
 
@@ -176,13 +181,11 @@ public:
     int areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
                               int &indexOffset) const;
 
+    // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
+    // to lastRunBlock (exclusive).
+    int getDpDelta(const InterpretedProgram *program, int firstRunBlock, int lastRunBlock) const;
+
     void dumpSequenceTree() const;
     void dumpCondensed() const;
     void dump() const;
 };
-
-class InterpretedProgram;
-// Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up to
-// lastRunBlock (exclusive).
-int getDpDelta(const RunSummary &runSummary, const InterpretedProgram *program,
-               int firstRunBlock, int lastRunBlock);
