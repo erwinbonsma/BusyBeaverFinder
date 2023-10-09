@@ -25,8 +25,8 @@ class RunBlockSequenceNode {
     RunUnitId _runUnitId;
 
     // Run block sequence node indices
-    int _childIndex;
-    int _siblingIndex;
+    int _childIndex = 0;
+    int _siblingIndex = 0;
 
 public:
     RunBlockSequenceNode(RunUnitId runUnitId) : _runUnitId(runUnitId) {}
@@ -90,7 +90,7 @@ class RunSummaryBase {
 
     RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, RunUnitId targetId);
 
-    virtual int getNumRunUnits() const = 0;
+    int getNumRunUnits() const { return _processed; }
     // Returns the identifier for the run unit at the given index in the run history
     virtual int getRunUnitIdAt(int runUnitIndex) const = 0;
 
@@ -112,6 +112,8 @@ protected:
     bool processNewHistory(const RunUnitHistory& history);
 
 public:
+    RunSummaryBase() { reset(); }
+
     void setHelperBuffer(int* helperBuf) { _helperBuf = helperBuf; }
 
     void reset();
@@ -166,7 +168,6 @@ class RunSummary : public RunSummaryBase {
 
     int getDpDeltaOfProgramBlockSequence(int start, int end) const;
 
-    int getNumRunUnits() const override { return (int)_runHistory.size(); };
     int getRunUnitIdAt(int runUnitIndex) const override {
         return _runHistory[runUnitIndex]->getStartIndex();
     };
@@ -186,7 +187,6 @@ public:
 class MetaRunSummary : public RunSummaryBase {
     const std::vector<RunBlock> &_runHistory;
 
-    int getNumRunUnits() const override { return (int)_runHistory.size(); };
     int getRunUnitIdAt(int runUnitIndex) const override {
         return _runHistory[runUnitIndex].getSequenceId();
     };
@@ -199,17 +199,14 @@ public:
 
 template <class RunUnitHistory>
 bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
-//    std::cout << "recordProgramBlock #" << (int)blockIndex << std::endl;
-
     bool newRunBlocks = false;
 
     while (_processed < history.size()) {
         if (_loop < 0) {
             int loopPeriod = findRepeatedSequence(&history[_pending], _helperBuf,
                                                   _processed - _pending + 1);
-            if (loopPeriod > 0) {                       // Start of new loop
-                // std::cout << "Loop detected (period = " << loopPeriod << ")" << std::endl;
-                _loop = (int)history.size() - loopPeriod * 2;
+            if (loopPeriod > 0) {                           // Start of new loop
+                _loop = _processed + 1 - loopPeriod * 2;
 
                 if (_loop != _pending) {
                     createRunBlock(_pending, _loop, 0);
@@ -219,8 +216,7 @@ bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
                 newRunBlocks = true;
             }
         } else {
-            if (history[_loop++] != history.back()) {  // Loop is broken
-                // std::cout << "Loop exited!" << std::endl;
+            if (history[_loop++] != history[_processed]) {  // Loop is broken
                 _pending = _processed;
                 _loop = -1;
             }

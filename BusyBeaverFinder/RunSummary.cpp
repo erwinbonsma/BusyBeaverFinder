@@ -33,7 +33,7 @@ RunBlockSequenceNode* RunSummaryBase::getChildNode(
 ) {
     RunBlockSequenceNode* node = parent;
 
-    if (node->_childIndex) {
+    if (!node->_childIndex) {
         // This node does not yet have any children. Add the first.
         node->_childIndex = (int)_sequenceBlocks.size();
         _sequenceBlocks.emplace_back(targetId);
@@ -61,14 +61,13 @@ RunBlockSequenceNode* RunSummaryBase::getChildNode(
 }
 
 void RunSummaryBase::createRunBlock(int start, int end, int loopPeriod) {
-    RunBlockSequenceNode* rootP = &_sequenceBlocks[0];
-    RunBlockSequenceNode* sequenceNodeP = rootP;
+    RunBlockSequenceNode* sequenceNodeP = &_sequenceBlocks[0];
 
     for (int i = start; i < end; ++i) {
         sequenceNodeP = getChildNode(sequenceNodeP, getRunUnitIdAt(i));
     }
 
-    int sequenceId = (int)(sequenceNodeP - rootP);
+    int sequenceId = (int)(sequenceNodeP - &_sequenceBlocks[0]);
 
     _runBlocks.emplace_back(start, sequenceId, loopPeriod);
 }
@@ -78,7 +77,7 @@ int RunSummaryBase::getRunBlockLength(int startIndex, int endIndex) const {
     int runUnitStartIndex = _runBlocks[startIndex].getStartIndex();
 
     if (isLast) {
-        if (_pending >= 0) {
+        if (_pending > 0) {
             // Last run block is completed. There are still some unassigned run units though
             return _pending - runUnitStartIndex;
         } else {
@@ -292,6 +291,7 @@ void RunSummaryBase::dump() const {
         }
         if (
             numPendingBlocks <= 0 &&
+            runBlock != _runBlocks.cend() &&
             (*runBlock).getStartIndex() == runUnitIndex
         ) {
             isLoop = (*runBlock).isLoop();

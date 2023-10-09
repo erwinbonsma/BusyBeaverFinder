@@ -18,7 +18,6 @@
 class RunSummaryTest : public RunSummaryBase {
     const std::vector<int> &_runHistory;
 
-    int getNumRunUnits() const override { return (int)_runHistory.size(); };
     int getRunUnitIdAt(int runUnitIndex) const override { return _runHistory[runUnitIndex]; };
 
 public:
@@ -78,6 +77,7 @@ bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns)
 
     runSummary.setHelperBuffer(zArrayHelperBuf);
     runSummary.processNewRunUnits();
+    runSummary.dump();
 
     return checkRunSummary(runSummary, expectedRuns);
 }
@@ -100,14 +100,14 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
     SECTION( "MultiBlockLoop" ) {
         // Execution contains loop that consists of more than one program block
         std::vector<int> v = {1,3, 5,7,5,7, 4, 5,7,5,7, 4};
-        std::vector<int> expectedRuns = {0,2, 1,4, 2,1, 1,4, 2,1};
+        std::vector<int> expectedRuns = {0,2, 1,4, 2,1, 1,4};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "MultiBlockLoopWithPrematureExit" ) {
         // Same as previous, but loop is aborted prematurely
         std::vector<int> v = {1,3, 5,7,5,7,5, 6, 5,7,5,7,5, 6};
-        std::vector<int> expectedRuns = {0,2, 1,5, 2,1, 1,5, 2,1};
+        std::vector<int> expectedRuns = {0,2, 1,5, 2,1, 1,5};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
@@ -136,7 +136,7 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
     SECTION( "LoopWithRepeatedProgramBlocks" ) {
         // Loop that contains some repeated run blocks
         std::vector<int> v = {1, 2,3,2,4,2,3,2,4, 5, 2,3,2,4,2,3,2,4, 5};
-        std::vector<int> expectedRuns = {0,1, 1,8, 2,1, 1,8, 2,1};
+        std::vector<int> expectedRuns = {0,1, 1,8, 2,1, 1,8};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
@@ -159,7 +159,7 @@ TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence]" )
     int loopOffset;
 
     SECTION( "EqualThreeBlockLoops" ) {
-        std::vector<int> v = {1, 2,3,4,2,3,4, 1, 3,4,2,3,4,2, 1, 4,2,3,4,2,3, -1};
+        std::vector<int> v = {1, 2,3,4,2,3,4, 1, 3,4,2,3,4,2, 1, 4,2,3,4,2,3};
         std::swap(history, v);
         runSummary.processNewRunUnits();
 
@@ -185,7 +185,7 @@ TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence]" )
         REQUIRE(loopOffset == 2);
     }
     SECTION( "UnequalThreeBlockLoops" ) {
-        std::vector<int> v = {1, 2,3,4,2,3,4, 1, 3,5,2,3,5,2, 1, 4,2,6,4,2,6, -1};
+        std::vector<int> v = {1, 2,3,4,2,3,4, 1, 3,5,2,3,5,2, 1, 4,2,6,4,2,6};
         std::swap(history, v);
         runSummary.processNewRunUnits();
 
