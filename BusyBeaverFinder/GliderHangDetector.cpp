@@ -202,7 +202,8 @@ bool GliderHangDetector::analyzeTransitionSequence() {
     // consists of more that one run block. That's okay, as long as its length remains the same.
 
     // The instructions comprising the (last) transition sequence
-    int startIndex = runHistory[runHistory.size() - metaPeriod]->getStartIndex();
+    int startIndex = runSummary.runBlockAt(runSummary.getNumRunBlocks() - metaPeriod
+                                           )->getStartIndex();
     int endIndex = _loopRunBlock->getStartIndex();
 
     ProgramBlockSequence sequence(&runHistory[startIndex], endIndex - startIndex);
@@ -219,12 +220,11 @@ bool GliderHangDetector::analyzeTransitionSequence() {
     return true;
 }
 
-
-
 bool GliderHangDetector::analyzeHangBehaviour() {
-    //std::cout <<  "Analysing" << std::endl;
-    //_execution.getInterpretedProgram().dump();
-    //_execution.dumpHangDetection();
+//    std::cout <<  "Analysing" << std::endl;
+//    _execution.getInterpretedProgram()->dump();
+//    _execution.getRunSummary().dump();
+//    _execution.getMetaRunSummary().dump();
 
     if (!analyzeLoop()) {
         return false;
