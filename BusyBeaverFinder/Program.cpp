@@ -10,7 +10,7 @@
 
 #include "Program.h"
 
-const char ins_chars[5] = {' ', '_', 'o', '*', 'X' };
+const char ins_chars[5] = {'.', '_', 'o', '*', 'X' };
 const char web_chars[5] = {'_', '_', 'o', '*', 'X' };
 
 const uint8_t from_ins[] = { 3, 0, 1, 2, 3 };

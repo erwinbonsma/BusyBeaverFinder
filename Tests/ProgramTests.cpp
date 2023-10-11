@@ -73,7 +73,7 @@ TEST_CASE( "Program Encoding/Decoding Tests", "[program][encoding]" ) {
 
         std::string plain = program.toPlainString();
         std::string b64 = program.toString();
-        REQUIRE(plain == "_o* _o* _o* _o* ");
+        REQUIRE(plain == "_o*._o*._o*._o*.");
         REQUIRE(b64 == s);
     }
     SECTION( "5x5 All Turn") {

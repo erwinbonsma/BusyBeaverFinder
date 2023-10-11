@@ -18,7 +18,7 @@ const int dummySteps = 1;
 const int INC = true;
 const int MOV = false;
 
-TEST_CASE( "Exit condition tests", "[classify-loop]" ) {
+TEST_CASE( "Exit condition tests", "[loop-analysis]" ) {
     ExitCondition exitCondition;
 
     SECTION( "ModuloGreaterThanExitCondition" ) {
@@ -71,7 +71,7 @@ void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, int numBlocks) {
     la.analyzeLoop(sequence);
 }
 
-TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]" ) {
+TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]" ) {
     ProgramBlock exitBlock;
     exitBlock.init(-1);
 
@@ -306,7 +306,7 @@ TEST_CASE( "Stationary loop classification tests", "[classify-loop][stationary]"
     }
 }
 
-TEST_CASE( "Travelling loop classification tests", "[classify-loop][travelling]" ) {
+TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]" ) {
     ProgramBlock exitBlock;
     exitBlock.init(-1);
 
