@@ -23,7 +23,7 @@ bool GliderHangDetector::shouldCheckNow(bool loopContinues) const {
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
 bool GliderHangDetector::identifyLoopCounter() {
-    auto runHistory = _execution.getRunHistory();
+    const std::vector<const ProgramBlock *>& runHistory = _execution.getRunHistory();
     const ProgramBlock* pb = runHistory.back();
 
     if (!pb->isDelta()) {
@@ -191,9 +191,9 @@ bool GliderHangDetector::checkTransitionDeltas() {
 }
 
 bool GliderHangDetector::analyzeTransitionSequence() {
-    auto runHistory = _execution.getRunHistory();
-    auto runSummary = _execution.getRunSummary();
-    auto metaRunSummary = _execution.getMetaRunSummary();
+    const std::vector<const ProgramBlock *>& runHistory = _execution.getRunHistory();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const MetaRunSummary& metaRunSummary = _execution.getMetaRunSummary();
 
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
@@ -246,8 +246,8 @@ bool GliderHangDetector::isBootstrapping() {
 // Checks that the transition sequence is identical each time. I.e. if it contains loops, their
 // iteration count is always fixed. This in turn means that it always does the same thing.
 bool GliderHangDetector::transitionSequenceIsFixed() {
-    auto runSummary = _execution.getRunSummary();
-    auto metaRunSummary = _execution.getMetaRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const MetaRunSummary& metaRunSummary = _execution.getMetaRunSummary();
     const RunBlock* metaRunBlock = metaRunSummary.getLastRunBlock();
     int metaPeriod = metaRunBlock->getLoopPeriod();
 

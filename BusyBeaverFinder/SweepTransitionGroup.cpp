@@ -119,7 +119,7 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
                                          const ExecutionState& execution) {
     _loopRunBlock = runBlock;
 
-    auto runHistory = execution.getRunHistory();
+    const std::vector<const ProgramBlock *>& runHistory = execution.getRunHistory();
     auto startPb = &runHistory[_loopRunBlock->getStartIndex()];
     ProgramBlockSequence sequence(startPb, _loopRunBlock->getLoopPeriod());
 
@@ -232,7 +232,7 @@ void SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endInde
 
 bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
                                                const ExecutionState& execution) const {
-    auto runSummary = execution.getRunSummary();
+    const RunSummary& runSummary = execution.getRunSummary();
 
     // The instructions comprising the transition sequence
     int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();

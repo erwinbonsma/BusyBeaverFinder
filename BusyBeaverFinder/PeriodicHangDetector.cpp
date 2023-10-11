@@ -18,8 +18,8 @@ bool PeriodicHangDetector::shouldCheckNow(bool loopContinues) const {
 }
 
 bool PeriodicHangDetector::analyzeHangBehaviour() {
-    auto runHistory = _execution.getRunHistory();
-    auto runSummary = _execution.getRunSummary();
+    const std::vector<const ProgramBlock *>& runHistory = _execution.getRunHistory();
+    const RunSummary& runSummary = _execution.getRunSummary();
     auto loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();

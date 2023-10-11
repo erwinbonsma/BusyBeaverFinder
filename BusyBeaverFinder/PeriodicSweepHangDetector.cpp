@@ -162,8 +162,8 @@ bool PeriodicSweepHangDetector::checkLinearIncrease(int start1, int start2, int 
 }
 
 bool PeriodicSweepHangDetector::analyzeSweepIterations() {
-    auto runSummary = _execution.getRunSummary();
-    auto metaRunSummary = _execution.getMetaRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const MetaRunSummary& metaRunSummary = _execution.getMetaRunSummary();
     const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
 
     _sweepRepetitionPeriod = 1;
@@ -192,8 +192,8 @@ bool PeriodicSweepHangDetector::analyzeSweepIterations() {
 }
 
 bool PeriodicSweepHangDetector::analyzeTransitions() {
-    auto runSummary = _execution.getRunSummary();
-    auto metaRunSummary = _execution.getMetaRunSummary();
+    const RunSummary& runSummary = _execution.getRunSummary();
+    const MetaRunSummary& metaRunSummary = _execution.getMetaRunSummary();
 
     const RunBlock *metaLoop = metaRunSummary.getLastRunBlock();
     int sweepLoopPeriod = metaLoop->getLoopPeriod() * _sweepRepetitionPeriod;
