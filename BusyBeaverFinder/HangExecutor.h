@@ -44,6 +44,8 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     MetaRunSummary _metaRunSummary;
     int* _zArrayHelperBuf;
 
+    void resetHangDetection();
+
     RunResult executeBlock();
 
     RunResult executeWithoutHangDetection(int stepLimit);

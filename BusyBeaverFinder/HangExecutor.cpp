@@ -40,6 +40,17 @@ HangExecutor::~HangExecutor() {
     delete[] _zArrayHelperBuf;
 }
 
+void HangExecutor::resetHangDetection() {
+    _runHistory.clear();
+    _runSummary.reset();
+    _metaRunSummary.reset();
+
+    for (auto hangDetector : _hangDetectors) {
+        hangDetector->reset();
+    }
+    _detectedHang = nullptr;
+}
+
 HangType HangExecutor::detectedHangType() const {
     return _detectedHang ? _detectedHang->hangType() : HangType::NO_DATA_LOOP;
 }
@@ -85,13 +96,7 @@ RunResult HangExecutor::executeWithoutHangDetection(int stepLimit) {
 }
 
 RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
-    _runSummary.reset();
-    _metaRunSummary.reset();
-
-    for (auto hangDetector : _hangDetectors) {
-        hangDetector->reset();
-    }
-    _detectedHang = nullptr;
+    resetHangDetection();
 
     while (_numSteps < stepLimit) {
         // Record block before executing it. This way, when signalling a loop exit, the value
