@@ -376,7 +376,12 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     }
 }
 
-void LoopAnalysis::finishAnalysis() {
+bool LoopAnalysis::startAnalysis() {
+    return (SequenceAnalysis::startAnalysis()
+            && _sequence->end - _sequence->start <= maxLoopSize);
+}
+
+bool LoopAnalysis::finishAnalysis() {
     SequenceAnalysis::finishAnalysis();
 
     // Collapse the results considering multiple loop iterations (only for non-stationary loops)
@@ -386,17 +391,12 @@ void LoopAnalysis::finishAnalysis() {
     } else {
         initExitsForStationaryLoop();
     }
+
+    return true;
 }
 
 bool LoopAnalysis::analyzeLoop(const ProgramBlockSequence& sequence) {
-    if (sequence.end - sequence.start > maxLoopSize) {
-        // This loop is too large to analyse
-        return false;
-    }
-
-    analyzeSequence(sequence);
-
-    return true;
+    return analyzeSequence(sequence);
 }
 
 void LoopAnalysis::dump() const {

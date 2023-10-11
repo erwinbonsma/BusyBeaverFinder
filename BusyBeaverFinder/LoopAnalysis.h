@@ -118,7 +118,8 @@ protected:
 
     const char* typeString() const override { return "LOOP"; }
 
-    void finishAnalysis() override;
+    bool startAnalysis() override;
+    bool finishAnalysis() override;
 
 public:
     LoopAnalysis();

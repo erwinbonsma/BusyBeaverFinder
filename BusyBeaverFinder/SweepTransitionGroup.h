@@ -88,6 +88,7 @@ class SweepLoopAnalysis : public LoopAnalysis {
     friend std::ostream &operator<<(std::ostream&, const SweepLoopAnalysis&);
 
     const RunBlock* _loopRunBlock;
+    std::vector<const ProgramBlock *> _programBlocks;
 
     SweepValueChangeType _sweepValueChangeType;
 
@@ -108,6 +109,9 @@ class SweepLoopAnalysis : public LoopAnalysis {
 
     bool _requiresFixedInput;
     int _requiredInput;
+
+protected:
+    bool finishAnalysis() override;
 
 public:
     const RunBlock* loopRunBlock() const { return _loopRunBlock; }
@@ -135,6 +139,8 @@ public:
 std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sta);
 
 class SweepTransitionAnalysis : public SequenceAnalysis {
+    int _pbStartIndex;
+
 public:
     // The indexes are run block indices. The end index is exclusive.
     void analyzeSweepTransition(int startIndex, int endIndex, const ExecutionState& execution);

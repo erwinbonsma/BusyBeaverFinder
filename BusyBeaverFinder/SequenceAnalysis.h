@@ -77,9 +77,13 @@ protected:
     // The sequence that is analyzed. It is only valid while the sequence is analyzed.
     const ProgramBlockSequence* _sequence;
 
-    void startAnalysis();
+    // Returns true if analysis can proceed
+    virtual bool startAnalysis();
+
     void analyzeBlock(const ProgramBlock* block);
-    virtual void finishAnalysis();
+
+    // Returns true is analysis completed and the sequence matched the expected pattern
+    virtual bool finishAnalysis();
 
     void addPreCondition(int dpOffset, PreCondition preCondition);
 
@@ -104,7 +108,7 @@ public:
     const std::multimap<int, PreCondition> preConditions() const { return _preConditions; }
     bool hasPreCondition(int dpOffset, PreCondition preCondition) const;
 
-    void analyzeSequence(const ProgramBlockSequence& sequence);
+    bool analyzeSequence(const ProgramBlockSequence& sequence);
 
     void dump() const { std::cout << *this << std::endl; }
 };

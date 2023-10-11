@@ -59,7 +59,7 @@ void SequenceAnalysis::addPreCondition(int dpOffset, PreCondition preCondition) 
     _preConditions.insert({dpOffset, preCondition});
 }
 
-void SequenceAnalysis::startAnalysis() {
+bool SequenceAnalysis::startAnalysis() {
     _dpDelta = 0;
     _dataDeltas.clear();
     _effectiveResult.clear();
@@ -71,6 +71,8 @@ void SequenceAnalysis::startAnalysis() {
     _maxDp = _minDp;
 
     _prevProgramBlock = nullptr;
+
+    return true;
 }
 
 void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
@@ -95,21 +97,26 @@ void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
     }
 }
 
-void SequenceAnalysis::finishAnalysis() {
+bool SequenceAnalysis::finishAnalysis() {
+    return true;
 }
 
-void SequenceAnalysis::analyzeSequence(const ProgramBlockSequence& sequence) {
+bool SequenceAnalysis::analyzeSequence(const ProgramBlockSequence& sequence) {
     _sequence = &sequence;
 
-    startAnalysis();
+    bool result = startAnalysis();
 
-    for (auto pb = sequence.start; pb != sequence.end; ++pb) {
-        analyzeBlock(*pb);
+    if (result) {
+        for (auto pb = sequence.start; pb != sequence.end; ++pb) {
+            analyzeBlock(*pb);
+        }
+
+        result = finishAnalysis();
     }
 
-    finishAnalysis();
-
     _sequence = nullptr;
+
+    return result;
 }
 
 bool SequenceAnalysis::hasPreCondition(int dpOffset, PreCondition preCondition) const {

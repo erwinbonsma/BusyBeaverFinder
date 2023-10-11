@@ -322,7 +322,7 @@ int RunSummary::getDpDeltaOfProgramBlockSequence(int start, int end) const {
 int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
     int dpDelta = 0;
 
-    for (auto runBlock : makeRange(_runBlocks, firstRunBlock, lastRunBlock)) {
+    for (auto& runBlock : makeRange(_runBlocks, firstRunBlock, lastRunBlock)) {
         int runBlockLen = getRunBlockLength(&runBlock);
         int start = runBlock.getStartIndex();
 

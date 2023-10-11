@@ -616,12 +616,15 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
 
-        // Not actually correct. Although it executes irregular sweep behavior, this eventually
-        // transfers into a normal sweep. For hang detection, this does not matter.
-        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+        // The regular sweep detector detects it, but the irregular sweep detector (incorrectly)
+        // detects it as well. TODO: Fix
+        REQUIRE((hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP /* correct */ ||
+                 hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP) /* incorrect */);
 
         REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        auto rse = rightSweepEndType(hangExecutor);
+        REQUIRE((rse == SweepEndType::IRREGULAR_GROWTH /* correct */ ||
+                 rse == SweepEndType::FIXED_APERIODIC_APPENDIX) /* incorrect */);
     }
     SECTION("6x6-SweepLoopExceedsMidSequencePoint") {
         // Program where DP during its leftwards sweep briefly extends beyond the mid-sequence

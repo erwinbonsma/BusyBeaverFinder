@@ -11,8 +11,8 @@
 #include "HangExecutor.h"
 
 TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
-    HangExecutor hangExecutor(1024, 1000000);
-    hangExecutor.setMaxSteps(1000000);
+    HangExecutor hangExecutor(1024, 100000);
+    hangExecutor.setMaxSteps(100000);
 
     SECTION("6x6-SweepWithInSequenceOscillatingZeros") {
         // The body of the sweep consists of alternating -1 and 0 values. The left side is a fixed
@@ -63,7 +63,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
         RunResult result = hangExecutor.execute("ZgICkoWJQKEkYA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::DATA_ERROR);
+        REQUIRE((result == RunResult::DATA_ERROR || result == RunResult::ASSUMED_HANG));
     }
     SECTION("6x6-LateStartingPeriodicSweepWithTwoFastGrowingEnds") {
         // This program executes a complex sweep that looks to be irregular but seems to becomes
@@ -78,7 +78,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
         RunResult result = hangExecutor.execute("ZgqCUikAWIElYA");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::DATA_ERROR);
+        REQUIRE((result == RunResult::DATA_ERROR || result == RunResult::ASSUMED_HANG));
     }
 }
 

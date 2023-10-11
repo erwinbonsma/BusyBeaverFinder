@@ -68,7 +68,7 @@ void SweepLoopAnalysis::collectInsweepDeltasAfterExit(int exitInstruction,
     for (int iteration = 0; iteration <= maxIteration; iteration++) {
         // Execute the last iteration until (inclusive) the exit instruction
         for (int instruction = 0; instruction < loopSize(); instruction++) {
-            const ProgramBlock* pb = _sequence->start[instruction];
+            const ProgramBlock* pb = _programBlocks[instruction];
 
             if (pb->isDelta()) {
                 dataDeltas.updateDelta(dpDelta, pb->getInstructionAmount());
@@ -122,13 +122,22 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
     auto runHistory = execution.getRunHistory();
     auto startPb = &runHistory[_loopRunBlock->getStartIndex()];
     ProgramBlockSequence sequence(startPb, _loopRunBlock->getLoopPeriod());
+
     if (!analyzeLoop(sequence)) {
         return transitionGroupFailure(execution);
     }
 
+    return true;
+}
+
+bool SweepLoopAnalysis::finishAnalysis() {
+    if (!LoopAnalysis::finishAnalysis()) {
+        return false;
+    }
+
     if (dataPointerDelta() == 0) {
         // A sweep loop cannot be stationary
-        return transitionGroupFailure(execution);
+        return false;
     }
 
     _sweepValueChanges.clear();
@@ -177,6 +186,13 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
         }
     }
 
+    // TODO: Should not copying program blocks here ideally.
+    // Plan to completely replace this specific analysis by more general approach.
+    _programBlocks.clear();
+    for (auto pb = _sequence->start; pb != _sequence->end; ++pb) {
+        _programBlocks.push_back(*pb);
+    }
+
     return true;
 }
 
@@ -207,9 +223,9 @@ void SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endInde
     const RunSummary& runSummary = execution.getRunSummary();
 
     // The instructions comprising the transition sequence
-    int pbStart = runSummary.runBlockAt(startIndex)->getStartIndex();
-    int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - pbStart;
-    ProgramBlockSequence sequence(&execution.getRunHistory()[pbStart], numProgramBlocks);
+    _pbStartIndex = runSummary.runBlockAt(startIndex)->getStartIndex();
+    int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - _pbStartIndex;
+    ProgramBlockSequence sequence(&execution.getRunHistory()[_pbStartIndex], numProgramBlocks);
 
     analyzeSequence(sequence);
 }
@@ -226,10 +242,11 @@ bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,
         return false;
     }
 
-    auto pb1 = _sequence->start;
+    auto pb1 = &execution.getRunHistory()[_pbStartIndex];
+    auto end = pb1 + numProgramBlocks;
     auto pb2 = &execution.getRunHistory()[pbStart];
-    while (pb1 != _sequence->end) {
-        if (pb1++ != pb2++) return false;
+    while (pb1 != end) {
+        if (*pb1++ != *pb2++) return false;
     }
 
     return true;
