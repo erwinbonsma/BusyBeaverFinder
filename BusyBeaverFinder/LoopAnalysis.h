@@ -143,7 +143,7 @@ public:
     const LoopExit& exit(int index) const { return _loopExit[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
-    bool analyzeLoop(const ProgramBlockSequence& sequence);
+    bool analyzeLoop(RawProgramBlocks programBlocks, int len);
 
     void dump() const;
 };

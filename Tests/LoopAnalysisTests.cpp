@@ -67,8 +67,7 @@ void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, int numBlocks) {
         blockP[i] = startBlock++;
     }
 
-    ProgramBlockSequence sequence(blockP, numBlocks);
-    la.analyzeLoop(sequence);
+    la.analyzeLoop(blockP, numBlocks);
 }
 
 TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]" ) {

@@ -77,13 +77,13 @@ bool GliderHangDetector::isGliderLoop() {
 
 bool GliderHangDetector::analyzeLoop() {
     // Assume that the loop which just finished is the glider-loop
+    const RunHistory& runHistory = _execution.getRunHistory();
     const RunSummary& runSummary = _execution.getRunSummary();
 
     _loopRunBlock = runSummary.getLastRunBlock();
 
-    ProgramBlockSequence sequence(&_execution.getRunHistory()[_loopRunBlock->getStartIndex()],
-                                  _loopRunBlock->getLoopPeriod());
-    if (!_loop.analyzeLoop(sequence)) {
+    if (!_loop.analyzeLoop(&runHistory[_loopRunBlock->getStartIndex()],
+                           _loopRunBlock->getLoopPeriod())) {
         return false;
     }
 
@@ -206,8 +206,7 @@ bool GliderHangDetector::analyzeTransitionSequence() {
                                            )->getStartIndex();
     int endIndex = _loopRunBlock->getStartIndex();
 
-    ProgramBlockSequence sequence(&runHistory[startIndex], endIndex - startIndex);
-    _transitionSequence.analyzeSequence(sequence);
+    _transitionSequence.analyzeSequence(&runHistory[startIndex], endIndex - startIndex);
 
     if (!determineCounterQueueSize()) {
         return false;

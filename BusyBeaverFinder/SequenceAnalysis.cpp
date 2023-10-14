@@ -65,9 +65,8 @@ bool SequenceAnalysis::startAnalysis() {
     _effectiveResult.clear();
     _preConditions.clear();
 
-    _sequenceSize = (int)(_sequence->end - _sequence->start);
-    _minDp = (_sequenceSize == 0 || _sequence->start[0]->isDelta())
-             ? 0 : _sequence->start[0]->getInstructionAmount();
+    _minDp = (_numProgramBlocks == 0 || _programBlocks[0]->isDelta())
+             ? 0 : _programBlocks[0]->getInstructionAmount();
     _maxDp = _minDp;
 
     _prevProgramBlock = nullptr;
@@ -101,20 +100,20 @@ bool SequenceAnalysis::finishAnalysis() {
     return true;
 }
 
-bool SequenceAnalysis::analyzeSequence(const ProgramBlockSequence& sequence) {
-    _sequence = &sequence;
+bool SequenceAnalysis::analyzeSequence(RawProgramBlocks programBlocks, int len) {
+    _programBlocks = programBlocks;
+    _numProgramBlocks = len;
 
     bool result = startAnalysis();
 
     if (result) {
-        for (auto pb = sequence.start; pb != sequence.end; ++pb) {
+        auto end = _programBlocks + _numProgramBlocks;
+        for (auto pb = _programBlocks; pb != end; ++pb) {
             analyzeBlock(*pb);
         }
 
         result = finishAnalysis();
     }
-
-    _sequence = nullptr;
 
     return result;
 }

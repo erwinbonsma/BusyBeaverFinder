@@ -60,8 +60,7 @@ bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
     int loopEnd = runSummary.runBlockAt(endRunBlockIndex)->getStartIndex()
                   + runSummary.getRunBlockLength(endRunBlockIndex);
     int loopPeriod = loopEnd - _loopStart;
-    ProgramBlockSequence sequence(&_execution.getRunHistory()[_loopStart], loopPeriod);
-    _lastAnalysisResult = _loop.analyzeLoop(sequence);
+    _lastAnalysisResult = _loop.analyzeLoop(&_execution.getRunHistory()[_loopStart], loopPeriod);
 
     return _lastAnalysisResult;
 }

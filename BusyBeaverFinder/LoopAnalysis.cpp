@@ -89,8 +89,8 @@ LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
 }
 
 bool LoopAnalysis::exitsOnZero(int index) {
-    const ProgramBlock* curBlock = _sequence->start[index];
-    const ProgramBlock* nxtBlock = _sequence->start[(index + 1) % loopSize()];
+    const ProgramBlock* curBlock = _programBlocks[index];
+    const ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
 
     return curBlock->nonZeroBlock() == nxtBlock;
 }
@@ -300,7 +300,7 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     // Establish the exit condition for each instruction
     for (int ii = 0 ; ii < loopSize(); ii++ ) {
         int i = indices[ii];
-        const ProgramBlock* pb = _sequence->start[i];
+        const ProgramBlock* pb = _programBlocks[i];
 
         int dp_i = _effectiveResult[i].dpOffset();
         int mod_i = normalizedMod(dp_i, _dpDelta);
@@ -377,8 +377,7 @@ void LoopAnalysis::initExitsForTravellingLoop() {
 }
 
 bool LoopAnalysis::startAnalysis() {
-    return (SequenceAnalysis::startAnalysis()
-            && _sequence->end - _sequence->start <= maxLoopSize);
+    return SequenceAnalysis::startAnalysis() && _numProgramBlocks <= maxLoopSize;
 }
 
 bool LoopAnalysis::finishAnalysis() {
@@ -395,8 +394,8 @@ bool LoopAnalysis::finishAnalysis() {
     return true;
 }
 
-bool LoopAnalysis::analyzeLoop(const ProgramBlockSequence& sequence) {
-    return analyzeSequence(sequence);
+bool LoopAnalysis::analyzeLoop(RawProgramBlocks programBlocks, int len) {
+    return analyzeSequence(programBlocks, len);
 }
 
 void LoopAnalysis::dump() const {

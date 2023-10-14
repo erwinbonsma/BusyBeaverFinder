@@ -26,8 +26,7 @@ void analyzeSequence(SequenceAnalysis& sa, ProgramBlock* startBlock, int numBloc
         blockP[i] = startBlock++;
     }
 
-    ProgramBlockSequence sequence(blockP, numBlocks);
-    sa.analyzeSequence(sequence);
+    sa.analyzeSequence(blockP, numBlocks);
 }
 
 TEST_CASE( "Pre-condition tests", "[sequence-analysis]" ) {

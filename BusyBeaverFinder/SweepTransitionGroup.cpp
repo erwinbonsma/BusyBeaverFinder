@@ -120,10 +120,8 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
     _loopRunBlock = runBlock;
 
     const RunHistory& runHistory = execution.getRunHistory();
-    auto startPb = &runHistory[_loopRunBlock->getStartIndex()];
-    ProgramBlockSequence sequence(startPb, _loopRunBlock->getLoopPeriod());
 
-    if (!analyzeLoop(sequence)) {
+    if (!analyzeLoop(&runHistory[_loopRunBlock->getStartIndex()], _loopRunBlock->getLoopPeriod())) {
         return transitionGroupFailure(execution);
     }
 
@@ -186,13 +184,6 @@ bool SweepLoopAnalysis::finishAnalysis() {
         }
     }
 
-    // TODO: Should not copying program blocks here ideally.
-    // Plan to completely replace this specific analysis by more general approach.
-    _programBlocks.clear();
-    for (auto pb = _sequence->start; pb != _sequence->end; ++pb) {
-        _programBlocks.push_back(*pb);
-    }
-
     return true;
 }
 
@@ -220,14 +211,14 @@ std::ostream &operator<<(std::ostream &os, const SweepLoopAnalysis& sla) {
 
 void SweepTransitionAnalysis::analyzeSweepTransition(int startIndex, int endIndex,
                                                      const ExecutionState& execution) {
+    const RunHistory& runHistory = execution.getRunHistory();
     const RunSummary& runSummary = execution.getRunSummary();
 
     // The instructions comprising the transition sequence
     _pbStartIndex = runSummary.runBlockAt(startIndex)->getStartIndex();
     int numProgramBlocks = runSummary.runBlockAt(endIndex)->getStartIndex() - _pbStartIndex;
-    ProgramBlockSequence sequence(&execution.getRunHistory()[_pbStartIndex], numProgramBlocks);
 
-    analyzeSequence(sequence);
+    analyzeSequence(&runHistory[_pbStartIndex], numProgramBlocks);
 }
 
 bool SweepTransitionAnalysis::transitionEquals(int startIndex, int endIndex,

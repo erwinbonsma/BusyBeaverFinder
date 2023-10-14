@@ -34,22 +34,7 @@ public:
     }
 };
 
-/* Specifies the sequence of program blocks that should be analyzed.
- *
- * Note: The referenced program blocks should not be persisted (they are stored in a vector, and
- * can change when the capacity grows). Instead, the range that is analyzed should be accessed via
- * the corresponding RunBlock in the RunSummary (which specifies the range) and associated
- * run history.
- */
-struct ProgramBlockSequence {
-    const ProgramBlock *const * start;
-    const ProgramBlock *const * end;
-
-    ProgramBlockSequence(const ProgramBlock *const * start, const ProgramBlock *const * end)
-        : start(start), end(end) {}
-    ProgramBlockSequence(const ProgramBlock *const * start, int length)
-        : start(start), end(start + length) {}
-};
+typedef const ProgramBlock *const * RawProgramBlocks;
 
 class SequenceAnalysis {
     friend std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa);
@@ -57,7 +42,12 @@ class SequenceAnalysis {
     const ProgramBlock* _prevProgramBlock;
 protected:
     int _dpDelta, _minDp, _maxDp;
-    int _sequenceSize;
+
+    // The sequence that is analyzed. It is only valid while the sequence is analyzed, as it is a
+    // pointer into vector-managed memory, which can be re-allocated when more program blocks are
+    // added to the run history.
+    RawProgramBlocks _programBlocks;
+    int _numProgramBlocks;
 
     // The result of executing one sequence.
     //
@@ -74,9 +64,6 @@ protected:
     // executed. Keys are DP offsets
     std::multimap<int, PreCondition> _preConditions;
 
-    // The sequence that is analyzed. It is only valid while the sequence is analyzed.
-    const ProgramBlockSequence* _sequence;
-
     // Returns true if analysis can proceed
     virtual bool startAnalysis();
 
@@ -92,7 +79,7 @@ protected:
 public:
     SequenceAnalysis();
 
-    int sequenceSize() const { return _sequenceSize; }
+    int sequenceSize() const { return _numProgramBlocks; }
 
     int dataPointerDelta() const { return _dpDelta; }
     int minDp() const { return _minDp; }
@@ -108,7 +95,7 @@ public:
     const std::multimap<int, PreCondition> preConditions() const { return _preConditions; }
     bool hasPreCondition(int dpOffset, PreCondition preCondition) const;
 
-    bool analyzeSequence(const ProgramBlockSequence& sequence);
+    bool analyzeSequence(RawProgramBlocks programBlocks, int len);
 
     void dump() const { std::cout << *this << std::endl; }
 };

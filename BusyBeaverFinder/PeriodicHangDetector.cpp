@@ -23,8 +23,7 @@ bool PeriodicHangDetector::analyzeHangBehaviour() {
     auto loopRunBlock = runSummary.getLastRunBlock();
 
     _loopStart = loopRunBlock->getStartIndex();
-    ProgramBlockSequence sequence(&runHistory[_loopStart], loopRunBlock->getLoopPeriod());
-    if (!_loop.analyzeLoop(sequence)) {
+    if (!_loop.analyzeLoop(&runHistory[_loopStart], loopRunBlock->getLoopPeriod())) {
         return false;
     }
 
