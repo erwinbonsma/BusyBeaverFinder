@@ -88,7 +88,7 @@ class SweepLoopAnalysis : public LoopAnalysis {
     friend std::ostream &operator<<(std::ostream&, const SweepLoopAnalysis&);
 
     const RunBlock* _loopRunBlock;
-    std::vector<const ProgramBlock *> _programBlocks;
+    RunHistory _programBlocks;
 
     SweepValueChangeType _sweepValueChangeType;
 

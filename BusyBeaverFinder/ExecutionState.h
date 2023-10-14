@@ -7,13 +7,10 @@
 //
 #pragma once
 
-#include <vector>
+#include "RunSummary.h"
 
 class Data;
 class InterpretedProgram;
-class MetaRunSummary;
-class ProgramBlock;
-class RunSummary;
 
 /* Abstract data type. Interface to hang detectors
  */
@@ -24,7 +21,7 @@ public:
 
     virtual const Data& getData() const = 0;
 
-    virtual const std::vector<const ProgramBlock *>& getRunHistory() const = 0;
+    virtual const RunHistory& getRunHistory() const = 0;
     virtual const RunSummary& getRunSummary() const = 0;
     virtual const MetaRunSummary& getMetaRunSummary() const = 0;
 

@@ -163,8 +163,10 @@ public:
     void dump() const;
 };
 
+typedef std::vector<const ProgramBlock *> RunHistory;
+
 class RunSummary : public RunSummaryBase {
-    const std::vector<const ProgramBlock *> &_runHistory;
+    const RunHistory &_runHistory;
 
     int getDpDeltaOfProgramBlockSequence(int start, int end) const;
 
@@ -173,7 +175,7 @@ class RunSummary : public RunSummaryBase {
     };
 
 public:
-    RunSummary(const std::vector<const ProgramBlock *> &runHistory) : _runHistory(runHistory) {}
+    RunSummary(const RunHistory &runHistory) : _runHistory(runHistory) {}
 
     // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
     // to lastRunBlock (exclusive).

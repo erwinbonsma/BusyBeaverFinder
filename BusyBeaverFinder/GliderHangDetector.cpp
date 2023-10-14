@@ -23,7 +23,7 @@ bool GliderHangDetector::shouldCheckNow(bool loopContinues) const {
 
 // Assumes that the loop counter exited by the loop-counter reaching zero.
 bool GliderHangDetector::identifyLoopCounter() {
-    const std::vector<const ProgramBlock *>& runHistory = _execution.getRunHistory();
+    const RunHistory& runHistory = _execution.getRunHistory();
     const ProgramBlock* pb = runHistory.back();
 
     if (!pb->isDelta()) {
@@ -191,7 +191,7 @@ bool GliderHangDetector::checkTransitionDeltas() {
 }
 
 bool GliderHangDetector::analyzeTransitionSequence() {
-    const std::vector<const ProgramBlock *>& runHistory = _execution.getRunHistory();
+    const RunHistory& runHistory = _execution.getRunHistory();
     const RunSummary& runSummary = _execution.getRunSummary();
     const MetaRunSummary& metaRunSummary = _execution.getMetaRunSummary();
 

@@ -119,7 +119,7 @@ bool SweepLoopAnalysis::analyzeSweepLoop(const RunBlock* runBlock,
                                          const ExecutionState& execution) {
     _loopRunBlock = runBlock;
 
-    const std::vector<const ProgramBlock *>& runHistory = execution.getRunHistory();
+    const RunHistory& runHistory = execution.getRunHistory();
     auto startPb = &runHistory[_loopRunBlock->getStartIndex()];
     ProgramBlockSequence sequence(startPb, _loopRunBlock->getLoopPeriod());
 
