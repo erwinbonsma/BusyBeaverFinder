@@ -54,6 +54,8 @@
 		AA5D7E9A257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */; };
 		AA639B32254C232200DD5129 /* IrregularSweepHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA639B31254C232200DD5129 /* IrregularSweepHangTests.cpp */; };
 		AA7A2DE12ABF634200C35C07 /* ProgramTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE02ABF634200C35C07 /* ProgramTests.cpp */; };
+		AA7A2DE42ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */; };
+		AA7A2DE52ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
 		AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
 		AA90A58A2201052900242D3D /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
@@ -153,6 +155,8 @@
 		AA5D7E98257D2F030054FC4E /* IrregularSweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IrregularSweepHangDetector.h; sourceTree = "<group>"; };
 		AA639B31254C232200DD5129 /* IrregularSweepHangTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IrregularSweepHangTests.cpp; sourceTree = "<group>"; };
 		AA7A2DE02ABF634200C35C07 /* ProgramTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProgramTests.cpp; sourceTree = "<group>"; };
+		AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopAnalysis.cpp; sourceTree = "<group>"; };
+		AA7A2DE32ADBE96500C35C07 /* MetaLoopAnalysis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetaLoopAnalysis.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
 		AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExhaustiveSearcher.h; sourceTree = "<group>"; };
 		AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProgressTracker.cpp; sourceTree = "<group>"; };
@@ -297,6 +301,8 @@
 				AAF43BD123EC76AC00D1EB33 /* SequenceAnalysis.h */,
 				AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */,
 				AA2865B423CDFF7200F738ED /* LoopAnalysis.h */,
+				AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */,
+				AA7A2DE32ADBE96500C35C07 /* MetaLoopAnalysis.h */,
 				AA4F450D224EB8EE0069FF36 /* ExitFinder.cpp */,
 				AA4F450E224EB8EE0069FF36 /* ExitFinder.h */,
 				AA2865AB23CDEC6A00F738ED /* HangDetector.cpp */,
@@ -419,6 +425,7 @@
 				AABDCBB0253B197B0009516B /* SweepHangDetector.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA2865BB23D30F8900F738ED /* MetaPeriodicHangDetector.cpp in Sources */,
+				AA7A2DE42ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
 				AACE84A02A87C568006341E7 /* HangExecutor.cpp in Sources */,
 				AA5D7E99257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */,
 				AA37E6CB2295D62200117A85 /* FastExecutor.cpp in Sources */,
@@ -453,6 +460,7 @@
 				AA2E8BA325A222CA003AD189 /* DeltaSummationTests.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
+				AA7A2DE52ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,
 				AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */,
 				AA4F45142259E88B0069FF36 /* RunSummary.cpp in Sources */,

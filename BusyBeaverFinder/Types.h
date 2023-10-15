@@ -48,6 +48,12 @@ enum class TurnDirection : int8_t {
     NONE = -1
 };
 
+const int numDataDirections = 2;
+enum class DataDirection : int8_t {
+    LEFT = 0,
+    RIGHT = 1,
+};
+
 const int numHangTypes = 8;
 const int numDetectedHangTypes = 7;
 enum class HangType : int8_t {
