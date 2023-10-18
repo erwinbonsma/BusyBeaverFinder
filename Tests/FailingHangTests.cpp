@@ -13,6 +13,7 @@
 TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
     HangExecutor hangExecutor(1024, 100000);
     hangExecutor.setMaxSteps(100000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-SweepWithInSequenceOscillatingZeros") {
         // The body of the sweep consists of alternating -1 and 0 values. The left side is a fixed
@@ -85,6 +86,7 @@ TEST_CASE("6x6 Failing Hang tests", "[hang][regular][sweep][6x6][fail]") {
 TEST_CASE("6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6][fail]") {
     HangExecutor hangExecutor(1024, 20000);
     hangExecutor.setMaxSteps(1000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
         // A truly binary counter. It actually uses ones and zeros, and also properly generates
@@ -106,6 +108,7 @@ TEST_CASE("6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x
 TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
     HangExecutor hangExecutor(1024, 20000);
     hangExecutor.setMaxSteps(1000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-IrregularHopScotch") {
         // This program executes a curious sweep. The sweep does not have a sweep body. At the left
@@ -153,6 +156,7 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
 TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
     HangExecutor hangExecutor(16384, 100000);
     hangExecutor.setMaxSteps(100000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-UndetectedHang1") {
         // *   *   * *
@@ -223,6 +227,7 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
 TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
     HangExecutor hangExecutor(16384, 100000);
     hangExecutor.setMaxSteps(100000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-FalsePositive1") {
         // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic

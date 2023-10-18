@@ -13,6 +13,7 @@
 TEST_CASE("6x6 Completion tests", "[success][6x6]") {
     HangExecutor hangExecutor(1024, 10000);
     hangExecutor.setMaxSteps(10000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("DivergingDeltaYetNoHang") {
         // A diverging change after 102 steps, however, not a hang as one value change touched zero
@@ -62,6 +63,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
 TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
     HangExecutor hangExecutor(16384, 1000000);
     hangExecutor.setMaxSteps(40000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("BB 7x7 #117273") {
         RunResult result = hangExecutor.execute("dwoAlShaIhJBYIGAKA");

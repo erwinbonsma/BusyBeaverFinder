@@ -58,6 +58,11 @@ public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
     ~HangExecutor();
 
+    void addDefaultHangDetectors();
+    void addHangDetector(std::shared_ptr<HangDetector> hangDetector) {
+        _hangDetectors.push_back(hangDetector);
+    }
+
     // Only applies to the next invocation of execute, after which it is reset to zero.
     void setHangDetectionStart(int numSteps) { _hangDetectionStart = numSteps; }
 

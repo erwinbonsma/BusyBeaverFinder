@@ -13,6 +13,7 @@
 TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
     HangExecutor hangExecutor(1024, 1000000);
     hangExecutor.setMaxSteps(1000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-Glider1") {
         // A non-periodic hang where two ever-increasing values move rightward on the tape, leaving
@@ -214,6 +215,7 @@ TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
 TEST_CASE("7x7 Glider Hang tests", "[hang][glider][7x7]") {
     HangExecutor hangExecutor(1024, 1000000);
     hangExecutor.setMaxSteps(1000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-GliderWithLargeRunBlocks") {
         // After a fairly chaotic start (which creates various one-off run blocks that contain many

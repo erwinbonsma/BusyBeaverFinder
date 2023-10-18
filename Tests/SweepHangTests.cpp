@@ -14,6 +14,7 @@
 TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
     HangExecutor hangExecutor(1024, 1024);
     hangExecutor.setMaxSteps(2048);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("InfSeqExtendingBothWays1") {
         //     *
@@ -44,6 +45,7 @@ TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
 TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
     HangExecutor hangExecutor(1024, 16384);
     hangExecutor.setMaxSteps(16384);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-SweepExtendingLeftwards") {
         // This program sweeps over the entire data sequence, which causes the hang cycle to

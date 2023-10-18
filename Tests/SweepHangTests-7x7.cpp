@@ -14,6 +14,7 @@
 TEST_CASE("7x7 sweep hangs", "[hang][7x7][sweep][irregular]") {
     HangExecutor hangExecutor(16384, 100000);
     hangExecutor.setMaxSteps(100000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-IrregularSweep1") {
         // Sweep detected after 7480 steps. The transition at the right is fairly complex. It's

@@ -14,6 +14,7 @@
 TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
     HangExecutor hangExecutor(1024, 20000);
     hangExecutor.setMaxSteps(1000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-IrregularSweepWhereIncomingLoopClears") {
         // Irregular sweep with an a-periodically growing appendix at its right end. The incoming

@@ -34,6 +34,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings set
 {
     _fastExecutor.setMaxSteps(_settings.maxSteps);
     _hangExecutor.setMaxSteps(_settings.maxSteps);
+    _hangExecutor.addDefaultHangDetectors();
 
     // Set default search mode
     _searchMode = SearchMode::FULL_TREE;

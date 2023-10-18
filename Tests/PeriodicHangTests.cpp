@@ -13,6 +13,7 @@
 TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
     HangExecutor hangExecutor(1024, 1024);
     hangExecutor.setMaxSteps(1024);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("BasicLoop") {
         // Loop without any data instructions
@@ -151,6 +152,7 @@ TEST_CASE("5x5 Periodic Hang tests", "[hang][periodic][5x5]") {
 TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
     HangExecutor hangExecutor(1024, 2048);
     hangExecutor.setMaxSteps(2048);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("6x6-DelayedHang") {
         // Classification: Periodic, Constant, Non-Uniform(?), Travelling
@@ -393,6 +395,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
 TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
     HangExecutor hangExecutor(1024, 2048);
     hangExecutor.setMaxSteps(1000000);
+    hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-DelayedPeriodicHang") {
         // Program that enters a periodic hang after around 800 steps. Earlier versions of the
