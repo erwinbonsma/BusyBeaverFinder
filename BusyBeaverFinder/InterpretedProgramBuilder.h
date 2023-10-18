@@ -58,7 +58,6 @@ public:
 
     int numProgramBlocks() const override { return _stateP->numBlocks; };
     const ProgramBlock* programBlockAt(int index) const override { return _blocks + index; };
-    int indexOf(const ProgramBlock *block) const override { return (int)(block - _blocks); }
 
     const ProgramBlock* getEntryBlock() const override { return _blocks; }
 

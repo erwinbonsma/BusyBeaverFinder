@@ -17,9 +17,22 @@ class InterpretedProgram {
 public:
     virtual int numProgramBlocks() const = 0;
     virtual const ProgramBlock* programBlockAt(int index) const = 0;
-    virtual int indexOf(const ProgramBlock *block) const = 0;
+    int indexOf(const ProgramBlock *block) const { return (int)(block - getEntryBlock()); };
 
     virtual const ProgramBlock* getEntryBlock() const = 0;
 
     virtual void dump() const;
+};
+
+class InterpretedProgramFromArray : public InterpretedProgram {
+    const ProgramBlock* _blocks;
+    int _numBlocks;
+
+public:
+    InterpretedProgramFromArray(const ProgramBlock* blocks, int numBlocks)
+    : _blocks(blocks), _numBlocks(numBlocks) {}
+
+    int numProgramBlocks() const override { return _numBlocks; }
+    const ProgramBlock* programBlockAt(int index) const override { return _blocks + index; }
+    const ProgramBlock* getEntryBlock() const override { return _blocks; }
 };
