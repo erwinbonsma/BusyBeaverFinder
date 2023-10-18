@@ -183,7 +183,7 @@ void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillCo
     report();
 }
 
-void ProgressTracker::reportDetectedHang(const HangDetector* hangDetector,
+void ProgressTracker::reportDetectedHang(std::shared_ptr<HangDetector> hangDetector,
                                          bool executionWillContinue) {
     _lastDetectedHang = hangDetector;
 

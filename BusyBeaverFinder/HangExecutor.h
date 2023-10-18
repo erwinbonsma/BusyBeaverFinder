@@ -7,6 +7,7 @@
 //
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "Data.h"
@@ -24,7 +25,7 @@ struct ExecutionStackFrame {
 };
 
 class HangExecutor : public ProgramExecutor, public ExecutionState {
-    std::vector<HangDetector*> _hangDetectors;
+    std::vector<std::shared_ptr<HangDetector>> _hangDetectors;
     std::vector<ExecutionStackFrame> _executionStack;
 
     int _hangDetectionStart;
@@ -33,7 +34,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     const InterpretedProgram *_program;
 
     Data _data;
-    const HangDetector* _detectedHang;
+    std::shared_ptr<HangDetector> _detectedHang;
 
     // Program execution summaries at different levels. The run history is a log of executed
     // program blocks. The run summary summarizes this by identifying (and collapsing) loops. The
@@ -61,7 +62,7 @@ public:
     void setHangDetectionStart(int numSteps) { _hangDetectionStart = numSteps; }
 
     HangType detectedHangType() const override;
-    const HangDetector* detectedHang() const { return _detectedHang; }
+    std::shared_ptr<HangDetector> detectedHang() const { return _detectedHang; }
 
     void pop() override;
 

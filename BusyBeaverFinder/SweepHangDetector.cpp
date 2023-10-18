@@ -470,8 +470,8 @@ std::ostream &operator<<(std::ostream &os, const SweepHangDetector &detector) {
 }
 
 SweepEndType sweepEndType(const HangExecutor& executor, bool atRight) {
-    return ((const SweepHangDetector *)executor.detectedHang()
-            )->transitionGroup(atRight).endType();
+    return std::dynamic_pointer_cast<SweepHangDetector>(executor.detectedHang()
+                                                        )->transitionGroup(atRight).endType();
 }
 
 SweepEndType rightSweepEndType(const HangExecutor& executor) {

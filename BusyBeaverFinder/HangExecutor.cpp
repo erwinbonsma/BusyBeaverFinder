@@ -21,11 +21,11 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _runSummary(_runHistory),
     _metaRunSummary(_runSummary.getRunBlocks())
 {
-    _hangDetectors.push_back(new PeriodicHangDetector(*this));
-    _hangDetectors.push_back(new MetaPeriodicHangDetector(*this));
-    _hangDetectors.push_back(new GliderHangDetector(*this));
-    _hangDetectors.push_back(new PeriodicSweepHangDetector(*this));
-    _hangDetectors.push_back(new IrregularSweepHangDetector(*this));
+    _hangDetectors.push_back(std::make_shared<PeriodicHangDetector>(*this));
+    _hangDetectors.push_back(std::make_shared<MetaPeriodicHangDetector>(*this));
+    _hangDetectors.push_back(std::make_shared<GliderHangDetector>(*this));
+    _hangDetectors.push_back(std::make_shared<PeriodicSweepHangDetector>(*this));
+    _hangDetectors.push_back(std::make_shared<IrregularSweepHangDetector>(*this));
 
     _zArrayHelperBuf = new int[maxHangDetectionSteps / 2];
     _runSummary.setHelperBuffer(_zArrayHelperBuf);
@@ -33,10 +33,6 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
 }
 
 HangExecutor::~HangExecutor() {
-    for (auto hangDetector : _hangDetectors) {
-        delete hangDetector;
-    }
-
     delete[] _zArrayHelperBuf;
 }
 

@@ -8,7 +8,7 @@
 #pragma once
 
 #include <time.h>
-#include <stdio.h>
+#include <memory>
 
 #include "Program.h"
 
@@ -41,7 +41,7 @@ class ProgressTracker {
 
     // Hang detector with details of the last detected specialized hang (i.e. hang that was
     // detected by a HangDetector).
-    const HangDetector *_lastDetectedHang;
+    std::shared_ptr<HangDetector> _lastDetectedHang;
 
     // Stats on hang-detection speed and effectiveness
     int _maxStepsUntilHangDetection = 0;
@@ -67,14 +67,14 @@ public:
     long getTotalDetectedHangs() const;
     long getTotalHangs(HangType hangType) const { return _totalHangsByType[(int)hangType]; }
 
-    const HangDetector* getLastDetectedHang() const { return _lastDetectedHang; }
+    std::shared_ptr<HangDetector> getLastDetectedHang() const { return _lastDetectedHang; }
 
     int getMaxStepsFound() const { return _maxStepsSofar; }
 
     void reportDone(int totalSteps);
     void reportError();
     void reportDetectedHang(HangType hangType, bool executionWillContinue);
-    void reportDetectedHang(const HangDetector* hangDetector, bool executionWillContinue);
+    void reportDetectedHang(std::shared_ptr<HangDetector> hangDetector, bool executionWillContinue);
     void reportAssumedHang();
 
     void reportFastExecution() { _totalFastExecutions++; }
