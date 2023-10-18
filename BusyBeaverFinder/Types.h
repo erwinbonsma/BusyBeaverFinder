@@ -54,18 +54,19 @@ enum class DataDirection : int8_t {
     RIGHT = 1,
 };
 
-const int numHangTypes = 8;
-const int numDetectedHangTypes = 7;
+const int numHangTypes = 9;
+const int numDetectedHangTypes = 8;
 enum class HangType : int8_t {
+    UNKNOWN = 0,
     // Simple loop, without any DATA
-    NO_DATA_LOOP = 0,
-    NO_EXIT = 1,
-    PERIODIC = 2,
-    META_PERIODIC = 3,
-    REGULAR_SWEEP = 4,
-    IRREGULAR_SWEEP = 5,
-    APERIODIC_GLIDER = 6,
-    UNDETECTED = 7 // Should always be last
+    NO_DATA_LOOP = 1,
+    NO_EXIT = 2,
+    PERIODIC = 3,
+    META_PERIODIC = 4,
+    REGULAR_SWEEP = 5,
+    IRREGULAR_SWEEP = 6,
+    APERIODIC_GLIDER = 7,
+    UNDETECTED = 8 // Should always be last
 };
 
 enum class Trilian : int8_t {

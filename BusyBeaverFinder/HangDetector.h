@@ -56,7 +56,7 @@ public:
     HangDetector(const ExecutionState& execution);
     virtual ~HangDetector() {}
 
-    virtual HangType hangType() const = 0;
+    virtual HangType hangType() const { return HangType::UNKNOWN; };
 
     virtual void reset();
 
