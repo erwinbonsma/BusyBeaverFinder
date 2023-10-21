@@ -54,6 +54,31 @@ enum class DataDirection : int8_t {
     RIGHT = 1,
 };
 
+enum class ValueChange : int8_t {
+    // Value remains constant: x[n+1] = x[n]
+    NONE = 0,
+
+    // Data value increases/decreases linearly: x[n+1] = x[n] + C, with C != 0
+    LINEAR = 1,
+
+    // Value changes non-linearly
+    OTHER = 2,
+};
+
+enum class BoundaryChange : int8_t {
+    // Boundary is fixed
+    FIXED = 0,
+
+    // Boundary moves at fixed speed in direction that expands the region
+    LINEAR_GROWTH = 1,
+
+    // Boundary moves at fixed speed in direction that shrinks the region
+    LINEAR_REDUCTION = 2,
+
+    // Not supporting OTHER, as detection does not (yet) support this so can immediately abort and
+    // does not need to store this.
+};
+
 const int numHangTypes = 9;
 const int numDetectedHangTypes = 8;
 enum class HangType : int8_t {

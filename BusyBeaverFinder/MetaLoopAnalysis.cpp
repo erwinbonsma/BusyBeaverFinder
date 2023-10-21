@@ -8,6 +8,54 @@
 
 #include "MetaLoopAnalysis.h"
 
+bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize) {
+    _seqProps.clear();
+
+    int end = runSummary.getNumRunBlocks();
+    int start = end - loopSize * 3;
+    int idx = start;
+
+    while (idx < end) {
+        const RunBlock* rb = runSummary.runBlockAt(idx);
+        bool init = _seqProps.size() < loopSize;
+
+        if (rb->isLoop()) {
+            int loopExit = runSummary.getRunBlockLength(idx) % rb->getLoopPeriod();
+            if (init) {
+                _seqProps.emplace_back(loopExit);
+            } else {
+                if (loopExit != _seqProps[(idx - start) % loopSize].loopExit) {
+                    return false;
+                }
+            }
+        } else {
+            if (init) {
+                _seqProps.emplace_back();
+            }
+        }
+
+        ++idx;
+    }
+
+    return true;
+}
+
+bool MetaLoopAnalysis::findLoopSize(const ExecutionState &executionState) {
+    const RunSummary &runSummary = executionState.getRunSummary();
+    const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
+    int lp = metaRunSummary.getLoopPeriod();
+    int ln = metaRunSummary.getLoopIteration();
+
+    for (int loopSize = lp; loopSize * 3 <= ln * lp; loopSize += lp) {
+        if (checkLoopSize(runSummary, loopSize)) {
+            _loopSize = loopSize;
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool MetaLoopAnalysis::establishIterationDeltas(const RunSummary &runSummary, int start, int end) {
     bool populate = _iterationDeltas.size() == 0;
 
@@ -51,7 +99,7 @@ bool MetaLoopAnalysis::establishIterationDeltas(const RunSummary &runSummary, in
     return true;
 }
 
-bool MetaLoopAnalysis::findLoopSize(const ExecutionState &executionState) {
+bool MetaLoopAnalysis::determineIterationDeltas(const ExecutionState &executionState) {
     const RunSummary &runSummary = executionState.getRunSummary();
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
     int metaLoopPeriod = metaRunSummary.getLoopPeriod();

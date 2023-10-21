@@ -13,11 +13,26 @@
 #include "SequenceAnalysis.h"
 #include "LoopAnalysis.h"
 #include "RunSummary.h"
+#include "Types.h"
 
 typedef const RunBlock *const * RawRunBlocks;
 
-/* Analyses a meta-run loop. The loops contained in the meta-run loop should either have a fixed
- * number of iterations each iteration of the meta-run loop, or increase at a constant rate.
+struct MetaLoopSequenceProps {
+    int loopExit = 0;
+
+    ValueChange dataPointerChange = ValueChange::NONE;
+    ValueChange iterationChange = ValueChange::NONE;
+
+    // Deltas in case the change is linear (or none)
+    int dataPointerDelta = 0;
+    int iterationDelta = 0;
+
+    MetaLoopSequenceProps() {}
+    MetaLoopSequenceProps(int loopExit) : loopExit(loopExit) {}
+};
+
+/* Analyses a meta-run loop. The loops contained in the meta-run loop should always exit at the
+ * same program block.
  */
 class MetaLoopAnalysis {
     std::vector<SequenceAnalysis> _sequenceAnalysisPool;
@@ -32,6 +47,8 @@ class MetaLoopAnalysis {
     // The analyzed meta loop therefore would consist of four run blocks (A[n] B A[n] B).
     int _loopSize;
 
+    std::vector<MetaLoopSequenceProps> _seqProps;
+
     // The increase in the number of iterations for each loop inside the meta-run loop. For
     // simplicity, sequences are treated as loops with iteration zero.
     std::vector<int> _iterationDeltas;
@@ -40,7 +57,12 @@ class MetaLoopAnalysis {
     int _sequenceGrowth[numDataDirections];
 
     bool establishIterationDeltas(const RunSummary &runSummary, int start, int end);
+    bool determineIterationDeltas(const ExecutionState &executionState);
+
+
+    bool checkLoopSize(const RunSummary &runSummary, int loopSize);
     bool findLoopSize(const ExecutionState &executionState);
+
     void analyzeRunBlocks(const ExecutionState &executionState);
 
 public:
