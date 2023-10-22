@@ -86,6 +86,4 @@ public:
     const RunHistory& getRunHistory() const override { return _runHistory; }
     const RunSummary& getRunSummary() const override { return _runSummary; }
     const MetaRunSummary& getMetaRunSummary() const override { return _metaRunSummary; }
-
-    void dumpExecutionState() const override;
 };

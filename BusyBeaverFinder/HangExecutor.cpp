@@ -180,11 +180,5 @@ RunResult HangExecutor::execute(std::string programSpec) {
 }
 
 void HangExecutor::dump() const {
-    _data.dump();
-    _runSummary.dump();
-    _metaRunSummary.dump();
-}
-
-void HangExecutor::dumpExecutionState() const {
-    dump();
+    dumpExecutionState();
 }

@@ -171,7 +171,7 @@ void Data::dumpWithCursor(DataPointer cursor) const {
             break;
         }
     }
-    std::cout << std::endl;
+    std::cout << ", dp = " << (cursor - _midDataP) << std::endl;
 }
 
 void Data::dumpHangInfo() const {

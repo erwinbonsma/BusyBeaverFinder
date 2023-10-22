@@ -17,10 +17,10 @@ void ExecutionState::dumpExecutionState() const {
     getData().dump();
 
     std::cout << "Run summary: ";
-    getRunSummary().dump();
+//    getRunSummary().dump();
     getRunSummary().dumpCondensed();
 
     std::cout << "Meta-run summary: ";
-    getMetaRunSummary().dump();
+//    getMetaRunSummary().dump();
     getMetaRunSummary().dumpCondensed();
 }
