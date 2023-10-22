@@ -7,6 +7,7 @@
 //
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "ExecutionState.h"
@@ -18,21 +19,27 @@
 typedef const RunBlock *const * RawRunBlocks;
 
 struct MetaLoopSequenceProps {
-    int loopExit = 0;
+    // The number of instruction executed in the last loop iteration in case the loop was exited
+    // prematurely.
+    int loopRemainder = 0;
 
     ValueChange dataPointerChange = ValueChange::NONE;
     ValueChange iterationChange = ValueChange::NONE;
 
-    // The number of iterations of the last analyzed run-block (it is a temporary value used for
-    // setting and checking iterationDelta)
+    // The number of iterations of the last analyzed run-block. It is a temporary value used for
+    // setting and checking iterationDelta.
     int numIterations = 0;
 
+    // (An approximation of) the data pointer position of the last analyzed run-block. It is a
+    // temporary value for setting dataPointerDelta.
+    int dataPointerPos = 0;
+
     // Deltas in case the change is linear (or none)
-    int dataPointerDelta = 0;
     int iterationDelta = 0;
+    int dataPointerDelta = 0;
 
     MetaLoopSequenceProps() {}
-    MetaLoopSequenceProps(int loopExit) : loopExit(loopExit) {}
+    MetaLoopSequenceProps(int loopRemainder) : loopRemainder(loopRemainder) {}
 };
 
 /* Analyses a meta-run loop.
@@ -51,11 +58,11 @@ class MetaLoopAnalysis {
     // to satisfy the meta-run loop conditions
     int _loopSize;
 
-    std::vector<SequenceAnalysis> _sequenceAnalysisPool;
-    std::vector<LoopAnalysis> _loopAnalysisPool;
+    std::vector<std::shared_ptr<SequenceAnalysis>> _sequenceAnalysisPool;
+    std::vector<std::shared_ptr<LoopAnalysis>> _loopAnalysisPool;
 
     // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
-    std::vector<SequenceAnalysis *> _seqAnalysis;
+    std::vector<std::shared_ptr<SequenceAnalysis>> _seqAnalysis;
 
     // The behaviour/properties of the run blocks in the meta-loop (size = _loopSize) 
     std::vector<MetaLoopSequenceProps> _seqProps;
@@ -64,10 +71,12 @@ class MetaLoopAnalysis {
 
     int _sequenceGrowth[numDataDirections];
 
-    bool checkLoopSize(const RunSummary &runSummary, int loopSize);
-    bool findLoopSize(const ExecutionState &executionState);
-
     void analyzeRunBlocks(const ExecutionState &executionState);
+
+    bool checkLoopSize(const RunSummary &runSummary, int loopSize);
+    bool determineLoopSize(const ExecutionState &executionState);
+
+    void determineDpDeltas(const RunSummary &runSummary);
 
 public:
     // Should be invoked when a loop in the run summary is about to finish,
@@ -82,6 +91,12 @@ public:
 
     int loopIterationDelta(int runBlockIndex) const {
         return _seqProps[runBlockIndex].iterationDelta;
+    }
+
+    // Returns how much the data pointer has shifted when execution of the run block starts
+    // compared to previous invocation of the run block in the meta-loop.
+    int dataPointerDelta(int runBlockIndex) const {
+        return _seqProps[runBlockIndex].dataPointerDelta;
     }
 
     int sequenceGrowth(DataDirection dataDir) const { return _sequenceGrowth[(int)dataDir]; }

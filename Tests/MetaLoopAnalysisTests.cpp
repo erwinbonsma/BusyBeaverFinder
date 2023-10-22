@@ -71,10 +71,13 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
         REQUIRE(mla.loopIterationDelta(0) == 1);
         REQUIRE(mla.loopIterationDelta(2) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 1); // Transition
+        REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
     }
 
     SECTION( "BasicLeftSweep" ) {
@@ -94,10 +97,13 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
         REQUIRE(mla.loopIterationDelta(0) == 1);
         REQUIRE(mla.loopIterationDelta(2) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0);  // Leftwards sweep
+        REQUIRE(mla.dataPointerDelta(1) == -1); // Transition
+        REQUIRE(mla.dataPointerDelta(2) == -1); // Rightward sweep
     }
 
     SECTION( "BasicDualEndedSweep" ) {
@@ -113,10 +119,14 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
         REQUIRE(mla.loopIterationDelta(1) == 2);
         REQUIRE(mla.loopIterationDelta(3) == 2);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 1); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(2) == -1);
+        REQUIRE(mla.dataPointerDelta(3) == -1); // Transition
     }
 
     SECTION( "TwoStateRightSweep" ) {
@@ -141,12 +151,18 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 6);
         REQUIRE(mla.loopIterationDelta(0) == 1);
         REQUIRE(mla.loopIterationDelta(2) == 1);
         REQUIRE(mla.loopIterationDelta(3) == 1);
         REQUIRE(mla.loopIterationDelta(5) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 1); // Increase transition
+        REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(3) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(4) == 1); // Extend transition
+        REQUIRE(mla.dataPointerDelta(5) == 1); // Leftward sweep
     }
 
     SECTION( "TwoStateRightSweep-SharedTransition" ) {
@@ -175,12 +191,18 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 6);
-        REQUIRE(mla.loopIterationDelta(0) == 3);
-        REQUIRE(mla.loopIterationDelta(2) == 3);
-        REQUIRE(mla.loopIterationDelta(3) == 3);
-        REQUIRE(mla.loopIterationDelta(5) == 3);
+        REQUIRE(mla.loopIterationDelta(0) == 2);
+        REQUIRE(mla.loopIterationDelta(2) == 2);
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.loopIterationDelta(5) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 2); // Extend by two
+        REQUIRE(mla.dataPointerDelta(2) == 2); // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(3) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(4) == 1); // Extend by one
+        REQUIRE(mla.dataPointerDelta(5) == 1); // Leftward sweep
     }
 
     SECTION( "SimpleGlider" ) {
@@ -205,9 +227,11 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
         REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
     }
 
     SECTION( "SimpleGliderDeltaTwo" ) {
@@ -232,9 +256,11 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
         REQUIRE(mla.loopIterationDelta(1) == 2);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
     }
 
     SECTION( "PowersOfTwo" ) {
@@ -262,10 +288,12 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
+        REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
         REQUIRE(mla.loopIterationDelta(0) == -1);
         REQUIRE(mla.loopIterationDelta(1) == -1);
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(1) == 0);
     }
 }
 
@@ -306,7 +334,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == false);
+        REQUIRE(!result);
     }
 }
 
@@ -352,7 +380,7 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         // It does not consistently fail. It depends when analysis is executed. Only higher-level
         // analysis can reject it as a meta-periodic hang.
-        REQUIRE(result == false);
+        REQUIRE(!result);
     }
 
     SECTION( "CounterControlledSweep" ) {
@@ -386,6 +414,6 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == false);
+        REQUIRE(!result);
     }
 }
