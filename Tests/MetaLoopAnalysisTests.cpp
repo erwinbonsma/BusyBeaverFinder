@@ -44,7 +44,7 @@ public:
 TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
     HangExecutor hangExecutor(1000, 1000);
     hangExecutor.setMaxSteps(1000);
-    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 3));
+    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
@@ -166,11 +166,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
         REQUIRE(result == true);
-        // TODO: Actual loop is 6 if you consider the changes to the data. How to detect this?
-        // Answer: Model data at start and end of every loop/sequence. Ensure that model is
-        // sufficiently specific to guarantee meta-loop continues, but sufficiently general to
-        // ensure model does not change in subsequent loop iterations.
-        REQUIRE(mla.loopSize() == 3);
+        REQUIRE(mla.loopSize() == 6);
     }
 
     SECTION( "SimpleGlider" ) {
@@ -266,8 +262,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(result == true);
-        REQUIRE(mla.loopSize() == 2);
+        REQUIRE(result == false);
     }
 }
 
@@ -311,8 +306,9 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        // TODO: Should fail
-        REQUIRE(result == true);
+        // It does not consistently fail. It depends when analysis is executed. Only higher-level
+        // analysis can reject it as a meta-periodic hang.
+        REQUIRE(result == false);
     }
 
     SECTION( "CounterControlledSweep" ) {
@@ -346,7 +342,6 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        // TODO: Should fail
-        REQUIRE(result == true);
+        REQUIRE(result == false);
     }
 }

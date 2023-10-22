@@ -23,6 +23,10 @@ struct MetaLoopSequenceProps {
     ValueChange dataPointerChange = ValueChange::NONE;
     ValueChange iterationChange = ValueChange::NONE;
 
+    // The number of iterations of the last analyzed run-block (it is a temporary value used for
+    // setting and checking iterationDelta)
+    int numIterations = 0;
+
     // Deltas in case the change is linear (or none)
     int dataPointerDelta = 0;
     int iterationDelta = 0;
@@ -31,34 +35,34 @@ struct MetaLoopSequenceProps {
     MetaLoopSequenceProps(int loopExit) : loopExit(loopExit) {}
 };
 
-/* Analyses a meta-run loop. The loops contained in the meta-run loop should always exit at the
- * same program block.
+/* Analyses a meta-run loop.
+ *
+ * The following conditions need to hold:
+ * - The loops contained in the meta-run loop should always exit at the same program block.
+ * - The DP position at the start of each run block every meta-iteration should be fixed, or move
+ *   at constant speed, which implies
+ *   - The number of iterations for non-stationairy loops should be constant or increase linearly
  */
 class MetaLoopAnalysis {
-    std::vector<SequenceAnalysis> _sequenceAnalysisPool;
-    std::vector<LoopAnalysis> _loopAnalysisPool;
-    std::vector<SequenceAnalysis *> _sequenceAnalysis;
+    // The meta-loop period in run blocks.
+    int _metaLoopPeriod;
 
-    // The size of the meta-loop in run blocks. This is a multiple of the meta-loop period.
-    //
-    // Consider this run history: A[2] B A[2] B A[3] B A[3] B A[4] B A[4]
-    // This results in the following meta run history loop: A[n] B consisting of two run blocks.
-    // However, two iterations need to be combined for the loop to increase at a constant rate.
-    // The analyzed meta loop therefore would consist of four run blocks (A[n] B A[n] B).
+    // The size of the meta-loop in run blocks. This could be a multiple of the meta-loop period
+    // to satisfy the meta-run loop conditions
     int _loopSize;
 
+    std::vector<SequenceAnalysis> _sequenceAnalysisPool;
+    std::vector<LoopAnalysis> _loopAnalysisPool;
+
+    // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
+    std::vector<SequenceAnalysis *> _seqAnalysis;
+
+    // The behaviour/properties of the run blocks in the meta-loop (size = _loopSize) 
     std::vector<MetaLoopSequenceProps> _seqProps;
 
-    // The increase in the number of iterations for each loop inside the meta-run loop. For
-    // simplicity, sequences are treated as loops with iteration zero.
-    std::vector<int> _iterationDeltas;
     bool _isPeriodic;
 
     int _sequenceGrowth[numDataDirections];
-
-    bool establishIterationDeltas(const RunSummary &runSummary, int start, int end);
-    bool determineIterationDeltas(const ExecutionState &executionState);
-
 
     bool checkLoopSize(const RunSummary &runSummary, int loopSize);
     bool findLoopSize(const ExecutionState &executionState);
@@ -76,7 +80,9 @@ public:
     // iterations for each loop inside the meta-loop remains constant.
     bool isPeriodic() const { return _isPeriodic; }
 
-    int loopIterationDelta(int runBlockIndex) const { return _iterationDeltas[runBlockIndex]; }
+    int loopIterationDelta(int runBlockIndex) const {
+        return _seqProps[runBlockIndex].iterationDelta;
+    }
 
     int sequenceGrowth(DataDirection dataDir) const { return _sequenceGrowth[(int)dataDir]; }
 };

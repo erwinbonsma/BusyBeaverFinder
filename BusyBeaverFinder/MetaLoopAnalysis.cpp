@@ -15,26 +15,55 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
     int start = end - loopSize * 3;
     int idx = start;
 
-    while (idx < end) {
-        const RunBlock* rb = runSummary.runBlockAt(idx);
-        bool init = _seqProps.size() < loopSize;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < loopSize; ++j, ++idx) {
+            const RunBlock* rb = runSummary.runBlockAt(idx);
 
-        if (rb->isLoop()) {
+            if (!rb->isLoop()) {
+                if (i == 0) {
+                    _seqProps.emplace_back();
+                }
+                continue;
+            }
+
             int loopExit = runSummary.getRunBlockLength(idx) % rb->getLoopPeriod();
-            if (init) {
-                _seqProps.emplace_back(loopExit);
-            } else {
-                if (loopExit != _seqProps[(idx - start) % loopSize].loopExit) {
-                    return false;
+            int numIter = runSummary.getRunBlockLength(idx) / rb->getLoopPeriod();
+
+            switch (i) {
+                case 0:
+                    _seqProps.emplace_back(loopExit);
+                    _seqProps.back().numIterations = numIter;
+                    break;
+                case 1: {
+                    auto &props = _seqProps[j];
+                    props.iterationDelta += numIter - props.numIterations;
+                    if (props.iterationDelta < 0) {
+                        // The number of iterations should not decrease
+                        return false;
+                    }
+                    props.numIterations = numIter;
+                    break;
+                }
+                case 2: {
+                    auto &props = _seqProps[j];
+                    auto seqAnalysis = _seqAnalysis[j % _metaLoopPeriod];
+                    int newDelta = numIter - props.numIterations;
+                    if (seqAnalysis->dataPointerDelta() != 0) {
+                        if (newDelta != props.iterationDelta) {
+                            // The number of iterations for non-stationary loops should be fixed or
+                            // increase linearly
+                            return false;
+                        }
+                    } else {
+                        if (newDelta < props.iterationDelta) {
+                            // The number of iterations should not decrease
+                            return false;
+                        }
+                    }
+                    break;
                 }
             }
-        } else {
-            if (init) {
-                _seqProps.emplace_back();
-            }
         }
-
-        ++idx;
     }
 
     return true;
@@ -43,10 +72,11 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
 bool MetaLoopAnalysis::findLoopSize(const ExecutionState &executionState) {
     const RunSummary &runSummary = executionState.getRunSummary();
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
-    int lp = metaRunSummary.getLoopPeriod();
     int ln = metaRunSummary.getLoopIteration();
 
-    for (int loopSize = lp; loopSize * 3 <= ln * lp; loopSize += lp) {
+    for (int loopSize = _metaLoopPeriod;
+         loopSize * 3 <= ln * _metaLoopPeriod;
+         loopSize += _metaLoopPeriod) {
         if (checkLoopSize(runSummary, loopSize)) {
             _loopSize = loopSize;
             return true;
@@ -56,88 +86,19 @@ bool MetaLoopAnalysis::findLoopSize(const ExecutionState &executionState) {
     return false;
 }
 
-bool MetaLoopAnalysis::establishIterationDeltas(const RunSummary &runSummary, int start, int end) {
-    bool populate = _iterationDeltas.size() == 0;
-
-    // Initialize iteration deltas
-    int idx1 = start;
-    int idx2 = end;
-    while (idx1 < end) {
-        const RunBlock* rb1 = runSummary.runBlockAt(idx1);
-        const RunBlock* rb2 = runSummary.runBlockAt(idx2);
-
-        assert(rb1->getSequenceId() == rb2->getSequenceId());
-
-        if (rb1->isLoop()) {
-            int len1 = runSummary.getRunBlockLength(idx1);
-            int len2 = runSummary.getRunBlockLength(idx2);
-
-            if (len2 < len1 || (len2 - len1) % rb1->getLoopPeriod() != 0) {
-                // The number of iterations should increase and both loops should exit at the
-                // same program block
-                return false;
-            }
-
-            int delta = (len2 - len1) / rb1->getLoopPeriod();
-            if (populate) {
-                _iterationDeltas.push_back(delta);
-            } else {
-                if (_iterationDeltas[start - idx1] != delta) {
-                    return false;
-                }
-            }
-        } else {
-            if (populate) {
-                _iterationDeltas.push_back(0);
-            }
-        }
-
-        ++idx1;
-        ++idx2;
-    }
-
-    return true;
-}
-
-bool MetaLoopAnalysis::determineIterationDeltas(const ExecutionState &executionState) {
-    const RunSummary &runSummary = executionState.getRunSummary();
-    const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
-    int metaLoopPeriod = metaRunSummary.getLoopPeriod();
-
-    _loopSize = metaLoopPeriod;
-
-    while (_loopSize * 3 <= metaRunSummary.getLoopIteration()) {
-        _iterationDeltas.clear();
-
-        int startIndex = runSummary.getNumRunBlocks() - _loopSize  * 3;
-
-        // Populate iteration deltas
-        if (!establishIterationDeltas(runSummary, startIndex, startIndex + _loopSize)) {
-            return false;
-        }
-
-        // Verify constant growth
-        startIndex += _loopSize;
-        if (!establishIterationDeltas(runSummary, startIndex, startIndex + _loopSize)) {
-            continue;
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
 void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
     const RunHistory &runHistory = executionState.getRunHistory();
     const RunSummary &runSummary = executionState.getRunSummary();
+    const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
 
     _sequenceAnalysisPool.clear();
     _loopAnalysisPool.clear();
-    _sequenceAnalysis.clear();
+    _seqAnalysis.clear();
 
-    int startIndex = runSummary.getNumRunBlocks() - _loopSize;
-    for (int i = 0; i < _loopSize; ++i) {
+    _metaLoopPeriod = metaRunSummary.getLoopPeriod();
+
+    int startIndex = runSummary.getNumRunBlocks() - _metaLoopPeriod;
+    for (int i = 0; i < _metaLoopPeriod; ++i) {
         const RunBlock * runBlock = runSummary.runBlockAt(startIndex + i);
         SequenceAnalysis *analysis = nullptr;
 
@@ -155,20 +116,19 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
             analysis = &sequenceAnalysis;
         }
 
-        _sequenceAnalysis.push_back(analysis);
+        _seqAnalysis.push_back(analysis);
     }
-
 }
 
 bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
+    // TODO: Make lazy (re-use previous results when applicable)?
+    analyzeRunBlocks(executionState);
+
     if (!findLoopSize(executionState)) {
         return false;
     }
-
-    analyzeRunBlocks(executionState);
 
     // TODO: Analyze how data boundaries move each iteration
 
     return true;
 }
-
