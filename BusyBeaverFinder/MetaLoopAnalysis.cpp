@@ -59,6 +59,10 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
                             // The number of iterations should not decrease
                             return false;
                         }
+                        if (newDelta != props.iterationDelta) {
+                            // Signal that increase is non-linear
+                            props.iterationDelta = -1;
+                        }
                     }
                     break;
                 }

@@ -73,6 +73,8 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 3);
+        REQUIRE(mla.loopIterationDelta(0) == 1);
+        REQUIRE(mla.loopIterationDelta(2) == 1);
     }
 
     SECTION( "BasicLeftSweep" ) {
@@ -94,6 +96,8 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 3);
+        REQUIRE(mla.loopIterationDelta(0) == 1);
+        REQUIRE(mla.loopIterationDelta(2) == 1);
     }
 
     SECTION( "BasicDualEndedSweep" ) {
@@ -111,6 +115,8 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 4);
+        REQUIRE(mla.loopIterationDelta(1) == 2);
+        REQUIRE(mla.loopIterationDelta(3) == 2);
     }
 
     SECTION( "TwoStateRightSweep" ) {
@@ -137,6 +143,10 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 6);
+        REQUIRE(mla.loopIterationDelta(0) == 1);
+        REQUIRE(mla.loopIterationDelta(2) == 1);
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.loopIterationDelta(5) == 1);
     }
 
     SECTION( "TwoStateRightSweep-SharedTransition" ) {
@@ -167,6 +177,10 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 6);
+        REQUIRE(mla.loopIterationDelta(0) == 3);
+        REQUIRE(mla.loopIterationDelta(2) == 3);
+        REQUIRE(mla.loopIterationDelta(3) == 3);
+        REQUIRE(mla.loopIterationDelta(5) == 3);
     }
 
     SECTION( "SimpleGlider" ) {
@@ -193,6 +207,34 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 2);
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+    }
+
+    SECTION( "SimpleGliderDeltaTwo" ) {
+        // Glider counter increases by two each iteration
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+
+        // Main loop
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(INC, -1, dummySteps, block + 6, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 2);
+
+        // Transition
+        block[6].finalize(MOV,  2, dummySteps, block + 7, exitBlock);
+        block[7].finalize(INC,  2, dummySteps, exitBlock, block + 2);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result == true);
+        REQUIRE(mla.loopSize() == 2);
+        REQUIRE(mla.loopIterationDelta(1) == 2);
     }
 
     SECTION( "PowersOfTwo" ) {
@@ -222,6 +264,8 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
         REQUIRE(result == true);
         REQUIRE(mla.loopSize() == 2);
+        REQUIRE(mla.loopIterationDelta(0) == -1);
+        REQUIRE(mla.loopIterationDelta(1) == -1);
     }
 }
 
