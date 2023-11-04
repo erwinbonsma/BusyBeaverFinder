@@ -80,6 +80,67 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
     }
 
+    SECTION( "SweepWithChangingBody" ) {
+        // Sweep body increases by one each right sweep
+
+        // Rightwards sweep
+        block[0].finalize(MOV,  1, dummySteps, block + 2, block + 1);
+        block[1].finalize(INC,  1, dummySteps, exitBlock, block + 0);
+
+        // Transition sequence that extends sequence
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        // Leftwards sweep
+        block[3].finalize(MOV, -1, dummySteps, block + 0, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        REQUIRE(mla.loopIterationDelta(0) == 1);
+        REQUIRE(mla.loopIterationDelta(2) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 1); // Transition
+        REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
+    }
+
+    SECTION( "SweepWithStripedBody" ) {
+        // Sweep body increases in length by two units. It's body consists of
+        // alternating positive and negative values that diverge from zero.
+
+        // Rightwards sweep
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  2, dummySteps, block + 2, block + 0);
+
+        // Transition sequence that extends sequence
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+
+        // Leftwards sweep
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV, -2, dummySteps, block + 6, block + 4);
+
+        // Transition sequence
+        block[6].finalize(MOV,  1, dummySteps, exitBlock, block + 0);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 2); // Transition at right
+        REQUIRE(mla.dataPointerDelta(1) == 2); // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(2) == 0); // Transition at left
+        REQUIRE(mla.dataPointerDelta(3) == 0); // Rightward sweep
+    }
+
     SECTION( "BasicLeftSweep" ) {
         // Sweep body consists of only ones and extends by one position to the left
 
@@ -205,6 +266,38 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.dataPointerDelta(5) == 1); // Leftward sweep
     }
 
+    SECTION( "ConstantSweepBodyWithStationaryCounter" ) {
+        // Sweep body consists of only ones and extends by one position to the right.
+        // At its left is a counter that is incremented by one each meta-loop iteration.
+
+        // Rightwards sweep
+        block[0].finalize(MOV,  1, dummySteps, block + 1, block + 0);
+
+        // Transition sequence that extends sequence
+        block[1].finalize(INC,  1, dummySteps, exitBlock, block + 2);
+
+        // Leftwards sweep
+        block[2].finalize(MOV, -1, dummySteps, block + 3, block + 2);
+
+        // Counter at left
+        block[3].finalize(MOV, 1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(INC, 1, dummySteps, exitBlock, block + 0);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0); // Stationary counter
+        REQUIRE(mla.dataPointerDelta(1) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(2) == 1); // Transition
+        REQUIRE(mla.dataPointerDelta(3) == 1); // Leftward sweep
+    }
+
     SECTION( "SimpleGlider" ) {
         // Glider counter increases by one each iteration
 
@@ -294,6 +387,48 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.loopIterationDelta(1) == -1);
         REQUIRE(mla.dataPointerDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(1) == 0);
+    }
+
+    SECTION( "SweepWithGlider" ) {
+        // Sweep body consists of only ones and extends by one position to the right.
+        // At its right is a moving counter that is incremented by one each meta-loop iteration.
+
+        // Bootstrap sequence
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+
+        // Rightwards sweep
+        block[1].finalize(MOV,  1, dummySteps, block + 2, block + 1);
+
+        // Transition towards glider - bootstrap counter
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        // Transition glider that extends sequence and increases moving counter
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(MOV, -1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(INC, -1, dummySteps, block + 7, block + 6);
+        block[6].finalize(MOV,  1, dummySteps, exitBlock, block + 3);
+
+        // Transition after glider - restore zero to one
+        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 8);
+
+        // Leftwards sweep
+        block[8].finalize(MOV, -1, dummySteps, block + 1, block + 8);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 5);
+        REQUIRE(mla.loopIterationDelta(0) == 1); // Rightward sweep
+        REQUIRE(mla.loopIterationDelta(2) == 1); // Glider counter
+        REQUIRE(mla.loopIterationDelta(4) == 1); // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 1); // Transition
+        REQUIRE(mla.dataPointerDelta(2) == 1); // Glider counter
+        REQUIRE(mla.dataPointerDelta(3) == 1); // Transition
+        REQUIRE(mla.dataPointerDelta(4) == 1); // Leftward sweep
     }
 }
 
