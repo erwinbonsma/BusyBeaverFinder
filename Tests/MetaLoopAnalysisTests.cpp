@@ -13,7 +13,7 @@
 #include "MetaLoopAnalysis.h"
 
 const int dummySteps = 1;
-const int maxSequenceLen = 12;
+const int maxSequenceLen = 16;
 
 const int INC = true;
 const int MOV = false;
@@ -42,8 +42,8 @@ public:
 
 // Programs that end up in a permanent meta-loop
 TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
-    HangExecutor hangExecutor(1000, 1000);
-    hangExecutor.setMaxSteps(1000);
+    HangExecutor hangExecutor(1000, 10000);
+    hangExecutor.setMaxSteps(10000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
@@ -298,6 +298,178 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.dataPointerDelta(3) == 1); // Leftward sweep
     }
 
+    SECTION( "ConstantSweepBodyWithStationaryCounter2" ) {
+        // Sweep body consists of only ones and extends by one position to the right.
+        // At its left is a counter that is incremented by one each meta-loop iteration.
+        // This is a result of the premature exit of the left sweep.
+
+        // Rightwards sweep
+        block[0].finalize(MOV,  1, dummySteps, block + 1, block + 0);
+
+        // Transition sequence that extends sequence
+        block[1].finalize(INC,  1, dummySteps, exitBlock, block + 2);
+
+        // Leftwards sweep, which oscilates each value in the sweep body during traversal
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 0, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(INC, -1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 2);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        // Rightward sweep
+        REQUIRE(mla.loopIterationDelta(0) == 1);
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        // Transition
+        REQUIRE(mla.loopIterationDelta(1) == 0);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // Leftward sweep
+        REQUIRE(mla.loopIterationDelta(2) == 1);
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+    }
+
+    SECTION( "BootstrappingSweep" ) {
+        // The rightwards sweep is a loop with a bootstrap cycle. The bootstrap results in a
+        // negative value moving away from zero, whereas the sweep body consists of positive values
+        // that move away from zero.
+
+        // Rightwards sweep
+        block[0].finalize(INC, -1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 3, block + 2);
+        block[2].finalize(INC,  2, dummySteps, exitBlock, block + 0);
+
+        // Transition at right
+        block[3].finalize(INC,  2, dummySteps, exitBlock, block + 4);
+
+        // Leftwards sweep
+        block[4].finalize(MOV, -1, dummySteps, block + 5, block + 4);
+
+        // Transition at left
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 0);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+        // Transition at left
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        // Rightward sweep
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 0);
+        // Transition at right
+        REQUIRE(mla.loopIterationDelta(2) == 0);
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        // Leftward sweep
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.dataPointerDelta(3) == 1);
+    }
+
+    SECTION( "BootstrappingSweep2" ) {
+        // The rightwards sweep is a loop with a bootstrap cycle. The changes during loop bootstrap
+        // are negated by the transition sequence that precedes it.
+
+        // Init
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 2);
+
+        // Transition at left
+        block[1].finalize(MOV,  1, dummySteps, exitBlock, block + 2);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        // Rightwards sweep
+        block[3].finalize(INC, -1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, block + 6, block + 5);
+        block[5].finalize(INC,  2, dummySteps, exitBlock, block + 3);
+
+        // Transition at right
+        block[6].finalize(INC,  2, dummySteps, exitBlock, block + 7);
+
+        // Leftwards sweep
+        block[7].finalize(MOV, -1, dummySteps, block + 1, block + 7);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+        // Transition at left
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        // Rightward sweep
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 0);
+        // Transition at right
+        REQUIRE(mla.loopIterationDelta(2) == 0);
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        // Leftward sweep
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.dataPointerDelta(3) == 1);
+    }
+
+    SECTION( "TwoPartSweep" ) {
+        // The rightward sweep is a single loop, whereas the leftward sweep is broken in two
+        // parts. The first part traverses the right part of the body, which consists of ones, and
+        // the second part traverses the left part, consisting of minus ones.
+
+        // Rightwards sweep
+        block[0].finalize(MOV,  1, dummySteps, block + 1, block + 0);
+
+        // Transition sequence extending sequence at right
+        block[1].finalize(INC,  1, dummySteps, exitBlock, block + 2);
+
+        // Leftwards sweep - Part 1
+        block[2].finalize(MOV, -1, dummySteps, block + 5, block + 3);
+        block[3].finalize(INC,  1, dummySteps, block + 5, block + 4);
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 2);
+
+        // Mid-sequence transition
+        block[5].finalize(INC, -1, dummySteps, exitBlock, block + 6);
+
+        // Leftwards sweep - Part 2
+        block[6].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+
+        // Transition sequence extending sequence at left
+        block[7].finalize(INC, -1, dummySteps, exitBlock, block + 0);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 6);
+
+        // Left transition
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == -1);
+        // Rightward sweep
+        REQUIRE(mla.loopIterationDelta(1) == 2);
+        REQUIRE(mla.dataPointerDelta(1) == -1);
+        // Right transition
+        REQUIRE(mla.loopIterationDelta(2) == 0);
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        // Leftward sweep - Part 1
+        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.dataPointerDelta(3) == 1);
+        // Mid transition
+        REQUIRE(mla.loopIterationDelta(4) == 0);
+        REQUIRE(mla.dataPointerDelta(4) == 0);
+        // Leftward sweep - Part 2
+        REQUIRE(mla.loopIterationDelta(5) == 1);
+        REQUIRE(mla.dataPointerDelta(5) == 0);
+    }
+
     SECTION( "SimpleGlider" ) {
         // Glider counter increases by one each iteration
 
@@ -354,6 +526,201 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.loopIterationDelta(1) == 2);
         REQUIRE(mla.dataPointerDelta(0) == 1);
         REQUIRE(mla.dataPointerDelta(1) == 1);
+    }
+
+    SECTION( "DoubleCounterGlider" ) {
+        // Glider that increases two counters during each meta-loop iteration, thereby ensuring
+        // that iterations go up non-linearly. This behavior is also harder to analyze, as the
+        // next loop counter is incremented one less than the current counter.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+
+        // Main loop
+        block[3].finalize(INC, -1, dummySteps, block + 9, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(MOV,  1, dummySteps, block + 7, block + 7);
+        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 8);
+        block[8].finalize(MOV, -2, dummySteps, exitBlock, block + 3);
+
+        // Transition
+        block[9].finalize(MOV,  2, dummySteps, exitBlock, block + 5);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 2);
+
+        // Transition at left
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        // Glider loop
+        REQUIRE(mla.loopIterationDelta(1) == -1);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+    }
+
+    SECTION( "TwoIndependentGliders" ) {
+        // Two chained gliders that independently update their counters. The first counter
+        // increases by one each meta-loop iteration. The other counter doubles each time.
+        // Data: C1_OLD C1_NEW C2_OLD C2_NEW
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  2, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+
+        // Glider 1
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV, -1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(INC, -1, dummySteps, block + 8, block + 7);
+        block[7].finalize(MOV,  1, dummySteps, exitBlock, block + 4);
+
+        // Transition
+        block[8].finalize(MOV,  3, dummySteps, block + 9, exitBlock);
+
+        // Glider 2
+        block[ 9].finalize(INC,  2, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV, -1, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC, -1, dummySteps, block + 13, block + 12);
+        block[12].finalize(MOV,  1, dummySteps, exitBlock, block +  9);
+
+        // Transition
+        block[13].finalize(INC,  1, dummySteps, exitBlock, block + 4);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+
+        // Transition
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        // Glider loop 1
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // Transition
+        REQUIRE(mla.loopIterationDelta(2) == 0);
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        // Glider loop 1
+        REQUIRE(mla.loopIterationDelta(3) == -1);
+        REQUIRE(mla.dataPointerDelta(3) == 1);
+    }
+
+    SECTION( "TwoEntangledIndependentGliders" ) {
+        // Two chained gliders that independently update their counters. The first counter
+        // increases by one each meta-loop iteration. The other counter doubles each time.
+        // Very similar to TwoIndependentGliders except that the data regions are now entangled.
+        // Data: C1_OLD C2_OLD C1_NEW C2_NEW
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV,  1, dummySteps, block + 4, exitBlock);
+
+        // Glider 1
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV, -2, dummySteps, exitBlock, block + 6);
+        block[6].finalize(INC, -1, dummySteps, block + 8, block + 7);
+        block[7].finalize(MOV,  2, dummySteps, exitBlock, block + 4);
+
+        // Transition
+        block[8].finalize(MOV,  3, dummySteps, block + 9, exitBlock);
+
+        // Glider 2
+        block[ 9].finalize(INC,  2, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV, -2, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC, -1, dummySteps, block + 13, block + 12);
+        block[12].finalize(MOV,  2, dummySteps, exitBlock, block +  9);
+
+        // Transition
+        block[13].finalize(MOV,  3, dummySteps, block + 14, exitBlock);
+        block[14].finalize(INC,  1, dummySteps, exitBlock, block +  4);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+
+        // Transition
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 2);
+        // Glider loop 1
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 2);
+        // Transition
+        REQUIRE(mla.loopIterationDelta(2) == 0);
+        REQUIRE(mla.dataPointerDelta(2) == 2);
+        // Glider loop 1
+        REQUIRE(mla.loopIterationDelta(3) == -1);
+        REQUIRE(mla.dataPointerDelta(3) == 2);
+    }
+
+    SECTION( "TwoDependentGliders" ) {
+        // Two chained gliders with a dependency between their counter. The first loop updates its
+        // own next counter by one each meta-loop iteration, but also updates the counter for the
+        // other loop. The other counter doubles each time.
+        // Data: C1_OLD C1_NEW C2_OLD C2_NEW
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  2, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+
+        // Glider 1
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5); // Update C1_NEW
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(INC,  1, dummySteps, exitBlock, block + 7); // Update C2_OLD
+        block[7].finalize(MOV, -2, dummySteps, exitBlock, block + 8);
+        block[8].finalize(INC, -1, dummySteps, block + 10, block + 9); // Update C1_OLD
+        block[9].finalize(MOV,  1, dummySteps, exitBlock, block + 4);
+
+        // Transition
+        block[10].finalize(MOV,  3, dummySteps, block + 11, exitBlock);
+
+        // Glider 2
+        block[11].finalize(INC,  2, dummySteps, exitBlock, block + 12); // Update C2_NEW
+        block[12].finalize(MOV, -1, dummySteps, exitBlock, block + 13);
+        block[13].finalize(INC, -1, dummySteps, block + 15, block + 14); // Update C2_OLD
+        block[14].finalize(MOV,  1, dummySteps, exitBlock, block + 11);
+
+        // Transition
+        block[15].finalize(INC,  1, dummySteps, exitBlock, block + 4);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+
+        // Transition
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        // Glider loop 1
+        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // Transition
+        REQUIRE(mla.loopIterationDelta(2) == 0);
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        // Glider loop 1
+        REQUIRE(mla.loopIterationDelta(3) == -1);
+        REQUIRE(mla.dataPointerDelta(3) == 1);
     }
 
     SECTION( "PowersOfTwo" ) {
