@@ -42,8 +42,8 @@ public:
 
 // Programs that end up in a permanent meta-loop
 TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
-    HangExecutor hangExecutor(1000, 10000);
-    hangExecutor.setMaxSteps(10000);
+    HangExecutor hangExecutor(1000, 20000);
+    hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
@@ -723,7 +723,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.dataPointerDelta(3) == 1);
     }
 
-    SECTION( "PowersOfTwo" ) {
+    SECTION( "StationaryLoop-PowersOfTwo" ) {
         // Calculates powers of two using two stationary counters that alternate between one being
         // decremented and the other being incremented
 
@@ -754,6 +754,69 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(mla.loopIterationDelta(1) == -1);
         REQUIRE(mla.dataPointerDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(1) == 0);
+    }
+
+    SECTION( "GliderWithWake-PowersOfTwo" ) {
+        // Glider that leaves powers of two in its wake
+        // Data: Wake Now Next
+
+        // Bootstrap: Now = 1
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+
+        // Loop: Wake += 2, Now -= 1, Next += 2
+        block[2].finalize(INC,  2, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -2, dummySteps, block + 4, block + 4);
+        block[4].finalize(INC,  2, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(INC, -1, dummySteps, block + 8, block + 7);
+        block[7].finalize(MOV,  1, dummySteps, exitBlock, block + 2);
+
+        // Transition
+        block[8].finalize(MOV,  2, dummySteps, block + 2, exitBlock);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 2);
+
+        // Transition
+        REQUIRE(mla.loopIterationDelta(0) == 0);
+        REQUIRE(mla.dataPointerDelta(0) == 1);
+        // Glider loop
+        REQUIRE(mla.loopIterationDelta(1) == -1);
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+    }
+
+    SECTION( "GliderWithWake-PowersOfThree" ) {
+        // Glider that leaves powers of three in its wake
+        // Data: Wake Now Next
+
+        // Bootstrap: Now = 1
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+
+        // Loop: Wake += 2, Now -= 1, Next += 2
+        block[2].finalize(INC,  3, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -2, dummySteps, block + 4, block + 4);
+        block[4].finalize(INC,  3, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(INC, -1, dummySteps, block + 8, block + 7);
+        block[7].finalize(MOV,  1, dummySteps, exitBlock, block + 2);
+
+        // Transition
+        block[8].finalize(MOV, -1, dummySteps, exitBlock, block + 9);
+        block[9].finalize(INC, -1, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV, 3, dummySteps, block + 2, exitBlock);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        REQUIRE(result);
     }
 
     SECTION( "SweepWithGlider" ) {
@@ -800,8 +863,8 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 }
 
 TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][completion]" ) {
-    HangExecutor hangExecutor(1000, 1000);
-    hangExecutor.setMaxSteps(1000);
+    HangExecutor hangExecutor(1000, 100000);
+    hangExecutor.setMaxSteps(10000000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor));
 
     ProgramBlock block[maxSequenceLen];
@@ -837,6 +900,42 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
         REQUIRE(!result);
+    }
+
+    SECTION( "SweepConsumingGliderWake" ) {
+        // Sweep connected to glider that leaves powers of three (minus one) in its wake.
+        // The leftward sweep subtracts seven of all values. This eventually causes the program
+        // to terminate, as (3^6 - 1) is divisible by seven. It requires 104 sweeps to get to
+        // zero which means that the glider counter is meanwhile at 3^(6+104) ~= 3 * 10^52
+
+        // Loop: Wake += 3, Now -= 1, Next += 3
+        block[0].finalize(INC,  3, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -2, dummySteps, block + 2, block + 2);
+        block[2].finalize(INC,  3, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV,  1, dummySteps, block + 6, block + 4);
+        block[4].finalize(INC, -1, dummySteps, block + 6, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 0);
+
+        // Transition
+        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 7);
+        block[7].finalize(INC, -1, dummySteps, exitBlock, block + 8);
+
+        // Leftward sweep
+        block[8].finalize(MOV, -1, dummySteps, block + 10, block + 9);
+        block[9].finalize(INC, -7, dummySteps, exitBlock, block + 8);
+
+        // Rightward sweep
+        block[10].finalize(MOV,  1, dummySteps, block + 11, block + 10);
+
+        // Transition at right
+        block[11].finalize(MOV,  2, dummySteps, block + 0, exitBlock);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 5);
     }
 }
 
