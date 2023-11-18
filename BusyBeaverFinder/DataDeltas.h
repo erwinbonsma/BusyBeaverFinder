@@ -37,8 +37,8 @@ class DataDeltas {
 public:
     void clear() { _dataDeltas.clear(); }
 
-    int numDeltas() const { return (int)_dataDeltas.size(); }
-    const DataDelta& dataDelta(int index) const { return _dataDeltas[index]; }
+    int size() const { return (int)_dataDeltas.size(); }
+    const DataDelta& operator[](int index) const { return _dataDeltas[index]; }
     int minDpOffset() const;
     int maxDpOffset() const;
 

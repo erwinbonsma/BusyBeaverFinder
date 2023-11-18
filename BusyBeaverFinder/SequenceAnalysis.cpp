@@ -157,10 +157,9 @@ std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {
     os << ", delta DP = " << sa.dataPointerDelta();
 
     os << ", deltas: ";
-    for (int i = 0; i < sa.numDataDeltas(); i++) {
-        const DataDelta& dd = sa.dataDeltaAt(i);
-
-        if (i != 0) {
+    int num = 0;
+    for (auto dd : sa.dataDeltas()) {
+        if (num++ != 0) {
             os << ", ";
         }
         os << "[" << dd.dpOffset() << "]";
@@ -169,7 +168,7 @@ std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {
         }
         os << dd.delta();
     }
-    if (sa.numDataDeltas() == 0) {
+    if (num == 0) {
         os << "none";
     }
 

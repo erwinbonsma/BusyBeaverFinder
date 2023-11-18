@@ -87,7 +87,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 1);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
@@ -99,7 +99,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 1);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::GREATER_THAN_OR_EQUAL, 3));
@@ -113,7 +113,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -2));
@@ -130,7 +130,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 4);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
@@ -147,7 +147,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -4));
@@ -166,7 +166,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 2);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -6));
@@ -184,7 +184,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 3);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -5));
@@ -203,7 +203,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 3);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
@@ -224,7 +224,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 3);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.dataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
@@ -244,7 +244,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 2);
+        REQUIRE(la.dataDeltas().size() == 2);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
@@ -264,7 +264,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.dataDeltas().size() == 0);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
@@ -279,7 +279,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.dataDeltas().size() == 0);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
@@ -295,7 +295,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         analyzeLoop(la, loopBlock, 2);
 
         REQUIRE(la.dataPointerDelta() == 0);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.dataDeltas().size() == 0);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, -1));
@@ -323,7 +323,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.squashedDataDeltas().size() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -336,7 +336,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 4);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.squashedDataDeltas().size() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -354,7 +354,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 3);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.squashedDataDeltas().size() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -373,7 +373,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -398,7 +398,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -423,7 +423,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 2);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -448,7 +448,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 3);
 
         REQUIRE(la.dataPointerDelta() == 2);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
@@ -472,7 +472,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
@@ -488,7 +488,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::BOOTSTRAP);
@@ -512,7 +512,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 6);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
@@ -564,7 +564,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 6);
 
         REQUIRE(la.dataPointerDelta() == -1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
@@ -594,7 +594,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 6);
 
         REQUIRE(la.dataPointerDelta() == -1);
-        REQUIRE(la.numDataDeltas() == 1);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
         REQUIRE(la.numBootstrapCycles() == 3);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
@@ -619,7 +619,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 2);
-        REQUIRE(la.numDataDeltas() == 2);
+        REQUIRE(la.squashedDataDeltas().size() == 2);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
@@ -643,7 +643,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 3);
-        REQUIRE(la.numDataDeltas() == 2);
+        REQUIRE(la.squashedDataDeltas().size() == 2);
         REQUIRE(la.numBootstrapCycles() == 0);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
@@ -666,7 +666,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.squashedDataDeltas().size() == 0);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
@@ -690,7 +690,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 3);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.squashedDataDeltas().size() == 0);
         REQUIRE(la.numBootstrapCycles() == 1);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, -1));
@@ -719,7 +719,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 1);
-        REQUIRE(la.numDataDeltas() == 0);
+        REQUIRE(la.squashedDataDeltas().size() == 0);
         REQUIRE(la.numBootstrapCycles() == 2);
 
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 2));

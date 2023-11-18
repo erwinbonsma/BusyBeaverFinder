@@ -85,10 +85,7 @@ public:
     int minDp() const { return _minDp; }
     int maxDp() const { return _maxDp; }
 
-    virtual const DataDeltas& dataDeltas() const { return _dataDeltas; }
-
-    virtual int numDataDeltas() const { return _dataDeltas.numDeltas(); }
-    virtual const DataDelta& dataDeltaAt(int index) const { return _dataDeltas.dataDelta(index); }
+    const DataDeltas& dataDeltas() const { return _dataDeltas; }
 
     const DataDelta& effectiveResultAt(int index) const { return _effectiveResult[index]; }
 

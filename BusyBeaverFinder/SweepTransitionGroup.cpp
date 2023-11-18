@@ -140,13 +140,13 @@ bool SweepLoopAnalysis::finishAnalysis() {
 
     _sweepValueChanges.clear();
     _sweepValueChange = 0;
-    for (int i = numDataDeltas(); --i >= 0; ) {
-        int delta = dataDeltaAt(i).delta();
+    for (auto dd : squashedDataDeltas()) {
+        int delta = dd.delta();
         _sweepValueChanges.insert(delta);
         _sweepValueChange = delta;
     }
 
-    if (numDataDeltas() < abs(dataPointerDelta())) {
+    if (squashedDataDeltas().size() < abs(dataPointerDelta())) {
         _sweepValueChanges.insert(0);
     }
     if (_sweepValueChanges.size() == 1) {
@@ -318,12 +318,12 @@ void SweepEndTypeAnalysis::collectSweepDeltas(std::set<int> &deltas) const {
 
     if (_group._sweepValueChangeType != SweepValueChangeType::NO_CHANGE) {
         if (_group._incomingLoop->sweepValueChangeType() != SweepValueChangeType::NO_CHANGE) {
-            for (DataDelta dd : _group._incomingLoop->dataDeltas()) {
+            for (auto dd : _group._incomingLoop->squashedDataDeltas()) {
                 deltas.insert(dd.delta());
             }
         }
         if (_group._outgoingLoop->sweepValueChangeType() != SweepValueChangeType::NO_CHANGE) {
-            for (DataDelta dd : _group._outgoingLoop->dataDeltas()) {
+            for (auto dd : _group._outgoingLoop->squashedDataDeltas()) {
                 deltas.insert(dd.delta());
             }
         }

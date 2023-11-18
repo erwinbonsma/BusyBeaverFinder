@@ -49,7 +49,7 @@ bool GliderHangDetector::isGliderLoop() {
         return false;
     }
 
-    if (_loop.numDataDeltas() != 2) {
+    if (_loop.dataDeltas().size() != 2) {
         // For now, only support the most basic glider loops.
 
         // TODO: Extend to support more complex glider loops once programs with these behaviors are
@@ -57,10 +57,11 @@ bool GliderHangDetector::isGliderLoop() {
         return false;
     }
 
-    bool curDdIsFirst = _loop.dataDeltaAt(0).dpOffset() == _curCounterDpOffset;
-    _nxtCounterDpOffset = _loop.dataDeltaAt(curDdIsFirst).dpOffset();
-    _curCounterDelta = _loop.dataDeltaAt(!curDdIsFirst).delta();
-    _nxtCounterDelta = _loop.dataDeltaAt(curDdIsFirst).delta();
+    auto deltas = _loop.dataDeltas();
+    bool curIndex = deltas[0].dpOffset() == _curCounterDpOffset ? 0 : 1;
+    _nxtCounterDpOffset = deltas[1 - curIndex].dpOffset();
+    _curCounterDelta = deltas[curIndex].delta();
+    _nxtCounterDelta = deltas[1 - curIndex].delta();
 
     if (_curCounterDelta * _nxtCounterDelta > 0) {
         // The signs should differ
@@ -124,8 +125,7 @@ bool GliderHangDetector::checkTransitionDeltas() {
         _aheadDelta[i] = 0;
     }
 
-    for (int i = _transitionSequence.numDataDeltas(); --i >= 0; ) {
-        const DataDelta& dd = _transitionSequence.dataDeltaAt(i);
+    for (auto dd : _transitionSequence.dataDeltas()) {
         int relDelta = dd.dpOffset();
         bool isAhead = sign(relDelta) == sign(shift);
 

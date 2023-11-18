@@ -96,6 +96,9 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const LoopExit &le);
 
+/* Analyses instructions of loop to determine the loop's properties, including squashed data deltas
+ * and possible exits.
+ */
 class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
     LoopExit _loopExit[maxLoopExits];
@@ -130,9 +133,7 @@ public:
     // always the same loop instruction (or set of instructions) that first sees a data value.
     int numBootstrapCycles() const { return _numBootstrapCycles; }
 
-    const DataDeltas& dataDeltas() const override;
-    int numDataDeltas() const override;
-    const DataDelta& dataDeltaAt(int idx) const override;
+    const DataDeltas& squashedDataDeltas() const { return _squashedDeltas; }
 
     // The delta realized by the loop at the given offset, assuming the loop runs endlessly.
     int deltaAt(int dpOffset) const;

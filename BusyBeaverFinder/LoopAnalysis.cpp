@@ -95,18 +95,6 @@ bool LoopAnalysis::exitsOnZero(int index) {
     return curBlock->nonZeroBlock() == nxtBlock;
 }
 
-const DataDeltas& LoopAnalysis::dataDeltas() const {
-    return _dpDelta != 0 ? _squashedDeltas : _dataDeltas;
-}
-
-int LoopAnalysis::numDataDeltas() const {
-    return (_dpDelta != 0 ? _squashedDeltas : _dataDeltas).numDeltas();
-}
-
-const DataDelta& LoopAnalysis::dataDeltaAt(int idx) const {
-    return (_dpDelta != 0 ? _squashedDeltas : _dataDeltas).dataDelta(idx);
-}
-
 int LoopAnalysis::deltaAt(int dpOffset) const {
     int delta = 0;
     int mod = normalizedMod(dpOffset, _dpDelta);
