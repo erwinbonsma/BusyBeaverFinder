@@ -180,5 +180,6 @@ RunResult HangExecutor::execute(std::string programSpec) {
 }
 
 void HangExecutor::dump() const {
+    std::cout << "#Steps = " << numSteps() << std::endl;
     dumpExecutionState();
 }
