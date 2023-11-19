@@ -65,6 +65,22 @@ enum class ValueChange : int8_t {
     OTHER = 2,
 };
 
+// Describes how the loop behaves in the context of the program that it is part of
+enum class LoopType : int8_t {
+    // Stationary loop. Loop that traverses the same part of the data tape each
+    STATIONARY = 0,
+
+    // Stationary loop that decreases one counter, while increasing another counter
+    // It moves across the data type to "consume" a different counter each time the loop runs.
+    GLIDER = 1,
+
+    // Sweep loop with one fixed end
+    ANCHORED_SWEEP = 2,
+
+    // Sweep loop that extends both ends
+    DOUBLE_SWEEP = 3,
+};
+
 enum class BoundaryChange : int8_t {
     // Boundary is fixed
     FIXED = 0,

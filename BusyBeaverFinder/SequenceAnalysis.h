@@ -79,6 +79,7 @@ protected:
 public:
     SequenceAnalysis();
 
+    virtual bool isLoop() const { return false; }
     int sequenceSize() const { return _numProgramBlocks; }
 
     int dataPointerDelta() const { return _dpDelta; }

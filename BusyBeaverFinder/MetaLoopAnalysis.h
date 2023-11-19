@@ -23,9 +23,6 @@ struct MetaLoopSequenceProps {
     // prematurely.
     int loopRemainder = 0;
 
-    ValueChange dataPointerChange = ValueChange::NONE;
-    ValueChange iterationChange = ValueChange::NONE;
-
     // The number of iterations of the last analyzed run-block. It is a temporary value used for
     // setting and checking iterationDelta.
     int numIterations = 0;
@@ -40,6 +37,27 @@ struct MetaLoopSequenceProps {
 
     MetaLoopSequenceProps() {}
     MetaLoopSequenceProps(int loopRemainder) : loopRemainder(loopRemainder) {}
+};
+
+class LoopBehavior {
+    std::shared_ptr<LoopAnalysis> _loopAnalysis;
+    // How much the mininum (left) and maximum (right) DP value changes on subsequent executions of
+    // the loop;
+    int _minDpDelta;
+    int _maxDpDelta;
+    int _iterationDelta;
+public:
+    LoopBehavior(std::shared_ptr<LoopAnalysis> loopAnalysis,
+                 int minDpDelta, int maxDpDelta, int iterationDelta)
+    : _loopAnalysis(loopAnalysis), _minDpDelta(minDpDelta), _maxDpDelta(maxDpDelta),
+    _iterationDelta(iterationDelta) {}
+
+    std::shared_ptr<LoopAnalysis> loopAnalysis() { return _loopAnalysis; }
+
+    int minDpDelta() const { return _minDpDelta; }
+    int maxDpDelta() const { return _maxDpDelta; }
+    int iterationDelta() const { return _iterationDelta; }
+    LoopType loopType() const;
 };
 
 /* Analyses a meta-run loop.
@@ -67,6 +85,8 @@ class MetaLoopAnalysis {
     // The behaviour/properties of the run blocks in the meta-loop (size = _loopSize) 
     std::vector<MetaLoopSequenceProps> _seqProps;
 
+    std::vector<LoopBehavior> _loopBehaviors;
+
     bool _isPeriodic;
 
     int _sequenceGrowth[numDataDirections];
@@ -77,18 +97,30 @@ class MetaLoopAnalysis {
     bool determineLoopSize(const ExecutionState &executionState);
 
     void determineDpDeltas(const RunSummary &runSummary);
+    void initLoopBehaviors();
 
 public:
     // Should be invoked when a loop in the run summary is about to finish,
     bool analyzeMetaLoop(const ExecutionState &executionState);
 
-    // The loop size (in run blocks)
-    int loopSize() { return _loopSize; }
+    // The meta-loop period (in run blocks). It is the period returned by the meta-run summary.
+    int metaLoopPeriod() const { return _metaLoopPeriod; }
+
+    // The loop size (in run blocks). It can be a multiple of the meta-loop period. This happens
+    // when the number of iterations would otherwise increase non-linearly.
+    int loopSize() const { return _loopSize; }
 
     // Returns true iff the program block history is periodic. This is the case when the number of
     // iterations for each loop inside the meta-loop remains constant.
     bool isPeriodic() const { return _isPeriodic; }
 
+    const std::vector<LoopBehavior>& loopBehaviors() const { return _loopBehaviors; }
+
+    // Returns how much the number of iterations increased compared to previous invocation of the
+    // run block in the meta-loop.
+    //
+    // Note: It differs from the iteration delta returned by the corresponding loop behavior when
+    // loopSize != metaLoopPeriod.
     int loopIterationDelta(int runBlockIndex) const {
         return _seqProps[runBlockIndex].iterationDelta;
     }

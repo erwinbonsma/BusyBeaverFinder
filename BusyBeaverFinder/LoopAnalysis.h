@@ -127,6 +127,7 @@ protected:
 public:
     LoopAnalysis();
 
+    bool isLoop() const override { return true; }
     int loopSize() const { return sequenceSize(); }
 
     // The number of iterations before the loop is fully spun up. A loop is spun up once it is

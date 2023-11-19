@@ -8,6 +8,19 @@
 
 #include "MetaLoopAnalysis.h"
 
+LoopType LoopBehavior::loopType() const {
+    if (_minDpDelta == 0 && _maxDpDelta == 0) {
+        return LoopType::STATIONARY;
+    }
+    if (_minDpDelta == _maxDpDelta) {
+        return LoopType::GLIDER;
+    }
+    if (_minDpDelta == 0 || _maxDpDelta == 0) {
+        return LoopType::ANCHORED_SWEEP;
+    }
+    return LoopType::DOUBLE_SWEEP;
+}
+
 bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize) {
     _seqProps.clear();
 
@@ -49,7 +62,7 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
                 continue;
             }
 
-            auto seqAnalysis = _seqAnalysis[j % _metaLoopPeriod];
+            auto &seqAnalysis = _seqAnalysis[j % _metaLoopPeriod];
             if (seqAnalysis->dataPointerDelta() != 0) {
                 if (delta != props.iterationDelta) {
                     // The number of iterations for non-stationary loops should be fixed or
@@ -165,6 +178,32 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     }
 }
 
+void MetaLoopAnalysis::initLoopBehaviors() {
+    _loopBehaviors.clear();
+
+    for (int i = 0; i < _loopSize; ++i) {
+        int index = i % _metaLoopPeriod;
+        auto &sa = _seqAnalysis[index];
+        if (sa->isLoop()) {
+            int dpDeltaStart = 0;
+            int iterDelta = 0;
+
+            for (int j = 0; j < _loopSize; j += _metaLoopPeriod) {
+                auto &sp = _seqProps[index + j];
+                dpDeltaStart += sp.dataPointerDelta;
+                iterDelta += sp.iterationDelta;
+            }
+
+            int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
+
+            _loopBehaviors.emplace_back(std::dynamic_pointer_cast<LoopAnalysis>(sa),
+                                        std::min(dpDeltaStart, dpDeltaEnd),
+                                        std::max(dpDeltaStart, dpDeltaEnd),
+                                        iterDelta);
+        }
+    }
+}
+
 bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
     // TODO: Make lazy (re-use previous results when applicable)?
     analyzeRunBlocks(executionState);
@@ -174,6 +213,7 @@ bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
     }
 
     determineDpDeltas(executionState.getRunSummary());
+    initLoopBehaviors();
 
     return true;
 }

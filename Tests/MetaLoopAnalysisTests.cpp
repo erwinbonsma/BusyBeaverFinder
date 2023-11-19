@@ -70,14 +70,26 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
-        REQUIRE(mla.loopIterationDelta(0) == 1);
-        REQUIRE(mla.loopIterationDelta(2) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(1) == 1); // Transition
-        REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
+        REQUIRE(lb.size() == 2);
+
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Transition
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "SweepWithChangingBody" ) {
@@ -97,14 +109,26 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
-        REQUIRE(mla.loopIterationDelta(0) == 1);
-        REQUIRE(mla.loopIterationDelta(2) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(1) == 1); // Transition
-        REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
+        REQUIRE(lb.size() == 2);
+
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Transition
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // LeftwardSweep
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "SweepWithStripedBody" ) {
@@ -130,15 +154,28 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
-        REQUIRE(mla.loopIterationDelta(1) == 1);
-        REQUIRE(mla.loopIterationDelta(3) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 2); // Transition at right
-        REQUIRE(mla.dataPointerDelta(1) == 2); // Leftward sweep
-        REQUIRE(mla.dataPointerDelta(2) == 0); // Transition at left
-        REQUIRE(mla.dataPointerDelta(3) == 0); // Rightward sweep
+        REQUIRE(lb.size() == 2);
+
+        // Transition at right
+        REQUIRE(mla.dataPointerDelta(0) == 2);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 2);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 2);
+        // Transition at left
+        REQUIRE(mla.dataPointerDelta(2) == 0);
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(3) == 0);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 2);
     }
 
     SECTION( "BasicLeftSweep" ) {
@@ -157,14 +194,26 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
-        REQUIRE(mla.loopIterationDelta(0) == 1);
-        REQUIRE(mla.loopIterationDelta(2) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 0);  // Leftwards sweep
-        REQUIRE(mla.dataPointerDelta(1) == -1); // Transition
-        REQUIRE(mla.dataPointerDelta(2) == -1); // Rightward sweep
+        REQUIRE(lb.size() == 2);
+
+        // Leftwards sweep
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == -1);
+        REQUIRE(lb[0].maxDpDelta() == 0);
+        // Transition
+        REQUIRE(mla.dataPointerDelta(1) == -1);
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(2) == -1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == -1);
+        REQUIRE(lb[1].maxDpDelta() == 0);
     }
 
     SECTION( "BasicDualEndedSweep" ) {
@@ -179,15 +228,28 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
-        REQUIRE(mla.loopIterationDelta(1) == 2);
-        REQUIRE(mla.loopIterationDelta(3) == 2);
+        REQUIRE(lb.size() == 2);
+
+        // Transition at left
         REQUIRE(mla.dataPointerDelta(0) == 1);
-        REQUIRE(mla.dataPointerDelta(1) == 1); // Rightward sweep
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 2);
+        REQUIRE(lb[0].minDpDelta() == -1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Transition at right
         REQUIRE(mla.dataPointerDelta(2) == -1);
-        REQUIRE(mla.dataPointerDelta(3) == -1); // Transition
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(3) == -1);
+        REQUIRE(lb[1].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 2);
+        REQUIRE(lb[1].minDpDelta() == -1);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "TwoStateRightSweep" ) {
@@ -211,19 +273,41 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
+        REQUIRE(mla.metaLoopPeriod() == 6);
         REQUIRE(mla.loopSize() == 6);
-        REQUIRE(mla.loopIterationDelta(0) == 1);
-        REQUIRE(mla.loopIterationDelta(2) == 1);
-        REQUIRE(mla.loopIterationDelta(3) == 1);
-        REQUIRE(mla.loopIterationDelta(5) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(1) == 1); // Increase transition
-        REQUIRE(mla.dataPointerDelta(2) == 1); // Leftward sweep
-        REQUIRE(mla.dataPointerDelta(3) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(4) == 1); // Extend transition
-        REQUIRE(mla.dataPointerDelta(5) == 1); // Leftward sweep
+        REQUIRE(lb.size() == 4);
+
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Increase transition
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(3) == 0);
+        REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[2].iterationDelta() == 1);
+        REQUIRE(lb[2].minDpDelta() == 0);
+        REQUIRE(lb[2].maxDpDelta() == 1);
+        // Extend transition
+        REQUIRE(mla.dataPointerDelta(4) == 1);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(5) == 1);
+        REQUIRE(lb[3].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[3].iterationDelta() == 1);
+        REQUIRE(lb[3].minDpDelta() == 0);
+        REQUIRE(lb[3].maxDpDelta() == 1);
     }
 
     SECTION( "TwoStateRightSweep-SharedTransition" ) {
@@ -251,19 +335,45 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
+        REQUIRE(mla.metaLoopPeriod() == 3);
         REQUIRE(mla.loopSize() == 6);
+        REQUIRE(lb.size() == 4);
+
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(0) == 0);
         REQUIRE(mla.loopIterationDelta(0) == 2);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 3);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 3);
+        // Extend by two
+        REQUIRE(mla.dataPointerDelta(1) == 2);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(2) == 2);
         REQUIRE(mla.loopIterationDelta(2) == 2);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 3);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 3);
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(3) == 0);
         REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[2].iterationDelta() == 3);
+        REQUIRE(lb[2].minDpDelta() == 0);
+        REQUIRE(lb[2].maxDpDelta() == 3);
+        // Extend by one
+        REQUIRE(mla.dataPointerDelta(4) == 1);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(5) == 1);
         REQUIRE(mla.loopIterationDelta(5) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(1) == 2); // Extend by two
-        REQUIRE(mla.dataPointerDelta(2) == 2); // Leftward sweep
-        REQUIRE(mla.dataPointerDelta(3) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(4) == 1); // Extend by one
-        REQUIRE(mla.dataPointerDelta(5) == 1); // Leftward sweep
+        REQUIRE(lb[3].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[3].iterationDelta() == 3);
+        REQUIRE(lb[3].minDpDelta() == 0);
+        REQUIRE(lb[3].maxDpDelta() == 3);
     }
 
     SECTION( "ConstantSweepBodyWithStationaryCounter" ) {
@@ -287,15 +397,28 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
-        REQUIRE(mla.loopIterationDelta(1) == 1);
-        REQUIRE(mla.loopIterationDelta(3) == 1);
-        REQUIRE(mla.dataPointerDelta(0) == 0); // Stationary counter
-        REQUIRE(mla.dataPointerDelta(1) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(2) == 1); // Transition
-        REQUIRE(mla.dataPointerDelta(3) == 1); // Leftward sweep
+        REQUIRE(lb.size() == 2);
+
+        // Stationary counter
+        REQUIRE(mla.dataPointerDelta(0) == 0);
+        // Rightward sweep
+        REQUIRE(mla.dataPointerDelta(1) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Transition
+        REQUIRE(mla.dataPointerDelta(2) == 1);
+        // Leftward sweep
+        REQUIRE(mla.dataPointerDelta(3) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "ConstantSweepBodyWithStationaryCounter2" ) {
@@ -320,18 +443,26 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
+        REQUIRE(lb.size() == 2);
+
         // Rightward sweep
-        REQUIRE(mla.loopIterationDelta(0) == 1);
         REQUIRE(mla.dataPointerDelta(0) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
         // Transition
-        REQUIRE(mla.loopIterationDelta(1) == 0);
         REQUIRE(mla.dataPointerDelta(1) == 1);
         // Leftward sweep
-        REQUIRE(mla.loopIterationDelta(2) == 1);
         REQUIRE(mla.dataPointerDelta(2) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "BootstrappingSweep" ) {
@@ -357,21 +488,28 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
+        REQUIRE(lb.size() == 2);
+
         // Transition at left
-        REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == 0);
         // Rightward sweep
-        REQUIRE(mla.loopIterationDelta(1) == 1);
         REQUIRE(mla.dataPointerDelta(1) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
         // Transition at right
-        REQUIRE(mla.loopIterationDelta(2) == 0);
         REQUIRE(mla.dataPointerDelta(2) == 1);
         // Leftward sweep
-        REQUIRE(mla.loopIterationDelta(3) == 1);
         REQUIRE(mla.dataPointerDelta(3) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "BootstrappingSweep2" ) {
@@ -400,21 +538,28 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
+        REQUIRE(lb.size() == 2);
+
         // Transition at left
-        REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == 0);
         // Rightward sweep
-        REQUIRE(mla.loopIterationDelta(1) == 1);
         REQUIRE(mla.dataPointerDelta(1) == 0);
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
         // Transition at right
-        REQUIRE(mla.loopIterationDelta(2) == 0);
         REQUIRE(mla.dataPointerDelta(2) == 1);
         // Leftward sweep
-        REQUIRE(mla.loopIterationDelta(3) == 1);
         REQUIRE(mla.dataPointerDelta(3) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "TwoPartSweep" ) {
@@ -446,28 +591,36 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 6);
+        REQUIRE(lb.size() == 3);
 
         // Left transition
-        REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == -1);
         // Rightward sweep
-        REQUIRE(mla.loopIterationDelta(1) == 2);
         REQUIRE(mla.dataPointerDelta(1) == -1);
+        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 2);
+        REQUIRE(lb[0].minDpDelta() == -1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
         // Right transition
-        REQUIRE(mla.loopIterationDelta(2) == 0);
         REQUIRE(mla.dataPointerDelta(2) == 1);
         // Leftward sweep - Part 1
-        REQUIRE(mla.loopIterationDelta(3) == 1);
         REQUIRE(mla.dataPointerDelta(3) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 1);
         // Mid transition
-        REQUIRE(mla.loopIterationDelta(4) == 0);
         REQUIRE(mla.dataPointerDelta(4) == 0);
         // Leftward sweep - Part 2
-        REQUIRE(mla.loopIterationDelta(5) == 1);
         REQUIRE(mla.dataPointerDelta(5) == 0);
+        REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[2].iterationDelta() == 1);
+        REQUIRE(lb[2].minDpDelta() == -1);
+        REQUIRE(lb[2].maxDpDelta() == 0);
     }
 
     SECTION( "SimpleGlider" ) {
@@ -491,12 +644,20 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
-        REQUIRE(mla.loopIterationDelta(1) == 1);
+        REQUIRE(lb.size() == 1);
+
+        // Transition
         REQUIRE(mla.dataPointerDelta(0) == 1);
-        REQUIRE(mla.dataPointerDelta(1) == 1);
+
+        // Glider loop
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
     }
 
     SECTION( "SimpleGliderDeltaTwo" ) {
@@ -520,12 +681,20 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
-        REQUIRE(mla.loopIterationDelta(1) == 2);
+        REQUIRE(lb.size() == 1);
+
+        // Transition
         REQUIRE(mla.dataPointerDelta(0) == 1);
-        REQUIRE(mla.dataPointerDelta(1) == 1);
+
+        // Glider loop
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == 2);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
     }
 
     SECTION( "DoubleCounterGlider" ) {
@@ -553,16 +722,20 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
+        REQUIRE(lb.size() == 1);
 
         // Transition at left
         REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == 1);
         // Glider loop
-        REQUIRE(mla.loopIterationDelta(1) == -1);
-        REQUIRE(mla.dataPointerDelta(1) == 1);
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == -1);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
     }
 
     SECTION( "TwoIndependentGliders" ) {
@@ -598,22 +771,26 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
+        REQUIRE(lb.size() == 2);
 
         // Transition
-        REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == 1);
         // Glider loop 1
-        REQUIRE(mla.loopIterationDelta(1) == 1);
-        REQUIRE(mla.dataPointerDelta(1) == 1);
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
         // Transition
-        REQUIRE(mla.loopIterationDelta(2) == 0);
         REQUIRE(mla.dataPointerDelta(2) == 1);
         // Glider loop 1
-        REQUIRE(mla.loopIterationDelta(3) == -1);
-        REQUIRE(mla.dataPointerDelta(3) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].minDpDelta() == 1);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "TwoEntangledIndependentGliders" ) {
@@ -651,26 +828,32 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
+        REQUIRE(lb.size() == 2);
 
         // Transition
-        REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == 2);
         // Glider loop 1
-        REQUIRE(mla.loopIterationDelta(1) == 1);
         REQUIRE(mla.dataPointerDelta(1) == 2);
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 2);
+        REQUIRE(lb[0].maxDpDelta() == 2);
         // Transition
-        REQUIRE(mla.loopIterationDelta(2) == 0);
         REQUIRE(mla.dataPointerDelta(2) == 2);
         // Glider loop 1
-        REQUIRE(mla.loopIterationDelta(3) == -1);
         REQUIRE(mla.dataPointerDelta(3) == 2);
+        REQUIRE(lb[1].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].minDpDelta() == 2);
+        REQUIRE(lb[1].maxDpDelta() == 2);
     }
 
     SECTION( "TwoDependentGliders" ) {
-        // Two chained gliders with a dependency between their counter. The first loop updates its
+        // Two chained gliders with a dependency between their counters. The first loop updates its
         // own next counter by one each meta-loop iteration, but also updates the counter for the
         // other loop. The other counter doubles each time.
         // Data: C1_OLD C1_NEW C2_OLD C2_NEW
@@ -705,9 +888,11 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 4);
+        REQUIRE(lb.size() == 2);
 
         // Transition
         REQUIRE(mla.loopIterationDelta(0) == 0);
@@ -715,12 +900,20 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         // Glider loop 1
         REQUIRE(mla.loopIterationDelta(1) == 1);
         REQUIRE(mla.dataPointerDelta(1) == 1);
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
         // Transition
         REQUIRE(mla.loopIterationDelta(2) == 0);
         REQUIRE(mla.dataPointerDelta(2) == 1);
-        // Glider loop 1
+        // Glider loop 2
         REQUIRE(mla.loopIterationDelta(3) == -1);
         REQUIRE(mla.dataPointerDelta(3) == 1);
+        REQUIRE(lb[1].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].minDpDelta() == 1);
+        REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
     SECTION( "StationaryLoop-PowersOfTwo" ) {
@@ -747,13 +940,22 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
-        REQUIRE(mla.loopIterationDelta(0) == -1);
-        REQUIRE(mla.loopIterationDelta(1) == -1);
-        REQUIRE(mla.dataPointerDelta(0) == 0);
-        REQUIRE(mla.dataPointerDelta(1) == 0);
+        REQUIRE(lb.size() == 2);
+
+        // Stationary loop 1
+        REQUIRE(lb[0].loopType() == LoopType::STATIONARY);
+        REQUIRE(lb[0].iterationDelta() == -1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 0);
+        // Stationary loop 2
+        REQUIRE(lb[1].loopType() == LoopType::STATIONARY);
+        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(lb[1].maxDpDelta() == 0);
     }
 
     SECTION( "GliderWithWake-PowersOfTwo" ) {
@@ -779,16 +981,20 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 2);
+        REQUIRE(lb.size() == 1);
 
         // Transition
-        REQUIRE(mla.loopIterationDelta(0) == 0);
         REQUIRE(mla.dataPointerDelta(0) == 1);
         // Glider loop
-        REQUIRE(mla.loopIterationDelta(1) == -1);
         REQUIRE(mla.dataPointerDelta(1) == 1);
+        REQUIRE(lb[0].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[0].iterationDelta() == -1);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 1);
     }
 
     SECTION( "GliderWithWake-PowersOfThree" ) {
@@ -848,17 +1054,31 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 5);
-        REQUIRE(mla.loopIterationDelta(0) == 1); // Rightward sweep
-        REQUIRE(mla.loopIterationDelta(2) == 1); // Glider counter
-        REQUIRE(mla.loopIterationDelta(4) == 1); // Leftward sweep
-        REQUIRE(mla.dataPointerDelta(0) == 0); // Rightward sweep
-        REQUIRE(mla.dataPointerDelta(1) == 1); // Transition
-        REQUIRE(mla.dataPointerDelta(2) == 1); // Glider counter
-        REQUIRE(mla.dataPointerDelta(3) == 1); // Transition
-        REQUIRE(mla.dataPointerDelta(4) == 1); // Leftward sweep
+        REQUIRE(lb.size() == 3);
+
+        // Rightward sweep
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Transition
+        REQUIRE(mla.dataPointerDelta(1) == 1);
+        // Glider counter
+        REQUIRE(lb[1].loopType() == LoopType::GLIDER);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 1);
+        REQUIRE(lb[1].maxDpDelta() == 1);
+        // Transition
+        REQUIRE(mla.dataPointerDelta(3) == 1);
+        // Leftward sweep
+        REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[2].iterationDelta() == 1);
+        REQUIRE(lb[2].minDpDelta() == 0);
+        REQUIRE(lb[2].maxDpDelta() == 1);
     }
 }
 
