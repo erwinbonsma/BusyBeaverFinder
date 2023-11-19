@@ -91,7 +91,7 @@ int RunSummaryBase::getRunBlockLength(int startIndex, int endIndex) const {
 int RunSummaryBase::getLoopIteration() const {
     assert(_loop >= 0);
 
-    auto loopBlock = _runBlocks.back();
+    auto &loopBlock = _runBlocks.back();
     int startIndex = loopBlock.getStartIndex();
     int loopLength = getNumRunUnits() - startIndex;
 
@@ -101,7 +101,7 @@ int RunSummaryBase::getLoopIteration() const {
 bool RunSummaryBase::isAtEndOfLoop() const {
     assert(_loop >= 0);
 
-    auto loopBlock = _runBlocks.back();
+    auto &loopBlock = _runBlocks.back();
     int startIndex = loopBlock.getStartIndex();
     int loopLength = getNumRunUnits() - startIndex;
 
@@ -159,7 +159,7 @@ bool RunSummaryBase::determineRotationEquivalence(int index1, int index2, int le
 
 
 int RunSummaryBase::areLoopsRotationEqual(const RunBlock* block1, const RunBlock* block2,
-                                      int &indexOffset) const {
+                                          int &indexOffset) const {
     int index1 = block1->getSequenceId();
     int index2 = block2->getSequenceId();
     if (index1 == index2) {
@@ -177,11 +177,8 @@ int RunSummaryBase::areLoopsRotationEqual(const RunBlock* block1, const RunBlock
         return false;
     }
 
-    int minIndex = std::min(index1, index2);
-    int maxIndex = std::max(index1, index2);
-
-    auto map = _rotationEqualityCache;
-    auto key = std::make_pair(minIndex, maxIndex);
+    auto &map = _rotationEqualityCache;
+    auto key = std::make_pair(index1, index2);
     auto cachedResult = map.find(key);
     if (cachedResult != map.end()) {
         // Return previously calculated result
@@ -190,10 +187,11 @@ int RunSummaryBase::areLoopsRotationEqual(const RunBlock* block1, const RunBlock
     }
 
     bool areEqual = determineRotationEquivalence(block1->getStartIndex(),
-                                                block2->getStartIndex(),
-                                                len, indexOffset);
-    // Cache result
+                                                 block2->getStartIndex(),
+                                                 len, indexOffset);
+    // Cache result (and its equivalent inverse)
     map[key] = std::make_pair(areEqual, indexOffset);
+    map[std::make_pair(index2, index1)] = std::make_pair(areEqual, len - indexOffset);
 
     return areEqual;
 }
@@ -310,7 +308,7 @@ void RunSummaryBase::dump() const {
 int RunSummary::getDpDeltaOfProgramBlockSequence(int start, int end) const {
     int dpDelta = 0;
 
-    for (auto programBlock : makeRange(_runHistory, start, end)) {
+    for (auto &programBlock : makeRange(_runHistory, start, end)) {
         if (!programBlock->isDelta()) {
             dpDelta += programBlock->getInstructionAmount();
         }
