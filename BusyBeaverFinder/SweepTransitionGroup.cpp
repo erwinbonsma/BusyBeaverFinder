@@ -140,7 +140,7 @@ bool SweepLoopAnalysis::finishAnalysis() {
 
     _sweepValueChanges.clear();
     _sweepValueChange = 0;
-    for (auto dd : squashedDataDeltas()) {
+    for (auto &dd : squashedDataDeltas()) {
         int delta = dd.delta();
         _sweepValueChanges.insert(delta);
         _sweepValueChange = delta;

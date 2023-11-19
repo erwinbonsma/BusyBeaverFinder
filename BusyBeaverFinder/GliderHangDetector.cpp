@@ -57,7 +57,7 @@ bool GliderHangDetector::isGliderLoop() {
         return false;
     }
 
-    auto deltas = _loop.dataDeltas();
+    auto &deltas = _loop.dataDeltas();
     bool curIndex = deltas[0].dpOffset() == _curCounterDpOffset ? 0 : 1;
     _nxtCounterDpOffset = deltas[1 - curIndex].dpOffset();
     _curCounterDelta = deltas[curIndex].delta();
@@ -125,7 +125,7 @@ bool GliderHangDetector::checkTransitionDeltas() {
         _aheadDelta[i] = 0;
     }
 
-    for (auto dd : _transitionSequence.dataDeltas()) {
+    for (auto &dd : _transitionSequence.dataDeltas()) {
         int relDelta = dd.dpOffset();
         bool isAhead = sign(relDelta) == sign(shift);
 

@@ -22,7 +22,7 @@ bool irregularSweepHangFailure(const IrregularSweepTransitionGroup& transitionGr
 
 std::set<int> tmpExhibitsAperiodicGrowthSet;
 bool IrregularSweepTransitionGroup::exhibitsAperiodicGrowth() {
-    auto exitDeltas = tmpExhibitsAperiodicGrowthSet;
+    auto &exitDeltas = tmpExhibitsAperiodicGrowthSet;
     exitDeltas.clear();
 
     bool hasNegativeDeltas = false;

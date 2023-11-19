@@ -99,7 +99,7 @@ int LoopAnalysis::deltaAt(int dpOffset) const {
     int delta = 0;
     int mod = normalizedMod(dpOffset, _dpDelta);
 
-    for (auto dd : _dataDeltas) {
+    for (auto &dd : _dataDeltas) {
         if (
             dd.dpOffset() == dpOffset ||
             (
@@ -118,12 +118,12 @@ int LoopAnalysis::deltaAtOnNonStandardEntry(int dpOffset, int startingInstructio
     assert(startingInstruction > 0);
 
     // Establish delta, compensating for DP offset
-    auto ddEntry = effectiveResultAt(startingInstruction - 1);
+    auto &ddEntry = effectiveResultAt(startingInstruction - 1);
     int delta = deltaAt(dpOffset + ddEntry.dpOffset());
 
     // Undo data value changes caused by skipped instructions.
     for (int i = startingInstruction; --i >= 0; ) {
-        auto dd = effectiveResultAt(i);
+        auto &dd = effectiveResultAt(i);
         if (dd.dpOffset() == (dpOffset + ddEntry.dpOffset())) {
             delta -= dd.delta();
             break;
