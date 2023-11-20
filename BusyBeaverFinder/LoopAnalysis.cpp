@@ -242,8 +242,7 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
     }
 
     // Final bookkeeping
-    for (int i = loopSize(); --i >= 0; ) {
-        LoopExit& loopExit = _loopExit[i];
+    for (auto &loopExit : _loopExit) {
         loopExit.firstForValue = (loopExit.exitWindow == ExitWindow::ANYTIME);
     }
 }
