@@ -23,6 +23,7 @@ LoopType LoopBehavior::loopType() const {
 
 bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize) {
     _seqProps.clear();
+    _isPeriodic = true;
 
     int end = runSummary.getNumRunBlocks();
     int start = end - loopSize * 3;
@@ -51,6 +52,8 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
             auto &propsPrev = _seqProps[(j + loopSize - _metaLoopPeriod) % loopSize];
             auto &props = _seqProps[j];
             int delta = numIter - propsPrev.numIterations;
+
+            _isPeriodic &= (delta == 0);
 
             if (i == 1) {
                 if (delta < 0) {
@@ -205,6 +208,8 @@ void MetaLoopAnalysis::initLoopBehaviors() {
 }
 
 bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
+    assert(executionState.getMetaRunSummary().isInsideLoop());
+
     // TODO: Make lazy (re-use previous results when applicable)?
     analyzeRunBlocks(executionState);
 

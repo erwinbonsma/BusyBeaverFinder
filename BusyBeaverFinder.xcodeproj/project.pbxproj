@@ -78,6 +78,8 @@
 		AADF9718255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */; };
 		AADF9719255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */; };
 		AADF971F255EBCA3002BF498 /* SequenceAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */; };
+		AAEB55B02B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
+		AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAF43BCE23EC068D00D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BD223EC76AC00D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
@@ -184,6 +186,8 @@
 		AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SweepTransitionGroup.cpp; sourceTree = "<group>"; };
 		AADF9717255E8788002BF498 /* SweepTransitionGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SweepTransitionGroup.h; sourceTree = "<group>"; };
 		AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysisTests.cpp; sourceTree = "<group>"; };
+		AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopHangDetector.cpp; sourceTree = "<group>"; };
+		AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetaLoopHangDetector.h; sourceTree = "<group>"; };
 		AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GliderHangDetector.cpp; sourceTree = "<group>"; };
 		AAF43BCD23EC068D00D1EB33 /* GliderHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GliderHangDetector.h; sourceTree = "<group>"; };
 		AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysis.cpp; sourceTree = "<group>"; };
@@ -314,6 +318,8 @@
 				AA2865B023CDF44F00F738ED /* PeriodicHangDetector.h */,
 				AA2865B923D30F8900F738ED /* MetaPeriodicHangDetector.cpp */,
 				AA2865BA23D30F8900F738ED /* MetaPeriodicHangDetector.h */,
+				AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */,
+				AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */,
 				AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */,
 				AAF43BCD23EC068D00D1EB33 /* GliderHangDetector.h */,
 				AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */,
@@ -432,6 +438,7 @@
 				AACE84A02A87C568006341E7 /* HangExecutor.cpp in Sources */,
 				AA5D7E99257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */,
 				AA37E6CB2295D62200117A85 /* FastExecutor.cpp in Sources */,
+				AAEB55B02B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */,
 				AACC274525458F5D007E83C3 /* InterpretedProgram.cpp in Sources */,
 				AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */,
 				AA2865AD23CDEC6A00F738ED /* HangDetector.cpp in Sources */,
@@ -478,6 +485,7 @@
 				AAADA6D62A8C06CC00F1C442 /* FastExecutorTests.cpp in Sources */,
 				AA0D5AE52263C488001909AF /* GliderHangTests.cpp in Sources */,
 				AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */,
+				AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */,
 				AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */,
 				AACC273C254589CF007E83C3 /* ExecutionState.cpp in Sources */,
 				AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */,
