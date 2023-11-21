@@ -12,6 +12,7 @@
 #include <array>
 #include <iostream>
 
+#include "Data.h"
 #include "ProgramBlock.h"
 #include "RunSummary.h"
 #include "InterpretedProgram.h"
@@ -146,34 +147,13 @@ void LoopAnalysis::squashDeltas() {
     }
 }
 
-void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
-    for (int i = loopSize(); --i >= 0; ) {
-        if (!exitsOnZero(i)) {
-            // After this instruction executed successfully and the loop continues the value will
-            // be zero. This makes it possible to verify if the instructions that follow it that
-            // depends on the same data value can abort the loop.
-
-            int dpOffset = _effectiveResult[i].dpOffset();
-
-            for (int j = i + 1; j < loopSize(); ++j) {
-                if (
-                    dpOffset == _effectiveResult[j].dpOffset() &&
-                    !_loopExit[j].exitCondition.isTrueForValue(
-                        _effectiveResult[j].delta() - _effectiveResult[i].delta()
-                    )
-                ) {
-                    _loopExit[j].exitWindow = ExitWindow::NEVER;
-                }
-            }
-        }
-    }
-}
-
 void LoopAnalysis::setExitConditionsForStationaryLoop() {
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
 
+    _loopExits.clear();
     for (int i = 0; i < loopSize(); i++) {
-        LoopExit& loopExit = _loopExit[i];
+        _loopExits.emplace_back();
+        LoopExit& loopExit = _loopExits.back();
         int dp = _effectiveResult[i].dpOffset();
         int currentDelta = _effectiveResult[i].delta();
         int finalDelta = _dataDeltas.deltaAt(dp);
@@ -199,7 +179,7 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
 // Identify bootstrap-only exits (and exits that can never be reached).
 void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
     for (int i = loopSize(); --i >= 0; ) {
-        LoopExit& loopExit = _loopExit[i];
+        LoopExit& loopExit = _loopExits[i];
 
         if (loopExit.exitWindow != ExitWindow::ANYTIME) {
             // This cannot cancel out other exits which are not yet marked as bootstrap-only.
@@ -227,14 +207,14 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
                         int numBootstrapCycles = abs((delta2 - delta) / mc);
                         _numBootstrapCycles = std::max(_numBootstrapCycles, numBootstrapCycles);
 
-                        _loopExit[k].exitWindow = ExitWindow::BOOTSTRAP;
+                        _loopExits[k].exitWindow = ExitWindow::BOOTSTRAP;
                         if (numBootstrapCycles == 1) {
                             // Simplify operator
-                            _loopExit[k].exitCondition.setOperator(Operator::EQUALS);
+                            _loopExits[k].exitCondition.setOperator(Operator::EQUALS);
                         }
                     } else {
                         // The masked condition can never occur
-                        _loopExit[i].exitWindow = ExitWindow::NEVER;
+                        loopExit.exitWindow = ExitWindow::NEVER;
                     }
                 }
             }
@@ -242,8 +222,31 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
     }
 
     // Final bookkeeping
-    for (auto &loopExit : _loopExit) {
+    for (auto &loopExit : _loopExits) {
         loopExit.firstForValue = (loopExit.exitWindow == ExitWindow::ANYTIME);
+    }
+}
+
+void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
+    for (int i = loopSize(); --i >= 0; ) {
+        if (!exitsOnZero(i)) {
+            // After this instruction executed successfully and the loop continues the value will
+            // be zero. This makes it possible to verify if the instructions that follow it that
+            // depends on the same data value can abort the loop.
+
+            int dpOffset = _effectiveResult[i].dpOffset();
+
+            for (int j = i + 1; j < loopSize(); ++j) {
+                if (
+                    dpOffset == _effectiveResult[j].dpOffset() &&
+                    !_loopExits[j].exitCondition.isTrueForValue(
+                        _effectiveResult[j].delta() - _effectiveResult[i].delta()
+                    )
+                ) {
+                    _loopExits[j].exitWindow = ExitWindow::NEVER;
+                }
+            }
+        }
     }
 }
 
@@ -283,6 +286,10 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     std::sort(indices.begin(), indices.begin() + loopSize(), _dpDelta > 0 ? compareUp : compareDn);
 
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
+    _loopExits.clear();
+    for (int i = loopSize(); --i >= 0; ) {
+        _loopExits.emplace_back();
+    }
 
     // Establish the exit condition for each instruction
     for (int ii = 0 ; ii < loopSize(); ii++ ) {
@@ -293,7 +300,7 @@ void LoopAnalysis::initExitsForTravellingLoop() {
         int mod_i = normalizedMod(dp_i, _dpDelta);
 
         bool hasZeroExit = exitsOnZero(i);
-        LoopExit& loopExit = _loopExit[i];
+        LoopExit& loopExit = _loopExits[i];
         Operator op = hasZeroExit ? Operator::EQUALS : Operator::UNEQUAL;
         loopExit.exitWindow = ExitWindow::ANYTIME; // Initial assumption
 
@@ -337,13 +344,13 @@ void LoopAnalysis::initExitsForTravellingLoop() {
                     // trigger the later instruction to exit
                     (
                         fixedExitValue[j] != UNSET_FIXED_VALUE && !exitsOnZero(j) &&
-                        !_loopExit[i].exitCondition.isTrueForValue(fixedExitValue[i])
+                        !loopExit.exitCondition.isTrueForValue(fixedExitValue[i])
                     )
                 ) {
                     if (_effectiveResult[i].dpOffset() == _effectiveResult[j].dpOffset()) {
                         // Both instructions see the same value in the same loop iteration, so the
                         // later instruction will never exit
-                        _loopExit[i].exitWindow = ExitWindow::NEVER;
+                        loopExit.exitWindow = ExitWindow::NEVER;
 
                         break;
                     } else if (loopExit.exitWindow != ExitWindow::BOOTSTRAP) {
@@ -383,6 +390,35 @@ bool LoopAnalysis::finishAnalysis() {
 
 bool LoopAnalysis::analyzeLoop(RawProgramBlocks programBlocks, int len) {
     return analyzeSequence(programBlocks, len);
+}
+
+bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
+    assert(dataPointerDelta() != 0);
+
+    for (auto &loopExit : _loopExits) {
+        if (loopExit.firstForValue) {
+            DataPointer p = data.getDataPointer() + loopExit.exitCondition.dpOffset();
+            int count = 0;
+
+            while (
+               (dataPointerDelta() > 0 && p <= data.getMaxBoundP()) ||
+               (dataPointerDelta() < 0 && p >= data.getMinBoundP())
+            ) {
+                if (*p != 0) {
+                    return false;
+                }
+                p += dataPointerDelta();
+                count++;
+                if (count > 32) {
+                    // Abort. This is not expected to occur in practise for (small) programs that
+                    // are actually locked in a periodic hang.
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 void LoopAnalysis::dump() const {

@@ -43,36 +43,9 @@ bool PeriodicHangDetector::analyzeHangBehaviour() {
     return true;
 }
 
-bool PeriodicHangDetector::allValuesToBeConsumedAreBeZero() {
+Trilian PeriodicHangDetector::proofHangPhase1() {
     const Data &data = _execution.getData();
 
-    for (int i = _loop.loopSize(); --i >= 0; ) {
-        if (_loop.exit(i).firstForValue) {
-            DataPointer p = data.getDataPointer() + _loop.exit(i).exitCondition.dpOffset();
-            int count = 0;
-
-            while (
-               (_loop.dataPointerDelta() > 0 && p <= data.getMaxBoundP()) ||
-               (_loop.dataPointerDelta() < 0 && p >= data.getMinBoundP())
-            ) {
-                if (*p != 0) {
-                    return false;
-                }
-                p += _loop.dataPointerDelta();
-                count++;
-                if (count > 32) {
-                    // Abort. This is not expected to occur in practise for (small) programs that
-                    // are actually locked in a periodic hang.
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-Trilian PeriodicHangDetector::proofHangPhase1() {
     int loopLen = (int)_execution.getRunHistory().size() - _loopStart;
     if (loopLen <= _loop.loopSize() * _loop.numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
@@ -90,7 +63,6 @@ Trilian PeriodicHangDetector::proofHangPhase1() {
         for (int i = _loop.loopSize(); --i >= 0; ) {
             const LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
-                const Data &data = _execution.getData();
                 int value = *(data.getDataPointer() + exit.exitCondition.dpOffset());
                 if (exit.exitCondition.isTrueForValue(value)) {
                     return Trilian::NO;
@@ -103,7 +75,7 @@ Trilian PeriodicHangDetector::proofHangPhase1() {
         // Travelling loop
 
         // A hang requires that all data values that the loop will consume are zero. Check this.
-        if (allValuesToBeConsumedAreBeZero()) {
+        if (_loop.allValuesToBeConsumedAreZero(data)) {
             // This may be a hang. The only thing that can prevent this is when some values already
             // consumed by the loop cause an exit of one the "slow" non-bootstrap exits (which
             // may see values a few iterations later). Check against this by letting the loop run

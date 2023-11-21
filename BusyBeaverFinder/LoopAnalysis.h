@@ -14,9 +14,9 @@
 
 class InterpretedProgram;
 class RunSummary;
+class Data;
 
 const int maxLoopSize = 64;
-const int maxLoopExits = 128;
 
 enum class Operator : int8_t {
     EQUALS = 0,
@@ -101,7 +101,7 @@ std::ostream &operator<<(std::ostream &os, const LoopExit &le);
  */
 class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
-    LoopExit _loopExit[maxLoopExits];
+    std::vector<LoopExit> _loopExits;
 
     DataDeltas _squashedDeltas;
 
@@ -142,10 +142,16 @@ public:
     int deltaAtOnNonStandardEntry(int dpOffset, int startingInstruction) const;
 
     // Returns the loop exit for the specified loop instruction
-    const LoopExit& exit(int index) const { return _loopExit[index]; }
+    const LoopExit& exit(int index) const { return _loopExits[index]; }
 
     // Analyses the loop. Returns true if analysis was successful.
     bool analyzeLoop(RawProgramBlocks programBlocks, int len);
+
+    // Checks for a travelling loop if all values it is yet to consume are zero.
+    //
+    // It should be invoked when the loop is just about to start executing its first instruction
+    // (again).
+    bool allValuesToBeConsumedAreZero(const Data &data) const;
 
     void dump() const;
 };

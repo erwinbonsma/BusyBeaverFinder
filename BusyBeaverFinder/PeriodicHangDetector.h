@@ -15,8 +15,6 @@
 
 class PeriodicHangDetector : public HangDetector {
 
-    bool allValuesToBeConsumedAreBeZero();
-
     int _loopStartLastProof;
     int _proofPhase;
     int _targetLoopLen;
