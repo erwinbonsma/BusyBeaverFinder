@@ -23,23 +23,26 @@ LoopType LoopBehavior::loopType() const {
 
 void MetaLoopAnalysis::initLoopData(const RunSummary &runSummary, int loopSize) {
     _loopData.clear();
-    _isPeriodic = true;
+    _loopIndexLookup.clear();
+
+    _isPeriodic = true;  // Initial assumption.
     _firstRunBlockIndex = runSummary.getNumRunBlocks() - loopSize * 3;
-    _nextRunBlockIndex = _firstRunBlockIndex;
+    int rbIndex = _firstRunBlockIndex;
 
     // Initialize properties
     for (int i = 0; i < loopSize; ++i) {
-        const RunBlock* rb = runSummary.runBlockAt(_nextRunBlockIndex);
+        const RunBlock* rb = runSummary.runBlockAt(rbIndex);
 
         if (rb->isLoop()) {
-            int blockLen = runSummary.getRunBlockLength(_nextRunBlockIndex);
+            int blockLen = runSummary.getRunBlockLength(rbIndex);
             int loopRemainder = blockLen % rb->getLoopPeriod();
             int numIter = blockLen / rb->getLoopPeriod();
 
+            _loopIndexLookup[i] = static_cast<int>(_loopData.size());
             _loopData.emplace_back(_loopData.size(), i, numIter, loopRemainder);
         }
 
-        _nextRunBlockIndex += 1;
+        rbIndex += 1;
     }
 }
 
@@ -196,7 +199,7 @@ void MetaLoopAnalysis::initLoopBehaviors() {
 
     for (auto &data : _loopData) {
         int index = data.runBlockIndex % _metaLoopPeriod;
-        auto &sa = _seqAnalysis[index];
+        auto sa = _seqAnalysis[index];
 
         assert(sa->isLoop());
         int dpDeltaStart = 0;
@@ -222,10 +225,47 @@ void MetaLoopAnalysis::initLoopBehaviors() {
 void MetaLoopAnalysis::reset() {
     _numRunBlocks = 0;
     _numMetaRunBlocks = 0;
+
+    _loopData.clear();
+    _loopBehaviors.clear();
+    _seqAnalysis.clear();
 }
 
 bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState) {
-    // TODO
+    int rbIndex = _numRunBlocks;
+    auto &runSummary = executionState.getRunSummary();
+
+    while (rbIndex < runSummary.getNumRunBlocks()) {
+        int relIndex = (rbIndex - _firstRunBlockIndex) % _loopSize;
+        auto sa = _seqAnalysis[relIndex % _metaLoopPeriod];
+
+        if (sa->isLoop()) {
+            const RunBlock *rb = runSummary.runBlockAt(rbIndex);
+            int loopIndex = _loopIndexLookup[relIndex];
+            auto &data = _loopData[loopIndex];
+            auto &behavior = _loopBehaviors[loopIndex];
+
+            int blockLen = runSummary.getRunBlockLength(rbIndex);
+            int numIter = blockLen / rb->getLoopPeriod();
+            int delta = numIter - data.lastNumIterations;
+
+            if (behavior.iterationDelta() >= 0) {
+                // Delta remain the same for constant-sized and linearly growing loops
+                if (delta != behavior.iterationDelta()) {
+                    return false;
+                }
+            } else {
+                // Delta should increase for non-linearly growing loops
+                if (delta < behavior.iterationDelta()) {
+                    return false;
+                }
+            }
+
+            data.lastNumIterations = numIter;
+            data.lastIterationDelta = delta;
+        }
+    }
+
     return true;
 }
 

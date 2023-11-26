@@ -91,8 +91,11 @@ class MetaLoopAnalysis {
     // to satisfy the meta-run loop conditions
     int _loopSize;
 
-    int _numRunBlocks = 0;
+    // The index of the run block from which this meta-loop analysis applies
+    int _firstRunBlockIndex;
+    // The number of meta-run blocks for which this meta-loop analysis is valid
     int _numMetaRunBlocks = 0;
+    int _numRunBlocks = 0;
 
     // The number of loops and sequences in one meta runblock loop iteration. These sum to the
     // meta loop period.
@@ -105,14 +108,11 @@ class MetaLoopAnalysis {
     // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
     std::vector<std::shared_ptr<SequenceAnalysis>> _seqAnalysis;
 
-    // The behaviour/properties of the loops in the meta-loop
+    // The properties of the loops in the meta-loop
     std::vector<MetaLoopData> _loopData;
-    // The index of the run block from which this meta-loop analysis applies
-    int _firstRunBlockIndex;
-    // The next run block to analyze
-    int _nextRunBlockIndex;
-
     std::vector<LoopBehavior> _loopBehaviors;
+
+    std::map<int, int> _loopIndexLookup;
 
     bool _isPeriodic;
 
