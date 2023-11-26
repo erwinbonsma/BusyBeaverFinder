@@ -81,20 +81,6 @@ enum class LoopType : int8_t {
     DOUBLE_SWEEP = 3,
 };
 
-enum class BoundaryChange : int8_t {
-    // Boundary is fixed
-    FIXED = 0,
-
-    // Boundary moves at fixed speed in direction that expands the region
-    LINEAR_GROWTH = 1,
-
-    // Boundary moves at fixed speed in direction that shrinks the region
-    LINEAR_REDUCTION = 2,
-
-    // Not supporting OTHER, as detection does not (yet) support this so can immediately abort and
-    // does not need to store this.
-};
-
 const int numHangTypes = 9;
 const int numDetectedHangTypes = 8;
 enum class HangType : int8_t {

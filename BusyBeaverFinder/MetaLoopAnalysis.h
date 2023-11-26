@@ -18,25 +18,37 @@
 
 typedef const RunBlock *const * RawRunBlocks;
 
-struct MetaLoopSequenceProps {
+struct MetaLoopData {
+    // References which of the loops this data applies to.
+    // Range: [0, numLoops>
+    int loopIndex;
+
+    // References which of the run-blocks in the meta-loop this data applies to.
+    // Range: [0, metaLoopPeriod>
+    int runBlockIndex;
+
     // The number of instruction executed in the last loop iteration in case the loop was exited
     // prematurely.
     int loopRemainder = 0;
 
     // The number of iterations of the last analyzed run-block. It is a temporary value used for
     // setting and checking iterationDelta.
-    int numIterations = 0;
+    int lastNumIterations = 0;
 
     // (An approximation of) the data pointer position of the last analyzed run-block. It is a
     // temporary value for setting dataPointerDelta.
     int dataPointerPos = 0;
 
-    // Deltas in case the change is linear (or none)
-    int iterationDelta = 0;
+    int lastIterationDelta = 0;
+    bool isLinear = true;
     int dataPointerDelta = 0;
 
-    MetaLoopSequenceProps() {}
-    MetaLoopSequenceProps(int loopRemainder) : loopRemainder(loopRemainder) {}
+    MetaLoopData() {}
+    MetaLoopData(int loopIndex, int runBlockIndex, int numIterations, int loopRemainder)
+    : loopIndex(loopIndex)
+    , runBlockIndex(runBlockIndex)
+    , lastNumIterations(numIterations)
+    , loopRemainder(loopRemainder) {}
 };
 
 class LoopBehavior {
@@ -46,11 +58,14 @@ class LoopBehavior {
     int _minDpDelta;
     int _maxDpDelta;
     int _iterationDelta;
+
 public:
     LoopBehavior(std::shared_ptr<LoopAnalysis> loopAnalysis,
                  int minDpDelta, int maxDpDelta, int iterationDelta)
-    : _loopAnalysis(loopAnalysis), _minDpDelta(minDpDelta), _maxDpDelta(maxDpDelta),
-    _iterationDelta(iterationDelta) {}
+    : _loopAnalysis(loopAnalysis)
+    , _minDpDelta(minDpDelta)
+    , _maxDpDelta(maxDpDelta)
+    , _iterationDelta(iterationDelta) {}
 
     std::shared_ptr<LoopAnalysis> loopAnalysis() { return _loopAnalysis; }
 
@@ -76,23 +91,34 @@ class MetaLoopAnalysis {
     // to satisfy the meta-run loop conditions
     int _loopSize;
 
+    int _numRunBlocks = 0;
+    int _numMetaRunBlocks = 0;
+
+    // The number of loops and sequences in one meta runblock loop iteration. These sum to the
+    // meta loop period.
+    int _numLoops = 0;
+    int _numSequences = 0;
+
     std::vector<std::shared_ptr<SequenceAnalysis>> _sequenceAnalysisPool;
     std::vector<std::shared_ptr<LoopAnalysis>> _loopAnalysisPool;
 
     // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
     std::vector<std::shared_ptr<SequenceAnalysis>> _seqAnalysis;
 
-    // The behaviour/properties of the run blocks in the meta-loop (size = _loopSize) 
-    std::vector<MetaLoopSequenceProps> _seqProps;
+    // The behaviour/properties of the loops in the meta-loop
+    std::vector<MetaLoopData> _loopData;
+    // The index of the run block from which this meta-loop analysis applies
+    int _firstRunBlockIndex;
+    // The next run block to analyze
+    int _nextRunBlockIndex;
 
     std::vector<LoopBehavior> _loopBehaviors;
 
     bool _isPeriodic;
 
-    int _sequenceGrowth[numDataDirections];
-
     void analyzeRunBlocks(const ExecutionState &executionState);
 
+    void initLoopData(const RunSummary &runSummary, int loopSize);
     bool checkLoopSize(const RunSummary &runSummary, int loopSize);
     bool determineLoopSize(const ExecutionState &executionState);
 
@@ -100,8 +126,12 @@ class MetaLoopAnalysis {
     void initLoopBehaviors();
 
 public:
+    void reset();
+
     // Should be invoked when a loop in the run summary is about to finish,
     bool analyzeMetaLoop(const ExecutionState &executionState);
+
+    bool isAnalysisStillValid(const ExecutionState &executionState);
 
     // The meta-loop period (in run blocks). It is the period returned by the meta-run summary.
     int metaLoopPeriod() const { return _metaLoopPeriod; }
@@ -117,19 +147,18 @@ public:
     const std::vector<LoopBehavior>& loopBehaviors() const { return _loopBehaviors; }
 
     // Returns how much the number of iterations increased compared to previous invocation of the
-    // run block in the meta-loop.
+    // loop run block in the meta-loop. In case the increase is non-linear, it returns the last
+    // delta.
     //
     // Note: It differs from the iteration delta returned by the corresponding loop behavior when
     // loopSize != metaLoopPeriod.
-    int loopIterationDelta(int runBlockIndex) const {
-        return _seqProps[runBlockIndex].iterationDelta;
+    int loopIterationDelta(int loopIndex) const {
+        return _loopData[loopIndex].lastIterationDelta;
     }
 
     // Returns how much the data pointer has shifted when execution of the run block starts
     // compared to previous invocation of the run block in the meta-loop.
-    int dataPointerDelta(int runBlockIndex) const {
-        return _seqProps[runBlockIndex].dataPointerDelta;
+    int dataPointerDelta(int loopIndex) const {
+        return _loopData[loopIndex].dataPointerDelta;
     }
-
-    int sequenceGrowth(DataDirection dataDir) const { return _sequenceGrowth[(int)dataDir]; }
 };
