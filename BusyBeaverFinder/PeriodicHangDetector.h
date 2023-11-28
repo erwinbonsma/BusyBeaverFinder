@@ -12,16 +12,13 @@
 #include "ExhaustiveSearcher.h"
 #include "RunSummary.h"
 #include "LoopAnalysis.h"
+#include "PeriodicHangChecker.h"
 
 class PeriodicHangDetector : public HangDetector {
 
-    int _loopStartLastProof;
-    int _proofPhase;
-    int _targetLoopLen;
-
 protected:
     LoopAnalysis _loop;
-    int _loopStart;
+    PeriodicHangChecker _checker;
 
     bool shouldCheckNow(bool loopContinues) const override;
 
@@ -29,15 +26,10 @@ protected:
     // and _loopStart should point to the analyzed periodic loop and its starting point.
     bool analyzeHangBehaviour() override;
 
-    Trilian proofHangPhase1();
-    Trilian proofHangPhase2();
-
     Trilian proofHang() override;
 
 public:
     PeriodicHangDetector(const ExecutionState& execution);
 
     HangType hangType() const override { return HangType::PERIODIC; }
-
-    void reset() override;
 };

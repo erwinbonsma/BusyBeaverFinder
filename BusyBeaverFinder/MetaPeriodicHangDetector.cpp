@@ -56,17 +56,21 @@ bool MetaPeriodicHangDetector::analyzeHangBehaviour() {
     int endRunBlockIndex = startRunBlockIndex + metaLoopPeriod - 1;
 
     _metaLoopStart = metaLoopStart;
-    _loopStart = runSummary.runBlockAt(startRunBlockIndex)->getStartIndex();
+    int loopStart = runSummary.runBlockAt(startRunBlockIndex)->getStartIndex();
     int loopEnd = runSummary.runBlockAt(endRunBlockIndex)->getStartIndex()
                   + runSummary.getRunBlockLength(endRunBlockIndex);
-    int loopPeriod = loopEnd - _loopStart;
-    _lastAnalysisResult = _loop.analyzeLoop(&_execution.getRunHistory()[_loopStart], loopPeriod);
+    int loopPeriod = loopEnd - loopStart;
+    _lastAnalysisResult = _loop.analyzeLoop(&_execution.getRunHistory()[loopStart], loopPeriod);
+
+    if (_lastAnalysisResult) {
+        _checker.init(&_loop, loopStart);
+    }
 
     return _lastAnalysisResult;
 }
 
 Trilian MetaPeriodicHangDetector::proofHang() {
-    int loopLen = (int)_execution.getRunHistory().size() - _loopStart;
+    int loopLen = (int)_execution.getRunHistory().size() - _checker.loopStart();
 
     if (loopLen % _loop.loopSize() != 0) {
         // The meta loop may contain multiple loops, which may trigger an invocation of proofHang
