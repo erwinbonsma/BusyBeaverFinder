@@ -411,7 +411,9 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
                 count++;
                 if (count > 32) {
                     // Abort. This is not expected to occur in practise for (small) programs that
-                    // are actually locked in a periodic hang.
+                    // are actually locked in a periodic hang. It currently triggers for a (yet
+                    // undetected) sweep hang where the body consists of zeroes in one sweep
+                    // direction. It can be replaced by an assert once this is detected.
                     return false;
                 }
             }

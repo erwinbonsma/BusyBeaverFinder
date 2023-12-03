@@ -81,7 +81,7 @@ std::ostream &operator<<(std::ostream &os, const ExitCondition &ec);
 
 class LoopExit {
 public:
-    // Indicates that this exit is the first that is based on this value, once the loop is fully
+    // Indicates that this exit is the first to inspect this value, once the loop is fully
     // bootstrapped.
     bool firstForValue;
 
@@ -89,7 +89,7 @@ public:
     ExitWindow exitWindow;
 
     // When the exitWindow is BOOTSTRAP, the condition is wrt to the value at the start of a loop
-    // iteration. When the exit window is ALWAYS, the condition is wrt to the value when it is
+    // iteration. When the exit window is ANYTIME, the condition is wrt to the value when it is
     // first consumed by the loop (once the loop has finished executing its bootstrap cycles)
     ExitCondition exitCondition;
 };
