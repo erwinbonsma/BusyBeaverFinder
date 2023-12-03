@@ -8,6 +8,15 @@
 
 #include "MetaLoopAnalysis.h"
 
+// The maximum number of meta-run loop iterations to unroll to construct a meta-loop that meets
+// the criteria.
+constexpr int MAX_ITERATIONS_TO_UNROLL = 2;
+
+// The number of meta-loop iterations that are analyzed.
+// Note: It should not be changed as its inherent to the analysis; using this constant avoids a
+// magic numbers.
+constexpr int NUM_ITERATIONS_TO_ANALYZE = 3;
+
 LoopType LoopBehavior::loopType() const {
     if (_minDpDelta == 0 && _maxDpDelta == 0) {
         return LoopType::STATIONARY;
@@ -26,7 +35,7 @@ void MetaLoopAnalysis::initLoopData(const RunSummary &runSummary, int loopSize) 
     _loopIndexLookup.clear();
 
     _isPeriodic = true;  // Initial assumption.
-    _firstRunBlockIndex = runSummary.getNumRunBlocks() - loopSize * 3;
+    _firstRunBlockIndex = runSummary.getNumRunBlocks() - loopSize * NUM_ITERATIONS_TO_ANALYZE;
     int rbIndex = _firstRunBlockIndex;
 
     // Initialize properties
@@ -101,9 +110,9 @@ bool MetaLoopAnalysis::determineLoopSize(const ExecutionState &executionState) {
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
     int ln = metaRunSummary.getLoopIteration();
 
-    for (int loopSize = _metaLoopPeriod;
-         loopSize * 3 <= ln * _metaLoopPeriod;
-         loopSize += _metaLoopPeriod) {
+    int max_i = std::min(MAX_ITERATIONS_TO_UNROLL, ln / NUM_ITERATIONS_TO_ANALYZE);
+    int loopSize = _metaLoopPeriod;
+    for (int i = 0; i < max_i; ++i, loopSize += _metaLoopPeriod) {
         if (checkLoopSize(runSummary, loopSize)) {
             _loopSize = loopSize;
             return true;
@@ -232,6 +241,17 @@ void MetaLoopAnalysis::reset() {
 }
 
 bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState) {
+    if (_numRunBlocks == 0) {
+        return false;  // There is no analysis yet
+    }
+
+    if (_numMetaRunBlocks != executionState.getMetaRunSummary().getNumRunBlocks()) {
+        return false;  // The meta-loop changed
+    }
+
+    // Check if the previous analysis still applies
+    assert(_numRunBlocks < executionState.getRunSummary().getNumRunBlocks());
+
     int rbIndex = _numRunBlocks;
     auto &runSummary = executionState.getRunSummary();
 
@@ -252,11 +272,13 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
             if (behavior.iterationDelta() >= 0) {
                 // Delta remain the same for constant-sized and linearly growing loops
                 if (delta != behavior.iterationDelta()) {
+                    reset();
                     return false;
                 }
             } else {
                 // Delta should increase for non-linearly growing loops
                 if (delta < behavior.iterationDelta()) {
+                    reset();
                     return false;
                 }
             }
@@ -264,25 +286,16 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
             data.lastNumIterations = numIter;
             data.lastIterationDelta = delta;
         }
+        rbIndex += 1;
     }
+
+    _numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
 
     return true;
 }
 
 bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
     assert(executionState.getMetaRunSummary().isInsideLoop());
-
-    if (_numMetaRunBlocks == executionState.getMetaRunSummary().getNumRunBlocks()) {
-        // Check if the previous analysis still applies
-        assert(_numRunBlocks < executionState.getRunSummary().getNumRunBlocks());
-
-        if (isAnalysisStillValid(executionState)) {
-            _numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
-            return true;
-        }
-    }
-
-    reset(); // Marks results invalid
 
     analyzeRunBlocks(executionState);
 

@@ -413,6 +413,5 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
-
     }
 }

@@ -20,8 +20,6 @@
 		AA2865B523CDFF7200F738ED /* LoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */; };
 		AA2865B623CDFF7200F738ED /* LoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */; };
 		AA2865B823CE044B00F738ED /* LoopAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */; };
-		AA2865BB23D30F8900F738ED /* MetaPeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B923D30F8900F738ED /* MetaPeriodicHangDetector.cpp */; };
-		AA2865BC23D30F8900F738ED /* MetaPeriodicHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA2865B923D30F8900F738ED /* MetaPeriodicHangDetector.cpp */; };
 		AA28C097220738F900F7EC25 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C096220738F900F7EC25 /* main.cpp */; };
 		AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA28C09C2207398C00F7EC25 /* ExhaustiveSearchTests.cpp */; };
 		AA28C09E22073A0600F7EC25 /* ProgressTracker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5852200EB9D00242D3D /* ProgressTracker.cpp */; };
@@ -131,8 +129,6 @@
 		AA2865B323CDFF7200F738ED /* LoopAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopAnalysis.cpp; sourceTree = "<group>"; };
 		AA2865B423CDFF7200F738ED /* LoopAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopAnalysis.h; sourceTree = "<group>"; };
 		AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopAnalysisTests.cpp; sourceTree = "<group>"; };
-		AA2865B923D30F8900F738ED /* MetaPeriodicHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MetaPeriodicHangDetector.cpp; sourceTree = "<group>"; };
-		AA2865BA23D30F8900F738ED /* MetaPeriodicHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MetaPeriodicHangDetector.h; sourceTree = "<group>"; };
 		AA28C094220738F800F7EC25 /* Tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Tests; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA28C096220738F900F7EC25 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		AA28C09B2207393400F7EC25 /* catch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = catch.hpp; sourceTree = "<group>"; };
@@ -328,8 +324,6 @@
 				AAEB55B72B15325B00695567 /* PeriodicHangChecker.h */,
 				AA2865AF23CDF44F00F738ED /* PeriodicHangDetector.cpp */,
 				AA2865B023CDF44F00F738ED /* PeriodicHangDetector.h */,
-				AA2865B923D30F8900F738ED /* MetaPeriodicHangDetector.cpp */,
-				AA2865BA23D30F8900F738ED /* MetaPeriodicHangDetector.h */,
 				AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */,
 				AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */,
 				AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */,
@@ -447,7 +441,6 @@
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AABDCBB0253B197B0009516B /* SweepHangDetector.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
-				AA2865BB23D30F8900F738ED /* MetaPeriodicHangDetector.cpp in Sources */,
 				AA7A2DE42ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
 				AACE84A02A87C568006341E7 /* HangExecutor.cpp in Sources */,
 				AA5D7E99257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */,
@@ -463,7 +456,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA2865BC23D30F8900F738ED /* MetaPeriodicHangDetector.cpp in Sources */,
 				AACC274625458F5D007E83C3 /* InterpretedProgram.cpp in Sources */,
 				AA4F4508224967A00069FF36 /* ProgramBlock.cpp in Sources */,
 				AA2865B623CDFF7200F738ED /* LoopAnalysis.cpp in Sources */,

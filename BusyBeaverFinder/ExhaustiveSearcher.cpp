@@ -13,11 +13,6 @@
 
 #include "Utils.h"
 
-#include "GliderHangDetector.h"
-#include "MetaPeriodicHangDetector.h"
-#include "PeriodicSweepHangDetector.h"
-#include "IrregularSweepHangDetector.h"
-
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {

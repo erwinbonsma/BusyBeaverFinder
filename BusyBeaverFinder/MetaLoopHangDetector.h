@@ -9,13 +9,22 @@
 
 #include "HangDetector.h"
 
+#include "HangChecker.h"
 #include "MetaLoopAnalysis.h"
+#include "PeriodicHangChecker.h"
 
 class MetaLoopHangDetector : public HangDetector {
     MetaLoopAnalysis _metaLoopAnalysis;
-    HangType _detectedHang;
+    PeriodicHangChecker  _periodicHangChecker;
+    LoopAnalysis _loopAnalysis;
+
+    HangChecker* _activeChecker;
+    HangType _activeHang;
+
+    bool preparePeriodicHangCheck();
 
 protected:
+    void clearAnalysis() override;
     bool shouldCheckNow(bool loopContinues) const override;
     bool analyzeHangBehaviour() override;
     Trilian proofHang() override;
@@ -23,5 +32,6 @@ protected:
 public:
     MetaLoopHangDetector(const ExecutionState& execution) : HangDetector(execution) {}
 
-    HangType hangType() const override { return _detectedHang; }
+    void reset() override;
+    HangType hangType() const override { return _activeHang; }
 };
