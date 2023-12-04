@@ -82,6 +82,8 @@
 		AAEB55B52B15315600695567 /* HangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B22B15315600695567 /* HangChecker.cpp */; };
 		AAEB55B82B15325B00695567 /* PeriodicHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B62B15325B00695567 /* PeriodicHangChecker.cpp */; };
 		AAEB55B92B15325B00695567 /* PeriodicHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B62B15325B00695567 /* PeriodicHangChecker.cpp */; };
+		AAEB55BC2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */; };
+		AAEB55BD2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */; };
 		AAF43BCE23EC068D00D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BD223EC76AC00D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
@@ -192,6 +194,8 @@
 		AAEB55B32B15315600695567 /* HangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HangChecker.h; sourceTree = "<group>"; };
 		AAEB55B62B15325B00695567 /* PeriodicHangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PeriodicHangChecker.cpp; sourceTree = "<group>"; };
 		AAEB55B72B15325B00695567 /* PeriodicHangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodicHangChecker.h; sourceTree = "<group>"; };
+		AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GliderHangChecker.cpp; sourceTree = "<group>"; };
+		AAEB55BB2B1D1D1F00695567 /* GliderHangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GliderHangChecker.h; sourceTree = "<group>"; };
 		AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GliderHangDetector.cpp; sourceTree = "<group>"; };
 		AAF43BCD23EC068D00D1EB33 /* GliderHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GliderHangDetector.h; sourceTree = "<group>"; };
 		AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysis.cpp; sourceTree = "<group>"; };
@@ -322,6 +326,8 @@
 				AAEB55B32B15315600695567 /* HangChecker.h */,
 				AAEB55B62B15325B00695567 /* PeriodicHangChecker.cpp */,
 				AAEB55B72B15325B00695567 /* PeriodicHangChecker.h */,
+				AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */,
+				AAEB55BB2B1D1D1F00695567 /* GliderHangChecker.h */,
 				AA2865AF23CDF44F00F738ED /* PeriodicHangDetector.cpp */,
 				AA2865B023CDF44F00F738ED /* PeriodicHangDetector.h */,
 				AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */,
@@ -428,6 +434,7 @@
 				AA90A58A2201052900242D3D /* Utils.cpp in Sources */,
 				AAEB55B42B15315600695567 /* HangChecker.cpp in Sources */,
 				AADF9718255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */,
+				AAEB55BC2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */,
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
 				AACC273B254589CF007E83C3 /* ExecutionState.cpp in Sources */,
 				AAF43BD223EC76AC00D1EB33 /* SequenceAnalysis.cpp in Sources */,
@@ -494,6 +501,7 @@
 				AA0D5AE52263C488001909AF /* GliderHangTests.cpp in Sources */,
 				AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */,
 				AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */,
+				AAEB55BD2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */,
 				AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */,
 				AACC273C254589CF007E83C3 /* ExecutionState.cpp in Sources */,
 				AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */,

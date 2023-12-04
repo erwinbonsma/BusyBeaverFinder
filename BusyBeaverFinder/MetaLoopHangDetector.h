@@ -9,6 +9,7 @@
 
 #include "HangDetector.h"
 
+#include "GliderHangChecker.h"
 #include "HangChecker.h"
 #include "MetaLoopAnalysis.h"
 #include "PeriodicHangChecker.h"
@@ -16,12 +17,14 @@
 class MetaLoopHangDetector : public HangDetector {
     MetaLoopAnalysis _metaLoopAnalysis;
     PeriodicHangChecker  _periodicHangChecker;
+    GliderHangChecker  _gliderHangChecker;
     LoopAnalysis _loopAnalysis;
 
     HangChecker* _activeChecker;
     HangType _activeHang;
 
     bool preparePeriodicHangCheck();
+    bool prepareGliderHangCheck();
 
 protected:
     void clearAnalysis() override;

@@ -52,6 +52,10 @@ bool MetaLoopHangDetector::preparePeriodicHangCheck() {
     return true;
 }
 
+bool MetaLoopHangDetector::prepareGliderHangCheck() {
+    return _gliderHangChecker.init(&_metaLoopAnalysis);
+}
+
 bool MetaLoopHangDetector::analyzeHangBehaviour() {
     if (_metaLoopAnalysis.isAnalysisStillValid(_execution)) {
         return true;
@@ -65,6 +69,10 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
         if (preparePeriodicHangCheck()) {
             return true;
         }
+    }
+
+    if (prepareGliderHangCheck()) {
+        return true;
     }
 
     // TODO: Remove once all types of loops can be checked
