@@ -9,6 +9,13 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
+#include "ProgramBlock.h"
+
+const int dummySteps = 1;
+const int maxSequenceLen = 16;
+
+const int INC = true;
+const int MOV = false;
 
 TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
     HangExecutor hangExecutor(1024, 1000000);
@@ -252,5 +259,117 @@ TEST_CASE("7x7 Glider Hang tests", "[hang][glider][7x7]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
+    }
+}
+
+TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
+    HangExecutor hangExecutor(1000, 20000);
+    hangExecutor.setMaxSteps(20000);
+    hangExecutor.addDefaultHangDetectors();
+
+    ProgramBlock block[maxSequenceLen];
+    for (int i = 0; i < maxSequenceLen; i++) {
+        block[i].init(i);
+    }
+    ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
+    exitBlock->finalizeExit(dummySteps);
+
+    SECTION("Glider-TransitionClearsZeroesAhead") {
+        // This glider program has a transition which clears zeroes several steps ahead of its
+        // glider loop. This complicates checks that there are only zeroes ahead.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  2, dummySteps, exitBlock, block + 3);
+
+        // Glider loop
+        block[3].finalize(INC, -1, dummySteps, block + 7, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(INC,  2, dummySteps, exitBlock, block + 6);
+        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+
+        // Transition
+        block[ 7].finalize(MOV,  8, dummySteps, block + 8, exitBlock);
+        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+        block[ 9].finalize(MOV, -6, dummySteps, block + 10, exitBlock);
+        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // clear zero
+        block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+        hangExecutor.dump();
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
+    }
+}
+
+
+TEST_CASE("Block-based Glider Completion Tests", "[success][glider][blocks]") {
+    HangExecutor hangExecutor(1000, 20000);
+    hangExecutor.setMaxSteps(20000);
+    hangExecutor.addDefaultHangDetectors();
+
+    ProgramBlock block[maxSequenceLen];
+    for (int i = 0; i < maxSequenceLen; i++) {
+        block[i].init(i);
+    }
+    ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
+    exitBlock->finalizeExit(dummySteps);
+
+    SECTION("Glider-TransitionExitsOnGliderCounter") {
+        // This glider program terminates because the transition "checks" the next glider counter
+        // and exits when its value is eight. A simple analysis might conclude that the program
+        // hangs before that happens.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        // Glider loop
+        block[3].finalize(INC, -1, dummySteps, block + 7, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+
+        // Transition
+        block[7].finalize(MOV,  1, dummySteps, exitBlock, block + 8);
+        block[8].finalize(INC, -8, dummySteps, exitBlock, block + 9);
+        block[9].finalize(INC,  9, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+
+    SECTION("Glider-ExitsOnTransitionPolutions") {
+        // This glider program has a transition which clears zeroes ahead of its glider loop.
+        // When these are consumed, the glider loop exits
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        // Glider loop
+        block[3].finalize(INC, -1, dummySteps, block + 7, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(INC,  2, dummySteps, exitBlock, block + 6);
+        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+
+        // Transition
+        block[ 7].finalize(MOV,  8, dummySteps, block + 8, exitBlock);
+        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+        block[ 9].finalize(MOV, -6, dummySteps, block + 10, exitBlock); // eventually fails
+        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // clear zero
+        block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::SUCCESS);
     }
 }
