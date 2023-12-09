@@ -11,7 +11,9 @@
 bool GliderHangChecker::identifyLoopCounters() {
     auto &loopBehavior = _metaLoopAnalysis->loopBehaviors()[_gliderLoopIndex];
     auto loopAnalysis = loopBehavior.loopAnalysis();
-    int instructionIndex = _metaLoopAnalysis->loopRemainder(_gliderLoopIndex);
+    int loopSize = loopAnalysis->loopSize();
+    int instructionIndex = ((_metaLoopAnalysis->loopRemainder(_gliderLoopIndex) + loopSize - 1)
+                            % loopSize);
 
     // Determine the DP offset of the loop counter (compared to the start of the loop)
     _curCounterDpOffset = loopAnalysis->effectiveResultAt(instructionIndex).dpOffset();
@@ -22,40 +24,41 @@ bool GliderHangChecker::identifyLoopCounters() {
         return false;
     }
 
-    auto &deltas = loopAnalysis->dataDeltas();
-    if (deltas.size() != 2) {
-        // For now, only support the most basic glider loops that increment one counter.
-
-        return false;
-    }
-
-    bool curIndex = deltas[0].dpOffset() == _curCounterDpOffset ? 0 : 1;
-    assert(deltas[curIndex].dpOffset() == _curCounterDpOffset);
-    _nxtCounterDpOffset = deltas[1 - curIndex].dpOffset();
-
     assert(loopBehavior.minDpDelta() == loopBehavior.maxDpDelta());
     int loopShift = loopBehavior.minDpDelta();
-    int dpDelta = _nxtCounterDpOffset - _curCounterDpOffset;
-    if (sign(dpDelta) != sign(loopShift)) {
-        // The loop should move in the direction of the next counter
-        return false;
+    auto &deltas = loopAnalysis->dataDeltas();
+    int curCounterDelta = deltas.deltaAt(_curCounterDpOffset);
+    bool foundNextCounter = false;
+    for (auto &dd : deltas) {
+        int dpDelta = dd.dpOffset() - _curCounterDpOffset;
+        if (dpDelta == 0) continue;
+
+        if (sign(dpDelta) != sign(loopShift)) {
+            // This is data left in the wake of the glider loop
+        } else if (abs(dpDelta) % abs(loopShift) != 0) {
+            // Although this data value is ahead of the current loop counter, it will be skipped,
+            // and also become part of the wake
+        } else {
+            // This modifies a future loop counter
+
+            if (dpDelta == loopShift) {
+                // This is the next loop counter
+                foundNextCounter = true;
+
+                if (abs(curCounterDelta) > abs(dd.delta())) {
+                    // The delta for the next loop counter should be larger (or at least equal)
+                    return false;
+                }
+            } else {
+                // This bumps a counter further in the future
+            }
+            if (sign(curCounterDelta) == sign(dd.delta())) {
+                // For now require that the next counter is always "incremented".
+            }
+        }
     }
 
-    if (abs(dpDelta) % abs(loopShift) != 0) {
-        // The loop should actually use the next counter as a counter
-        return false;
-    }
-
-    int curCounterDelta = deltas[curIndex].delta();
-    int nxtCounterDelta = deltas[1 - curIndex].delta();
-
-    if (curCounterDelta * nxtCounterDelta > 0) {
-        // The signs should differ
-        return false;
-    }
-
-    if (abs(curCounterDelta) > abs(nxtCounterDelta)) {
-        // The delta for the next loop counter should be larger (or at least equal)
+    if (!foundNextCounter) {
         return false;
     }
 
@@ -94,6 +97,9 @@ bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis) {
     if (!identifyLoopCounters()) {
         return false;
     }
+
+    // TODO: Analyze transition sequence
+    // Analyze sequence from glider loop exit until next glider loop start as a loop
 
     return true;
 }

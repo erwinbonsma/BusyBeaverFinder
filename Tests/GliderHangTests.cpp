@@ -275,7 +275,7 @@ TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
     exitBlock->finalizeExit(dummySteps);
 
     SECTION("Glider-TransitionClearsZeroesAhead") {
-        // This glider program has a transition which clears zeroes several steps ahead of its
+        // This glider program has a transition which writes ones several steps ahead of its
         // glider loop. This complicates checks that there are only zeroes ahead.
 
         // Bootstrap
@@ -291,14 +291,13 @@ TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
 
         // Transition
         block[ 7].finalize(MOV,  8, dummySteps, block + 8, exitBlock);
-        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9); // far-ahead data set
         block[ 9].finalize(MOV, -6, dummySteps, block + 10, exitBlock);
-        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // clear zero
+        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // init next counter
         block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         RunResult result = hangExecutor.execute(&program);
-        hangExecutor.dump();
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
@@ -346,7 +345,7 @@ TEST_CASE("Block-based Glider Completion Tests", "[success][glider][blocks]") {
     }
 
     SECTION("Glider-ExitsOnTransitionPolutions") {
-        // This glider program has a transition which clears zeroes ahead of its glider loop.
+        // This glider program has a transition which writes ones ahead of its glider loop.
         // When these are consumed, the glider loop exits
 
         // Bootstrap

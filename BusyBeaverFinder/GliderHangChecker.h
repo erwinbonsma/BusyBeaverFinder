@@ -13,8 +13,9 @@
 class GliderHangChecker : public HangChecker {
     const MetaLoopAnalysis* _metaLoopAnalysis;
     int _gliderLoopIndex;
+
+    // The location of the current loop counter, relative to DP at loop entry.
     int _curCounterDpOffset;
-    int _nxtCounterDpOffset;
 
     bool identifyLoopCounters();
 
