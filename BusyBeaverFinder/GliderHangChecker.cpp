@@ -12,11 +12,11 @@ bool GliderHangChecker::identifyLoopCounters() {
     auto &loopBehavior = _metaLoopAnalysis->loopBehaviors()[_gliderLoopIndex];
     auto loopAnalysis = loopBehavior.loopAnalysis();
     int loopSize = loopAnalysis->loopSize();
-    int instructionIndex = ((_metaLoopAnalysis->loopRemainder(_gliderLoopIndex) + loopSize - 1)
-                            % loopSize);
+    _loopCounterIndex = ((_metaLoopAnalysis->loopRemainder(_gliderLoopIndex) + loopSize - 1)
+                         % loopSize);
 
     // Determine the DP offset of the loop counter (compared to the start of the loop)
-    _curCounterDpOffset = loopAnalysis->effectiveResultAt(instructionIndex).dpOffset();
+    _counterDpOffset = loopAnalysis->effectiveResultAt(_loopCounterIndex).dpOffset();
 
     if (loopAnalysis->dataPointerDelta() != 0) {
         // The glider loop should be stationary
@@ -27,10 +27,10 @@ bool GliderHangChecker::identifyLoopCounters() {
     assert(loopBehavior.minDpDelta() == loopBehavior.maxDpDelta());
     int loopShift = loopBehavior.minDpDelta();
     auto &deltas = loopAnalysis->dataDeltas();
-    int curCounterDelta = deltas.deltaAt(_curCounterDpOffset);
+    int curCounterDelta = deltas.deltaAt(_counterDpOffset);
     bool foundNextCounter = false;
     for (auto &dd : deltas) {
-        int dpDelta = dd.dpOffset() - _curCounterDpOffset;
+        int dpDelta = dd.dpOffset() - _counterDpOffset;
         if (dpDelta == 0) continue;
 
         if (sign(dpDelta) != sign(loopShift)) {
@@ -65,7 +65,29 @@ bool GliderHangChecker::identifyLoopCounters() {
     return true;
 }
 
-bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis) {
+bool GliderHangChecker::analyzeTransitionSequence(const ExecutionState& executionState) {
+    auto& runHistory = executionState.getRunHistory();
+    auto& runSummary = executionState.getRunSummary();
+
+    int firstLoopRunBlock = (_metaLoopAnalysis->firstRunBlockIndex()
+                             + _metaLoopAnalysis->loopRunBlockIndex(_gliderLoopIndex));
+    int pbIndexStart = runSummary.runBlockAt(firstLoopRunBlock + 1)->getStartIndex();
+    int nextLoopRunBlock = firstLoopRunBlock + _metaLoopAnalysis->loopSize();
+
+    // Note: Include start of loop until loop exit so that DP shift is correct over an iteration of
+    // the meta-loop. Or re-phrased, let the glider loop start at the instruction where it exits.
+    int pbIndexEnd = runSummary.runBlockAt(nextLoopRunBlock)->getStartIndex() + _loopCounterIndex;
+
+    if (!_transitionLoopAnalysis.analyzeLoop(&runHistory[pbIndexStart],
+                                             pbIndexEnd - pbIndexStart)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
+                             const ExecutionState& executionState) {
     _metaLoopAnalysis = nullptr;
 
     _gliderLoopIndex = -1;
@@ -98,8 +120,9 @@ bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis) {
         return false;
     }
 
-    // TODO: Analyze transition sequence
-    // Analyze sequence from glider loop exit until next glider loop start as a loop
+    if (!analyzeTransitionSequence(executionState)) {
+        return false;
+    }
 
     return true;
 }

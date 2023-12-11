@@ -53,7 +53,7 @@ bool MetaLoopHangDetector::preparePeriodicHangCheck() {
 }
 
 bool MetaLoopHangDetector::prepareGliderHangCheck() {
-    if (!_gliderHangChecker.init(&_metaLoopAnalysis)) {
+    if (!_gliderHangChecker.init(&_metaLoopAnalysis, _execution)) {
         return false;
     }
 

@@ -176,4 +176,8 @@ public:
     int loopRemainder(int loopIndex) const {
         return _loopData[loopIndex].loopRemainder;
     }
+
+    int loopRunBlockIndex(int loopIndex) const {
+        return _loopData[loopIndex].runBlockIndex;
+    }
 };

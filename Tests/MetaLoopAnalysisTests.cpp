@@ -926,6 +926,14 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         REQUIRE(lb[0].iterationDelta() == 1);
         REQUIRE(lb[0].minDpDelta() == 1);
         REQUIRE(lb[0].maxDpDelta() == 1);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+        REQUIRE(hangChecker.counterDpOffset() == -1);
+
+        auto& tla = hangChecker.transitionLoopAnalysis();
+        REQUIRE(tla.loopSize() == 4); // Sequence ends at at glider loop exit instruction
+        REQUIRE(tla.dataPointerDelta() == 1);
     }
 
     SECTION( "GliderWithWake-PowersOfTwo" ) {
@@ -963,8 +971,13 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         REQUIRE(lb[0].minDpDelta() == 1);
         REQUIRE(lb[0].maxDpDelta() == 1);
 
-        result = hangChecker.init(&mla);
+        result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+        REQUIRE(hangChecker.counterDpOffset() == -1);
+
+        auto& tla = hangChecker.transitionLoopAnalysis();
+        REQUIRE(tla.loopSize() == 5); // Sequence ends at at glider loop exit instruction
+        REQUIRE(tla.dataPointerDelta() == 1);
     }
 
     SECTION( "GliderWithWake-PowersOfThree" ) {
@@ -975,7 +988,7 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
         block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
 
-        // Loop: Wake += 2, Now -= 1, Next += 2
+        // Loop: Wake += 3, Now -= 1, Next += 3
         block[2].finalize(INC,  3, dummySteps, exitBlock, block + 3);
         block[3].finalize(MOV, -2, dummySteps, block + 4, block + 4);
         block[4].finalize(INC,  3, dummySteps, exitBlock, block + 5);
@@ -994,8 +1007,13 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
 
-        result = hangChecker.init(&mla);
+        result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+        REQUIRE(hangChecker.counterDpOffset() == -1);
+
+        auto& tla = hangChecker.transitionLoopAnalysis();
+        REQUIRE(tla.loopSize() == 7); // Sequence ends at at glider loop exit instruction
+        REQUIRE(tla.dataPointerDelta() == 1);
     }
 
     SECTION("Glider-TransitionClearsZeroesAhead") {
@@ -1026,8 +1044,13 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
 
-        result = hangChecker.init(&mla);
+        result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+        REQUIRE(hangChecker.counterDpOffset() == 0);
+
+        auto& tla = hangChecker.transitionLoopAnalysis();
+        REQUIRE(tla.loopSize() == 5); // Sequence ends at at glider loop exit instruction
+        REQUIRE(tla.dataPointerDelta() == 1);
     }
 }
 
