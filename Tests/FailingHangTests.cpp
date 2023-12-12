@@ -158,19 +158,6 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
     hangExecutor.setMaxSteps(100000);
     hangExecutor.addDefaultHangDetectors();
 
-    SECTION("7x7-UndetectedHang1") {
-        // *   *   * *
-        // o _ _ _ _ _ *
-        // _   _ * _ _
-        // _ * o o o o *
-        // _   * o o o *
-        // _ * _ o o *
-        // _   * * *
-        RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqA");
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::ASSUMED_HANG);
-    }
     SECTION("7x7-UndetectedHang2") {
         // Irregular sweep.
         //

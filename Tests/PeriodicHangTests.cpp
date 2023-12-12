@@ -414,4 +414,22 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
+    SECTION("7x7-LargePeriodicMetaLoop") {
+        // Meta-periodic hang with a meta-loop that contains three loops with a fixed number of
+        // iterations, two of which run five times. It also contains a transition sequence which
+        // consists of 27 program blocks.
+        //
+        // *   *   * *
+        // o _ _ _ _ _ *
+        // _   _ * _ _
+        // _ * o o o o *
+        // _   * o o o *
+        // _ * _ o o *
+        // _   * * *
+        RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqA");
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+    }
 }
