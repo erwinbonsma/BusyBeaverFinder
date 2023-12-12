@@ -16,7 +16,7 @@ class InterpretedProgram;
 class RunSummary;
 class Data;
 
-const int maxLoopSize = 64;
+const int maxLoopSize = 128;
 
 enum class Operator : int8_t {
     EQUALS = 0,

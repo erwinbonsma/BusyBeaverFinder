@@ -73,9 +73,7 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
     }
 
     if (_metaLoopAnalysis.isPeriodic()) {
-        if (preparePeriodicHangCheck()) {
-            return true;
-        }
+        return preparePeriodicHangCheck();
     }
 
     if (prepareGliderHangCheck()) {

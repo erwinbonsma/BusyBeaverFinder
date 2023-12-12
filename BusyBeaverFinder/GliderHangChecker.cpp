@@ -28,7 +28,7 @@ bool GliderHangChecker::identifyLoopCounters() {
     int loopShift = loopBehavior.minDpDelta();
     auto &deltas = loopAnalysis->dataDeltas();
     int curCounterDelta = deltas.deltaAt(_counterDpOffset);
-    bool foundNextCounter = false;
+    int sumFutureDeltas = 0;
     for (auto &dd : deltas) {
         int dpDelta = dd.dpOffset() - _counterDpOffset;
         if (dpDelta == 0) continue;
@@ -41,24 +41,16 @@ bool GliderHangChecker::identifyLoopCounters() {
         } else {
             // This modifies a future loop counter
 
-            if (dpDelta == loopShift) {
-                // This is the next loop counter
-                foundNextCounter = true;
-
-                if (abs(curCounterDelta) > abs(dd.delta())) {
-                    // The delta for the next loop counter should be larger (or at least equal)
-                    return false;
-                }
-            } else {
-                // This bumps a counter further in the future
-            }
             if (sign(curCounterDelta) == sign(dd.delta())) {
                 // For now require that the next counter is always "incremented".
+                return false;
             }
+            sumFutureDeltas += dd.delta();
         }
     }
 
-    if (!foundNextCounter) {
+    if (abs(curCounterDelta) > abs(sumFutureDeltas)) {
+        // Simple sanity check. Probably not needed
         return false;
     }
 
@@ -69,13 +61,13 @@ bool GliderHangChecker::analyzeTransitionSequence(const ExecutionState& executio
     auto& runHistory = executionState.getRunHistory();
     auto& runSummary = executionState.getRunSummary();
 
-    int firstLoopRunBlock = (_metaLoopAnalysis->firstRunBlockIndex()
-                             + _metaLoopAnalysis->loopRunBlockIndex(_gliderLoopIndex));
-    int pbIndexStart = runSummary.runBlockAt(firstLoopRunBlock + 1)->getStartIndex();
-    int nextLoopRunBlock = firstLoopRunBlock + _metaLoopAnalysis->loopSize();
+    _firstGliderLoopRunBlockIndex = (_metaLoopAnalysis->firstRunBlockIndex()
+                                     + _metaLoopAnalysis->loopRunBlockIndex(_gliderLoopIndex));
+    int pbIndexStart = runSummary.runBlockAt(_firstGliderLoopRunBlockIndex + 1)->getStartIndex();
+    int nextLoopRunBlock = _firstGliderLoopRunBlockIndex + _metaLoopAnalysis->loopSize();
 
-    // Note: Include start of loop until loop exit so that DP shift is correct over an iteration of
-    // the meta-loop. Or re-phrased, let the glider loop start at the instruction where it exits.
+    // Include start of loop until loop exit so that DP shift is correct over an iteration of the
+    // meta-loop. Or re-phrased, let the glider loop start at the instruction where it exits.
     int pbIndexEnd = runSummary.runBlockAt(nextLoopRunBlock)->getStartIndex() + _loopCounterIndex;
 
     if (!_transitionLoopAnalysis.analyzeLoop(&runHistory[pbIndexStart],
@@ -89,6 +81,7 @@ bool GliderHangChecker::analyzeTransitionSequence(const ExecutionState& executio
 bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
                              const ExecutionState& executionState) {
     _metaLoopAnalysis = nullptr;
+    _proofEnd = 0;
 
     _gliderLoopIndex = -1;
     int loopIndex = 0;
@@ -124,9 +117,34 @@ bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
         return false;
     }
 
+    // The proof checks only that all newly consumed values are zero. It may happen that
+    // recently consumed values cause hang-breaking exits. Guard against this by running until
+    // all loops are fully bootstrapped.
+    auto loopAnalysis = _metaLoopAnalysis->loopBehaviors()[_gliderLoopIndex].loopAnalysis();
+    _numBootstrapCycles = std::max(_transitionLoopAnalysis.numBootstrapCycles(),
+                                   loopAnalysis->numBootstrapCycles());
+
     return true;
 }
 
 Trilian GliderHangChecker::proofHang(const ExecutionState& _execution) {
+    // The glider loop should just have finished
+    if ((_execution.getRunSummary().getNumRunBlocks() - _firstGliderLoopRunBlockIndex)
+        % _metaLoopAnalysis->loopSize() != 1) {
+        return Trilian::MAYBE;
+    }
+
+    if (_proofEnd == 0) {
+        if (!_transitionLoopAnalysis.allValuesToBeConsumedAreZero(_execution.getData())) {
+            return Trilian::MAYBE;
+        }
+        _proofEnd = (_execution.getRunSummary().getNumRunBlocks()
+                     + _numBootstrapCycles * _metaLoopAnalysis->loopSize());
+    }
+
+    if (_execution.getRunSummary().getNumRunBlocks() >= _proofEnd) {
+        return Trilian::YES;
+    }
+
     return Trilian::MAYBE;
 }

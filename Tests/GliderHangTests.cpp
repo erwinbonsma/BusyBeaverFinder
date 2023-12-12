@@ -299,8 +299,7 @@ TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
         InterpretedProgramFromArray program(block, maxSequenceLen);
         RunResult result = hangExecutor.execute(&program);
 
-        REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::APERIODIC_GLIDER);
+        // TODO: Replace by an actual hang
     }
 }
 
@@ -361,7 +360,7 @@ TEST_CASE("Block-based Glider Completion Tests", "[success][glider][blocks]") {
 
         // Transition
         block[ 7].finalize(MOV,  8, dummySteps, block + 8, exitBlock);
-        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9);  // far-ahead data set
         block[ 9].finalize(MOV, -6, dummySteps, block + 10, exitBlock); // eventually fails
         block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // clear zero
         block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);

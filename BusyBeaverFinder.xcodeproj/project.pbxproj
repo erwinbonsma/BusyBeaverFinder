@@ -84,8 +84,6 @@
 		AAEB55B92B15325B00695567 /* PeriodicHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B62B15325B00695567 /* PeriodicHangChecker.cpp */; };
 		AAEB55BC2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */; };
 		AAEB55BD2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */; };
-		AAF43BCE23EC068D00D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
-		AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */; };
 		AAF43BD223EC76AC00D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
 		AAF43BD323EC8B0100D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
 /* End PBXBuildFile section */
@@ -196,8 +194,6 @@
 		AAEB55B72B15325B00695567 /* PeriodicHangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodicHangChecker.h; sourceTree = "<group>"; };
 		AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GliderHangChecker.cpp; sourceTree = "<group>"; };
 		AAEB55BB2B1D1D1F00695567 /* GliderHangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GliderHangChecker.h; sourceTree = "<group>"; };
-		AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GliderHangDetector.cpp; sourceTree = "<group>"; };
-		AAF43BCD23EC068D00D1EB33 /* GliderHangDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GliderHangDetector.h; sourceTree = "<group>"; };
 		AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysis.cpp; sourceTree = "<group>"; };
 		AAF43BD123EC76AC00D1EB33 /* SequenceAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SequenceAnalysis.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -332,8 +328,6 @@
 				AA2865B023CDF44F00F738ED /* PeriodicHangDetector.h */,
 				AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */,
 				AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */,
-				AAF43BCC23EC068D00D1EB33 /* GliderHangDetector.cpp */,
-				AAF43BCD23EC068D00D1EB33 /* GliderHangDetector.h */,
 				AADF9716255E8788002BF498 /* SweepTransitionGroup.cpp */,
 				AADF9717255E8788002BF498 /* SweepTransitionGroup.h */,
 				AABDCBAE253B197B0009516B /* SweepHangDetector.cpp */,
@@ -442,7 +436,6 @@
 				AA2865B123CDF44F00F738ED /* PeriodicHangDetector.cpp in Sources */,
 				AA5D7E91257CDBAE0054FC4E /* PeriodicSweepHangDetector.cpp in Sources */,
 				AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */,
-				AAF43BCE23EC068D00D1EB33 /* GliderHangDetector.cpp in Sources */,
 				AA2865B523CDFF7200F738ED /* LoopAnalysis.cpp in Sources */,
 				AA4F450B224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
@@ -502,7 +495,6 @@
 				AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */,
 				AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */,
 				AAEB55BD2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */,
-				AAF43BCF23EC223600D1EB33 /* GliderHangDetector.cpp in Sources */,
 				AACC273C254589CF007E83C3 /* ExecutionState.cpp in Sources */,
 				AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */,
 				AA28C0A022073A0F00F7EC25 /* Data.cpp in Sources */,
