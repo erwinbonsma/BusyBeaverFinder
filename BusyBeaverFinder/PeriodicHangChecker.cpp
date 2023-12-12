@@ -13,8 +13,7 @@
 void PeriodicHangChecker::init(const LoopAnalysis* loop, int loopStart) {
     _loop = loop;
     _loopStart = loopStart;
-
-    _loopStartLastProof = -1;
+    _proofPhase = 1;
 }
 
 Trilian PeriodicHangChecker::proofHangPhase1(const ExecutionState& execution) {
@@ -79,11 +78,13 @@ Trilian PeriodicHangChecker::proofHangPhase2(const ExecutionState& execution) {
 }
 
 Trilian PeriodicHangChecker::proofHang(const ExecutionState& execution) {
-    if (_loopStart != _loopStartLastProof) {
-        // Reset proof state
+    int loopLen = (int)execution.getRunHistory().size() - _loopStart;
 
-        _proofPhase = 1;
-        _loopStartLastProof = _loopStart;
+    if (loopLen % _loop->loopSize() != 0) {
+        // Only check that we are at the start of the loop. This check is needed in case the
+        // subject loop contain multiple loops. These may trigger an invocation of proofHang that
+        // is not in sync with the analyzed subject loop. Ignore these.
+        return Trilian::MAYBE;
     }
 
     return _proofPhase == 1 ? proofHangPhase1(execution) : proofHangPhase2(execution);

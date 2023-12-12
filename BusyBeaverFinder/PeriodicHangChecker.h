@@ -15,7 +15,6 @@ class PeriodicHangChecker : public HangChecker {
     const LoopAnalysis* _loop;
     int _loopStart;
 
-    int _loopStartLastProof;
     int _proofPhase;
     int _targetLoopLen;
 

@@ -91,16 +91,6 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
 Trilian MetaLoopHangDetector::proofHang() {
     assert(_activeChecker != nullptr);
 
-    if (_activeHang == HangType::META_PERIODIC) {
-        int loopLen = (int)_execution.getRunHistory().size() - _periodicHangChecker.loopStart();
-
-        if (loopLen % _loopAnalysis.loopSize() != 0) {
-            // The meta loop may contain multiple loops, which may trigger an invocation of
-            // proofHang that is not in sync with the analyzed loop. Ignore these.
-            return Trilian::MAYBE;
-        }
-    }
-
     Trilian result = _activeChecker->proofHang(_execution);
     if (result == Trilian::NO) {
         _activeChecker = nullptr;
