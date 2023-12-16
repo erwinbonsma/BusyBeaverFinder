@@ -19,12 +19,14 @@ constexpr int NUM_ITERATIONS_TO_ANALYZE = 3;
 
 const LoopBehavior& LoopBehavior::prevLoop() const {
     auto &behaviors = _metaLoopAnalysis->loopBehaviors();
-    return behaviors[(_loopIndex + behaviors.size() - 1) % behaviors.size()];
+    int loopIndex = _metaLoopAnalysis->loopIndexForSequence(_sequenceIndex);
+    return behaviors[(loopIndex + behaviors.size() - 1) % behaviors.size()];
 }
 
 const LoopBehavior& LoopBehavior::nextLoop() const {
     auto &behaviors = _metaLoopAnalysis->loopBehaviors();
-    return behaviors[(_loopIndex + 1) % behaviors.size()];
+    int loopIndex = _metaLoopAnalysis->loopIndexForSequence(_sequenceIndex);
+    return behaviors[(loopIndex + 1) % behaviors.size()];
 }
 
 LoopType LoopBehavior::loopType() const {
@@ -73,7 +75,7 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
     for (int i = 1; i <= 2; ++i) {
         int loopStartIndex = _firstRunBlockIndex + loopSize * i;
         for (auto &data : _loopData) {
-            int rbIndex = loopStartIndex + data.runBlockIndex;
+            int rbIndex = loopStartIndex + data.sequenceIndex;
             const RunBlock* rb = runSummary.runBlockAt(rbIndex);
 
             assert(rb->isLoop());
@@ -96,7 +98,7 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
                     return false;
                 }
                 if (delta > data.lastIterationDelta) {
-                    auto &seqAnalysis = _seqAnalysis[data.runBlockIndex % _metaLoopPeriod];
+                    auto &seqAnalysis = _seqAnalysis[data.sequenceIndex % _metaLoopPeriod];
                     if (seqAnalysis->dataPointerDelta() != 0) {
                         // The number of iterations for non-stationary loops should be fixed or
                         // increase linearly
@@ -169,6 +171,28 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
     }
 }
 
+int MetaLoopAnalysis::dpDeltaOfRunBlock(const RunSummary& runSummary, int rbIndex) const {
+    assert(rbIndex >= _firstRunBlockIndex);
+
+    const RunBlock *rb = runSummary.runBlockAt(rbIndex);
+    auto sa = _seqAnalysis[(rbIndex - _firstRunBlockIndex) % _metaLoopPeriod];
+
+    int delta = sa->dataPointerDelta();
+
+    if (rb->isLoop()) {
+        int numIter = runSummary.getRunBlockLength(rbIndex) / rb->getLoopPeriod();
+        delta *= numIter;
+
+        int blockLen = runSummary.getRunBlockLength(rbIndex);
+        int loopRemainder = blockLen % rb->getLoopPeriod();
+        if (loopRemainder > 0) {
+            delta += sa->effectiveResultAt(loopRemainder - 1).dpOffset();
+        }
+    }
+
+    return delta;
+}
+
 void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     int dp = 0;
 
@@ -180,28 +204,17 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
         auto loopDataIt = _loopData.begin();
         for (int j = 0; j < _loopSize; ++j, ++rbIndex) {
             const RunBlock *rb = runSummary.runBlockAt(rbIndex);
-            auto sa = _seqAnalysis[j % _metaLoopPeriod];
+            if (rb->isLoop()) {
+                auto &data = *loopDataIt++;
 
-            if (!rb->isLoop()) {
-                dp += sa->dataPointerDelta();
-                continue;
+                if (i == 1) {
+                    auto &dataPrev = _loopData[(data.loopIndex - _numLoops + _loopData.size())
+                                               % _loopData.size()];
+                    data.dataPointerDelta = dp - dataPrev.dataPointerPos;
+                }
+                data.dataPointerPos = dp;
             }
-            auto &data = *loopDataIt++;
-
-//            std::cout << "dp[" << j << "] = " << dp << std::endl;
-
-            if (i == 1) {
-                auto &dataPrev = _loopData[(data.loopIndex - _numLoops + _loopData.size())
-                                           % _loopData.size()];
-                data.dataPointerDelta = dp - dataPrev.dataPointerPos;
-            }
-            data.dataPointerPos = dp;
-
-            int numIter = runSummary.getRunBlockLength(rbIndex) / rb->getLoopPeriod();
-            dp += numIter * sa->dataPointerDelta();
-            if (data.loopRemainder > 0) {
-                dp += sa->effectiveResultAt(data.loopRemainder - 1).dpOffset();
-            }
+            dp += dpDeltaOfRunBlock(runSummary, rbIndex);
         }
     }
 }
@@ -217,7 +230,7 @@ void MetaLoopAnalysis::initLoopBehaviors() {
     // rare, and when analysis is extended, the equality may not hold anymore.
 
     for (auto &data : _loopData) {
-        int index = data.runBlockIndex % _metaLoopPeriod;
+        int index = data.sequenceIndex % _metaLoopPeriod;
         auto sa = _seqAnalysis[index];
 
         assert(sa->isLoop());
@@ -234,7 +247,7 @@ void MetaLoopAnalysis::initLoopBehaviors() {
 
         int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
 
-        _loopBehaviors.emplace_back(this, _loopBehaviors.size(),
+        _loopBehaviors.emplace_back(this, data.sequenceIndex,
                                     std::dynamic_pointer_cast<LoopAnalysis>(sa),
                                     std::min(dpDeltaStart, dpDeltaEnd),
                                     std::max(dpDeltaStart, dpDeltaEnd),

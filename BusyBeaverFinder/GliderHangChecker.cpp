@@ -61,8 +61,8 @@ bool GliderHangChecker::analyzeTransitionSequence(const ExecutionState& executio
     auto& runHistory = executionState.getRunHistory();
     auto& runSummary = executionState.getRunSummary();
 
-    _firstGliderLoopRunBlockIndex = (_metaLoopAnalysis->firstRunBlockIndex()
-                                     + _metaLoopAnalysis->loopRunBlockIndex(_gliderLoopIndex));
+    auto &loop = _metaLoopAnalysis->loopBehaviors()[_gliderLoopIndex];
+    _firstGliderLoopRunBlockIndex = _metaLoopAnalysis->firstRunBlockIndex() + loop.sequenceIndex();
     int pbIndexStart = runSummary.runBlockAt(_firstGliderLoopRunBlockIndex + 1)->getStartIndex();
     int nextLoopRunBlock = _firstGliderLoopRunBlockIndex + _metaLoopAnalysis->loopSize();
 

@@ -10,16 +10,23 @@
 #include <array>
 #include <vector>
 
+#include "DataDeltas.h"
 #include "HangChecker.h"
 #include "LoopAnalysis.h"
 #include "MetaLoopAnalysis.h"
 
 namespace v2 {
 
+// A transition where the sweep changes direction
 struct SweepTransitionGroup {
-    std::vector<const LoopBehavior*> incomingLoops;
-    std::vector<const LoopBehavior*> outgoingLoops;
+    // All sweep loops that arrive or depart at this transition point
+    std::vector<const LoopBehavior*> sweepLoops;
     SequenceAnalysis transitionSequence;
+    DataDeltas _sweepLoopDeltas;
+
+    void initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
+                             const RunSummary& runSummary);
+    const DataDeltas sweepLoopDeltas() const { return _sweepLoopDeltas; }
 };
 
 }
@@ -34,6 +41,13 @@ class SweepHangChecker : public HangChecker {
     bool initTransitionSequences(const ExecutionState& executionState);
 public:
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
+
+    // The direction indicates the side where the sweep changes direction. When the sweep loops at
+    // both sides are the same (e.g. when there is no mid-sweep transition) the deltas at both
+    // sides are equivalent.
+    const DataDeltas sweepLoopDeltas(DataDirection dir) {
+        return _transitionGroups[dir == DataDirection::RIGHT]._sweepLoopDeltas;
+    }
 
     Trilian proofHang(const ExecutionState& executionState) override;
 };

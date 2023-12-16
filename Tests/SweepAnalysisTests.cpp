@@ -69,6 +69,12 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+
+        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        REQUIRE(ddl.size() == 0);
+
+        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        REQUIRE(ddr.size() == 0);
     }
 
     SECTION( "SweepWithChangingBody" ) {
@@ -107,6 +113,14 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+
+        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        REQUIRE(ddl.size() == 1);
+        REQUIRE(ddl.deltaAt(0) == 1);
+
+        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        REQUIRE(ddr.size() == 1);
+        REQUIRE(ddr.deltaAt(0) == 1);
     }
 
     SECTION( "SweepWithStripedBody" ) {
@@ -151,6 +165,16 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+
+        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        REQUIRE(ddl.size() == 2);
+        REQUIRE(ddl.deltaAt(0) == -1);
+        REQUIRE(ddl.deltaAt(1) == 1);
+
+        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        REQUIRE(ddr.size() == 2);
+        REQUIRE(ddr.deltaAt(0) == -1);
+        REQUIRE(ddr.deltaAt(1) == 1);
     }
 
     SECTION( "BasicLeftSweep" ) {
@@ -188,6 +212,12 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+
+        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        REQUIRE(ddl.size() == 0);
+
+        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        REQUIRE(ddr.size() == 0);
     }
 
     SECTION( "BasicDualEndedSweep" ) {
@@ -221,6 +251,12 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
+
+        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        REQUIRE(ddl.size() == 0);
+
+        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        REQUIRE(ddr.size() == 0);
     }
 
     SECTION( "TwoStateRightSweep" ) {

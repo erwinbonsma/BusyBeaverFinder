@@ -31,6 +31,22 @@ int makePowerOfTwo(int val) {
     return 1 << shifts;
 }
 
+int gcd(int a, int b) {
+    assert(a > 0 && b > 0);
+    while (a != b) {
+        if (a > b) {
+            a = a - b;
+        } else {
+            b = b - a;
+        }
+    }
+    return a;
+}
+
+int lcm(int a, int b) {
+    return a / gcd(a, b) * b;
+}
+
 InstructionPointer nextInstructionPointer(ProgramPointer pp) {
     return InstructionPointer {
         .col = (int8_t)(pp.p.col + dx[(int)pp.dir]),

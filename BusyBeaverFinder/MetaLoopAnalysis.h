@@ -24,8 +24,8 @@ struct MetaLoopData {
     int loopIndex;
 
     // References which of the run-blocks in the meta-loop this data applies to.
-    // Range: [0, metaLoopPeriod>
-    int runBlockIndex;
+    // Range: [0, metaLoop.loopSize>
+    int sequenceIndex;
 
     // The number of instruction executed in the last loop iteration in case the loop was exited
     // prematurely.
@@ -44,9 +44,9 @@ struct MetaLoopData {
     int dataPointerDelta = 0;
 
     MetaLoopData() {}
-    MetaLoopData(int loopIndex, int runBlockIndex, int numIterations, int loopRemainder)
+    MetaLoopData(int loopIndex, int sequenceIndex, int numIterations, int loopRemainder)
     : loopIndex(loopIndex)
-    , runBlockIndex(runBlockIndex)
+    , sequenceIndex(sequenceIndex)
     , lastNumIterations(numIterations)
     , loopRemainder(loopRemainder) {}
 };
@@ -55,7 +55,7 @@ class MetaLoopAnalysis;
 class LoopBehavior {
     const MetaLoopAnalysis* _metaLoopAnalysis;
     // The index of the loop in the MetaLoopAnalysis
-    int _loopIndex;
+    int _sequenceIndex;
 
     std::shared_ptr<LoopAnalysis> _loopAnalysis;
 
@@ -67,11 +67,11 @@ class LoopBehavior {
     int _iterationDelta;
 
 public:
-    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int loopIndex,
+    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
                  std::shared_ptr<LoopAnalysis> loopAnalysis,
                  int minDpDelta, int maxDpDelta, int iterationDelta)
     : _metaLoopAnalysis(metaLoopAnalysis)
-    , _loopIndex(loopIndex)
+    , _sequenceIndex(sequenceIndex)
     , _loopAnalysis(loopAnalysis)
     , _minDpDelta(minDpDelta)
     , _maxDpDelta(maxDpDelta)
@@ -79,7 +79,7 @@ public:
 
     std::shared_ptr<LoopAnalysis> loopAnalysis() const { return _loopAnalysis; }
 
-    int loopIndex() const { return _loopIndex; }
+    int sequenceIndex() const { return _sequenceIndex; }
     int minDpDelta() const { return _minDpDelta; }
     int maxDpDelta() const { return _maxDpDelta; }
     int iterationDelta() const { return _iterationDelta; }
@@ -131,7 +131,7 @@ class MetaLoopAnalysis {
     std::vector<MetaLoopData> _loopData;
     std::vector<LoopBehavior> _loopBehaviors;
 
-    // Maps loop indices to sequence index.
+    // Maps sequence indices to loop indices.
     std::map<int, int> _loopIndexLookup;
 
     bool _isPeriodic;
@@ -168,13 +168,17 @@ public:
     // meta-loop analysis is valid.
     int firstRunBlockIndex() const { return _firstRunBlockIndex; }
 
-    // Returns the sequence index for the given loop.
-    int sequenceIndexForLoop(int loopIndex) const { return _loopIndexLookup.at(loopIndex); }
-
     const std::vector<std::shared_ptr<SequenceAnalysis>> sequenceAnalysisResults() {
         return _seqAnalysis;
     }
     const std::vector<LoopBehavior>& loopBehaviors() const { return _loopBehaviors; }
+
+    // Returns how much DP changed after executing the specified run-block. The index is with
+    // respect to the run summary.
+    int dpDeltaOfRunBlock(const RunSummary& runSummary, int runBlockIndex) const;
+
+    int loopIndexForSequence(int sequenceIndex) const { return _loopIndexLookup.at(sequenceIndex); }
+    int sequenceIndexForLoop(int loopIndex) const { return _loopData[loopIndex].sequenceIndex; }
 
     // Returns how much the number of iterations increased compared to previous invocation of the
     // loop run block in the meta-loop. In case the increase is non-linear, it returns the last
@@ -194,9 +198,5 @@ public:
 
     int loopRemainder(int loopIndex) const {
         return _loopData[loopIndex].loopRemainder;
-    }
-
-    int loopRunBlockIndex(int loopIndex) const {
-        return _loopData[loopIndex].runBlockIndex;
     }
 };

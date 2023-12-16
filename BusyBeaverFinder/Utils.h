@@ -20,9 +20,13 @@
     pp1.dir == pp2.dir \
 )
 
+// Least common multiple
+int lcm(int a, int b);
+
 bool isPowerOfTwo(int val);
 int makePowerOfTwo(int val);
 
+// Returns a value that is always possible, i.e. 0 <= result < abs(modulus)
 inline int normalizedMod(int operand, int modulus) {
     int val = operand % modulus;
     return (val >= 0) ? val : val + abs(modulus);
