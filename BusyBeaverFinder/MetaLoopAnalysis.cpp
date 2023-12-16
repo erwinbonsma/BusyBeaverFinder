@@ -225,6 +225,7 @@ void MetaLoopAnalysis::initLoopBehaviors() {
         int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
 
         _loopBehaviors.emplace_back(std::dynamic_pointer_cast<LoopAnalysis>(sa),
+                                    _loopBehaviors.size(),
                                     std::min(dpDeltaStart, dpDeltaEnd),
                                     std::max(dpDeltaStart, dpDeltaEnd),
                                     isLinear ? iterDelta : -1);

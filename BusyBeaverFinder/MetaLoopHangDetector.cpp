@@ -63,6 +63,18 @@ bool MetaLoopHangDetector::prepareGliderHangCheck() {
     return true;
 }
 
+
+bool MetaLoopHangDetector::prepareSweepHangCheck() {
+    if (!_sweepHangChecker.init(&_metaLoopAnalysis, _execution)) {
+        return false;
+    }
+
+    _activeChecker = &_sweepHangChecker;
+    _activeHang = HangType::REGULAR_SWEEP;
+
+    return true;
+}
+
 bool MetaLoopHangDetector::analyzeHangBehaviour() {
     if (_metaLoopAnalysis.isAnalysisStillValid(_execution)) {
         return true;

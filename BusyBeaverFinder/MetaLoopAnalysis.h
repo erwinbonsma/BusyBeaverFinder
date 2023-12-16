@@ -53,22 +53,29 @@ struct MetaLoopData {
 
 class LoopBehavior {
     std::shared_ptr<LoopAnalysis> _loopAnalysis;
+
+    // The index of the loop in the MetaLoopAnalysis
+    int _loopIndex;
+
     // How much the mininum (left) and maximum (right) DP value changes on subsequent executions of
     // the loop;
     int _minDpDelta;
     int _maxDpDelta;
+
     int _iterationDelta;
 
 public:
-    LoopBehavior(std::shared_ptr<LoopAnalysis> loopAnalysis,
+    LoopBehavior(std::shared_ptr<LoopAnalysis> loopAnalysis, int loopIndex,
                  int minDpDelta, int maxDpDelta, int iterationDelta)
     : _loopAnalysis(loopAnalysis)
+    , _loopIndex(loopIndex)
     , _minDpDelta(minDpDelta)
     , _maxDpDelta(maxDpDelta)
     , _iterationDelta(iterationDelta) {}
 
     std::shared_ptr<LoopAnalysis> loopAnalysis() const { return _loopAnalysis; }
 
+    int loopIndex() const { return _loopIndex; }
     int minDpDelta() const { return _minDpDelta; }
     int maxDpDelta() const { return _maxDpDelta; }
     int iterationDelta() const { return _iterationDelta; }
