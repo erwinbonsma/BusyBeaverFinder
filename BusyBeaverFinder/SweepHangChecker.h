@@ -30,7 +30,8 @@ class SweepHangChecker : public HangChecker {
     // First is the group at the left, second is the group at the right
     std::array<v2::SweepTransitionGroup, 2> _transitionGroups;
 
-    bool extractSweepLoops(const MetaLoopAnalysis* metaLoopAnalysis);
+    bool extractSweepLoops();
+    bool initTransitionSequences(const ExecutionState& executionState);
 public:
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 

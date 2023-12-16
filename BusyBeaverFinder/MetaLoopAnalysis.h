@@ -51,11 +51,13 @@ struct MetaLoopData {
     , loopRemainder(loopRemainder) {}
 };
 
+class MetaLoopAnalysis;
 class LoopBehavior {
-    std::shared_ptr<LoopAnalysis> _loopAnalysis;
-
+    const MetaLoopAnalysis* _metaLoopAnalysis;
     // The index of the loop in the MetaLoopAnalysis
     int _loopIndex;
+
+    std::shared_ptr<LoopAnalysis> _loopAnalysis;
 
     // How much the mininum (left) and maximum (right) DP value changes on subsequent executions of
     // the loop;
@@ -65,10 +67,12 @@ class LoopBehavior {
     int _iterationDelta;
 
 public:
-    LoopBehavior(std::shared_ptr<LoopAnalysis> loopAnalysis, int loopIndex,
+    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int loopIndex,
+                 std::shared_ptr<LoopAnalysis> loopAnalysis,
                  int minDpDelta, int maxDpDelta, int iterationDelta)
-    : _loopAnalysis(loopAnalysis)
+    : _metaLoopAnalysis(metaLoopAnalysis)
     , _loopIndex(loopIndex)
+    , _loopAnalysis(loopAnalysis)
     , _minDpDelta(minDpDelta)
     , _maxDpDelta(maxDpDelta)
     , _iterationDelta(iterationDelta) {}
@@ -79,7 +83,15 @@ public:
     int minDpDelta() const { return _minDpDelta; }
     int maxDpDelta() const { return _maxDpDelta; }
     int iterationDelta() const { return _iterationDelta; }
+
+    const LoopBehavior& prevLoop() const;
+    const LoopBehavior& nextLoop() const;
+
     LoopType loopType() const;
+    bool isSweepLoop() const {
+        LoopType tp = loopType();
+        return tp == LoopType::ANCHORED_SWEEP || tp == LoopType::DOUBLE_SWEEP;
+    }
 };
 
 /* Analyses a meta-run loop.

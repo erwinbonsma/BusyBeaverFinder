@@ -86,6 +86,8 @@
 		AAEB55BD2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BA2B1D1D1F00695567 /* GliderHangChecker.cpp */; };
 		AAEB55C02B2DB32D00695567 /* SweepHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BE2B2DB32C00695567 /* SweepHangChecker.cpp */; };
 		AAEB55C12B2DB32D00695567 /* SweepHangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55BE2B2DB32C00695567 /* SweepHangChecker.cpp */; };
+		AAEB55C42B2DE99600695567 /* GliderAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55C32B2DE99600695567 /* GliderAnalysisTests.cpp */; };
+		AAEB55C62B2DEA6500695567 /* SweepAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55C52B2DEA6500695567 /* SweepAnalysisTests.cpp */; };
 		AAF43BD223EC76AC00D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
 		AAF43BD323EC8B0100D1EB33 /* SequenceAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */; };
 /* End PBXBuildFile section */
@@ -198,6 +200,9 @@
 		AAEB55BB2B1D1D1F00695567 /* GliderHangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GliderHangChecker.h; sourceTree = "<group>"; };
 		AAEB55BE2B2DB32C00695567 /* SweepHangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SweepHangChecker.cpp; sourceTree = "<group>"; };
 		AAEB55BF2B2DB32D00695567 /* SweepHangChecker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SweepHangChecker.h; sourceTree = "<group>"; };
+		AAEB55C22B2DE92900695567 /* RunUntilMetaLoop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunUntilMetaLoop.h; sourceTree = "<group>"; };
+		AAEB55C32B2DE99600695567 /* GliderAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = GliderAnalysisTests.cpp; sourceTree = "<group>"; };
+		AAEB55C52B2DEA6500695567 /* SweepAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SweepAnalysisTests.cpp; sourceTree = "<group>"; };
 		AAF43BD023EC76AC00D1EB33 /* SequenceAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysis.cpp; sourceTree = "<group>"; };
 		AAF43BD123EC76AC00D1EB33 /* SequenceAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SequenceAnalysis.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -289,6 +294,8 @@
 				AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */,
 				AA2865B723CE044B00F738ED /* LoopAnalysisTests.cpp */,
 				AA7A2DE62ADFE29900C35C07 /* MetaLoopAnalysisTests.cpp */,
+				AAEB55C32B2DE99600695567 /* GliderAnalysisTests.cpp */,
+				AAEB55C52B2DEA6500695567 /* SweepAnalysisTests.cpp */,
 				AA4F44FE223E57A10069FF36 /* NoExitHangTests.cpp */,
 				AA4F4502223E77350069FF36 /* PeriodicHangTests.cpp */,
 				AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */,
@@ -301,6 +308,7 @@
 				AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */,
 				AA37E6CD229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp */,
 				AAADA6D52A8C06CC00F1C442 /* FastExecutorTests.cpp */,
+				AAEB55C22B2DE92900695567 /* RunUntilMetaLoop.h */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -485,6 +493,7 @@
 				AAEB55C12B2DB32D00695567 /* SweepHangChecker.cpp in Sources */,
 				AA2E8BA325A222CA003AD189 /* DeltaSummationTests.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
+				AAEB55C42B2DE99600695567 /* GliderAnalysisTests.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
 				AA7A2DE52ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,
@@ -514,6 +523,7 @@
 				AADF9719255E8788002BF498 /* SweepTransitionGroup.cpp in Sources */,
 				AA2865B223CDF44F00F738ED /* PeriodicHangDetector.cpp in Sources */,
 				AA153A90228371BA00F7B1DF /* InterpretationTests.cpp in Sources */,
+				AAEB55C62B2DEA6500695567 /* SweepAnalysisTests.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

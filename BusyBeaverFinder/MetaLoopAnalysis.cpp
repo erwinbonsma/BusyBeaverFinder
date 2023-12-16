@@ -17,6 +17,16 @@ constexpr int MAX_ITERATIONS_TO_UNROLL = 2;
 // magic numbers.
 constexpr int NUM_ITERATIONS_TO_ANALYZE = 3;
 
+const LoopBehavior& LoopBehavior::prevLoop() const {
+    auto &behaviors = _metaLoopAnalysis->loopBehaviors();
+    return behaviors[(_loopIndex + behaviors.size() - 1) % behaviors.size()];
+}
+
+const LoopBehavior& LoopBehavior::nextLoop() const {
+    auto &behaviors = _metaLoopAnalysis->loopBehaviors();
+    return behaviors[(_loopIndex + 1) % behaviors.size()];
+}
+
 LoopType LoopBehavior::loopType() const {
     if (_minDpDelta == 0 && _maxDpDelta == 0) {
         return LoopType::STATIONARY;
@@ -224,8 +234,8 @@ void MetaLoopAnalysis::initLoopBehaviors() {
 
         int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
 
-        _loopBehaviors.emplace_back(std::dynamic_pointer_cast<LoopAnalysis>(sa),
-                                    _loopBehaviors.size(),
+        _loopBehaviors.emplace_back(this, _loopBehaviors.size(),
+                                    std::dynamic_pointer_cast<LoopAnalysis>(sa),
                                     std::min(dpDeltaStart, dpDeltaEnd),
                                     std::max(dpDeltaStart, dpDeltaEnd),
                                     isLinear ? iterDelta : -1);

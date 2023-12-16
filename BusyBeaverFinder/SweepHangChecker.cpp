@@ -8,7 +8,7 @@
 
 #include "SweepHangChecker.h"
 
-bool SweepHangChecker::extractSweepLoops(const MetaLoopAnalysis* metaLoopAnalysis) {
+bool SweepHangChecker::extractSweepLoops() {
     for (auto& tg : _transitionGroups) {
         tg.incomingLoops.clear();
         tg.outgoingLoops.clear();
@@ -17,7 +17,7 @@ bool SweepHangChecker::extractSweepLoops(const MetaLoopAnalysis* metaLoopAnalysi
     // Extract sweep loops. There should be at least two (one in each direction), and at most
     // four (when double-ended sweeps are broken up by a mid-sweep transition in both directions)
     int numSweepLoops = 0;
-    for (auto &behavior : metaLoopAnalysis->loopBehaviors()) {
+    for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
         switch (behavior.loopType()) {
             case LoopType::STATIONARY:
             case LoopType::GLIDER: {
@@ -36,10 +36,21 @@ bool SweepHangChecker::extractSweepLoops(const MetaLoopAnalysis* metaLoopAnalysi
             }
             case LoopType::ANCHORED_SWEEP: {
                 int i = behavior.minDpDelta() != 0 ? 0 : 1;
-                if (behavior.loopAnalysis()->dataPointerDelta() > 0) {
+                int dpDelta = behavior.loopAnalysis()->dataPointerDelta();
+                if (dpDelta > 0) {
                     _transitionGroups[i].outgoingLoops.push_back(&behavior);
+                    auto* nextBehavior = &behavior.nextLoop();
+                    while (!nextBehavior->isSweepLoop()) nextBehavior = &nextBehavior->nextLoop();
+                    if (nextBehavior->loopAnalysis()->dataPointerDelta() < 0) {
+                        _transitionGroups[1 - i].incomingLoops.push_back(&behavior);
+                    }
                 } else {
                     _transitionGroups[i].incomingLoops.push_back(&behavior);
+                    auto* prevBehavior = &behavior.prevLoop();
+                    while (!prevBehavior->isSweepLoop()) prevBehavior = &prevBehavior->prevLoop();
+                    if (prevBehavior->loopAnalysis()->dataPointerDelta() > 0) {
+                        _transitionGroups[1 - i].outgoingLoops.push_back(&behavior);
+                    }
                 }
                 numSweepLoops += 1;
             }
@@ -61,15 +72,37 @@ bool SweepHangChecker::extractSweepLoops(const MetaLoopAnalysis* metaLoopAnalysi
     return true;
 }
 
+bool SweepHangChecker::initTransitionSequences(const ExecutionState& executionState) {
+    return true;
+}
+
 bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
                             const ExecutionState& executionState) {
-    if (!extractSweepLoops(metaLoopAnalysis)) {
+    _metaLoopAnalysis = metaLoopAnalysis;
+
+    if (!extractSweepLoops()) {
         return false;
     }
+
+    if (!initTransitionSequences(executionState)) {
+        return false;
+    }
+
+    // TODO: Analyze sweep section deltas
+
+    // TODO: Analyze stationary sequences
+
+    // TODO: Analyze gliding sequences
 
     return true;
 }
 
 Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
+    // TODO: All sweep sections: value is fixed (over time) or moves away from zero
+
+    // TODO: All stationary sequences (including mid-sweep): All values fixed or diverging.
+
+    // TODO: All gliding sequences: Only zeroes ahead and no-recently consumed exit-values.
+
     return Trilian::MAYBE;
 }
