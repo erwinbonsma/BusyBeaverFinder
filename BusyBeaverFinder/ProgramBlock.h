@@ -8,18 +8,15 @@
 #pragma once
 
 #include <iostream>
-#include <assert.h>
+#include <vector>
 
 #include "Types.h"
-
-const int maxProgramBlockEntries = 16;
 
 class ProgramBlock {
     int _startIndex;
 
     // Entries
-    ProgramBlock* _entries[maxProgramBlockEntries];
-    int _numEntries;
+    std::vector<ProgramBlock*> _entries;
 
     // Exits
     ProgramBlock* _zeroBlock;
@@ -52,13 +49,10 @@ public:
     int getInstructionAmount() const { return _instructionAmount; }
     int getNumSteps() const { return _numSteps; }
 
-    void pushEntry(ProgramBlock* entry) {
-        assert(_numEntries < maxProgramBlockEntries);
-        _entries[_numEntries++] = entry;
-    }
-    ProgramBlock* popEntry() { return _entries[--_numEntries]; }
+    void pushEntry(ProgramBlock* entry) { _entries.push_back(entry); }
+    ProgramBlock* popEntry() { auto entry = _entries.back(); _entries.pop_back(); return entry; }
 
-    int numEntryBlocks() const { return _numEntries; }
+    int numEntryBlocks() const { return static_cast<int>(_entries.size()); }
 
     const ProgramBlock* entryBlock(int index) const { return _entries[index]; }
     const ProgramBlock* zeroBlock() const { return _zeroBlock; }

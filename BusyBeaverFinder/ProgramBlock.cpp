@@ -14,7 +14,7 @@ ProgramBlock::ProgramBlock() {
 void ProgramBlock::init(int startIndex) {
     _startIndex = startIndex;
     _isFinalized = false;
-    _numEntries = 0;
+    _entries.clear();
     _zeroBlock = nullptr;
     _nonZeroBlock = nullptr;
 }
@@ -85,4 +85,3 @@ std::ostream &operator<<(std::ostream &os, const ProgramBlock &pb) {
 
     return os;
 }
-
