@@ -17,16 +17,16 @@ constexpr int MAX_ITERATIONS_TO_UNROLL = 2;
 // magic numbers.
 constexpr int NUM_ITERATIONS_TO_ANALYZE = 3;
 
-const LoopBehavior& LoopBehavior::prevLoop() const {
+const LoopBehavior* LoopBehavior::prevLoop() const {
     auto &behaviors = _metaLoopAnalysis->loopBehaviors();
     int loopIndex = _metaLoopAnalysis->loopIndexForSequence(_sequenceIndex);
-    return behaviors[(loopIndex + behaviors.size() - 1) % behaviors.size()];
+    return &behaviors[(loopIndex + behaviors.size() - 1) % behaviors.size()];
 }
 
-const LoopBehavior& LoopBehavior::nextLoop() const {
+const LoopBehavior* LoopBehavior::nextLoop() const {
     auto &behaviors = _metaLoopAnalysis->loopBehaviors();
     int loopIndex = _metaLoopAnalysis->loopIndexForSequence(_sequenceIndex);
-    return behaviors[(loopIndex + 1) % behaviors.size()];
+    return &behaviors[(loopIndex + 1) % behaviors.size()];
 }
 
 LoopType LoopBehavior::loopType() const {
@@ -80,7 +80,7 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
 
             assert(rb->isLoop());
 
-            auto &dataPrev = _loopData[(data.loopIndex - _numLoops + _loopData.size())
+            auto &dataPrev = _loopData[(data.loopIndex + _loopData.size() - numLoops())
                                        % _loopData.size()];
             int blockLen = runSummary.getRunBlockLength(rbIndex);
             int numIter = blockLen / rb->getLoopPeriod();
@@ -140,8 +140,8 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
 
     _seqAnalysis.clear();
-    _numSequences = 0;
-    _numLoops = 0;
+    _sequenceAnalysisPool.reset();
+    _loopAnalysisPool.reset();
 
     _metaLoopPeriod = metaRunSummary.getLoopPeriod();
 
@@ -151,17 +151,11 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
         std::shared_ptr<SequenceAnalysis> analysis = nullptr;
 
         if (rb->isLoop()) {
-            while (_numLoops >= _loopAnalysisPool.size()) {
-                _loopAnalysisPool.push_back(std::make_shared<LoopAnalysis>());
-            }
-            auto loopAnalysis = _loopAnalysisPool[_numLoops++];
+            auto loopAnalysis = _loopAnalysisPool.pop();
             loopAnalysis->analyzeLoop(&runHistory[rb->getStartIndex()], rb->getLoopPeriod());
             analysis = loopAnalysis;
         } else {
-            while (_numSequences >= _sequenceAnalysisPool.size()) {
-                _sequenceAnalysisPool.push_back(std::make_shared<SequenceAnalysis>());
-            }
-            auto sequenceAnalysis = _sequenceAnalysisPool[_numSequences++];
+            auto sequenceAnalysis = _sequenceAnalysisPool.pop();
             sequenceAnalysis->analyzeSequence(&runHistory[rb->getStartIndex()],
                                               runSummary.getRunBlockLength(startIndex + i));
             analysis = sequenceAnalysis;
@@ -208,7 +202,7 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
                 auto &data = *loopDataIt++;
 
                 if (i == 1) {
-                    auto &dataPrev = _loopData[(data.loopIndex - _numLoops + _loopData.size())
+                    auto &dataPrev = _loopData[(data.loopIndex + _loopData.size() - numLoops())
                                                % _loopData.size()];
                     data.dataPointerDelta = dp - dataPrev.dataPointerPos;
                 }
@@ -238,7 +232,7 @@ void MetaLoopAnalysis::initLoopBehaviors() {
         int iterDelta = 0;
         bool isLinear = true;
 
-        for (int j = data.loopIndex % _numLoops; j < _loopData.size(); j += _numLoops) {
+        for (int j = data.loopIndex % numLoops(); j < _loopData.size(); j += numLoops()) {
             auto &data = _loopData[j];
             dpDeltaStart += data.dataPointerDelta;
             iterDelta += data.lastIterationDelta;
@@ -253,6 +247,33 @@ void MetaLoopAnalysis::initLoopBehaviors() {
                                     std::max(dpDeltaStart, dpDeltaEnd),
                                     isLinear ? iterDelta : -1);
     }
+}
+
+
+std::shared_ptr<SequenceAnalysis>
+    MetaLoopAnalysis::unrolledLoopSequenceAnalysis(const ExecutionState &executionState,
+                                                   int sequenceIndex) const
+{
+    assert(_seqAnalysis[sequenceIndex]->isLoop());
+    int loopIndex = loopIndexForSequence(sequenceIndex);
+    assert(_loopBehaviors[loopIndex].iterationDelta() == 0);
+
+    auto result = _unrolledLoopSeqAnalysis.find(sequenceIndex);
+    if (result != _unrolledLoopSeqAnalysis.end()) {
+        return result->second;
+    }
+
+    const RunHistory &runHistory = executionState.getRunHistory();
+    const RunSummary &runSummary = executionState.getRunSummary();
+
+    int rbIndex = _firstRunBlockIndex + sequenceIndex;
+    int pbStart = runSummary.runBlockAt(rbIndex)->getStartIndex();
+    auto sa = _sequenceAnalysisPool.pop();
+    sa->analyzeSequence(&runHistory[pbStart], runSummary.getRunBlockLength(rbIndex));
+
+    _unrolledLoopSeqAnalysis[sequenceIndex] = sa;
+
+    return sa;
 }
 
 void MetaLoopAnalysis::reset() {

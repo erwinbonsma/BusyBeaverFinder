@@ -19,14 +19,26 @@ namespace v2 {
 
 // A transition where the sweep changes direction
 struct SweepTransitionGroup {
+
     // All sweep loops that arrive or depart at this transition point
+    bool atRight;
     std::vector<const LoopBehavior*> sweepLoops;
     SequenceAnalysis transitionSequence;
     DataDeltas _sweepLoopDeltas;
+    DataDeltas _stationaryTransitionDeltas;
+    bool _isStationary;
+
+    void analyze(const MetaLoopAnalysis* metaLoopAnalysis, const RunSummary& runSummary);
+
+    const DataDeltas sweepLoopDeltas() const { return _sweepLoopDeltas; }
+
+private:
 
     void initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
                              const RunSummary& runSummary);
-    const DataDeltas sweepLoopDeltas() const { return _sweepLoopDeltas; }
+    void analyzeStationaryTransition(const MetaLoopAnalysis* metaLoopAnalysis,
+                                     const RunSummary& runSummary);
+    void analyzeGliderTransition();
 };
 
 }
@@ -40,6 +52,8 @@ class SweepHangChecker : public HangChecker {
     bool extractSweepLoops();
     bool initTransitionSequences(const ExecutionState& executionState);
 public:
+    SweepHangChecker();
+
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 
     // The direction indicates the side where the sweep changes direction. When the sweep loops at

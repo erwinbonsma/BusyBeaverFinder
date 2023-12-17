@@ -84,14 +84,30 @@ public:
     int maxDpDelta() const { return _maxDpDelta; }
     int iterationDelta() const { return _iterationDelta; }
 
-    const LoopBehavior& prevLoop() const;
-    const LoopBehavior& nextLoop() const;
+    const LoopBehavior* prevLoop() const;
+    const LoopBehavior* nextLoop() const;
 
     LoopType loopType() const;
     bool isSweepLoop() const {
         LoopType tp = loopType();
         return tp == LoopType::ANCHORED_SWEEP || tp == LoopType::DOUBLE_SWEEP;
     }
+};
+
+// Simple pool that lazily expands when needed. All elements should be returned at once (via reset)
+template <typename T>
+class SimplePool {
+    std::vector<std::shared_ptr<T>> _pool;
+    int _numPopped;
+public:
+    std::shared_ptr<T> pop() {
+        if (_numPopped == _pool.size()) {
+            _pool.push_back(std::make_shared<T>());
+        }
+        return _pool[_numPopped++];
+    }
+    int numPopped() const { return _numPopped; }
+    void reset() { _numPopped = 0; }
 };
 
 /* Analyses a meta-run loop.
@@ -116,16 +132,15 @@ class MetaLoopAnalysis {
     int _numMetaRunBlocks = 0;
     int _numRunBlocks = 0;
 
-    // The number of loops and sequences in one meta runblock loop iteration. These sum to the
-    // meta loop period.
-    int _numLoops = 0;
-    int _numSequences = 0;
-
-    std::vector<std::shared_ptr<SequenceAnalysis>> _sequenceAnalysisPool;
-    std::vector<std::shared_ptr<LoopAnalysis>> _loopAnalysisPool;
+    mutable SimplePool<SequenceAnalysis> _sequenceAnalysisPool;
+    mutable SimplePool<LoopAnalysis> _loopAnalysisPool;
 
     // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
     std::vector<std::shared_ptr<SequenceAnalysis>> _seqAnalysis;
+
+    // The sequence analysis for unrolled loops. It can be generated on demand, for fixed-sized
+    // loops. It is indexed by sequence index.
+    mutable std::map<int, std::shared_ptr<SequenceAnalysis>> _unrolledLoopSeqAnalysis;
 
     // The properties of the loops in the meta-loop. Access by loop index.
     std::vector<MetaLoopData> _loopData;
@@ -141,6 +156,10 @@ class MetaLoopAnalysis {
     void initLoopData(const RunSummary &runSummary, int loopSize);
     bool checkLoopSize(const RunSummary &runSummary, int loopSize);
     bool determineLoopSize(const ExecutionState &executionState);
+
+    // The number of loops in the meta-run block (the meta-loop may contain a multiple of this).
+    // It is valid before analysis is complete.
+    int numLoops() const { return _loopAnalysisPool.numPopped(); }
 
     void determineDpDeltas(const RunSummary &runSummary);
     void initLoopBehaviors();
@@ -168,14 +187,22 @@ public:
     // meta-loop analysis is valid.
     int firstRunBlockIndex() const { return _firstRunBlockIndex; }
 
-    const std::vector<std::shared_ptr<SequenceAnalysis>> sequenceAnalysisResults() {
+    const std::vector<std::shared_ptr<SequenceAnalysis>> sequenceAnalysisResults() const {
         return _seqAnalysis;
     }
+
+    // Returns an analysis of a fixed-size loop as if it was a plain sequence.
+    std::shared_ptr<SequenceAnalysis>
+        unrolledLoopSequenceAnalysis(const ExecutionState &executionState,
+                                     int sequenceIndex) const;
+
     const std::vector<LoopBehavior>& loopBehaviors() const { return _loopBehaviors; }
 
     // Returns how much DP changed after executing the specified run-block. The index is with
     // respect to the run summary.
     int dpDeltaOfRunBlock(const RunSummary& runSummary, int runBlockIndex) const;
+
+    int isLoop(int sequenceIndex) const { return _seqAnalysis[sequenceIndex]->isLoop(); }
 
     int loopIndexForSequence(int sequenceIndex) const { return _loopIndexLookup.at(sequenceIndex); }
     int sequenceIndexForLoop(int loopIndex) const { return _loopData[loopIndex].sequenceIndex; }

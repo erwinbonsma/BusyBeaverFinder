@@ -173,8 +173,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
 
         auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
         REQUIRE(ddr.size() == 2);
-        REQUIRE(ddr.deltaAt(0) == -1);
-        REQUIRE(ddr.deltaAt(1) == 1);
+        REQUIRE(ddr.deltaAt(0) == 1);
+        REQUIRE(ddr.deltaAt(1) == -1);
     }
 
     SECTION("BasicLeftSweep") {
@@ -685,8 +685,6 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
 
-        hangExecutor.dumpExecutionState();
-
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
 
@@ -736,8 +734,6 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-
-        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
