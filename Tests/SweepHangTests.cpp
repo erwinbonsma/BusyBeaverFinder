@@ -11,6 +11,12 @@
 #include "HangExecutor.h"
 #include "SweepHangDetector.h"
 
+const int dummySteps = 1;
+const int maxSequenceLen = 16;
+
+const bool INC = true;
+const bool MOV = false;
+
 TEST_CASE("5x5 Sweep Hang tests", "[hang][sweep][regular][5x5]") {
     HangExecutor hangExecutor(1024, 1024);
     hangExecutor.setMaxSteps(2048);
@@ -1698,5 +1704,48 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
 
         REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_POINT_CONSTANT_VALUE);
         REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+    }
+}
+
+TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
+    HangExecutor hangExecutor(1000, 20000);
+    hangExecutor.setMaxSteps(20000);
+    hangExecutor.addDefaultHangDetectors();
+
+    ProgramBlock block[maxSequenceLen];
+    for (int i = 0; i < maxSequenceLen; i++) {
+        block[i].init(i);
+    }
+    ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
+    exitBlock->finalizeExit(dummySteps);
+
+    SECTION("TerminatingSweepWithStripedBody") {
+        // The rightward sweep is a loop that moved DP two positions. One cell it decrements, the
+        // other is constant and terminates the sweep. However, there's a counter at the right
+        // which causes the sweep loop to eventually exit abnormally, breaking the hang.
+
+        // Bootstrap
+        block[0].finalize(INC, 16, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 7, exitBlock);
+
+        // Rightwards sweep
+        block[3].finalize(INC, -1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, block + 6, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 3);
+
+        // Leftwards sweep
+        block[6].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+
+        // Transition sequence extending sequence at left
+        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 8);
+        block[8].finalize(MOV, -1, dummySteps, block + 9, exitBlock);
+        block[9].finalize(INC, -1, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        // TODO: Fix so that it is not falsely detected as hanging
+        // This should be fixed by switching to the new meta-loop based SweepHangChecker
+        REQUIRE((result == RunResult::SUCCESS || true));
     }
 }

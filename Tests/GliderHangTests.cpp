@@ -14,8 +14,8 @@
 const int dummySteps = 1;
 const int maxSequenceLen = 16;
 
-const int INC = true;
-const int MOV = false;
+const bool INC = true;
+const bool MOV = false;
 
 TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
     HangExecutor hangExecutor(1024, 1000000);

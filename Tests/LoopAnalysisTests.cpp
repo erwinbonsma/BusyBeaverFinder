@@ -15,8 +15,8 @@
 
 const int dummySteps = 1;
 
-const int INC = true;
-const int MOV = false;
+const bool INC = true;
+const bool MOV = false;
 
 TEST_CASE( "Exit condition tests", "[loop-analysis]" ) {
     ExitCondition exitCondition;

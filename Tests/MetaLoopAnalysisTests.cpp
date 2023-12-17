@@ -18,8 +18,8 @@
 const int dummySteps = 1;
 const int maxSequenceLen = 16;
 
-const int INC = true;
-const int MOV = false;
+const bool INC = true;
+const bool MOV = false;
 
 
 // Programs that end up in a permanent meta-loop

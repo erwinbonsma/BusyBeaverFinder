@@ -15,11 +15,11 @@
 const int dummySteps = 1;
 const int maxSequenceLen = 16;
 
-const int INC = true;
-const int MOV = false;
+const bool INC = true;
+const bool MOV = false;
 
 // Sweep programs that may or may not hang.
-TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
+TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
     HangExecutor hangExecutor(1000, 20000);
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
@@ -34,7 +34,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
 
     MetaLoopAnalysis mla;
 
-    SECTION( "BasicRightSweep" ) {
+    SECTION("BasicRightSweep") {
         // Sweep body consists of only ones and extends by one position to the right
 
         // Rightwards sweep
@@ -77,7 +77,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(ddr.size() == 0);
     }
 
-    SECTION( "SweepWithChangingBody" ) {
+    SECTION("SweepWithChangingBody") {
         // Sweep body increases by one each right sweep
 
         // Rightwards sweep
@@ -123,7 +123,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(ddr.deltaAt(0) == 1);
     }
 
-    SECTION( "SweepWithStripedBody" ) {
+    SECTION("SweepWithStripedBody") {
         // Sweep body increases in length by two units. It's body consists of
         // alternating positive and negative values that diverge from zero.
 
@@ -177,7 +177,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(ddr.deltaAt(1) == 1);
     }
 
-    SECTION( "BasicLeftSweep" ) {
+    SECTION("BasicLeftSweep") {
         // Sweep body consists of only ones and extends by one position to the left
 
         // Rightwards sweep
@@ -220,7 +220,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(ddr.size() == 0);
     }
 
-    SECTION( "BasicDualEndedSweep" ) {
+    SECTION("BasicDualEndedSweep") {
         // Sweep body consists of only ones (at the right) and minus ones (at the left) and extends
         // by one position to the left and right
         block[0].finalize(MOV,  1, dummySteps, block + 1, block + 0);
@@ -259,7 +259,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(ddr.size() == 0);
     }
 
-    SECTION( "TwoStateRightSweep" ) {
+    SECTION("TwoStateRightSweep") {
         // Sweep that extends to the right once every two sweep iterations
 
         // Rightwards sweep loop
@@ -312,7 +312,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(!result);  // TODO: Support
     }
 
-    SECTION( "TwoStateRightSweep-SharedTransition" ) {
+    SECTION("TwoStateRightSweep-SharedTransition") {
         // Sweep that extends to the right by either one or two cells. This variation happens even
         // though the rightwards sweep loop always exits at the same instruction _and_ is followed
         // by the same transition sequence.
@@ -373,7 +373,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(!result);  // TODO: support
     }
 
-    SECTION( "ConstantSweepBodyWithStationaryCounter" ) {
+    SECTION("ConstantSweepBodyWithStationaryCounter") {
         // Sweep body consists of only ones and extends by one position to the right.
         // At its left is a counter that is incremented by one each meta-loop iteration.
 
@@ -415,7 +415,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(result);
     }
 
-    SECTION( "ConstantSweepBodyWithStationaryCounter2" ) {
+    SECTION("ConstantSweepBodyWithStationaryCounter2") {
         // Sweep body consists of only ones and extends by one position to the right.
         // At its left is a counter that is incremented by one each meta-loop iteration.
         // This is a result of the premature exit of the left sweep.
@@ -458,7 +458,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(result);
     }
 
-    SECTION( "BootstrappingSweep" ) {
+    SECTION("BootstrappingSweep") {
         // The rightwards sweep is a loop with a bootstrap cycle. The bootstrap results in a
         // negative value moving away from zero, whereas the sweep body consists of positive values
         // that move away from zero.
@@ -502,7 +502,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(result);
     }
 
-    SECTION( "BootstrappingSweep2" ) {
+    SECTION("BootstrappingSweep2") {
         // The rightwards sweep is a loop with a bootstrap cycle. The changes during loop bootstrap
         // are negated by the transition sequence that precedes it.
 
@@ -549,7 +549,7 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(result);
     }
 
-    SECTION( "TwoPartSweep" ) {
+    SECTION("TwoPartSweep") {
         // The rightward sweep is a single loop, whereas the leftward sweep is broken in two
         // parts. The first part traverses the right part of the body, which consists of ones, and
         // the second part traverses the left part, consisting of minus ones.
@@ -604,4 +604,50 @@ TEST_CASE( "Meta-loop (sweeps)", "[meta-loop-analysis][sweep]" ) {
         REQUIRE(!result);  // TODO: support
     }
 
+    SECTION("TerminatingSweepWithStripedBody") {
+        // The rightward sweep is a loop that moved DP two positions. One cell it decrements, the
+        // other is constant and terminates the sweep. However, there's a counter at the right
+        // which causes the sweep loop to eventually exit abnormally, breaking the hang.
+
+        // Bootstrap
+        block[0].finalize(INC, 16, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 7, exitBlock);
+
+        // Rightwards sweep
+        block[3].finalize(INC, -1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(MOV,  1, dummySteps, block + 6, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 3);
+
+        // Leftwards sweep
+        block[6].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+
+        // Transition sequence extending sequence at left
+        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 8);
+        block[8].finalize(MOV, -1, dummySteps, block + 9, exitBlock);
+        block[9].finalize(INC, -1, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        REQUIRE(lb.size() == 2);
+
+        // Leftward sweep
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 2);
+        REQUIRE(lb[0].minDpDelta() == -2);
+        REQUIRE(lb[0].maxDpDelta() == 0);
+        // Rightward sweep
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == -2);
+        REQUIRE(lb[1].maxDpDelta() == 0);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+    }
 }

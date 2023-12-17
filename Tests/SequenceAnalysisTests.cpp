@@ -14,8 +14,8 @@
 const int dummySteps = 1;
 const int maxSequenceLen = 4;
 
-const int INC = true;
-const int MOV = false;
+const bool INC = true;
+const bool MOV = false;
 const bool EQ = true;
 const bool NEQ = false;
 

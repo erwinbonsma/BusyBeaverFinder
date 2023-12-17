@@ -77,7 +77,6 @@ bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns)
 
     runSummary.setHelperBuffer(zArrayHelperBuf);
     runSummary.processNewRunUnits();
-    runSummary.dump();
 
     return checkRunSummary(runSummary, expectedRuns);
 }

@@ -15,8 +15,8 @@
 const int dummySteps = 1;
 const int maxSequenceLen = 16;
 
-const int INC = true;
-const int MOV = false;
+const bool INC = true;
+const bool MOV = false;
 
 // Glider programs that may or may not hang.
 TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
