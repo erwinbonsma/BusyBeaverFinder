@@ -650,4 +650,100 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
     }
+
+    SECTION("SweepWithTwoDependentStationaryEndTransitions") {
+        // The sweep extends to the left by one unit each time. The rightward sweep moves two
+        // units. It alternates between two exits, A and B, which are at different data cells and
+        // also exit at a different loop instruction. The transition sequences at the right are
+        // dependent. The sentinel for exit A is restored to its value by the transition sequence
+        // that follows exit B.
+
+        // Bootstrap
+        block[0].finalize(INC, -2, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC, -1, dummySteps, exitBlock, block + 3);
+
+        // Leftward sweep
+        block[3].finalize(MOV, -1, dummySteps, block + 4, block + 3);
+
+        // Transition - extends sequence at left
+        block[4].finalize(INC, 1, dummySteps, exitBlock, block + 5);
+
+        // Rightward sweep
+        block[5].finalize(INC, 1, dummySteps, block + 9, block + 6);  // exit B
+        block[6].finalize(INC, 1, dummySteps, block + 8, block + 7);  // exit A
+        block[7].finalize(MOV, 2, dummySteps, exitBlock, block + 5);
+
+        // Transition A (partially restores own sentinel)
+        block[ 8].finalize(INC, -1, dummySteps, exitBlock, block + 3);
+
+        // Transition B (restores own sentinel _and_ sentinel for exit A)
+        block[ 9].finalize(INC, -1, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV,  1, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC, -1, dummySteps, exitBlock, block +  3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        hangExecutor.dumpExecutionState();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 8);
+        REQUIRE(lb.size() == 4);
+    }
+
+    SECTION("SweepWithTwoStationaryEndTransitions") {
+        // The sweep extends to the left by one unit each time. The rightward sweep moves one
+        // unit and increments all cells during its traversal. It always exits at the same
+        // loop instruction, but alternatives between two different data positions. The subsequent
+        // transition sequences diverge to restore the sweep's tail so that it keeps alternating
+        // between both sequences. The tail ends are respectively A = [... -1 1 0] and
+        // B = [... -2 -1 0].
+        //
+        // Correctly determining that this program hangs requires properly analyzing the combined
+        // impact of the right sweep (which modifies a sentinel position) and the two transition
+        // sequences at the right.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC, -1, dummySteps, exitBlock, block + 3);
+
+        // Leftward sweep
+        block[3].finalize(MOV, -1, dummySteps, block + 4, block + 3);
+
+        // Transition - extends sequence at left
+        block[4].finalize(INC, 1, dummySteps, exitBlock, block + 5);
+
+        // Rightward sweep
+        block[5].finalize(INC, 1, dummySteps, block + 7, block + 6);
+        block[6].finalize(MOV, 1, dummySteps, exitBlock, block + 5);
+
+        // Transition sequence (right)
+        block[7].finalize(MOV, 1, dummySteps, block + 11, block + 8);
+
+        // Transition A: ... -1 1 0 => ... 0 [1] 0 => ... -2 -1 0
+        block[ 8].finalize(INC, -2, dummySteps, exitBlock, block + 9);
+        block[ 9].finalize(MOV, -1, dummySteps, block + 10, exitBlock);
+        block[10].finalize(INC, -2, dummySteps, exitBlock, block + 3);
+
+        // Transition B: ... -2 -1 0 => ... -1 0 [0] => ... -1 1 0
+        block[11].finalize(MOV, -1, dummySteps, block + 12, exitBlock);
+        block[12].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        hangExecutor.dumpExecutionState();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 8);
+        REQUIRE(lb.size() == 4);
+    }
 }
