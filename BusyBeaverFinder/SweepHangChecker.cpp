@@ -148,7 +148,7 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
                                        ? la->effectiveResultAt(remainder).dpOffset() : 0);
                 int numIter = (atRight
                                ? (maxDp - dpEnd - la->dataDeltas().minDpOffset() + dpDeltaLastIter
-                                  ) / -la->dataPointerDelta()
+                                  ) / la->dataPointerDelta()
                                : (minDp - dpEnd - la->dataDeltas().maxDpOffset() + dpDeltaLastIter
                                   ) / la->dataPointerDelta()) + 1;
                 assert(numIter >= 1);

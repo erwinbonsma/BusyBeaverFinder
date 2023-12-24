@@ -806,4 +806,52 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         REQUIRE(dd.deltaAt( 3) == 3);
         REQUIRE(dd.deltaAt( 4) == 6);
     }
+
+    SECTION("StationaryTransitionAtRightOfSweep") {
+        // Basically an inverse of StationaryTransitionAtLeftOfSweep
+
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  7, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -4, dummySteps, block + 6, exitBlock);
+
+        // Leftwards sweep, increments one
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV, -1, dummySteps, block + 6, block + 4);
+
+        // Rightwards sweep, increments two
+        block[6].finalize(INC,  2, dummySteps, exitBlock, block + 7);
+        block[7].finalize(MOV,  1, dummySteps, block + 8, block + 6);
+
+        // Stationary transition under test
+        block[ 8].finalize(MOV, -4, dummySteps, exitBlock, block +  9);
+        block[ 9].finalize(INC,  3, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV,  7, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC,  4, dummySteps, exitBlock, block + 12);
+        block[12].finalize(MOV, -4, dummySteps, exitBlock, block +  4);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        REQUIRE(lb.size() == 2);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        auto &stg = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        REQUIRE(stg.isStationary());
+
+        auto &dd = stg.stationaryTransitionDeltas();
+        REQUIRE(dd.size() == 5);
+        REQUIRE(dd.deltaAt( 3) == 4);
+        REQUIRE(dd.deltaAt(-1) == 3);
+        REQUIRE(dd.deltaAt(-2) == 3);
+        REQUIRE(dd.deltaAt(-3) == 3);
+        REQUIRE(dd.deltaAt(-4) == 6);
+    }
 }
