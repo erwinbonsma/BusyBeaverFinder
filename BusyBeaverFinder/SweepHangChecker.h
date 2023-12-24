@@ -31,12 +31,12 @@ struct SweepTransitionGroup {
     const DataDeltas& sweepLoopDeltas() const { return _sweepLoopDeltas; }
 
     const bool isStationary() const { return _isStationary; }
-    const DataDeltas& stationaryTransitionDeltas() const { return _stationaryTransitionDeltas; }
+    const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
 
 private:
     SequenceAnalysis transitionSequence;
     DataDeltas _sweepLoopDeltas;
-    DataDeltas _stationaryTransitionDeltas;
+    DataDeltas _transitionDeltas;
     bool _isStationary;
 
     struct Bounds {
@@ -47,9 +47,8 @@ private:
     void initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
                              const RunSummary& runSummary);
 
-    void analyzeStationaryTransition(const MetaLoopAnalysis* metaLoopAnalysis,
-                                     const ExecutionState& executionState);
-    void analyzeGliderTransition();
+    void analyzeTransition(const MetaLoopAnalysis* metaLoopAnalysis,
+                           const ExecutionState& executionState);
 };
 
 }

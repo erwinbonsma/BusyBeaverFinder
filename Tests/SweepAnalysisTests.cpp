@@ -70,11 +70,15 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
-        REQUIRE(ddl.size() == 0);
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        REQUIRE(etl.sweepLoopDeltas().size() == 0);
+        REQUIRE(etl.transitionDeltas().size() == 0);
 
-        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
-        REQUIRE(ddr.size() == 0);
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        REQUIRE(etl.sweepLoopDeltas().size() == 0);
+        auto& ddr = etr.transitionDeltas();
+        REQUIRE(ddr.size() == 1);
+        REQUIRE(ddr.deltaAt(0) == 1);
     }
 
     SECTION("SweepWithChangingBody") {
@@ -114,13 +118,19 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
-        REQUIRE(ddl.size() == 1);
-        REQUIRE(ddl.deltaAt(0) == 1);
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        auto& sdl = etl.sweepLoopDeltas();
+        REQUIRE(sdl.size() == 1);
+        REQUIRE(sdl.deltaAt(0) == 1);
+        REQUIRE(etl.transitionDeltas().size() == 0);
 
-        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
-        REQUIRE(ddr.size() == 1);
-        REQUIRE(ddr.deltaAt(0) == 1);
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        auto& sdr = etr.sweepLoopDeltas();
+        REQUIRE(sdr.size() == 1);
+        REQUIRE(sdr.deltaAt(0) == 1);
+        auto& tdr = etr.transitionDeltas();
+        REQUIRE(tdr.size() == 1);
+        REQUIRE(tdr.deltaAt(0) == 2);  // Includes delta of next incoming sweep
     }
 
     SECTION("SweepWithStripedBody") {
@@ -166,15 +176,22 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
-        REQUIRE(ddl.size() == 2);
-        REQUIRE(ddl.deltaAt(0) == -1);
-        REQUIRE(ddl.deltaAt(1) == 1);
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        auto& sdl = etl.sweepLoopDeltas();
+        REQUIRE(sdl.size() == 2);
+        REQUIRE(sdl.deltaAt(0) == -1);
+        REQUIRE(sdl.deltaAt(1) == 1);
 
-        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
-        REQUIRE(ddr.size() == 2);
-        REQUIRE(ddr.deltaAt(0) == 1);
-        REQUIRE(ddr.deltaAt(1) == -1);
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        auto& sdr = etr.sweepLoopDeltas();
+        REQUIRE(sdr.size() == 2);
+        REQUIRE(sdr.deltaAt(0) == 1);
+        REQUIRE(sdr.deltaAt(1) == -1);
+        auto& tdr = etr.transitionDeltas();
+        REQUIRE(tdr.size() == 1);
+        REQUIRE(tdr.deltaAt(0) == 2);
+        // Even though the sequence is extend with two non-zero values each meta-loop iteration,
+        // only one delta is realized by the transition.
     }
 
     SECTION("BasicLeftSweep") {
@@ -187,7 +204,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[1].finalize(MOV, -1, dummySteps, block + 2, block + 1);
 
         // Transition sequence that extends sequence at left
-        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
+        block[2].finalize(INC,  3, dummySteps, exitBlock, block + 0);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
@@ -213,11 +230,14 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
-        REQUIRE(ddl.size() == 0);
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        REQUIRE(etl.sweepLoopDeltas().size() == 0);
+        auto& tdl = etl.transitionDeltas();
+        REQUIRE(tdl.size() == 1);
+        REQUIRE(tdl.deltaAt(0) == 3);
 
-        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
-        REQUIRE(ddr.size() == 0);
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        REQUIRE(etr.sweepLoopDeltas().size() == 0);
     }
 
     SECTION("BasicDualEndedSweep") {
@@ -252,11 +272,11 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
-        REQUIRE(ddl.size() == 0);
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        REQUIRE(etl.sweepLoopDeltas().size() == 0);
 
-        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
-        REQUIRE(ddr.size() == 0);
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        REQUIRE(etr.sweepLoopDeltas().size() == 0);
     }
 
     SECTION("TwoStateRightSweep") {
@@ -798,7 +818,7 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         auto &stg = hangChecker.sweepEndTransition(DataDirection::LEFT);
         REQUIRE(stg.isStationary());
 
-        auto &dd = stg.stationaryTransitionDeltas();
+        auto &dd = stg.transitionDeltas();
         REQUIRE(dd.size() == 5);
         REQUIRE(dd.deltaAt(-3) == 4);
         REQUIRE(dd.deltaAt( 1) == 3);
@@ -846,7 +866,7 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         auto &stg = hangChecker.sweepEndTransition(DataDirection::RIGHT);
         REQUIRE(stg.isStationary());
 
-        auto &dd = stg.stationaryTransitionDeltas();
+        auto &dd = stg.transitionDeltas();
         REQUIRE(dd.size() == 5);
         REQUIRE(dd.deltaAt( 3) == 4);
         REQUIRE(dd.deltaAt(-1) == 3);

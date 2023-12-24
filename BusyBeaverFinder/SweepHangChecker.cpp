@@ -52,12 +52,12 @@ void SweepTransitionGroup::initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopA
     }
 }
 
-void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* mla,
-                                                       const ExecutionState& state) {
+void SweepTransitionGroup::analyzeTransition(const MetaLoopAnalysis* mla,
+                                             const ExecutionState& state) {
     auto &runHistory = state.getRunHistory();
     auto &runSummary = state.getRunSummary();
 
-    assert(_stationaryTransitionDeltas.size() == 0);
+    _transitionDeltas.clear();
 
     // First collect the contribution of the sequences (thereby also determining the DP range)
     int dp = 0;
@@ -85,7 +85,7 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
             }
             if (dd) {
                 for (auto delta : *dd) {
-                    _stationaryTransitionDeltas.addDelta(delta.dpOffset(), delta.delta());
+                    _transitionDeltas.addDelta(delta.dpOffset(), delta.delta());
                 }
             }
         }
@@ -99,7 +99,6 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
         rbIndex += 1;
         seqIndex = (seqIndex + 1) % mla->loopSize();
     }
-    std::cout << _stationaryTransitionDeltas << std::endl;
 
     // Next, now the range is known, add the contributions from the sweep loops
     dp = 0;
@@ -108,8 +107,8 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
     rbIndex = mla->firstRunBlockIndex() + seqIndex;
     nextSweepLoop = lastSweepLoop->nextLoop();
     bool outgoing = true;
-    int minDp = _stationaryTransitionDeltas.minDpOffset();
-    int maxDp = _stationaryTransitionDeltas.maxDpOffset();
+    int minDp = _transitionDeltas.minDpOffset();
+    int maxDp = _transitionDeltas.maxDpOffset();
     auto isDeltaInRange = [=](int dp) { return (dp >= minDp && dp <= maxDp); };
     for (int i = mla->loopSize(); --i >= 0; ) {
         if (seqIndex == nextSweepLoop->sequenceIndex()) {
@@ -132,8 +131,7 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
 
                 auto begin = runHistory.cbegin() + pbIndex;
                 auto end = begin + la->loopSize() * numIter;
-                _stationaryTransitionDeltas.bulkAdd(begin, end, dp, isDeltaInRange);
-                std::cout << "After outgoing: " << _stationaryTransitionDeltas << std::endl;
+                _transitionDeltas.bulkAdd(begin, end, dp, isDeltaInRange);
             } else {
                 // Incoming loop: Determine which iteration the loop comes in range, and run it
                 // until it terminates
@@ -147,9 +145,9 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
                 int dpDeltaLastIter = ((remainder > 0)
                                        ? la->effectiveResultAt(remainder).dpOffset() : 0);
                 int numIter = (atRight
-                               ? (maxDp - dpEnd - la->dataDeltas().minDpOffset() + dpDeltaLastIter
+                               ? (dpEnd + la->dataDeltas().maxDpOffset() - minDp - dpDeltaLastIter
                                   ) / la->dataPointerDelta()
-                               : (minDp - dpEnd - la->dataDeltas().maxDpOffset() + dpDeltaLastIter
+                               : (dpEnd + la->dataDeltas().minDpOffset() - maxDp - dpDeltaLastIter
                                   ) / la->dataPointerDelta()) + 1;
                 assert(numIter >= 1);
                 int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
@@ -157,8 +155,7 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
 
                 auto end = runHistory.cbegin() + pbIndexNext;
                 auto begin = end - remainder - la->loopSize() * numIter;
-                _stationaryTransitionDeltas.bulkAdd(begin, end, dpStart, isDeltaInRange);
-                std::cout << "After incoming: " << _stationaryTransitionDeltas << std::endl;
+                _transitionDeltas.bulkAdd(begin, end, dpStart, isDeltaInRange);
             }
         }
 
@@ -195,12 +192,7 @@ void SweepTransitionGroup::analyze(const MetaLoopAnalysis* metaLoopAnalysis,
     }
 
     initSweepLoopDeltas(metaLoopAnalysis, executionState.getRunSummary());
-
-    _stationaryTransitionDeltas.clear();
-    if (_isStationary) {
-        analyzeStationaryTransition(metaLoopAnalysis, executionState);
-    } else {
-    }
+    analyzeTransition(metaLoopAnalysis, executionState);
 }
 
 } // namespace v2
@@ -289,9 +281,7 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
         tg.analyze(metaLoopAnalysis, executionState);
     }
 
-    // TODO: Analyze stationary sequences
-
-    // TODO: Analyze gliding sequences
+    // TODO: Analyze mid-sweep transition (if any)
 
     return true;
 }
