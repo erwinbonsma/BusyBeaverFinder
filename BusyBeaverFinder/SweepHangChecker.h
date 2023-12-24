@@ -26,7 +26,10 @@ struct SweepTransitionGroup {
 
     void analyze(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 
+    // When the sweep loops at both sides of the sweep are the same (e.g. when there is no
+    // mid-sweep transition) the deltas in both sweep transition groups are equivalent.
     const DataDeltas& sweepLoopDeltas() const { return _sweepLoopDeltas; }
+
     const bool isStationary() const { return _isStationary; }
     const DataDeltas& stationaryTransitionDeltas() const { return _stationaryTransitionDeltas; }
 
@@ -43,12 +46,6 @@ private:
 
     void initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
                              const RunSummary& runSummary);
-
-    Bounds determineStationaryTransitionBounds(const MetaLoopAnalysis* metaLoopAnalysis,
-                                               const ExecutionState& executionState);
-    void collectStationaryTransitionDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
-                                           const ExecutionState& executionState,
-                                           Bounds bounds);
 
     void analyzeStationaryTransition(const MetaLoopAnalysis* metaLoopAnalysis,
                                      const ExecutionState& executionState);
@@ -70,15 +67,12 @@ public:
 
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 
-    // The direction indicates the side where the sweep changes direction. When the sweep loops at
-    // both sides are the same (e.g. when there is no mid-sweep transition) the deltas at both
-    // sides are equivalent.
-    // TODO: Remove
     const DataDeltas& sweepLoopDeltas(DataDirection dir) {
         return _transitionGroups[dir == DataDirection::RIGHT].sweepLoopDeltas();
     }
 
-    const v2::SweepTransitionGroup& sweepTransitionGroup(DataDirection dir) {
+    // The direction indicates the side where the sweep changes direction.
+    const v2::SweepTransitionGroup& sweepEndTransition(DataDirection dir) {
         return _transitionGroups[dir == DataDirection::RIGHT];
     }
 

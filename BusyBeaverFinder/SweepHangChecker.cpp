@@ -52,59 +52,6 @@ void SweepTransitionGroup::initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopA
     }
 }
 
-SweepTransitionGroup::Bounds SweepTransitionGroup::determineStationaryTransitionBounds
-    (const MetaLoopAnalysis* mla, const ExecutionState& executionState)
-{
-    auto &runSummary = executionState.getRunSummary();
-
-    int dp = 0;
-    Bounds bounds;
-    bool isAtSweepEnd = true; // The first loop is an incoming loop
-    auto lastSweepLoop = sweepLoops[0];
-    int seqIndex = lastSweepLoop->sequenceIndex() + 1; // Start at instruction after incoming loop
-    assert(seqIndex < mla->loopSize());
-    int rbIndex = mla->firstRunBlockIndex() + seqIndex;
-    auto nextSweepLoop = lastSweepLoop->nextLoop();
-    for (int i = mla->loopSize(); --i >= 0; ) {
-        if (isAtSweepEnd) {
-            const DataDeltas* dd = nullptr;
-            if (mla->isLoop(seqIndex)) {
-                if (seqIndex != nextSweepLoop->sequenceIndex()) {
-                    // This is a fixed-size loop
-                    assert(mla->loopIterationDelta(mla->loopIndexForSequence(seqIndex)) == 0);
-                    auto sa = mla->unrolledLoopSequenceAnalysis(executionState, seqIndex);
-                    dd = &sa->dataDeltas();
-                }
-            } else {
-                auto sa = mla->sequenceAnalysisResults()[seqIndex];
-                dd = &sa->dataDeltas();
-            }
-            if (dd) {
-                bounds.minDp = std::min(bounds.minDp, dp + dd->minDpOffset());
-                bounds.maxDp = std::max(bounds.maxDp, dp + dd->maxDpOffset());
-            }
-        }
-
-        dp += mla->dpDeltaOfRunBlock(runSummary, rbIndex);
-        if (seqIndex == nextSweepLoop->sequenceIndex()) {
-            isAtSweepEnd = !isAtSweepEnd;
-            lastSweepLoop = nextSweepLoop;
-            nextSweepLoop = lastSweepLoop->nextLoop();
-        }
-        rbIndex += 1;
-        seqIndex = (seqIndex + 1) % mla->loopSize();
-    }
-
-    return bounds;
-}
-
-void SweepTransitionGroup::collectStationaryTransitionDeltas(const MetaLoopAnalysis* mla,
-                                                             const ExecutionState& state,
-                                                             Bounds bounds) {
-
-
-}
-
 void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* mla,
                                                        const ExecutionState& state) {
     auto &runHistory = state.getRunHistory();

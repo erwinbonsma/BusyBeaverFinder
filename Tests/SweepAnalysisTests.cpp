@@ -70,10 +70,10 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
         REQUIRE(ddl.size() == 0);
 
-        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
         REQUIRE(ddr.size() == 0);
     }
 
@@ -114,11 +114,11 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
         REQUIRE(ddl.size() == 1);
         REQUIRE(ddl.deltaAt(0) == 1);
 
-        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
         REQUIRE(ddr.size() == 1);
         REQUIRE(ddr.deltaAt(0) == 1);
     }
@@ -166,12 +166,12 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
         REQUIRE(ddl.size() == 2);
         REQUIRE(ddl.deltaAt(0) == -1);
         REQUIRE(ddl.deltaAt(1) == 1);
 
-        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
         REQUIRE(ddr.size() == 2);
         REQUIRE(ddr.deltaAt(0) == 1);
         REQUIRE(ddr.deltaAt(1) == -1);
@@ -213,10 +213,10 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
         REQUIRE(ddl.size() == 0);
 
-        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
         REQUIRE(ddr.size() == 0);
     }
 
@@ -252,10 +252,10 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto& ddl = hangChecker.sweepLoopDeltas(DataDirection::LEFT);
+        auto& ddl = hangChecker.sweepEndTransition(DataDirection::LEFT).sweepLoopDeltas();
         REQUIRE(ddl.size() == 0);
 
-        auto& ddr = hangChecker.sweepLoopDeltas(DataDirection::RIGHT);
+        auto& ddr = hangChecker.sweepEndTransition(DataDirection::RIGHT).sweepLoopDeltas();
         REQUIRE(ddr.size() == 0);
     }
 
@@ -768,19 +768,19 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         block[3].finalize(MOV,  4, dummySteps, block + 6, exitBlock);
 
         // Rightwards sweep, increments one
-        block[6].finalize(INC,  1, dummySteps, exitBlock, block + 7);
-        block[7].finalize(MOV,  1, dummySteps, block + 8, block + 6);
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, block + 6, block + 4);
 
         // Leftwards sweep, increments two
-        block[8].finalize(INC,  2, dummySteps, exitBlock, block + 9);
-        block[9].finalize(MOV, -1, dummySteps, block + 10, block + 8);
+        block[6].finalize(INC,  2, dummySteps, exitBlock, block + 7);
+        block[7].finalize(MOV, -1, dummySteps, block + 8, block + 6);
 
         // Stationary transition under test
-        block[10].finalize(MOV, 4, dummySteps, exitBlock, block + 11);
-        block[11].finalize(INC, 3, dummySteps, exitBlock, block + 12);
-        block[12].finalize(MOV, -7, dummySteps, exitBlock, block + 13);
-        block[13].finalize(INC, 4, dummySteps, exitBlock, block + 14);
-        block[14].finalize(MOV, 4, dummySteps, exitBlock, block + 6);
+        block[ 8].finalize(MOV,  4, dummySteps, exitBlock, block +  9);
+        block[ 9].finalize(INC,  3, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV, -7, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC,  4, dummySteps, exitBlock, block + 12);
+        block[12].finalize(MOV,  4, dummySteps, exitBlock, block +  4);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
@@ -795,7 +795,7 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        auto &stg = hangChecker.sweepTransitionGroup(DataDirection::LEFT);
+        auto &stg = hangChecker.sweepEndTransition(DataDirection::LEFT);
         REQUIRE(stg.isStationary());
 
         auto &dd = stg.stationaryTransitionDeltas();
