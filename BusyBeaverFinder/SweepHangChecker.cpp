@@ -52,11 +52,13 @@ void SweepTransitionGroup::initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopA
     }
 }
 
-void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* mla,
-                                                       const RunSummary& runSummary) {
-    // First determine the combined range of all sequences (and fixed-size loops) at this end
-    // of the sweep.
-    int dp = 0, minDp = 0, maxDp = 0;
+SweepTransitionGroup::Bounds SweepTransitionGroup::determineStationaryTransitionBounds
+    (const MetaLoopAnalysis* mla, const ExecutionState& executionState)
+{
+    auto &runSummary = executionState.getRunSummary();
+
+    int dp = 0;
+    Bounds bounds;
     bool isAtSweepEnd = true; // The first loop is an incoming loop
     auto lastSweepLoop = sweepLoops[0];
     int seqIndex = lastSweepLoop->sequenceIndex() + 1; // Start at instruction after incoming loop
@@ -70,17 +72,16 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
                 if (seqIndex != nextSweepLoop->sequenceIndex()) {
                     // This is a fixed-size loop
                     assert(mla->loopIterationDelta(mla->loopIndexForSequence(seqIndex)) == 0);
-                    // TODO: Get the data deltas of the unrolled loop
-                    // => Let MLA generate it on-demand (and cache it)
-                    // Note: Also needed when calculating deltas
+                    auto sa = mla->unrolledLoopSequenceAnalysis(executionState, seqIndex);
+                    dd = &sa->dataDeltas();
                 }
             } else {
                 auto sa = mla->sequenceAnalysisResults()[seqIndex];
                 dd = &sa->dataDeltas();
             }
             if (dd) {
-                minDp = std::min(minDp, dp + dd->minDpOffset());
-                maxDp = std::min(maxDp, dp + dd->maxDpOffset());
+                bounds.minDp = std::min(bounds.minDp, dp + dd->minDpOffset());
+                bounds.maxDp = std::max(bounds.maxDp, dp + dd->maxDpOffset());
             }
         }
 
@@ -93,10 +94,141 @@ void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* m
         rbIndex += 1;
         seqIndex = (seqIndex + 1) % mla->loopSize();
     }
+
+    return bounds;
 }
 
+void SweepTransitionGroup::collectStationaryTransitionDeltas(const MetaLoopAnalysis* mla,
+                                                             const ExecutionState& state,
+                                                             Bounds bounds) {
+
+
+}
+
+void SweepTransitionGroup::analyzeStationaryTransition(const MetaLoopAnalysis* mla,
+                                                       const ExecutionState& state) {
+    auto &runHistory = state.getRunHistory();
+    auto &runSummary = state.getRunSummary();
+
+    assert(_stationaryTransitionDeltas.size() == 0);
+
+    // First collect the contribution of the sequences (thereby also determining the DP range)
+    int dp = 0;
+    bool isAtSweepEnd = true; // The first loop is an incoming loop
+    auto lastSweepLoop = sweepLoops[0];
+
+    // Start at instruction after incoming loop
+    int seqIndex = (lastSweepLoop->sequenceIndex() + 1) % mla->loopSize();
+
+    int rbIndex = mla->firstRunBlockIndex() + seqIndex;
+    auto nextSweepLoop = lastSweepLoop->nextLoop();
+    for (int i = mla->loopSize(); --i >= 0; ) {
+        if (isAtSweepEnd) {
+            const DataDeltas* dd = nullptr;
+            if (mla->isLoop(seqIndex)) {
+                if (seqIndex != nextSweepLoop->sequenceIndex()) {
+                    // This is a fixed-size loop
+                    assert(mla->loopIterationDelta(mla->loopIndexForSequence(seqIndex)) == 0);
+                    auto sa = mla->unrolledLoopSequenceAnalysis(state, seqIndex);
+                    dd = &sa->dataDeltas();
+                }
+            } else {
+                auto sa = mla->sequenceAnalysisResults()[seqIndex];
+                dd = &sa->dataDeltas();
+            }
+            if (dd) {
+                for (auto delta : *dd) {
+                    _stationaryTransitionDeltas.addDelta(delta.dpOffset(), delta.delta());
+                }
+            }
+        }
+
+        dp += mla->dpDeltaOfRunBlock(runSummary, rbIndex);
+        if (seqIndex == nextSweepLoop->sequenceIndex()) {
+            isAtSweepEnd = !isAtSweepEnd;
+            lastSweepLoop = nextSweepLoop;
+            nextSweepLoop = lastSweepLoop->nextLoop();
+        }
+        rbIndex += 1;
+        seqIndex = (seqIndex + 1) % mla->loopSize();
+    }
+    std::cout << _stationaryTransitionDeltas << std::endl;
+
+    // Next, now the range is known, add the contributions from the sweep loops
+    dp = 0;
+    lastSweepLoop = sweepLoops[0];
+    seqIndex = lastSweepLoop->sequenceIndex() + 1; // Start at instruction after incoming loop
+    rbIndex = mla->firstRunBlockIndex() + seqIndex;
+    nextSweepLoop = lastSweepLoop->nextLoop();
+    bool outgoing = true;
+    int minDp = _stationaryTransitionDeltas.minDpOffset();
+    int maxDp = _stationaryTransitionDeltas.maxDpOffset();
+    auto isDeltaInRange = [=](int dp) { return (dp >= minDp && dp <= maxDp); };
+    for (int i = mla->loopSize(); --i >= 0; ) {
+        if (seqIndex == nextSweepLoop->sequenceIndex()) {
+            int loopIndex = mla->loopIndexForSequence(seqIndex);
+            auto &behavior = mla->loopBehaviors()[loopIndex];
+            auto la = behavior.loopAnalysis();
+            int pbIndex = runSummary.runBlockAt(rbIndex)->getStartIndex();
+
+            if (outgoing) {
+                // Outgoing loop: add deltas until its out of range
+
+                // Calculate how many iterations before all modifications of the loop are beyond
+                // the stationary data delta range.
+                int numIter = (atRight
+                               ? (minDp - dp - la->dataDeltas().maxDpOffset()
+                                  ) / la->dataPointerDelta()
+                               : (maxDp - dp - la->dataDeltas().minDpOffset()
+                                  ) / la->dataPointerDelta()) + 1;
+                assert(numIter >= 1);
+
+                auto begin = runHistory.cbegin() + pbIndex;
+                auto end = begin + la->loopSize() * numIter;
+                _stationaryTransitionDeltas.bulkAdd(begin, end, dp, isDeltaInRange);
+                std::cout << "After outgoing: " << _stationaryTransitionDeltas << std::endl;
+            } else {
+                // Incoming loop: Determine which iteration the loop comes in range, and run it
+                // until it terminates
+                //
+                // Note: As the loop may not fully execute its last iteration, deltas from its
+                // last iteration could theoretically fall outside the loop's data delta range.
+                // Ignoring this for now.
+
+                int dpEnd = dp + mla->dpDeltaOfRunBlock(runSummary, rbIndex);
+                int remainder = mla->loopRemainder(loopIndex);
+                int dpDeltaLastIter = ((remainder > 0)
+                                       ? la->effectiveResultAt(remainder).dpOffset() : 0);
+                int numIter = (atRight
+                               ? (maxDp - dpEnd - la->dataDeltas().minDpOffset() + dpDeltaLastIter
+                                  ) / -la->dataPointerDelta()
+                               : (minDp - dpEnd - la->dataDeltas().maxDpOffset() + dpDeltaLastIter
+                                  ) / la->dataPointerDelta()) + 1;
+                assert(numIter >= 1);
+                int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
+                int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
+
+                auto end = runHistory.cbegin() + pbIndexNext;
+                auto begin = end - remainder - la->loopSize() * numIter;
+                _stationaryTransitionDeltas.bulkAdd(begin, end, dpStart, isDeltaInRange);
+                std::cout << "After incoming: " << _stationaryTransitionDeltas << std::endl;
+            }
+        }
+
+        dp += mla->dpDeltaOfRunBlock(runSummary, rbIndex);
+        if (seqIndex == nextSweepLoop->sequenceIndex()) {
+            outgoing = !outgoing;
+            lastSweepLoop = nextSweepLoop;
+            nextSweepLoop = lastSweepLoop->nextLoop();
+        }
+        rbIndex += 1;
+        seqIndex = (seqIndex + 1) % mla->loopSize();
+    }
+}
+
+
 void SweepTransitionGroup::analyze(const MetaLoopAnalysis* metaLoopAnalysis,
-                                   const RunSummary& runSummary) {
+                                   const ExecutionState& executionState) {
     int i = 0;
     for (auto loop : sweepLoops) {
         bool stationary = atRight ? loop->maxDpDelta() == 0 : loop->minDpDelta() == 0;
@@ -115,13 +247,13 @@ void SweepTransitionGroup::analyze(const MetaLoopAnalysis* metaLoopAnalysis,
         sweepLoops.push_back(firstLoop);
     }
 
-    initSweepLoopDeltas(metaLoopAnalysis, runSummary);
+    initSweepLoopDeltas(metaLoopAnalysis, executionState.getRunSummary());
 
-//    _stationaryTransitionDeltas.clear();
-//    if (_isStationary) {
-//        analyzeStationaryTransition(metaLoopAnalysis, runSummary);
-//    } else {
-//    }
+    _stationaryTransitionDeltas.clear();
+    if (_isStationary) {
+        analyzeStationaryTransition(metaLoopAnalysis, executionState);
+    } else {
+    }
 }
 
 } // namespace v2
@@ -207,7 +339,7 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     }
 
     for (auto& tg : _transitionGroups) {
-        tg.analyze(metaLoopAnalysis, executionState.getRunSummary());
+        tg.analyze(metaLoopAnalysis, executionState);
     }
 
     // TODO: Analyze stationary sequences

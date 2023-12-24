@@ -20,24 +20,38 @@ namespace v2 {
 // A transition where the sweep changes direction
 struct SweepTransitionGroup {
 
-    // All sweep loops that arrive or depart at this transition point
     bool atRight;
+    // All sweep loops that arrive or depart at this transition point
     std::vector<const LoopBehavior*> sweepLoops;
+
+    void analyze(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
+
+    const DataDeltas& sweepLoopDeltas() const { return _sweepLoopDeltas; }
+    const bool isStationary() const { return _isStationary; }
+    const DataDeltas& stationaryTransitionDeltas() const { return _stationaryTransitionDeltas; }
+
+private:
     SequenceAnalysis transitionSequence;
     DataDeltas _sweepLoopDeltas;
     DataDeltas _stationaryTransitionDeltas;
     bool _isStationary;
 
-    void analyze(const MetaLoopAnalysis* metaLoopAnalysis, const RunSummary& runSummary);
-
-    const DataDeltas sweepLoopDeltas() const { return _sweepLoopDeltas; }
-
-private:
+    struct Bounds {
+        int minDp = 0;
+        int maxDp = 0;
+    };
 
     void initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
                              const RunSummary& runSummary);
+
+    Bounds determineStationaryTransitionBounds(const MetaLoopAnalysis* metaLoopAnalysis,
+                                               const ExecutionState& executionState);
+    void collectStationaryTransitionDeltas(const MetaLoopAnalysis* metaLoopAnalysis,
+                                           const ExecutionState& executionState,
+                                           Bounds bounds);
+
     void analyzeStationaryTransition(const MetaLoopAnalysis* metaLoopAnalysis,
-                                     const RunSummary& runSummary);
+                                     const ExecutionState& executionState);
     void analyzeGliderTransition();
 };
 
@@ -59,8 +73,13 @@ public:
     // The direction indicates the side where the sweep changes direction. When the sweep loops at
     // both sides are the same (e.g. when there is no mid-sweep transition) the deltas at both
     // sides are equivalent.
-    const DataDeltas sweepLoopDeltas(DataDirection dir) {
-        return _transitionGroups[dir == DataDirection::RIGHT]._sweepLoopDeltas;
+    // TODO: Remove
+    const DataDeltas& sweepLoopDeltas(DataDirection dir) {
+        return _transitionGroups[dir == DataDirection::RIGHT].sweepLoopDeltas();
+    }
+
+    const v2::SweepTransitionGroup& sweepTransitionGroup(DataDirection dir) {
+        return _transitionGroups[dir == DataDirection::RIGHT];
     }
 
     Trilian proofHang(const ExecutionState& executionState) override;

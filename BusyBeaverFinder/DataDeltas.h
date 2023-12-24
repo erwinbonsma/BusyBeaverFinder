@@ -10,6 +10,8 @@
 #include <vector>
 #include <iostream>
 
+#include "RunSummary.h"
+
 class DataDelta {
     int _dpOffset;
     int _delta;
@@ -30,9 +32,18 @@ public:
 };
 
 class DataDeltas {
+    // TODO: Store using map?
+    // Note: This then also changes iteration
     std::vector<DataDelta> _dataDeltas;
 
+    // Cache bounds
+    mutable int _minDp;
+    mutable int _maxDp;
+    mutable bool _dpBoundsValid;
+
     typedef std::vector<DataDelta>::const_iterator const_iterator;
+
+    void updateBounds() const;
 
 public:
     void clear() { _dataDeltas.clear(); }
@@ -50,6 +61,38 @@ public:
     // Adds the given delta. It should only be used when it was first checked that no delta exists
     // yet for this offset (using deltaAt). It is then more efficient than using updateDelta.
     void addDelta(int dpOffset, int delta);
+
+    // Adds the contribution from a range of ProgramBlocks from RunHistory.
+    // Note: Cannot iterate in reverse order, as this messes with DP updates.
+    template <typename Iterator>
+    void bulkAdd(Iterator begin, Iterator end, int dp0) {
+        int dp = dp0;
+        Iterator it = begin;
+        while (it != end) {
+            const ProgramBlock *pb = *it++;
+            if (pb->isDelta()) {
+                updateDelta(dp, pb->getInstructionAmount());
+            } else {
+                dp += pb->getInstructionAmount();
+            }
+        }
+    }
+
+    template <typename Iterator, typename Predicate>
+    void bulkAdd(Iterator begin, Iterator end, int dp0, Predicate pred) {
+        int dp = dp0;
+        Iterator it = begin;
+        while (it != end) {
+            const ProgramBlock *pb = *it++;
+            if (pb->isDelta()) {
+                if (pred(dp)) {
+                    updateDelta(dp, pb->getInstructionAmount());
+                }
+            } else {
+                dp += pb->getInstructionAmount();
+            }
+        }
+    }
 
     const_iterator begin() const { return _dataDeltas.cbegin(); }
     const_iterator end() const { return _dataDeltas.cend(); }

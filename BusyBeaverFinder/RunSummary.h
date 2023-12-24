@@ -11,9 +11,8 @@
 #include <vector>
 
 #include "InterpretedProgram.h"
+#include "ProgramBlock.h"
 #include "Utils.h"
-
-class ProgramBlock;
 
 typedef int RunUnitId;
 

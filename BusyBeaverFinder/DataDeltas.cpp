@@ -8,20 +8,30 @@
 
 #include "DataDeltas.h"
 
-int DataDeltas::minDpOffset() const {
-    int min = 0;
+void DataDeltas::updateBounds() const {
+    _minDp = 0;
+    _maxDp = 0;
+
     for (const DataDelta &dd : _dataDeltas) {
-        min = std::min(min, dd.dpOffset());
+        int dp = dd.dpOffset();
+        _minDp = std::min(_minDp, dp);
+        _maxDp = std::max(_maxDp, dp);
     }
-    return min;
+    _dpBoundsValid = true;
+}
+
+int DataDeltas::minDpOffset() const {
+    if (!_dpBoundsValid) {
+        updateBounds();
+    }
+    return _minDp;
 }
 
 int DataDeltas::maxDpOffset() const {
-    int max = 0;
-    for (const DataDelta &dd : _dataDeltas) {
-        max = std::max(max, dd.dpOffset());
+    if (!_dpBoundsValid) {
+        updateBounds();
     }
-    return max;
+    return _maxDp;
 }
 
 int DataDeltas::deltaAt(int dpOffset) const {
@@ -37,6 +47,8 @@ int DataDeltas::deltaAt(int dpOffset) const {
 
 int DataDeltas::updateDelta(int dpOffset, int delta) {
     auto iter = _dataDeltas.begin();
+
+    _dpBoundsValid = false; // Invalidate cache
 
     // Find existing delta record, if any
     while (iter != _dataDeltas.end() && iter->dpOffset() != dpOffset) {
@@ -62,6 +74,7 @@ int DataDeltas::updateDelta(int dpOffset, int delta) {
 }
 
 void DataDeltas::addDelta(int dpOffset, int delta) {
+    _dpBoundsValid = false;
     _dataDeltas.push_back(DataDelta(dpOffset, delta));
 }
 

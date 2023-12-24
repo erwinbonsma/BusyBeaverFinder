@@ -743,3 +743,67 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(lb.size() == 4);
     }
 }
+
+TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
+    HangExecutor hangExecutor(1000, 20000);
+    hangExecutor.setMaxSteps(20000);
+    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
+
+    SweepHangChecker hangChecker;
+
+    ProgramBlock block[maxSequenceLen];
+    for (int i = 0; i < maxSequenceLen; i++) {
+        block[i].init(i);
+    }
+    ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
+
+    MetaLoopAnalysis mla;
+
+    SECTION("StationaryTransitionAtLeftOfSweep") {
+        // Stationary transition sequence at left with a large DP-range for testing purposes.
+
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -7, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV,  4, dummySteps, block + 6, exitBlock);
+
+        // Rightwards sweep, increments one
+        block[6].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+        block[7].finalize(MOV,  1, dummySteps, block + 8, block + 6);
+
+        // Leftwards sweep, increments two
+        block[8].finalize(INC,  2, dummySteps, exitBlock, block + 9);
+        block[9].finalize(MOV, -1, dummySteps, block + 10, block + 8);
+
+        // Stationary transition under test
+        block[10].finalize(MOV, 4, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC, 3, dummySteps, exitBlock, block + 12);
+        block[12].finalize(MOV, -7, dummySteps, exitBlock, block + 13);
+        block[13].finalize(INC, 4, dummySteps, exitBlock, block + 14);
+        block[14].finalize(MOV, 4, dummySteps, exitBlock, block + 6);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        REQUIRE(lb.size() == 2);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        auto &stg = hangChecker.sweepTransitionGroup(DataDirection::LEFT);
+        REQUIRE(stg.isStationary());
+
+        auto &dd = stg.stationaryTransitionDeltas();
+        REQUIRE(dd.size() == 5);
+        REQUIRE(dd.deltaAt(-3) == 4);
+        REQUIRE(dd.deltaAt( 1) == 3);
+        REQUIRE(dd.deltaAt( 2) == 3);
+        REQUIRE(dd.deltaAt( 3) == 3);
+        REQUIRE(dd.deltaAt( 4) == 6);
+    }
+}
