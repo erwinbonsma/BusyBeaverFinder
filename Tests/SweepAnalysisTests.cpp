@@ -75,7 +75,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(etl.transitionDeltas().size() == 0);
 
         auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
-        REQUIRE(etl.sweepLoopDeltas().size() == 0);
+        REQUIRE(etr.sweepLoopDeltas().size() == 0);
         auto& ddr = etr.transitionDeltas();
         REQUIRE(ddr.size() == 1);
         REQUIRE(ddr.deltaAt(0) == 1);
@@ -194,6 +194,52 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // only one delta is realized by the transition.
     }
 
+    SECTION("SweepWithShiftingBodyUpdates") {
+        // The leftward sweep makes two different modifications: -1 and +3. Their positions,
+        // however, shift by one each iteration of the meta-loop, so the effective delta is +2.
+
+        // Transition sequence that extends sequence
+        block[0].finalize(INC,  3, dummySteps, exitBlock, block + 1);
+
+        // Leftwards sweep
+        block[1].finalize(MOV, -1, dummySteps, block + 5, block + 2);
+        block[2].finalize(INC, -1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 5, block + 4);
+        block[4].finalize(INC,  3, dummySteps, exitBlock, block + 1);
+
+        // Rightwards sweep
+        block[5].finalize(MOV,  1, dummySteps, block + 0, block + 5);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 6);
+        REQUIRE(lb.size() == 4);
+
+        // The loop behaviors are nearly identical
+        for (int i = 0; i < 4; ++i) {
+            REQUIRE(lb[i].loopType() == LoopType::ANCHORED_SWEEP);
+            REQUIRE(lb[i].minDpDelta() == 0);
+            REQUIRE(lb[i].maxDpDelta() == 2);
+            // The loop-body (and DP delta) differs for the leftward and rightward sweep. Therefore
+            // the iteration delta differs
+            REQUIRE(lb[i].iterationDelta() == ((i + 1) % 2) + 1);
+        }
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        auto& sdl = etl.sweepLoopDeltas();
+        REQUIRE(sdl.size() == 2);
+        REQUIRE(sdl.deltaAt(0) == 2);
+        REQUIRE(sdl.deltaAt(1) == 2);
+    }
+
     SECTION("BasicLeftSweep") {
         // Sweep body consists of only ones and extends by one position to the left
 
@@ -307,29 +353,26 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(mla.loopSize() == 6);
         REQUIRE(lb.size() == 4);
 
-        // Rightward sweep
-        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[0].iterationDelta() == 1);
-        REQUIRE(lb[0].minDpDelta() == 0);
-        REQUIRE(lb[0].maxDpDelta() == 1);
-        // Leftward sweep
-        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[1].iterationDelta() == 1);
-        REQUIRE(lb[1].minDpDelta() == 0);
-        REQUIRE(lb[1].maxDpDelta() == 1);
-        // Rightward sweep
-        REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[2].iterationDelta() == 1);
-        REQUIRE(lb[2].minDpDelta() == 0);
-        REQUIRE(lb[2].maxDpDelta() == 1);
-        // Leftward sweep
-        REQUIRE(lb[3].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[3].iterationDelta() == 1);
-        REQUIRE(lb[3].minDpDelta() == 0);
-        REQUIRE(lb[3].maxDpDelta() == 1);
+        // All sweep loops behave the same
+        for (int i = 0; i < 4; ++i) {
+            REQUIRE(lb[i].loopType() == LoopType::ANCHORED_SWEEP);
+            REQUIRE(lb[i].iterationDelta() == 1);
+            REQUIRE(lb[i].minDpDelta() == 0);
+            REQUIRE(lb[i].maxDpDelta() == 1);
+        }
 
         result = hangChecker.init(&mla, hangExecutor);
-        REQUIRE(!result);  // TODO: Support
+        REQUIRE(result);
+
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        REQUIRE(etl.sweepLoopDeltas().size() == 0);
+        auto& tdl = etl.transitionDeltas();
+        REQUIRE(tdl.size() == 0);
+
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        auto& tdr = etr.transitionDeltas();
+        REQUIRE(tdr.size() == 1);
+        REQUIRE(tdr.deltaAt(0) == 2);
     }
 
     SECTION("TwoStateRightSweep-SharedTransition") {
@@ -390,7 +433,9 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(lb[3].maxDpDelta() == 3);
 
         result = hangChecker.init(&mla, hangExecutor);
-        REQUIRE(!result);  // TODO: support
+        REQUIRE(result);
+
+        // TODO: Check SweepHangChecker's analysis results
     }
 
     SECTION("ConstantSweepBodyWithStationaryCounter") {
@@ -621,7 +666,9 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(lb[2].maxDpDelta() == 0);
 
         result = hangChecker.init(&mla, hangExecutor);
-        REQUIRE(!result);  // TODO: support
+        REQUIRE(result);
+
+        // TODO: Check SweepHangChecker's analysis results
     }
 
     SECTION("TerminatingSweepWithStripedBody") {

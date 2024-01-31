@@ -46,7 +46,7 @@ void SweepTransitionGroup::initSweepLoopDeltas(const MetaLoopAnalysis* metaLoopA
             int deltaRange = abs(loop->loopAnalysis()->dataPointerDelta());
             for (int i = 0; i < numDeltas; i += deltaRange) {
                 int dpDelta = normalizedMod(dpOffset + dd.dpOffset() + i, numDeltas);
-                _sweepLoopDeltas.addDelta(dpDelta, dd.delta());
+                _sweepLoopDeltas.updateDelta(dpDelta, dd.delta());
             }
         }
     }
@@ -80,13 +80,15 @@ void SweepTransitionGroup::analyzeTransition(const MetaLoopAnalysis* mla,
                     dd = &sa->dataDeltas();
                 }
             } else {
-                auto sa = mla->sequenceAnalysisResults()[seqIndex];
+                auto sa = mla->sequenceAnalysis(seqIndex);
                 dd = &sa->dataDeltas();
             }
             if (dd) {
                 for (auto delta : *dd) {
-                    _transitionDeltas.addDelta(delta.dpOffset(), delta.delta());
+                    _transitionDeltas.updateDelta(delta.dpOffset(), delta.delta());
                 }
+//                std::cout << "seq dd: " << *dd << std::endl;
+//                std::cout << "deltas: " << _transitionDeltas << std::endl;
             }
         }
 
@@ -100,6 +102,8 @@ void SweepTransitionGroup::analyzeTransition(const MetaLoopAnalysis* mla,
         seqIndex = (seqIndex + 1) % mla->loopSize();
     }
 
+//    std::cout << "atRight = " << atRight << ", deltas: " << _transitionDeltas << std::endl;
+
     // Next, now the range is known, add the contributions from the sweep loops
     dp = 0;
     lastSweepLoop = sweepLoops[0];
@@ -111,6 +115,9 @@ void SweepTransitionGroup::analyzeTransition(const MetaLoopAnalysis* mla,
     int maxDp = _transitionDeltas.maxDpOffset();
     auto isDeltaInRange = [=](int dp) { return (dp >= minDp && dp <= maxDp); };
     for (int i = mla->loopSize(); --i >= 0; ) {
+//        std::cout << "seqIndex = " << seqIndex << ", dp = " << dp << ", rbIndex = " << rbIndex
+//        << ", outgoing = " << outgoing << std::endl;
+
         if (seqIndex == nextSweepLoop->sequenceIndex()) {
             int loopIndex = mla->loopIndexForSequence(seqIndex);
             auto &behavior = mla->loopBehaviors()[loopIndex];
@@ -149,7 +156,11 @@ void SweepTransitionGroup::analyzeTransition(const MetaLoopAnalysis* mla,
                                   ) / la->dataPointerDelta()
                                : (dpEnd + la->dataDeltas().minDpOffset() - maxDp - dpDeltaLastIter
                                   ) / la->dataPointerDelta()) + 1;
-                assert(numIter >= 1);
+                // The number of complete iterations that the loop traverses the sequence can be
+                // zero when the DP delta in its last iteration is large (and outside its
+                // effective squashed DP range). The calculation can even (incorrectly) get a
+                // negative value. Fix this (and err on the side of caution).
+                numIter = std::max(numIter, 2);
                 int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
                 int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
 
@@ -252,12 +263,6 @@ bool SweepHangChecker::extractSweepLoops() {
                 numSweepLoops += 1;
             }
         }
-    }
-
-    if (numSweepLoops != 2) {
-        // TODO: Extend to support mid-sweep transitions
-        // TODO: Extend to support meta-loops consisting of more than one meta-run loop iteration
-        return false;
     }
 
     for (auto& tg : _transitionGroups) {

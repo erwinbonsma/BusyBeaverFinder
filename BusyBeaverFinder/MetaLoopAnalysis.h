@@ -52,6 +52,10 @@ struct MetaLoopData {
 };
 
 class MetaLoopAnalysis;
+
+// Describes how a loop tat is part of a meta-loop, behaves in the context of the meta-loop.
+// More specifically, how does the number of iterations and the data cells it visits change over
+// time?
 class LoopBehavior {
     const MetaLoopAnalysis* _metaLoopAnalysis;
     // The index of the loop in the MetaLoopAnalysis
@@ -190,6 +194,9 @@ public:
     const std::vector<std::shared_ptr<SequenceAnalysis>> sequenceAnalysisResults() const {
         return _seqAnalysis;
     }
+    const std::shared_ptr<SequenceAnalysis> sequenceAnalysis(int sequenceIndex) const {
+        return _seqAnalysis[sequenceIndex % _metaLoopPeriod];
+    }
 
     // Returns an analysis of a fixed-size loop as if it was a plain sequence.
     std::shared_ptr<SequenceAnalysis>
@@ -202,7 +209,9 @@ public:
     // respect to the run summary.
     int dpDeltaOfRunBlock(const RunSummary& runSummary, int runBlockIndex) const;
 
-    int isLoop(int sequenceIndex) const { return _seqAnalysis[sequenceIndex]->isLoop(); }
+    int isLoop(int sequenceIndex) const {
+        return _seqAnalysis[sequenceIndex % _metaLoopPeriod]->isLoop();
+    }
 
     int loopIndexForSequence(int sequenceIndex) const { return _loopIndexLookup.at(sequenceIndex); }
     int sequenceIndexForLoop(int loopIndex) const { return _loopData[loopIndex].sequenceIndex; }
