@@ -95,22 +95,43 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
 //        std::cout << "seqIndex = " << seqIndex << ", dp = " << dp << ", rbIndex = " << rbIndex
 //        << std::endl;
         auto &loc = checker.locationInSweep(seqIndex);
-        if (loc.isAt(_location) && !loc.isSweepLoop()) {
-            const DataDeltas* dd = nullptr;
-            if (analysis->isLoop(seqIndex)) {
-                // This is a fixed-size loop
-                assert(analysis->loopIterationDelta(analysis->loopIndexForSequence(seqIndex)) == 0);
-                auto sa = analysis->unrolledLoopSequenceAnalysis(state, seqIndex);
-                dd = &sa->dataDeltas();
-            } else {
-                auto sa = analysis->sequenceAnalysis(seqIndex);
-                dd = &sa->dataDeltas();
+        if (loc.isAt(_location)) {
+            if (!loc.isSweepLoop()) {
+                const DataDeltas* dd = nullptr;
+                if (analysis->isLoop(seqIndex)) {
+                    // This is a fixed-size loop
+                    assert(analysis->loopIterationDelta(analysis->loopIndexForSequence(seqIndex)
+                                                        ) == 0);
+                    auto sa = analysis->unrolledLoopSequenceAnalysis(state, seqIndex);
+                    dd = &sa->dataDeltas();
+                } else {
+                    auto sa = analysis->sequenceAnalysis(seqIndex);
+                    dd = &sa->dataDeltas();
+                }
+                for (auto delta : *dd) {
+                    _transitionDeltas.updateDelta(delta.dpOffset() + dp, delta.delta());
+                }
+//                std::cout << "seq dd: " << *dd << std::endl;
+//                std::cout << "deltas: " << _transitionDeltas << std::endl;
+            } else if (loc.end == _location) {
+                // Check if the incoming loop has a remainder. If so, also add this. This needs
+                // to be done here, as sometimes the only delta realized at a transition is from
+                // a pre-mature exit, which may be outside of the transition range otherwise.
+                auto &loopBehavior = checker.loopBehavior(seqIndex);
+                auto la = loopBehavior.loopAnalysis();
+                int loopIndex = analysis->loopIndexForSequence(seqIndex);
+                int remainder = analysis->loopRemainder(loopIndex);
+                if (remainder > 0) {
+                    int dpEnd = dp + analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
+                    int dpDeltaLastIter = la->effectiveResultAt(remainder - 1).dpOffset();
+                    int dpStart = dpEnd - dpDeltaLastIter;
+                    int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
+
+                    auto end = runHistory.cbegin() + pbIndexNext;
+                    auto begin = end - remainder;
+                    _transitionDeltas.bulkAdd(begin, end, dpStart);
+                }
             }
-            for (auto delta : *dd) {
-                _transitionDeltas.updateDelta(delta.dpOffset() + dp, delta.delta());
-            }
-//            std::cout << "seq dd: " << *dd << std::endl;
-//            std::cout << "deltas: " << _transitionDeltas << std::endl;
         }
 
         dp += analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
@@ -181,8 +202,8 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
                 int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
                 int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
 
-                auto end = runHistory.cbegin() + pbIndexNext;
-                auto begin = end - remainder - la->loopSize() * numIter;
+                auto end = runHistory.cbegin() + pbIndexNext - remainder;
+                auto begin = end - la->loopSize() * numIter;
                 _transitionDeltas.bulkAdd(begin, end, dpStart, isDeltaInRange);
 //                std::cout << "dd: " << _transitionDeltas << std::endl;
             }
