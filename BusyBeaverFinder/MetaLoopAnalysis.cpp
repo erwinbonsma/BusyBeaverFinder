@@ -42,6 +42,15 @@ LoopType LoopBehavior::loopType() const {
     return LoopType::DOUBLE_SWEEP;
 }
 
+std::ostream &operator<<(std::ostream &os, const LoopBehavior &behavior) {
+    os << "minDpDelta = " << behavior.minDpDelta()
+    << ", maxDpDelta = " << behavior.maxDpDelta()
+    << ", iterationDelta = " << behavior.iterationDelta();
+
+    return os;
+}
+
+
 void MetaLoopAnalysis::initLoopData(const RunSummary &runSummary, int loopSize) {
     _loopData.clear();
     _loopIndexLookup.clear();
@@ -356,4 +365,27 @@ bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
     _numMetaRunBlocks = executionState.getMetaRunSummary().getNumRunBlocks();
 
     return true;
+}
+
+void MetaLoopAnalysis::dump() const {
+    std::cout << *this << std::endl;
+}
+
+std::ostream &operator<<(std::ostream &os, const MetaLoopAnalysis &mla) {
+    os << "loopPeriod = " << mla.metaLoopPeriod()
+    << ", loopSize = " << mla.loopSize()
+    << ", firstRunBlockIndex = " << mla.firstRunBlockIndex()
+    << std::endl;
+
+    os << "Sequences:" << std::endl;
+    for (int i = 0; i < mla.metaLoopPeriod(); ++i) {
+        os << i << ". " << *mla.sequenceAnalysisResults()[i] << std::endl;
+    }
+
+    os << "Loop behaviors:" << std::endl;
+    for (auto& behavior : mla.loopBehaviors()) {
+        os << behavior.sequenceIndex() << ". " << behavior << std::endl;
+    }
+
+    return os;
 }

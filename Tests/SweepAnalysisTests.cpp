@@ -546,6 +546,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+        mla.dump();
         auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
@@ -616,8 +617,9 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
 
     SECTION("TwoPartSweep") {
         // The rightward sweep is a single loop, whereas the leftward sweep is broken in two
-        // parts. The first part traverses the right part of the body, which consists of ones, and
-        // the second part traverses the left part, consisting of minus ones.
+        // parts. The first part traverses the right part of the body, which consists of positive
+        // values that increase, and the second part traverses the left part, consisting of minus
+        // ones.
 
         // Rightwards sweep
         block[0].finalize(MOV,  1, dummySteps, block + 1, block + 0);
@@ -626,21 +628,21 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[1].finalize(INC,  1, dummySteps, exitBlock, block + 2);
 
         // Leftwards sweep - Part 1
-        block[2].finalize(MOV, -1, dummySteps, block + 5, block + 3);
-        block[3].finalize(INC,  1, dummySteps, block + 5, block + 4);
-        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 2);
+        block[2].finalize(MOV, -1, dummySteps, block + 4, block + 3);
+        block[3].finalize(INC,  1, dummySteps, block + 4, block + 2);
 
         // Mid-sequence transition
-        block[5].finalize(INC, -1, dummySteps, exitBlock, block + 6);
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 5);
 
         // Leftwards sweep - Part 2
-        block[6].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+        block[5].finalize(MOV, -1, dummySteps, block + 6, block + 5);
 
         // Transition sequence extending sequence at left
-        block[7].finalize(INC, -1, dummySteps, exitBlock, block + 0);
+        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 0);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
+        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -650,25 +652,38 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(lb.size() == 3);
 
         // Rightward sweep
-        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
-        REQUIRE(lb[0].iterationDelta() == 2);
-        REQUIRE(lb[0].minDpDelta() == -1);
-        REQUIRE(lb[0].maxDpDelta() == 1);
+        REQUIRE(lb[2].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[2].iterationDelta() == 2);
+        REQUIRE(lb[2].minDpDelta() == -1);
+        REQUIRE(lb[2].maxDpDelta() == 1);
         // Leftward sweep - Part 1
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        // Leftward sweep - Part 2
         REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
         REQUIRE(lb[1].iterationDelta() == 1);
-        REQUIRE(lb[1].minDpDelta() == 0);
-        REQUIRE(lb[1].maxDpDelta() == 1);
-        // Leftward sweep - Part 2
-        REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[2].iterationDelta() == 1);
-        REQUIRE(lb[2].minDpDelta() == -1);
-        REQUIRE(lb[2].maxDpDelta() == 0);
+        REQUIRE(lb[1].minDpDelta() == -1);
+        REQUIRE(lb[1].maxDpDelta() == 0);
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        // TODO: Check SweepHangChecker's analysis results
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        auto& sdl = etl.sweepLoopDeltas();
+        REQUIRE(sdl.size() == 0);
+        auto& tdl = etl.transitionDeltas();
+        REQUIRE(tdl.size() == 1);
+        REQUIRE(tdl.deltaAt(0) == -1);
+
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        auto& sdr = etr.sweepLoopDeltas();
+        REQUIRE(sdr.size() == 1);
+        REQUIRE(sdr.deltaAt(0) == 1);
+        auto& tdr = etr.transitionDeltas();
+        REQUIRE(tdr.size() == 1);
+        REQUIRE(tdr.deltaAt(0) == 1);
     }
 
     SECTION("TerminatingSweepWithStripedBody") {

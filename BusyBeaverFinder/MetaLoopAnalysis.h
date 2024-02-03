@@ -88,6 +88,7 @@ public:
     int maxDpDelta() const { return _maxDpDelta; }
     int iterationDelta() const { return _iterationDelta; }
 
+    // TODO: Remove?
     const LoopBehavior* prevLoop() const;
     const LoopBehavior* nextLoop() const;
 
@@ -97,6 +98,9 @@ public:
         return tp == LoopType::ANCHORED_SWEEP || tp == LoopType::DOUBLE_SWEEP;
     }
 };
+
+std::ostream &operator<<(std::ostream &os, const LoopBehavior &behavior);
+
 
 // Simple pool that lazily expands when needed. All elements should be returned at once (via reset)
 template <typename T>
@@ -199,9 +203,8 @@ public:
     }
 
     // Returns an analysis of a fixed-size loop as if it was a plain sequence.
-    std::shared_ptr<SequenceAnalysis>
-        unrolledLoopSequenceAnalysis(const ExecutionState &executionState,
-                                     int sequenceIndex) const;
+    std::shared_ptr<SequenceAnalysis> unrolledLoopSequenceAnalysis(const ExecutionState &execState,
+                                                                   int sequenceIndex) const;
 
     const std::vector<LoopBehavior>& loopBehaviors() const { return _loopBehaviors; }
 
@@ -235,4 +238,8 @@ public:
     int loopRemainder(int loopIndex) const {
         return _loopData[loopIndex].loopRemainder;
     }
+
+    void dump() const;
 };
+
+std::ostream &operator<<(std::ostream &os, const MetaLoopAnalysis &mla);
