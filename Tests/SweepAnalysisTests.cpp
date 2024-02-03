@@ -641,7 +641,6 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -686,7 +685,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
     }
 
     SECTION("TerminatingSweepWithStripedBody") {
-        // The rightward sweep is a loop that moved DP two positions. One cell it decrements, the
+        // The rightward sweep is a loop that moves DP two positions. One cell it decrements, the
         // other is constant and terminates the sweep. However, there's a counter at the right
         // which causes the sweep loop to eventually exit abnormally, breaking the hang.
 
@@ -796,7 +795,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
     SECTION("SweepWithTwoStationaryEndTransitions") {
         // The sweep extends to the left by one unit each time. The rightward sweep moves one
         // unit and increments all cells during its traversal. It always exits at the same
-        // loop instruction, but alternatives between two different data positions. The subsequent
+        // loop instruction, but alternates between two different data positions. The subsequent
         // transition sequences diverge to restore the sweep's tail so that it keeps alternating
         // between both sequences. The tail ends are respectively A = [... -1 1 0] and
         // B = [... -2 -1 0].
@@ -841,6 +840,24 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 8);
         REQUIRE(lb.size() == 4);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        auto& sdl = etl.sweepLoopDeltas();
+        REQUIRE(sdl.size() == 1);
+        REQUIRE(sdl.deltaAt(0) == 2);
+        auto& tdl = etl.transitionDeltas();
+        REQUIRE(tdl.size() == 2);
+        REQUIRE(tdl.deltaAt(0) == 3);
+        REQUIRE(tdl.deltaAt(-1) == 2);
+
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        auto& sdr = etr.sweepLoopDeltas();
+        REQUIRE(sdr.size() == 1);
+        auto& tdr = etr.transitionDeltas();
+        REQUIRE(tdr.size() == 0);
     }
 }
 
