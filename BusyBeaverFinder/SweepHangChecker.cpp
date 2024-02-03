@@ -129,7 +129,7 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
                                   ) / la->dataPointerDelta()
                                : (maxDp - dp - la->dataDeltas().minDpOffset()
                                   ) / la->dataPointerDelta()) + 1;
-                assert(numIter >= 1);
+                numIter = std::max(numIter, 0);
 
                 auto begin = runHistory.cbegin() + pbIndex;
                 auto end = begin + la->loopSize() * numIter;
@@ -243,12 +243,12 @@ bool SweepHangChecker::locateSweepLoops() {
             } else {
                 // This is an incoming loop
                 loc.end = dpDelta > 0 ? LocationInSweep::RIGHT : LocationInSweep::LEFT;
-                numIn[loc.start == LocationInSweep::LEFT] += 1;
+                numIn[loc.end == LocationInSweep::LEFT] += 1;
             }
         }
     }
 
-    if (numOut[0] != numIn[0] || numOut[1] || numIn[1]) {
+    if (numOut[0] != numIn[0] || numOut[1] != numIn[1]) {
         // The incoming and outgoing count should match
         return false;
     }
