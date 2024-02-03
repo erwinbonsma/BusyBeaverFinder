@@ -87,7 +87,7 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
                 dd = &sa->dataDeltas();
             }
             for (auto delta : *dd) {
-                _transitionDeltas.updateDelta(delta.dpOffset(), delta.delta());
+                _transitionDeltas.updateDelta(delta.dpOffset() + dp, delta.delta());
             }
             std::cout << "seq dd: " << *dd << std::endl;
             std::cout << "deltas: " << _transitionDeltas << std::endl;
@@ -146,7 +146,7 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
                 int loopIndex = analysis->loopIndexForSequence(seqIndex);
                 int remainder = analysis->loopRemainder(loopIndex);
                 int dpDeltaLastIter = ((remainder > 0)
-                                       ? la->effectiveResultAt(remainder).dpOffset() : 0);
+                                       ? la->effectiveResultAt(remainder - 1).dpOffset() : 0);
                 int numIter = (_location == LocationInSweep::RIGHT
                                ? (dpEnd + la->dataDeltas().maxDpOffset() - minDp - dpDeltaLastIter
                                   ) / la->dataPointerDelta()

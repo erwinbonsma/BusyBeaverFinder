@@ -546,7 +546,6 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
-        mla.dump();
         auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
@@ -773,6 +772,25 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 8);
         REQUIRE(lb.size() == 4);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        auto& etl = hangChecker.sweepEndTransition(DataDirection::LEFT);
+        auto& sdl = etl.sweepLoopDeltas();
+        REQUIRE(sdl.size() == 2);
+        REQUIRE(sdl.deltaAt(0) == 2);
+        REQUIRE(sdl.deltaAt(1) == 2);
+        auto& tdl = etl.transitionDeltas();
+        REQUIRE(tdl.size() == 2);
+        REQUIRE(tdl.deltaAt(0) == 3);
+        REQUIRE(tdl.deltaAt(-1) == 3);
+
+        auto& etr = hangChecker.sweepEndTransition(DataDirection::RIGHT);
+        auto& sdr = etr.sweepLoopDeltas();
+        REQUIRE(sdr.size() == 2);
+        auto& tdr = etr.transitionDeltas();
+        REQUIRE(tdr.size() == 0);
     }
 
     SECTION("SweepWithTwoStationaryEndTransitions") {
