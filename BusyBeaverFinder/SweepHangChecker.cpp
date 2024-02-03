@@ -76,8 +76,8 @@ void SweepHangChecker::SweepLoop::analyze(const SweepHangChecker& checker,
     initSweepLoopDeltas(checker, executionState.getRunSummary());
 }
 
-void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker& checker,
-                                                          const ExecutionState& state) {
+void SweepHangChecker::TransitionGroup::addDeltasFromTransitions(const SweepHangChecker& checker,
+                                                                 const ExecutionState& state) {
     auto &runHistory = state.getRunHistory();
     auto &runSummary = state.getRunSummary();
     auto &analysis = checker._metaLoopAnalysis;
@@ -85,7 +85,6 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
 
     _transitionDeltas.clear();
 
-    // First collect the contribution of the sequences (thereby also determining the DP range)
     int dp = 0;
 
     // Start at instruction after incoming loop
@@ -130,6 +129,8 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
                     auto end = runHistory.cbegin() + pbIndexNext;
                     auto begin = end - remainder;
                     _transitionDeltas.bulkAdd(begin, end, dpStart);
+
+//                    std::cout << "deltas: " << _transitionDeltas << std::endl;
                 }
             }
         }
@@ -138,15 +139,22 @@ void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker
         seqIndex = (seqIndex + 1) % loopSize;
         rbIndex += 1;
     }
+}
+
+void SweepHangChecker::TransitionGroup::addDeltasFromSweepLoops(const SweepHangChecker& checker,
+                                                                const ExecutionState& state) {
+    auto &runHistory = state.getRunHistory();
+    auto &runSummary = state.getRunSummary();
+    auto &analysis = checker._metaLoopAnalysis;
+    int loopSize = analysis->loopSize();
 
 //    std::cout << "atRight = " << (_location == LocationInSweep::RIGHT)
 //    << ", deltas: " << _transitionDeltas << std::endl;
 
-    // Next, now the range is known, add the contributions from the sweep loops
-    dp = 0;
+    int dp = 0;
     // Start at instruction after incoming loop
-    seqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
-    rbIndex = analysis->firstRunBlockIndex() + seqIndex;
+    int seqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
+    int rbIndex = analysis->firstRunBlockIndex() + seqIndex;
     int minDp = _transitionDeltas.minDpOffset();
     int maxDp = _transitionDeltas.maxDpOffset();
     auto isDeltaInRange = [=](int dp) { return (dp >= minDp && dp <= maxDp); };
@@ -236,7 +244,11 @@ void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
         }
     }
 
-    analyzeTransition(checker, executionState);
+    // First collect the contribution of the sequences (thereby also determining the DP range)
+    addDeltasFromTransitions(checker, executionState);
+
+    // Next, now the range is known, add the contributions from the sweep loops
+    addDeltasFromSweepLoops(checker, executionState);
 }
 
 bool SweepHangChecker::locateSweepLoops() {

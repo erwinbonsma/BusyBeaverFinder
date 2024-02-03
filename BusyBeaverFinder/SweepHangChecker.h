@@ -64,8 +64,10 @@ public:
         int _incomingLoopSeqIndex;
         bool _isStationary;
 
-        void analyzeTransition(const SweepHangChecker& checker,
-                               const ExecutionState& executionState);
+        void addDeltasFromTransitions(const SweepHangChecker& checker,
+                                      const ExecutionState& executionState);
+        void addDeltasFromSweepLoops(const SweepHangChecker& checker,
+                                     const ExecutionState& executionState);
     };
 
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
