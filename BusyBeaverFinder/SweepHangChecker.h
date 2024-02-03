@@ -8,6 +8,7 @@
 #pragma once
 
 #include <array>
+#include <optional>
 #include <vector>
 
 #include "DataDeltas.h"
@@ -24,8 +25,9 @@ public:
         RIGHT
     };
 
-    // A transition where the sweep changes direction
-    struct TransitionGroup {
+    class SweepLoop {
+      public:
+        SweepLoop(LocationInSweep loc) : _location(loc) {}
 
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
@@ -33,38 +35,47 @@ public:
         // mid-sweep transition) the deltas in both sweep transition groups are equivalent.
         const DataDeltas& sweepLoopDeltas() const { return _sweepLoopDeltas; }
 
+      private:
+        // Location should either be LEFT or RIGHT to uniquely identify the loop (as there are
+        // two different loops arriving/departing from MID).
+        LocationInSweep _location;
+
+        DataDeltas _sweepLoopDeltas;
+        // Index of (one of) the incoming sweep-loop(s)
+        int _incomingLoopSeqIndex;
+
+        void initSweepLoopDeltas(const SweepHangChecker& checker, const RunSummary& runSummary);
+    };
+
+    // A transition where sweeps end and start
+    class TransitionGroup {
+      public:
+        TransitionGroup(LocationInSweep loc) : _location(loc) {}
+
+        void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
+
         const bool isStationary() const { return _isStationary; }
         const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
 
-      protected:
-        LocationInSweep _location;
       private:
-        DataDeltas _sweepLoopDeltas;
+        LocationInSweep _location;
         DataDeltas _transitionDeltas;
         // Index of (one of) the incoming sweep-loop(s)
         int _incomingLoopSeqIndex;
         bool _isStationary;
 
-        void initSweepLoopDeltas(const SweepHangChecker& checker, const RunSummary& runSummary);
-
         void analyzeTransition(const SweepHangChecker& checker,
                                const ExecutionState& executionState);
-
-        friend class SweepHangChecker;
     };
-
-    SweepHangChecker();
 
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 
-    const DataDeltas& sweepLoopDeltas(DataDirection dir) {
-        return _transitionGroups[dir == DataDirection::RIGHT].sweepLoopDeltas();
-    }
+    const SweepLoop& leftSweepLoop() { return _leftSweepLoop; }
+    const std::optional<SweepLoop>& rightSweepLoop() { return _rightSweepLoop; }
 
-    // The direction indicates the side where the sweep changes direction.
-    const TransitionGroup& sweepEndTransition(DataDirection dir) {
-        return _transitionGroups[dir == DataDirection::RIGHT];
-    }
+    const TransitionGroup& leftTransition() { return _leftTransition; }
+    const TransitionGroup& rightTransition() { return _rightTransition; }
+    const std::optional<TransitionGroup>& midTransition() { return _midTransition; }
 
     Trilian proofHang(const ExecutionState& executionState) override;
 
@@ -95,8 +106,13 @@ protected:
 private:
     const MetaLoopAnalysis* _metaLoopAnalysis;
 
-    // First is the group at the left, second is the group at the right
-    std::array<TransitionGroup, 2> _transitionGroups;
+    TransitionGroup _leftTransition { LocationInSweep::LEFT };
+    TransitionGroup _rightTransition { LocationInSweep::RIGHT };
+    std::optional<TransitionGroup> _midTransition {};
+
+    SweepLoop _leftSweepLoop { LocationInSweep::LEFT };
+    // Only set when there is a mid-sweep transition
+    std::optional<SweepLoop> _rightSweepLoop;
 
     std::vector<Location> _locationsInSweep;
     // The sequence index of the first loop that is a sweep
@@ -108,5 +124,6 @@ private:
     // Set the locations of the plain sequences and fixed-sized (non-sweep) loops
     void locateSweepTransitions();
 
+    bool initSweepLoops(const ExecutionState& executionState);
     bool initTransitionSequences(const ExecutionState& executionState);
 };

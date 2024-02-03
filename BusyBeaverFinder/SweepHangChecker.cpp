@@ -10,8 +10,8 @@
 
 #include "Utils.h"
 
-void SweepHangChecker::TransitionGroup::initSweepLoopDeltas(const SweepHangChecker& checker,
-                                                            const RunSummary& runSummary) {
+void SweepHangChecker::SweepLoop::initSweepLoopDeltas(const SweepHangChecker& checker,
+                                                      const RunSummary& runSummary) {
     _sweepLoopDeltas.clear();
 
     auto &analysis = checker._metaLoopAnalysis;
@@ -54,6 +54,26 @@ void SweepHangChecker::TransitionGroup::initSweepLoopDeltas(const SweepHangCheck
         seqIndex = (seqIndex + 1) % analysis->loopSize();
         rbIndex += 1;
     }
+}
+
+void SweepHangChecker::SweepLoop::analyze(const SweepHangChecker& checker,
+                                          const ExecutionState& executionState) {
+    auto &analysis = checker._metaLoopAnalysis;
+    int loopSize = analysis->loopSize();
+    _incomingLoopSeqIndex = -1;
+
+    for (int i = 0; i < loopSize; ++i) {
+        auto& loc = checker.locationInSweep(i);
+        if (loc.isAt(_location) && loc.isSweepLoop()) {
+            if (loc.end == _location) {
+                // Found an incoming sweep loop
+                _incomingLoopSeqIndex = i;
+                break;
+            }
+        }
+    }
+
+    initSweepLoopDeltas(checker, executionState.getRunSummary());
 }
 
 void SweepHangChecker::TransitionGroup::analyzeTransition(const SweepHangChecker& checker,
@@ -195,22 +215,16 @@ void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
         }
     }
 
-    initSweepLoopDeltas(checker, executionState.getRunSummary());
     analyzeTransition(checker, executionState);
-}
-
-SweepHangChecker::SweepHangChecker() {
-    bool atRight = false;
-    for (auto& tg : _transitionGroups) {
-        tg._location = atRight ? LocationInSweep::RIGHT : LocationInSweep::LEFT;
-        atRight = !atRight;
-    }
 }
 
 bool SweepHangChecker::locateSweepLoops() {
     _locationsInSweep.clear();
     _locationsInSweep.insert(_locationsInSweep.end(), _metaLoopAnalysis->loopSize(), {});
     _firstSweepLoopSeqIndex = _metaLoopAnalysis->loopSize();
+
+    _midTransition.reset();
+    _rightSweepLoop.reset();
 
     // Extract sweep loops. There should be at least two (one in each direction), and at most
     // four (when double-ended sweeps are broken up by a mid-sweep transition in both directions)
@@ -261,6 +275,7 @@ bool SweepHangChecker::locateSweepLoops() {
     }
 
     bool oneSideFixed = numOut[0] == 0 || numOut[1] == 0;
+    bool hasMidTransition = false;
     for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
         if (behavior.loopType() == LoopType::ANCHORED_SWEEP) {
             auto &loc = _locationsInSweep[behavior.sequenceIndex()];
@@ -269,7 +284,13 @@ bool SweepHangChecker::locateSweepLoops() {
             } else {
                 loc.end = oneSideFixed ? opposite(loc.start) : LocationInSweep::MID;
             }
+            hasMidTransition |= !oneSideFixed;
         }
+    }
+
+    if (hasMidTransition) {
+        _midTransition.emplace(LocationInSweep::MID);
+        _rightSweepLoop.emplace(LocationInSweep::RIGHT);
     }
 
     return true;
@@ -303,11 +324,16 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     }
     locateSweepTransitions();
 
-    for (auto& tg : _transitionGroups) {
-        tg.analyze(*this, executionState);
+    _leftTransition.analyze(*this, executionState);
+    _rightTransition.analyze(*this, executionState);
+    if (_midTransition) {
+        _midTransition.value().analyze(*this, executionState);
     }
 
-    // TODO: Analyze mid-sweep transition (if any)
+    _leftSweepLoop.analyze(*this, executionState);
+    if (_rightSweepLoop) {
+        _rightSweepLoop.value().analyze(*this, executionState);
+    }
 
     return true;
 }
