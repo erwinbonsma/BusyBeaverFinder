@@ -127,22 +127,22 @@ bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     return true;
 }
 
-Trilian GliderHangChecker::proofHang(const ExecutionState& _execution) {
+Trilian GliderHangChecker::proofHang(const ExecutionState& executionState) {
     // The glider loop should just have finished
-    if ((_execution.getRunSummary().getNumRunBlocks() - _firstGliderLoopRunBlockIndex)
+    if ((executionState.getRunSummary().getNumRunBlocks() - _firstGliderLoopRunBlockIndex)
         % _metaLoopAnalysis->loopSize() != 1) {
         return Trilian::MAYBE;
     }
 
     if (_proofEnd == 0) {
-        if (!_transitionLoopAnalysis.allValuesToBeConsumedAreZero(_execution.getData())) {
+        if (!_transitionLoopAnalysis.allValuesToBeConsumedAreZero(executionState.getData())) {
             return Trilian::MAYBE;
         }
-        _proofEnd = (_execution.getRunSummary().getNumRunBlocks()
+        _proofEnd = (executionState.getRunSummary().getNumRunBlocks()
                      + _numBootstrapCycles * _metaLoopAnalysis->loopSize());
     }
 
-    if (_execution.getRunSummary().getNumRunBlocks() >= _proofEnd) {
+    if (executionState.getRunSummary().getNumRunBlocks() >= _proofEnd) {
         return Trilian::YES;
     }
 
