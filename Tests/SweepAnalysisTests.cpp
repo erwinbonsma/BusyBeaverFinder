@@ -972,6 +972,43 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(sdl.deltaAt(0) == 2);
         REQUIRE(!hangChecker.rightSweepLoop());
     }
+
+    SECTION("SweepLooksBeyondSweepExit") {
+        // The right sweep looks beyond the zero value that will cause it to exit, which must be
+        // non-zero. After the sweep terminates, the sweep extends one position to the right,
+        // again with a zero followed by a one. The sweep also extends one position to the left
+        // each time. Together this ensures that look-ahead is always non-zero.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  2, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+
+        // Left sweep
+        block[4].finalize(MOV, -1, dummySteps, block + 5, block + 4);
+
+        // Extend at left
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+
+        // Right sweep
+        block[6].finalize(MOV,  3, dummySteps, exitBlock, block + 7); // Look ahead, non-zero
+        block[7].finalize(MOV, -1, dummySteps, block + 8, block + 6); // Sweep exit
+
+        // Extend at right, preserving invariant
+        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+        block[ 9].finalize(MOV,  1, dummySteps, exitBlock, block + 10);
+        block[10].finalize(INC, -1, dummySteps, block + 11, exitBlock);
+        block[11].finalize(MOV,  1, dummySteps, block + 12, exitBlock);
+        block[12].finalize(INC,  1, dummySteps, exitBlock, block + 13);
+        block[13].finalize(MOV, -2, dummySteps, exitBlock, block + 4);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+        hangExecutor.dumpExecutionState();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+    }
 }
 
 TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
