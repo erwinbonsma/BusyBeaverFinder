@@ -136,7 +136,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
     }
 
     SECTION("SweepWithStripedBody") {
-        // Sweep body increases in length by two units. It's body consists of
+        // Sweep body increases in length by two units. Its body consists of
         // alternating positive and negative values that diverge from zero.
 
         // Rightwards sweep
@@ -911,10 +911,6 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // transition sequences diverge to restore the sweep's tail so that it keeps alternating
         // between both sequences. The tail ends are respectively A = [... -1 1 0] and
         // B = [... -2 -1 0].
-        //
-        // Correctly determining that this program hangs requires properly analyzing the combined
-        // impact of the right sweep (which modifies a sentinel position) and the two transition
-        // sequences at the right.
 
         // Bootstrap
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
@@ -1008,6 +1004,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        // TODO: Check analysis
     }
 }
 
