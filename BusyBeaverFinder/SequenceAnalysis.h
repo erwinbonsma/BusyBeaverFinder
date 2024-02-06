@@ -68,6 +68,7 @@ protected:
     virtual bool startAnalysis();
 
     void analyzeBlock(const ProgramBlock* block);
+    void analyzeBlocks();
 
     // Returns true is analysis completed and the sequence matched the expected pattern
     virtual bool finishAnalysis();
@@ -83,6 +84,9 @@ public:
     int sequenceSize() const { return _numProgramBlocks; }
 
     int dataPointerDelta() const { return _dpDelta; }
+
+    // Only needed by old SweepTransitionGroup.
+    // TODO: Remove once switched to new sweep analysis
     int minDp() const { return _minDp; }
     int maxDp() const { return _maxDp; }
 
@@ -93,7 +97,14 @@ public:
     const std::multimap<int, PreCondition> preConditions() const { return _preConditions; }
     bool hasPreCondition(int dpOffset, PreCondition preCondition) const;
 
+    // Analyse the given continous sequence of program blocks
     bool analyzeSequence(RawProgramBlocks programBlocks, int len);
+
+    // Analyse the combined effects of multiple sub-sequences
+    bool analyzeMultiSequenceStart(RawProgramBlocks programBlocks, int len);
+    // dpDelta gives the start position of DP relative to DP at the start of the first sub-sequence
+    void analyzeMultiSequence(RawProgramBlocks programBlocks, int len, int dpDelta);
+    bool analyzeMultiSequenceEnd();
 
     void dump() const { std::cout << *this << std::endl; }
 };

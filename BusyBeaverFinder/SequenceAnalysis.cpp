@@ -96,6 +96,13 @@ void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
     }
 }
 
+void SequenceAnalysis::analyzeBlocks() {
+    auto end = _programBlocks + _numProgramBlocks;
+    for (auto pb = _programBlocks; pb != end; ++pb) {
+        analyzeBlock(*pb);
+    }
+}
+
 bool SequenceAnalysis::finishAnalysis() {
     return true;
 }
@@ -104,18 +111,41 @@ bool SequenceAnalysis::analyzeSequence(RawProgramBlocks programBlocks, int len) 
     _programBlocks = programBlocks;
     _numProgramBlocks = len;
 
-    bool result = startAnalysis();
-
-    if (result) {
-        auto end = _programBlocks + _numProgramBlocks;
-        for (auto pb = _programBlocks; pb != end; ++pb) {
-            analyzeBlock(*pb);
-        }
-
-        result = finishAnalysis();
+    if (!startAnalysis()) {
+        return false;
     }
 
-    return result;
+    analyzeBlocks();
+
+    return finishAnalysis();
+}
+
+bool SequenceAnalysis::analyzeMultiSequenceStart(RawProgramBlocks programBlocks, int len) {
+    _programBlocks = programBlocks;
+    _numProgramBlocks = len;
+
+    if (!startAnalysis()) {
+        return false;
+    }
+
+    analyzeBlocks();
+
+    return true;
+}
+
+void SequenceAnalysis::analyzeMultiSequence(RawProgramBlocks programBlocks, int len, int dpDelta) {
+    // TODO: Move setting of _programBlocks and _numProgramBlocks to analyzeBlocks
+    // This can be done once minDp and maxDp are not needed anymore.
+    _programBlocks = programBlocks;
+    _numProgramBlocks = len;
+
+    _dpDelta = dpDelta;
+
+    analyzeBlocks();
+}
+
+bool SequenceAnalysis::analyzeMultiSequenceEnd() {
+    return finishAnalysis();
 }
 
 bool SequenceAnalysis::hasPreCondition(int dpOffset, PreCondition preCondition) const {
