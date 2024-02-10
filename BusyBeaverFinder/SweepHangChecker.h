@@ -34,6 +34,8 @@ public:
         const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
         int deltaRange() const { return _deltaRange; }
 
+        const SequenceAnalysis sequenceAnalysis() const { return _analysis; }
+
       private:
         // Location should either be LEFT or RIGHT to uniquely identify the loop (as there are
         // two different loops arriving/departing from MID).

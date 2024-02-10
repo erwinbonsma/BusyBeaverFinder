@@ -1001,11 +1001,70 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
         // TODO: Check analysis
+    }
+}
+
+TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
+    HangExecutor hangExecutor(1000, 20000);
+    hangExecutor.setMaxSteps(20000);
+    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
+
+    SweepHangChecker hangChecker;
+
+    ProgramBlock block[maxSequenceLen];
+    for (int i = 0; i < maxSequenceLen; i++) {
+        block[i].init(i);
+    }
+    ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
+
+    MetaLoopAnalysis mla;
+
+    SECTION("SweepWithComplexSweepLoop") {
+        // Sweep with a sweep loops that are more difficult to analyze
+        // The rightwards sweep looks ahead several positions, so requires combining multiple
+        // loop iterations to get the effect.
+
+        // Bootsrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+
+        // Rightwards sweep loop
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4);
+        block[4].finalize(MOV,  3, dummySteps, block + 7, block + 5);
+        block[5].finalize(INC,  2, dummySteps, exitBlock, block + 6);
+        block[6].finalize(MOV, -2, dummySteps, block + 9, block + 3);
+
+        // Leftwards sweep loop
+        block[7].finalize(INC,  4, dummySteps, exitBlock, block + 8);
+        block[8].finalize(MOV, -1, dummySteps, block + 9, block + 7);
+
+        // Extension
+        block[9].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+        hangExecutor.dumpExecutionState();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        mla.dump();
+        REQUIRE(lb.size() == 2);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+        auto& sll = hangChecker.leftSweepLoop();
+        sll.sequenceAnalysis().dump();
+        REQUIRE(sll.deltaRange() == 1);
+        auto& sdl = sll.sweepLoopDeltas();
+        REQUIRE(sdl.deltaAt(0) == 7);
     }
 }
 

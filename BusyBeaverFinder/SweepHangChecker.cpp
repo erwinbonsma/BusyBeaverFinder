@@ -68,7 +68,7 @@ void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& 
             }
 
             // Determine DP start (so that's correctly aligned with the other loops)
-            int dpStart = dpOffset + (startIter - 1) * dpDelta;
+            int dpStart = dpOffset + startIter * dpDelta;
             auto runBlock = runSummary.runBlockAt(rbIndex);
             _analysis.analyzeMultiSequence(&runHistory.at(runBlock->getStartIndex()),
                                            (endIter - startIter) * analysis->loopSize(),
