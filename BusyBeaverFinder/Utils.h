@@ -23,6 +23,9 @@
 // Least common multiple
 int lcm(int a, int b);
 
+int floordiv(int a, int b);
+int ceildiv(int a, int b);
+
 bool isPowerOfTwo(int val);
 int makePowerOfTwo(int val);
 

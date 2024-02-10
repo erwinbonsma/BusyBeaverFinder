@@ -113,7 +113,7 @@ class LoopAnalysis : public SequenceAnalysis {
     void markUnreachableExitsForStationaryLoop();
     void initExitsForStationaryLoop();
 
-    void initExitsForTravellingLoop();
+    bool initExitsForTravellingLoop();
 
 protected:
     // Returns true if the specified loop instruction exits the loop on a zero-value
@@ -121,7 +121,6 @@ protected:
 
     const char* typeString() const override { return "LOOP"; }
 
-    bool startAnalysis() override;
     bool finishAnalysis() override;
 
 public:

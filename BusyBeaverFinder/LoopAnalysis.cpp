@@ -256,7 +256,7 @@ void LoopAnalysis::initExitsForStationaryLoop() {
     markUnreachableExitsForStationaryLoop();
 }
 
-void LoopAnalysis::initExitsForTravellingLoop() {
+bool LoopAnalysis::initExitsForTravellingLoop() {
     // Temporary helper array that contains instruction indices, which will be sorted based on
     // the order in which they consume data values.
     static std::array<int, maxLoopSize> indices;
@@ -268,6 +268,10 @@ void LoopAnalysis::initExitsForTravellingLoop() {
     // Temporary helper array that tracks if the instruction has a zero-based continuation
     // condition, thereby fixing the entry value required for the loop to spin up.
     static std::array<int, maxLoopSize> fixedExitValue;
+
+    if (loopSize() > maxLoopSize) {
+        return false;
+    }
 
     for (int i = loopSize(); --i >= 0; ) {
         indices[i] = i;
@@ -368,10 +372,8 @@ void LoopAnalysis::initExitsForTravellingLoop() {
             loopExit.exitCondition.init(op, -cumDelta[i], dp_i);
         }
     }
-}
 
-bool LoopAnalysis::startAnalysis() {
-    return SequenceAnalysis::startAnalysis() && _numProgramBlocks <= maxLoopSize;
+    return true;
 }
 
 bool LoopAnalysis::finishAnalysis() {
@@ -380,7 +382,9 @@ bool LoopAnalysis::finishAnalysis() {
     // Collapse the results considering multiple loop iterations (only for non-stationary loops)
     if (_dpDelta != 0) {
         squashDeltas();
-        initExitsForTravellingLoop();
+        if (!initExitsForTravellingLoop()) {
+            return false;
+        }
     } else {
         initExitsForStationaryLoop();
     }

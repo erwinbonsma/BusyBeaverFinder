@@ -31,20 +31,26 @@ public:
 
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
-        // When the sweep loops at both sides of the sweep are the same (e.g. when there is no
-        // mid-sweep transition) the deltas in both sweep transition groups are equivalent.
-        const DataDeltas& sweepLoopDeltas() const { return _sweepLoopDeltas; }
+        const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
+        int deltaRange() const { return _deltaRange; }
 
       private:
         // Location should either be LEFT or RIGHT to uniquely identify the loop (as there are
         // two different loops arriving/departing from MID).
         LocationInSweep _location;
 
-        DataDeltas _sweepLoopDeltas;
+        // The effective result of the loop after one meta-loop period
+        SequenceAnalysis _analysis;
+
+        // The range of DP after which the sweep-loop behavior repeats. Only DP values in range of
+        // [0, _deltaRange> should be considered when checking/proving hangs.
+        int _deltaRange;
+
         // Index of (one of) the incoming sweep-loop(s)
         int _incomingLoopSeqIndex;
 
-        void initSweepLoopDeltas(const SweepHangChecker& checker, const RunSummary& runSummary);
+        void analyzeLoopAsSequence(const SweepHangChecker& checker,
+                                   const ExecutionState& executionState);
     };
 
     // A transition where sweeps end and start

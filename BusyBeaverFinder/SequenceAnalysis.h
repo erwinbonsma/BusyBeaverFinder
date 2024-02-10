@@ -42,10 +42,11 @@ class SequenceAnalysis {
     const ProgramBlock* _prevProgramBlock;
 protected:
     int _dpDelta, _minDp, _maxDp;
-
     // The sequence that is analyzed. It is only valid while the sequence is analyzed, as it is a
     // pointer into vector-managed memory, which can be re-allocated when more program blocks are
     // added to the run history.
+    //
+    // TODO: Remove once SweepLoopAnalysis is removed
     RawProgramBlocks _programBlocks;
     int _numProgramBlocks;
 
@@ -64,11 +65,10 @@ protected:
     // executed. Keys are DP offsets
     std::multimap<int, PreCondition> _preConditions;
 
-    // Returns true if analysis can proceed
-    virtual bool startAnalysis();
+    void startAnalysis();
 
     void analyzeBlock(const ProgramBlock* block);
-    void analyzeBlocks();
+    void analyzeBlocks(RawProgramBlocks programBlocks, int len);
 
     // Returns true is analysis completed and the sequence matched the expected pattern
     virtual bool finishAnalysis();
@@ -85,8 +85,6 @@ public:
 
     int dataPointerDelta() const { return _dpDelta; }
 
-    // Only needed by old SweepTransitionGroup.
-    // TODO: Remove once switched to new sweep analysis
     int minDp() const { return _minDp; }
     int maxDp() const { return _maxDp; }
 
@@ -101,10 +99,10 @@ public:
     bool analyzeSequence(RawProgramBlocks programBlocks, int len);
 
     // Analyse the combined effects of multiple sub-sequences
-    bool analyzeMultiSequenceStart(RawProgramBlocks programBlocks, int len);
-    // dpDelta gives the start position of DP relative to DP at the start of the first sub-sequence
+    void analyzeMultiSequenceStart();
+    // dpDelta gives the (relative) start position of DP at start of program block sequence
     void analyzeMultiSequence(RawProgramBlocks programBlocks, int len, int dpDelta);
-    bool analyzeMultiSequenceEnd();
+    bool analyzeMultiSequenceEnd(int dpDelta);
 
     void dump() const { std::cout << *this << std::endl; }
 };

@@ -59,19 +59,17 @@ void SequenceAnalysis::addPreCondition(int dpOffset, PreCondition preCondition) 
     _preConditions.insert({dpOffset, preCondition});
 }
 
-bool SequenceAnalysis::startAnalysis() {
+void SequenceAnalysis::startAnalysis() {
     _dpDelta = 0;
     _dataDeltas.clear();
     _effectiveResult.clear();
     _preConditions.clear();
 
-    _minDp = (_numProgramBlocks == 0 || _programBlocks[0]->isDelta())
-             ? 0 : _programBlocks[0]->getInstructionAmount();
-    _maxDp = _minDp;
+    _minDp = std::numeric_limits<int>::max();
+    _maxDp = std::numeric_limits<int>::min();
 
     _prevProgramBlock = nullptr;
-
-    return true;
+    _programBlocks = nullptr;
 }
 
 void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
@@ -96,11 +94,13 @@ void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
     }
 }
 
-void SequenceAnalysis::analyzeBlocks() {
-    auto end = _programBlocks + _numProgramBlocks;
-    for (auto pb = _programBlocks; pb != end; ++pb) {
+void SequenceAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, int len) {
+    auto end = programBlocks + len;
+    for (auto pb = programBlocks; pb != end; ++pb) {
         analyzeBlock(*pb);
     }
+
+    _numProgramBlocks += len;
 }
 
 bool SequenceAnalysis::finishAnalysis() {
@@ -108,43 +108,27 @@ bool SequenceAnalysis::finishAnalysis() {
 }
 
 bool SequenceAnalysis::analyzeSequence(RawProgramBlocks programBlocks, int len) {
+    startAnalysis();
+
     _programBlocks = programBlocks;
-    _numProgramBlocks = len;
-
-    if (!startAnalysis()) {
-        return false;
-    }
-
-    analyzeBlocks();
+    analyzeBlocks(programBlocks, len);
 
     return finishAnalysis();
 }
 
-bool SequenceAnalysis::analyzeMultiSequenceStart(RawProgramBlocks programBlocks, int len) {
-    _programBlocks = programBlocks;
-    _numProgramBlocks = len;
-
-    if (!startAnalysis()) {
-        return false;
-    }
-
-    analyzeBlocks();
-
-    return true;
+void SequenceAnalysis::analyzeMultiSequenceStart() {
+    startAnalysis();
 }
 
 void SequenceAnalysis::analyzeMultiSequence(RawProgramBlocks programBlocks, int len, int dpDelta) {
-    // TODO: Move setting of _programBlocks and _numProgramBlocks to analyzeBlocks
-    // This can be done once minDp and maxDp are not needed anymore.
-    _programBlocks = programBlocks;
-    _numProgramBlocks = len;
-
     _dpDelta = dpDelta;
 
-    analyzeBlocks();
+    analyzeBlocks(programBlocks, len);
 }
 
-bool SequenceAnalysis::analyzeMultiSequenceEnd() {
+bool SequenceAnalysis::analyzeMultiSequenceEnd(int dpDelta) {
+    _dpDelta = dpDelta;
+
     return finishAnalysis();
 }
 

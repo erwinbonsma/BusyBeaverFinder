@@ -47,6 +47,20 @@ int lcm(int a, int b) {
     return a / gcd(a, b) * b;
 }
 
+int floordiv(int a, int b) {
+    int result = a / b;
+    // For negative results, that were truncated towards zero, compensate by subtracting one
+    result -= (result < 0) && (a % b) != 0;
+    return result;
+}
+
+int ceildiv(int a, int b) {
+    int result = a / b;
+    // For positive results, that were truncated towards zero, compensate by adding one
+    result += (result > 0) && (a % b) != 0;
+    return result;
+}
+
 InstructionPointer nextInstructionPointer(ProgramPointer pp) {
     return InstructionPointer {
         .col = (int8_t)(pp.p.col + dx[(int)pp.dir]),
