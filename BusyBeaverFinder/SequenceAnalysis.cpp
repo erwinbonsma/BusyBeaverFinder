@@ -70,6 +70,7 @@ void SequenceAnalysis::startAnalysis() {
 
     _prevProgramBlock = nullptr;
     _programBlocks = nullptr;
+    _numProgramBlocks = 0;
 }
 
 void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
@@ -95,6 +96,9 @@ void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
 }
 
 void SequenceAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, int len) {
+    _minDp = std::min(_minDp, _dpDelta);
+    _maxDp = std::max(_maxDp, _dpDelta);
+
     auto end = programBlocks + len;
     for (auto pb = programBlocks; pb != end; ++pb) {
         analyzeBlock(*pb);

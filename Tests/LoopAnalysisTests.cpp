@@ -18,10 +18,10 @@ const int dummySteps = 1;
 const bool INC = true;
 const bool MOV = false;
 
-TEST_CASE( "Exit condition tests", "[loop-analysis]" ) {
+TEST_CASE("Exit condition tests", "[loop-analysis]") {
     ExitCondition exitCondition;
 
-    SECTION( "ModuloGreaterThanExitCondition" ) {
+    SECTION("ModuloGreaterThanExitCondition") {
         exitCondition.init(Operator::GREATER_THAN_OR_EQUAL, 3, 0);
         exitCondition.setModulusConstraint(3);
 
@@ -40,7 +40,7 @@ TEST_CASE( "Exit condition tests", "[loop-analysis]" ) {
         // Match neither
         REQUIRE(!exitCondition.isTrueForValue(2));
     }
-    SECTION( "ModuloLessThanCondition" ) {
+    SECTION("ModuloLessThanCondition") {
         exitCondition.init(Operator::LESS_THAN_OR_EQUAL, -2, 0);
         exitCondition.setModulusConstraint(5);
 
@@ -70,7 +70,7 @@ void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, int numBlocks) {
     la.analyzeLoop(blockP, numBlocks);
 }
 
-TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]" ) {
+TEST_CASE("Stationary loop classification tests", "[loop-analysis][stationary]") {
     ProgramBlock exitBlock;
     exitBlock.init(-1);
 
@@ -81,7 +81,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
 
     LoopAnalysis la;
 
-    SECTION( "StationarySingleChangeIncByOne" ) {
+    SECTION("StationarySingleChangeIncByOne") {
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0);
 
         analyzeLoop(la, loopBlock, 1);
@@ -93,7 +93,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::LESS_THAN_OR_EQUAL, -1));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "StationarySingleChangeDecByThree" ) {
+    SECTION("StationarySingleChangeDecByThree") {
         loopBlock[0].finalize(INC, -3, dummySteps, &exitBlock, loopBlock + 0);
 
         analyzeLoop(la, loopBlock, 1);
@@ -106,7 +106,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(0).exitCondition.modulusConstraintEquals(3));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "StationarySingleChangeInTwoSteps" ) {
+    SECTION("StationarySingleChangeInTwoSteps") {
         loopBlock[0].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, 3, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -123,7 +123,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitCondition.modulusConstraintEquals(5));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "StationarySingleChangeInTwoStepsWithBootstrap" ) {
+    SECTION("StationarySingleChangeInTwoStepsWithBootstrap") {
         loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -4, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -140,7 +140,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitCondition.modulusConstraintEquals(1));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "StationarySingleChangeInTwoStepsWithBootstrapAndModulus" ) {
+    SECTION("StationarySingleChangeInTwoStepsWithBootstrapAndModulus") {
         loopBlock[0].finalize(INC, 4, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -157,7 +157,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitCondition.modulusConstraintEquals(2));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "StationarySingleChangeInTwoStepsWithBootstrapAndModulus2" ) {
+    SECTION("StationarySingleChangeInTwoStepsWithBootstrapAndModulus2") {
         // As StationarySingleChangeInTwoStepsWithBootstrapAndModulus, but with longer bootstrap.
         // This also impacts the bootstrap operator.
         loopBlock[0].finalize(INC, 6, dummySteps, &exitBlock, loopBlock + 1);
@@ -176,7 +176,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitCondition.modulusConstraintEquals(2));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "StationarySingleChangeInThreeSteps" ) {
+    SECTION("StationarySingleChangeInThreeSteps") {
         loopBlock[0].finalize(INC, 5, dummySteps, &exitBlock, loopBlock + 1);  // INC 5
         loopBlock[1].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 2); // DEC 2
         loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC 2
@@ -195,7 +195,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(2).exitWindow == ExitWindow::NEVER);
     }
-    SECTION( "StationarySingleChangeWithDummyShift" ) {
+    SECTION("StationarySingleChangeWithDummyShift") {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);  // SHR
         loopBlock[1].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 2); // SHL
         loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC
@@ -216,7 +216,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(2).exitCondition.modulusConstraintEquals(2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "StationarySingleChangeWithDummyShiftAndNonZeroExit" ) {
+    SECTION("StationarySingleChangeWithDummyShiftAndNonZeroExit") {
         loopBlock[0].finalize(MOV, 1, dummySteps, loopBlock + 1, &exitBlock);  // SHR   # Expects 0
         loopBlock[1].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 2); // SHL
         loopBlock[2].finalize(INC, 2, dummySteps, &exitBlock, loopBlock + 0);  // INC
@@ -235,7 +235,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(2).exitCondition.modulusConstraintEquals(2));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "StationaryTwoChanges" ) {
+    SECTION("StationaryTwoChanges") {
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);  // INC
         loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 2);  // SHR
         loopBlock[2].finalize(INC, -2, dummySteps, &exitBlock, loopBlock + 3); // DEC 2
@@ -257,7 +257,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(2).exitWindow == ExitWindow::ANYTIME);
         REQUIRE(la.exit(3).exitWindow == ExitWindow::NEVER);
     }
-    SECTION( "StationaryOscillating" ) {
+    SECTION("StationaryOscillating") {
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -272,7 +272,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "StationaryOscillatingWithNonZeroExit" ) {
+    SECTION("StationaryOscillatingWithNonZeroExit") {
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1);  // INC
         loopBlock[1].finalize(INC, -1, dummySteps, loopBlock + 0, &exitBlock); // DEC   # Expects 0
 
@@ -287,7 +287,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "StationaryOscillatingWithNonZeroExit2" ) {
+    SECTION("StationaryOscillatingWithNonZeroExit2") {
         // As StationaryOscillatingWithNonZeroExit, but with non-zero condition swapped
         loopBlock[0].finalize(INC, 1, dummySteps, loopBlock + 1, &exitBlock);  // INC   # Expects 0
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 0); // DEC
@@ -305,7 +305,7 @@ TEST_CASE( "Stationary loop classification tests", "[loop-analysis][stationary]"
     }
 }
 
-TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]" ) {
+TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]") {
     ProgramBlock exitBlock;
     exitBlock.init(-1);
 
@@ -316,7 +316,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
 
     LoopAnalysis la;
 
-    SECTION( "TravellingConstant" ) {
+    SECTION("TravellingConstant") {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
         analyzeLoop(la, loopBlock, 1);
@@ -328,7 +328,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(0).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(0).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingConstantWithBootstrap" ) {
+    SECTION("TravellingConstantWithBootstrap") {
         loopBlock[0].finalize(MOV, 5, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(MOV, -4, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -344,7 +344,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "TravellingConstantWithBootstrap2" ) {
+    SECTION("TravellingConstantWithBootstrap2") {
         loopBlock[0].finalize(MOV, 3, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(MOV, -5, dummySteps, &exitBlock, loopBlock + 2);
         loopBlock[2].finalize(MOV, 3, dummySteps, &exitBlock, loopBlock + 0);
@@ -365,7 +365,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(2).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(2).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "TravellingSingleChange" ) {
+    SECTION("TravellingSingleChange") {
         loopBlock[0].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 0);
 
@@ -388,7 +388,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.deltaAtOnNonStandardEntry(0, 1) == 0);
         REQUIRE(la.deltaAtOnNonStandardEntry(1, 1) == -1);
     }
-    SECTION( "TravellingSingleChange2" ) {
+    SECTION("TravellingSingleChange2") {
         // As TravellingSingleChange, but with instructions reversed. This, amongst others, changes
         // the number of bootstrap cycles
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);
@@ -413,7 +413,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.deltaAtOnNonStandardEntry(0, 1) == -1);
         REQUIRE(la.deltaAtOnNonStandardEntry(1, 1) == -1);
     }
-    SECTION( "TravellingSingleChange3" ) {
+    SECTION("TravellingSingleChange3") {
         // Single change, but with large DP shifts, and modulus DP
         loopBlock[0].finalize(MOV, -5, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 2);
@@ -438,7 +438,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.deltaAt(-4) ==  0);
         REQUIRE(la.deltaAt(-3) == -1);
     }
-    SECTION( "TravellingSingleChange4" ) {
+    SECTION("TravellingSingleChange4") {
         // Single change, but with large DP shifts, and modulus DP
         loopBlock[0].finalize(MOV, -4, dummySteps, &exitBlock, loopBlock + 1);
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 2);
@@ -463,7 +463,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.deltaAt(-3) ==  0);
         REQUIRE(la.deltaAt(-2) == -1);
     }
-    SECTION( "TravellingSingleChangeAndNonZeroExit" ) {
+    SECTION("TravellingSingleChangeAndNonZeroExit") {
         loopBlock[0].finalize(MOV, 1, dummySteps, loopBlock + 1, &exitBlock); // SHR   # Expects 0
         loopBlock[1].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 0); // INC
 
@@ -479,7 +479,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::NEVER);
     }
-    SECTION( "TravellingSingleChangeAndNonZeroExit2" ) {
+    SECTION("TravellingSingleChangeAndNonZeroExit2") {
         // As TravellingSingleChangeAndNonZeroExit, but with order reversed
         loopBlock[0].finalize(INC, 1, dummySteps, &exitBlock, loopBlock + 1); // INC
         loopBlock[1].finalize(MOV, 1, dummySteps, loopBlock + 0, &exitBlock); // SHR   # Expects 0
@@ -495,7 +495,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(1).exitCondition.expressionEquals(Operator::UNEQUAL, 0));
         REQUIRE(la.exit(1).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingSingleChangeInThreeSteps" ) {
+    SECTION("TravellingSingleChangeInThreeSteps") {
         // A single change realized in three separate increments, each of which can break the loop.
         // Due to complex shifting, the same value is changed in different iterations of the loop.
         // This means that the order of the instructions in the loop does not match the order in
@@ -551,7 +551,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.deltaAtOnNonStandardEntry( 0, 5) == 1);
         REQUIRE(la.deltaAtOnNonStandardEntry( 1, 5) == 1);
     }
-    SECTION( "TravellingSingleChangeInThreeSteps2" ) {
+    SECTION("TravellingSingleChangeInThreeSteps2") {
         // As TravellingSingleChangeInThreeSteps, but with shifts reversed. This should not impact
         // the exit analysis, which this test intends to verify.
         loopBlock[0].finalize(MOV, -2, dummySteps, &exitBlock, loopBlock + 1); // SHL 2   (3)
@@ -580,7 +580,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -3));
         REQUIRE(la.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingSingleChangeInThreeSteps3" ) {
+    SECTION("TravellingSingleChangeInThreeSteps3") {
         // Similar to TravellingSingleChangeInThreeSteps but with a single shift change, which
         // changes the order in which instructions consume new values and leads to different
         // bootstrap-only exits. Also, it increases the number of bootstrap cycles.
@@ -610,7 +610,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(5).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(5).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingTwoChanges" ) {
+    SECTION("TravellingTwoChanges") {
         loopBlock[0].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 1);  // SHR
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 2); // DEC
         loopBlock[2].finalize(MOV, 1, dummySteps, &exitBlock, loopBlock + 3);  // SHR
@@ -619,6 +619,8 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 2);
+        REQUIRE(la.minDp() == 1);
+        REQUIRE(la.maxDp() == 2);
         REQUIRE(la.squashedDataDeltas().size() == 2);
         REQUIRE(la.numBootstrapCycles() == 0);
 
@@ -631,7 +633,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, -1));
         REQUIRE(la.exit(3).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingTwoChanges2" ) {
+    SECTION("TravellingTwoChanges2") {
         // A variant of TravellingOscillating2 but with modified shifts so that deltas do not
         // cancel each other out
         loopBlock[0].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 1); // SHL
@@ -643,6 +645,8 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         analyzeLoop(la, loopBlock, 5);
 
         REQUIRE(la.dataPointerDelta() == 3);
+        REQUIRE(la.minDp() == -1);
+        REQUIRE(la.maxDp() == 3);
         REQUIRE(la.squashedDataDeltas().size() == 2);
         REQUIRE(la.numBootstrapCycles() == 0);
 
@@ -657,7 +661,22 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(4).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingOscillating" ) {
+    SECTION("TravellingTwoChanges3") {
+        // A variant of TravellingOscillating2 but with modified shifts so that deltas do not
+        // cancel each other out
+        loopBlock[0].finalize(INC,  1, dummySteps, &exitBlock, loopBlock + 1);
+        loopBlock[1].finalize(MOV,  3, dummySteps, &exitBlock, loopBlock + 2);
+        loopBlock[2].finalize(INC,  2, dummySteps, &exitBlock, loopBlock + 3);
+        loopBlock[3].finalize(MOV, -2, dummySteps, &exitBlock, loopBlock + 0);
+
+        analyzeLoop(la, loopBlock, 5);
+        REQUIRE(la.dataPointerDelta() == 1);
+        REQUIRE(la.minDp() == 0);
+        REQUIRE(la.maxDp() == 3);
+        REQUIRE(la.squashedDataDeltas().size() == 1);
+        REQUIRE(la.squashedDataDeltas().deltaAt(0) == 3);
+    }
+    SECTION("TravellingOscillating") {
         loopBlock[0].finalize(MOV, 2, dummySteps, &exitBlock, loopBlock + 1);  // SHR 2
         loopBlock[1].finalize(INC, -1, dummySteps, &exitBlock, loopBlock + 2); // DEC
         loopBlock[2].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 3); // SHL
@@ -678,7 +697,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(3).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(3).exitWindow == ExitWindow::BOOTSTRAP);
     }
-    SECTION( "TravellingOscillating2" ) {
+    SECTION("TravellingOscillating2") {
         // A more complex oscillating change, where original DP-offsets are both positive and
         // negative, which requires sign-aware modulus matching to collapse these entries.
         loopBlock[0].finalize(MOV, -1, dummySteps, &exitBlock, loopBlock + 1); // SHL
@@ -704,7 +723,7 @@ TEST_CASE( "Travelling loop classification tests", "[loop-analysis][travelling]"
         REQUIRE(la.exit(4).exitCondition.expressionEquals(Operator::EQUALS, 0));
         REQUIRE(la.exit(4).exitWindow == ExitWindow::ANYTIME);
     }
-    SECTION( "TravellingOscillatingWithNonZeroExit" ) {
+    SECTION("TravellingOscillatingWithNonZeroExit") {
         // A loop that occurs in BB 7x7 #950175 which was wrongly analysed.
         //
         // Note: This is a short-running loop. It cannot complete three iterations, as it has two
