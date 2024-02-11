@@ -1025,7 +1025,7 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
     MetaLoopAnalysis mla;
 
     SECTION("SweepWithComplexSweepLoop") {
-        // Sweep with a sweep loops that are more difficult to analyze
+        // Sweep with a sweep loop that is more difficult to analyze.
         // The rightwards sweep looks ahead several positions, so requires combining multiple
         // loop iterations to get the effect.
 
@@ -1063,6 +1063,107 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
         REQUIRE(sll.deltaRange() == 1);
         auto& sdl = sll.sweepLoopDeltas();
         REQUIRE(sdl.deltaAt(0) == 7);
+    }
+
+    SECTION("SweepWithComplexSweepLoop2") {
+        // Sweep with a sweep loop that is more difficult to analyze. The program is similar to
+        // SweepWithComplexSweepLoop, except that the leftward sweep now moves DP two positions.
+        // This means that it only modifies half of the cells it traverses. However, as the sweep
+        // loop itself shifts its starting point each meta-loop iteration, the overall effect on
+        // the sweep body is still uniformly distributed.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+
+        // Rightwards sweep loop
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV,  3, dummySteps, block + 8, block + 6);
+        block[6].finalize(INC,  2, dummySteps, exitBlock, block + 7);
+        block[7].finalize(MOV, -2, dummySteps, exitBlock, block + 4);
+
+        // Extension at right
+        block[8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+
+        // Leftwards sweep loop
+        block[ 9].finalize(INC,  4, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV, -2, dummySteps, block + 11, block + 9);
+
+        // Extension at left
+        block[11].finalize(INC,  1, dummySteps, exitBlock, block + 4);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+        hangExecutor.dump();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+        mla.dump();
+        REQUIRE(lb.size() == 2);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+        auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 2);
+        auto& sdl = sll.sweepLoopDeltas();
+        REQUIRE(sdl.deltaAt(0) == 7);
+        REQUIRE(sdl.deltaAt(1) == 3);
+    }
+
+    SECTION("SweepWithComplexSweepLoop3") {
+        // Sweep with a sweep loop that is more difficult to analyze. The program is similar to
+        // SweepWithComplexSweepLoop2, except that the sweep only extends at the right (by two
+        // cells). This means that the assymetric update of the leftward sweep now remains fixed.
+
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 13, exitBlock);
+
+        // Rightwards sweep loop
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV,  3, dummySteps, block + 8, block + 6);
+        block[6].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+        block[7].finalize(MOV, -2, dummySteps, exitBlock, block + 4);
+
+        // Extension at right
+        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block +  9);
+        block[ 9].finalize(MOV,  1, dummySteps, block + 10, exitBlock);
+        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11);
+
+        // Leftwards sweep loop
+        block[11].finalize(INC, -5, dummySteps, exitBlock, block + 12);
+        block[12].finalize(MOV, -2, dummySteps, block + 5, block + 11);
+
+        // More bootstrap
+        block[13].finalize(INC,  1, dummySteps, exitBlock, block + 14);
+        block[14].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+        hangExecutor.dump();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        mla.dump();
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 3);
+        REQUIRE(lb.size() == 2);
+
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+        auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 2);
+        auto& sdl = sll.sweepLoopDeltas();
+        REQUIRE(sdl.deltaAt(0) == -3);
+        REQUIRE(sdl.deltaAt(1) == 2);
     }
 }
 
