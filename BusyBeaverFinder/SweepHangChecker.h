@@ -106,6 +106,10 @@ protected:
         bool isAt(LocationInSweep loc) const { return start == loc || end == loc; }
     };
 
+    // Returns sequence index for first incoming sweep loop of the given location
+    int findIncomingSweepLoop(LocationInSweep location,
+                              const ExecutionState& executionState) const;
+
     const Location& locationInSweep(int seqIndex) const { return _locationsInSweep.at(seqIndex); }
     const LoopBehavior& loopBehavior(int seqIndex) const {
         return _metaLoopAnalysis->loopBehaviors().at(

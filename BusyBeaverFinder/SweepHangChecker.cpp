@@ -85,20 +85,7 @@ void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& 
 
 void SweepHangChecker::SweepLoop::analyze(const SweepHangChecker& checker,
                                           const ExecutionState& executionState) {
-    auto &analysis = checker._metaLoopAnalysis;
-    int loopSize = analysis->loopSize();
-    _incomingLoopSeqIndex = -1;
-
-    for (int i = 0; i < loopSize; ++i) {
-        auto& loc = checker.locationInSweep(i);
-        if (loc.isAt(_location) && loc.isSweepLoop()) {
-            if (loc.end == _location) {
-                // Found an incoming sweep loop
-                _incomingLoopSeqIndex = i;
-                break;
-            }
-        }
-    }
+    _incomingLoopSeqIndex = checker.findIncomingSweepLoop(_location, executionState);
 
     analyzeLoopAsSequence(checker, executionState);
 }
@@ -252,30 +239,32 @@ void SweepHangChecker::TransitionGroup::addDeltasFromSweepLoops(const SweepHangC
 
 void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
                                                 const ExecutionState& executionState) {
-    auto &analysis = checker._metaLoopAnalysis;
-    int loopSize = analysis->loopSize();
-    _incomingLoopSeqIndex = -1;
-
-    for (int i = 0; i < loopSize; ++i) {
-        auto& loc = checker.locationInSweep(i);
-        if (loc.isAt(_location) && loc.isSweepLoop()) {
-            if (loc.end == _location) {
-                // Found an incoming sweep loop
-                auto &loopBehavior = checker.loopBehavior(i);
-                _incomingLoopSeqIndex = i;
-                _isStationary = (_location == LocationInSweep::RIGHT
-                                 ? loopBehavior.maxDpDelta() == 0
-                                 : loopBehavior.minDpDelta() == 0);
-                break;
-            }
-        }
-    }
+    _incomingLoopSeqIndex = checker.findIncomingSweepLoop(_location, executionState);
+    auto &loopBehavior = checker.loopBehavior(_incomingLoopSeqIndex);
+    _isStationary = (_location == LocationInSweep::RIGHT
+                     ? loopBehavior.maxDpDelta() == 0
+                     : loopBehavior.minDpDelta() == 0);
 
     // First collect the contribution of the sequences (thereby also determining the DP range)
     addDeltasFromTransitions(checker, executionState);
 
     // Next, now the range is known, add the contributions from the sweep loops
     addDeltasFromSweepLoops(checker, executionState);
+}
+
+int SweepHangChecker::findIncomingSweepLoop(LocationInSweep location,
+                                            const ExecutionState& executionState) const {
+    int loopSize = _metaLoopAnalysis->loopSize();
+
+    for (int i = 0; i < loopSize; ++i) {
+        auto& loc = locationInSweep(i);
+        if (loc.isAt(location) && loc.isSweepLoop() && loc.end == location) {
+            // Found an incoming sweep loop
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 bool SweepHangChecker::locateSweepLoops() {
