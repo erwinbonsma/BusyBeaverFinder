@@ -129,8 +129,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(tdr.deltaAt(0) == 2);  // Includes delta of next incoming sweep
 
         auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 1);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.size() == 1);
         REQUIRE(sdl.deltaAt(0) == 1);
         REQUIRE(!hangChecker.rightSweepLoop());
     }
@@ -189,8 +189,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // only one delta is realized by the transition.
 
         auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 2);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.size() == 2);
         REQUIRE(sdl.deltaAt(0) == -1);
         REQUIRE(sdl.deltaAt(1) == 1);
         REQUIRE(!hangChecker.rightSweepLoop());
@@ -248,8 +248,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(ddr.deltaAt(1) == 3);
 
         auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 2);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.size() == 2);
         REQUIRE(sdl.deltaAt(0) == 2);
         REQUIRE(sdl.deltaAt(1) == 2);
     }
@@ -736,12 +736,13 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(tm.value().transitionDeltas().size() == 0);
 
         auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 1);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.size() == 0);
+        REQUIRE(sdl.deltaAt(0) == 0);
         auto& slr = hangChecker.rightSweepLoop();
         REQUIRE(slr);
+        REQUIRE(slr.value().deltaRange() == 1);
         auto& sdr = slr.value().sweepLoopDeltas();
-        REQUIRE(sdr.size() == 1);
         REQUIRE(sdr.deltaAt(0) == 1);
     }
 
@@ -897,8 +898,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(tdr.size() == 0);
 
         auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 2);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.size() == 2);
         REQUIRE(sdl.deltaAt(0) == 2);
         REQUIRE(sdl.deltaAt(1) == 2);
         REQUIRE(!hangChecker.rightSweepLoop());
@@ -963,8 +964,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         REQUIRE(tdr.size() == 0);
 
         auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.deltaRange() == 1);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.size() == 1);
         REQUIRE(sdl.deltaAt(0) == 2);
         REQUIRE(!hangChecker.rightSweepLoop());
     }
@@ -1048,20 +1049,17 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
         REQUIRE(mla.loopSize() == 3);
-        mla.dump();
         REQUIRE(lb.size() == 2);
 
         result = hangChecker.init(&mla, hangExecutor);
         REQUIRE(result);
         auto& sll = hangChecker.leftSweepLoop();
-        sll.sequenceAnalysis().dump();
         REQUIRE(sll.deltaRange() == 1);
         auto& sdl = sll.sweepLoopDeltas();
         REQUIRE(sdl.deltaAt(0) == 7);

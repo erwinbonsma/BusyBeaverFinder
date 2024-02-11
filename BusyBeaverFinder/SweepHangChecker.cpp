@@ -55,13 +55,13 @@ void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& 
             int startIter, endIter;
             if (dpDelta > 0) {
                 // Iteration where loop first enters DP range: dpMax(i) >= 0
-                startIter = floordiv(-dpOffset - analysis->maxDp(), dpDelta);
+                startIter = ceildiv(-dpOffset - analysis->maxDp(), dpDelta);
 
                 // Iteration where loop fully exited DP range: dpMin(i) >= deltaRange
                 endIter = ceildiv(_deltaRange - dpOffset - analysis->minDp(), dpDelta);
             } else {
                 // dpMin(i) <= deltaRange - 1  =>  i >= div(..., ...)
-                startIter = floordiv(_deltaRange - 1 - analysis->minDp() - dpOffset, dpDelta);
+                startIter = ceildiv(_deltaRange - 1 - analysis->minDp() - dpOffset, dpDelta);
 
                 // dpMax(i) < 0  =>  dpMax(i) <= -1  =>  i >= div(..., ...)
                 endIter = ceildiv(-1 - dpOffset - analysis->maxDp(), dpDelta);

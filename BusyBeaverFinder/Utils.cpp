@@ -57,7 +57,7 @@ int floordiv(int a, int b) {
 int ceildiv(int a, int b) {
     int result = a / b;
     // For positive results, that were truncated towards zero, compensate by adding one
-    result += (result > 0) && (a % b) != 0;
+    result += (result >= 0) && (a % b) != 0;
     return result;
 }
 
