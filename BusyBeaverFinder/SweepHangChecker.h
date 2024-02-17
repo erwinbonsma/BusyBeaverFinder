@@ -34,7 +34,7 @@ public:
         const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
         int deltaRange() const { return _deltaRange; }
 
-        const SequenceAnalysis sequenceAnalysis() const { return _analysis; }
+        const SequenceAnalysis& sequenceAnalysis() const { return _analysis; }
 
       private:
         // Location should either be LEFT or RIGHT to uniquely identify the loop (as there are
@@ -63,19 +63,24 @@ public:
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
         const bool isStationary() const { return _isStationary; }
-        const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
+        const DataDeltas& transitionDeltas() const { return _analysis.squashedDataDeltas(); }
+
+        const LoopAnalysis& loopAnalysis() const { return _analysis; }
 
       private:
         LocationInSweep _location;
-        DataDeltas _transitionDeltas;
+
+        // The behavior over time.
+        LoopAnalysis _analysis;
         // Index of (one of) the incoming sweep-loop(s)
         int _incomingLoopSeqIndex;
         bool _isStationary;
 
-        void addDeltasFromTransitions(const SweepHangChecker& checker,
-                                      const ExecutionState& executionState);
-        void addDeltasFromSweepLoops(const SweepHangChecker& checker,
-                                     const ExecutionState& executionState);
+        void addSequenceInstructions(const SweepHangChecker& checker, const ExecutionState& state,
+                                     int rbIndex, int dp);
+        void addLoopInstructions(const SweepHangChecker& checker, const ExecutionState& state,
+                                 int seqIndex, int rbIndex, int dp, bool incoming);
+        void analyzeTransitionAsLoop(const SweepHangChecker& checker, const ExecutionState& state);
     };
 
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);

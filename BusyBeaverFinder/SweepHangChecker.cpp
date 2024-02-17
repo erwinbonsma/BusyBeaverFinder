@@ -10,7 +10,6 @@
 
 #include "Utils.h"
 
-
 void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& checker,
                                                         const ExecutionState &executionState) {
     auto &runSummary = executionState.getRunSummary();
@@ -90,14 +89,13 @@ void SweepHangChecker::SweepLoop::analyze(const SweepHangChecker& checker,
     analyzeLoopAsSequence(checker, executionState);
 }
 
-void SweepHangChecker::TransitionGroup::addDeltasFromTransitions(const SweepHangChecker& checker,
-                                                                 const ExecutionState& state) {
-    auto &runHistory = state.getRunHistory();
+void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangChecker& checker,
+                                                                const ExecutionState& state) {
     auto &runSummary = state.getRunSummary();
     auto &analysis = checker._metaLoopAnalysis;
     int loopSize = analysis->loopSize();
 
-    _transitionDeltas.clear();
+    _analysis.analyzeMultiSequenceStart();
 
     int dp = 0;
 
@@ -105,47 +103,14 @@ void SweepHangChecker::TransitionGroup::addDeltasFromTransitions(const SweepHang
     int seqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
     int rbIndex = analysis->firstRunBlockIndex() + seqIndex;
     for (int i = 0; i < loopSize; ++i) {
-//        std::cout << "seqIndex = " << seqIndex << ", dp = " << dp << ", rbIndex = " << rbIndex
-//        << std::endl;
+         std::cout << "seqIndex = " << seqIndex << ", dp = " << dp << ", rbIndex = " << rbIndex
+         << std::endl;
         auto &loc = checker.locationInSweep(seqIndex);
         if (loc.isAt(_location)) {
-            if (!loc.isSweepLoop()) {
-                const DataDeltas* dd = nullptr;
-                if (analysis->isLoop(seqIndex)) {
-                    // This is a fixed-size loop
-                    assert(analysis->loopIterationDelta(analysis->loopIndexForSequence(seqIndex)
-                                                        ) == 0);
-                    auto sa = analysis->unrolledLoopSequenceAnalysis(state, seqIndex);
-                    dd = &sa->dataDeltas();
-                } else {
-                    auto sa = analysis->sequenceAnalysis(seqIndex);
-                    dd = &sa->dataDeltas();
-                }
-                for (auto delta : *dd) {
-                    _transitionDeltas.updateDelta(delta.dpOffset() + dp, delta.delta());
-                }
-//                std::cout << "seq dd: " << *dd << std::endl;
-//                std::cout << "deltas: " << _transitionDeltas << std::endl;
-            } else if (loc.end == _location) {
-                // Check if the incoming loop has a remainder. If so, also add this. This needs
-                // to be done here, as sometimes the only delta realized at a transition is from
-                // a pre-mature exit, which may be outside of the transition range otherwise.
-                auto &loopBehavior = checker.loopBehavior(seqIndex);
-                auto la = loopBehavior.loopAnalysis();
-                int loopIndex = analysis->loopIndexForSequence(seqIndex);
-                int remainder = analysis->loopRemainder(loopIndex);
-                if (remainder > 0) {
-                    int dpEnd = dp + analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
-                    int dpDeltaLastIter = la->effectiveResultAt(remainder - 1).dpOffset();
-                    int dpStart = dpEnd - dpDeltaLastIter;
-                    int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
-
-                    auto end = runHistory.cbegin() + pbIndexNext;
-                    auto begin = end - remainder;
-                    _transitionDeltas.bulkAdd(begin, end, dpStart);
-
-//                    std::cout << "deltas: " << _transitionDeltas << std::endl;
-                }
+            if (loc.isSweepLoop()) {
+                addLoopInstructions(checker, state, seqIndex, rbIndex, dp, loc.end == _location);
+            } else {
+                addSequenceInstructions(checker, state, rbIndex, dp);
             }
         }
 
@@ -153,87 +118,63 @@ void SweepHangChecker::TransitionGroup::addDeltasFromTransitions(const SweepHang
         seqIndex = (seqIndex + 1) % loopSize;
         rbIndex += 1;
     }
+
+    _analysis.analyzeMultiSequenceEnd(dp);
 }
 
-void SweepHangChecker::TransitionGroup::addDeltasFromSweepLoops(const SweepHangChecker& checker,
-                                                                const ExecutionState& state) {
+void SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepHangChecker& checker,
+                                                                const ExecutionState& state,
+                                                                int rbIndex,
+                                                                int dp) {
+    auto &runSummary = state.getRunSummary();
+    auto runBlock = runSummary.runBlockAt(rbIndex);
+    int pbIndex = runBlock->getStartIndex();
+
+    _analysis.analyzeMultiSequence(&state.getRunHistory().at(pbIndex),
+                                   runSummary.getRunBlockLength(rbIndex),
+                                   dp);
+}
+
+void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepHangChecker& checker,
+                                                            const ExecutionState& state,
+                                                            int seqIndex, int rbIndex, int dp,
+                                                            bool incoming) {
     auto &runHistory = state.getRunHistory();
     auto &runSummary = state.getRunSummary();
-    auto &analysis = checker._metaLoopAnalysis;
-    int loopSize = analysis->loopSize();
+    auto &loopBehavior = checker.loopBehavior(seqIndex);
+    auto la = loopBehavior.loopAnalysis();
+    int numIter = la->numBootstrapCycles();
+    int len = numIter * la->loopSize();
 
-//    std::cout << "atRight = " << (_location == LocationInSweep::RIGHT)
-//    << ", deltas: " << _transitionDeltas << std::endl;
+    // TODO: For mid-transition, also add contribution of loop that passes it
 
-    int dp = 0;
-    // Start at instruction after incoming loop
-    int seqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
-    int rbIndex = analysis->firstRunBlockIndex() + seqIndex;
-    int minDp = _transitionDeltas.minDpOffset();
-    int maxDp = _transitionDeltas.maxDpOffset();
-    auto isDeltaInRange = [=](int dp) { return (dp >= minDp && dp <= maxDp); };
-    for (int i = 0; i < loopSize; ++i) {
-//        std::cout << "seqIndex = " << seqIndex << ", dp = " << dp << ", rbIndex = " << rbIndex
-//        << std::endl;
+    // Range:
+    // - DP-range of all sequences (which can be inside the sequence)
+    // - Location LEFT/RIGHT:
+    //   - DP-range of connected sweep loop (to DP = 0, i.e. first loop exit)
+    // - Location MID:
+    //   - For terminating loops. DP-range of connected sweep loop
+    //   - For traversing loops. Do not modify DP-range but should traverse it fully
 
-        auto &loc = checker.locationInSweep(seqIndex);
-        if (loc.isAt(_location) && loc.isSweepLoop()) {
-            auto &loopBehavior = checker.loopBehavior(seqIndex);
-            auto la = loopBehavior.loopAnalysis();
-            int pbIndex = runSummary.runBlockAt(rbIndex)->getStartIndex();
+    if (incoming) {
+        // Incoming loop. Execute last "numIter" full loop iterations + any remaining instructions
+        auto &analysis = checker._metaLoopAnalysis;
 
-            if (loc.start == _location) {
-                // Outgoing loop: add deltas until its out of range
+        int dpEnd = dp + analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
+        int loopIndex = analysis->loopIndexForSequence(seqIndex);
+        int remainder = analysis->loopRemainder(loopIndex);
+        int dpDeltaLastIter = ((remainder > 0)
+                               ? la->effectiveResultAt(remainder - 1).dpOffset() : 0);
+        int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
+        int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
+        len += remainder;
 
-                // Calculate how many iterations before all modifications of the loop are beyond
-                // the stationary data delta range.
-                int numIter = (_location == LocationInSweep::RIGHT
-                               ? (minDp - dp - la->dataDeltas().maxDpOffset()
-                                  ) / la->dataPointerDelta()
-                               : (maxDp - dp - la->dataDeltas().minDpOffset()
-                                  ) / la->dataPointerDelta()) + 1;
-                numIter = std::max(numIter, 0);
+        _analysis.analyzeMultiSequence(&runHistory.at(pbIndexNext - len), len, dpStart);
+    } else {
+        // Outgoing loop. Execute first "numIter" loop iterations
+        int pbIndex = runSummary.runBlockAt(rbIndex)->getStartIndex();
 
-                auto begin = runHistory.cbegin() + pbIndex;
-                auto end = begin + la->loopSize() * numIter;
-                _transitionDeltas.bulkAdd(begin, end, dp, isDeltaInRange);
-//                std::cout << "dd: " << _transitionDeltas << std::endl;
-            } else {
-                // Incoming loop: Determine which iteration the loop comes in range, and run it
-                // until it terminates
-                //
-                // Note: As the loop may not fully execute its last iteration, deltas from its
-                // last iteration could theoretically fall outside the loop's data delta range.
-                // Ignoring this for now.
-
-                int dpEnd = dp + analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
-                int loopIndex = analysis->loopIndexForSequence(seqIndex);
-                int remainder = analysis->loopRemainder(loopIndex);
-                int dpDeltaLastIter = ((remainder > 0)
-                                       ? la->effectiveResultAt(remainder - 1).dpOffset() : 0);
-                int numIter = (_location == LocationInSweep::RIGHT
-                               ? (dpEnd + la->dataDeltas().maxDpOffset() - minDp - dpDeltaLastIter
-                                  ) / la->dataPointerDelta()
-                               : (dpEnd + la->dataDeltas().minDpOffset() - maxDp - dpDeltaLastIter
-                                  ) / la->dataPointerDelta()) + 1;
-                // The number of complete iterations that the loop traverses the sequence can be
-                // zero when the DP delta in its last iteration is large (and outside its
-                // effective squashed DP range). The calculation can even (incorrectly) get a
-                // negative value. Fix this (and err on the side of caution).
-                numIter = std::max(numIter, 2);
-                int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
-                int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
-
-                auto end = runHistory.cbegin() + pbIndexNext - remainder;
-                auto begin = end - la->loopSize() * numIter;
-                _transitionDeltas.bulkAdd(begin, end, dpStart, isDeltaInRange);
-//                std::cout << "dd: " << _transitionDeltas << std::endl;
-            }
-        }
-
-        dp += analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
-        seqIndex = (seqIndex + 1) % loopSize;
-        rbIndex += 1;
+        _analysis.analyzeMultiSequence(&runHistory.at(pbIndex), len, dp);
     }
 }
 
@@ -241,15 +182,11 @@ void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
                                                 const ExecutionState& executionState) {
     _incomingLoopSeqIndex = checker.findIncomingSweepLoop(_location, executionState);
     auto &loopBehavior = checker.loopBehavior(_incomingLoopSeqIndex);
-    _isStationary = (_location == LocationInSweep::RIGHT
-                     ? loopBehavior.maxDpDelta() == 0
-                     : loopBehavior.minDpDelta() == 0);
+    _isStationary = _location == LocationInSweep::MID || (_location == LocationInSweep::RIGHT
+                                                          ? loopBehavior.maxDpDelta() == 0
+                                                          : loopBehavior.minDpDelta() == 0);
 
-    // First collect the contribution of the sequences (thereby also determining the DP range)
-    addDeltasFromTransitions(checker, executionState);
-
-    // Next, now the range is known, add the contributions from the sweep loops
-    addDeltasFromSweepLoops(checker, executionState);
+    analyzeTransitionAsLoop(checker, executionState);
 }
 
 int SweepHangChecker::findIncomingSweepLoop(LocationInSweep location,

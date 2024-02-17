@@ -103,6 +103,10 @@ class LoopAnalysis : public SequenceAnalysis {
     int _numBootstrapCycles;
     std::vector<LoopExit> _loopExits;
 
+    // The program blocks when the analysis is passed multiple sub-sequences of program blocks
+    std::vector<const ProgramBlock *> _subSequenceProgramBlocks;
+    std::vector<int> _subSequenceLengths;
+
     DataDeltas _squashedDeltas;
 
     // Determine the effective delta over multiple iterations, taking into account the shifting DP
@@ -117,11 +121,15 @@ class LoopAnalysis : public SequenceAnalysis {
 
 protected:
     // Returns true if the specified loop instruction exits the loop on a zero-value
-    bool exitsOnZero(int index);
+    bool exitsOnZero(int index) const;
+    const ProgramBlock* programBlockAt(int index) const;
+    const ProgramBlock* programBlockFollowing(int index) const;
+    void analyzeBlocks(RawProgramBlocks programBlocks, int len) override;
+
+    void startAnalysis() override;
+    bool finishAnalysis() override;
 
     const char* typeString() const override { return "LOOP"; }
-
-    bool finishAnalysis() override;
 
 public:
     LoopAnalysis();

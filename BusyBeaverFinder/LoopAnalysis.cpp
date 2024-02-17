@@ -89,11 +89,52 @@ std::ostream &operator<<(std::ostream &os, const LoopExit &le) {
 LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
 }
 
-bool LoopAnalysis::exitsOnZero(int index) {
-    const ProgramBlock* curBlock = _programBlocks[index];
-    const ProgramBlock* nxtBlock = _programBlocks[(index + 1) % loopSize()];
+bool LoopAnalysis::exitsOnZero(int index) const {
+    const ProgramBlock* curBlock = programBlockAt(index);
+    const ProgramBlock* nxtBlock = programBlockFollowing(index);
 
     return curBlock->nonZeroBlock() == nxtBlock;
+}
+
+const ProgramBlock* LoopAnalysis::programBlockAt(int index) const {
+    if (_programBlocks) {
+        return _programBlocks[index];
+    } else {
+        int seqIndex = 0;
+        int lenSofar = _subSequenceLengths[0];
+        while (index >= lenSofar) {
+            seqIndex += 1;
+            lenSofar += _subSequenceLengths[seqIndex];
+        }
+        return _subSequenceProgramBlocks[index + seqIndex];
+    }
+}
+
+const ProgramBlock* LoopAnalysis::programBlockFollowing(int index) const {
+    if (_programBlocks) {
+        return _programBlocks[(index + 1) % loopSize()];
+    } else {
+        int seqIndex = 0;
+        int lenSofar = _subSequenceLengths[0];
+        while (index >= lenSofar) {
+            seqIndex += 1;
+            lenSofar += _subSequenceLengths[seqIndex];
+        }
+        return _subSequenceProgramBlocks[index + seqIndex + 1];
+    }
+}
+
+void LoopAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, int len) {
+    SequenceAnalysis::analyzeBlocks(programBlocks, len);
+
+    if (!_programBlocks) {
+        // The analysis consists of multiple sub-sequences. Copy all program blocks.
+
+        _subSequenceLengths.push_back(len);
+        // Note: Add an extra program block (so we can determine how the last block exited)
+        _subSequenceProgramBlocks.insert(_subSequenceProgramBlocks.end(),
+                                         programBlocks, programBlocks + len + 1);
+    }
 }
 
 int LoopAnalysis::deltaAt(int dpOffset) const {
@@ -296,9 +337,9 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
     }
 
     // Establish the exit condition for each instruction
-    for (int ii = 0 ; ii < loopSize(); ii++ ) {
+    for (int ii = 0 ; ii < loopSize(); ii++) {
         int i = indices[ii];
-        const ProgramBlock* pb = _programBlocks[i];
+        const ProgramBlock* pb = programBlockAt(i);
 
         int dp_i = _effectiveResult[i].dpOffset();
         int mod_i = normalizedMod(dp_i, _dpDelta);
@@ -374,6 +415,13 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
     }
 
     return true;
+}
+
+void LoopAnalysis::startAnalysis() {
+    SequenceAnalysis::startAnalysis();
+
+    _subSequenceProgramBlocks.clear();
+    _subSequenceLengths.clear();
 }
 
 bool LoopAnalysis::finishAnalysis() {

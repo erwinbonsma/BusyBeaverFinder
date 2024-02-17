@@ -65,10 +65,10 @@ protected:
     // executed. Keys are DP offsets
     std::multimap<int, PreCondition> _preConditions;
 
-    void startAnalysis();
+    virtual void startAnalysis();
 
     void analyzeBlock(const ProgramBlock* block);
-    void analyzeBlocks(RawProgramBlocks programBlocks, int len);
+    virtual void analyzeBlocks(RawProgramBlocks programBlocks, int len);
 
     // Returns true is analysis completed and the sequence matched the expected pattern
     virtual bool finishAnalysis();
