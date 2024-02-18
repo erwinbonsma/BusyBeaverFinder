@@ -68,7 +68,6 @@ void SequenceAnalysis::startAnalysis() {
     _minDp = std::numeric_limits<int>::max();
     _maxDp = std::numeric_limits<int>::min();
 
-    _prevProgramBlock = nullptr;
     _programBlocks = nullptr;
     _numProgramBlocks = 0;
 }
@@ -98,6 +97,7 @@ void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
 void SequenceAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, int len) {
     _minDp = std::min(_minDp, _dpDelta);
     _maxDp = std::max(_maxDp, _dpDelta);
+    _prevProgramBlock = nullptr;
 
     auto end = programBlocks + len;
     for (auto pb = programBlocks; pb != end; ++pb) {

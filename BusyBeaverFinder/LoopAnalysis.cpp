@@ -191,7 +191,7 @@ void LoopAnalysis::squashDeltas() {
 void LoopAnalysis::setExitConditionsForStationaryLoop() {
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
 
-    _loopExits.clear();
+    assert(_loopExits.empty());
     for (int i = 0; i < loopSize(); i++) {
         _loopExits.emplace_back();
         LoopExit& loopExit = _loopExits.back();
@@ -331,7 +331,7 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
     std::sort(indices.begin(), indices.begin() + loopSize(), _dpDelta > 0 ? compareUp : compareDn);
 
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
-    _loopExits.clear();
+    assert(_loopExits.empty());
     for (int i = loopSize(); --i >= 0; ) {
         _loopExits.emplace_back();
     }
@@ -422,6 +422,8 @@ void LoopAnalysis::startAnalysis() {
 
     _subSequenceProgramBlocks.clear();
     _subSequenceLengths.clear();
+
+    _loopExits.clear();
 }
 
 bool LoopAnalysis::finishAnalysis() {
@@ -482,9 +484,32 @@ void LoopAnalysis::dump() const {
 std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
     os << (const SequenceAnalysis&)la << std::endl;
 
-    for (int i = 0; i < la.sequenceSize(); i++) {
-        os << "Instruction #" << i;
-        os << ", Exit: " << la.exit(i) << std::endl;
+    if (la.exitsAnalyzed()) {
+        for (int i = 0; i < la.sequenceSize(); i++) {
+            os << "Instruction #" << i;
+            os << ", Exit: " << la.exit(i) << std::endl;
+        }
+    }
+
+    if (la._subSequenceProgramBlocks.size() > 0) {
+        const ProgramBlock *pbPrev = nullptr;
+        const ProgramBlock *pb;
+        for (int i = 0; i < la.loopSize(); ++i) {
+            pb = la.programBlockAt(i);
+            if (pbPrev && pbPrev->zeroBlock() != pb && pbPrev->nonZeroBlock() != pb) {
+                os << "---" << std::endl;
+            }
+            os << i << ". " << *pb;
+
+            // Exit condition
+            os << (la.exitsOnZero(i) ? " ==" : " !=") << " 0, ";
+
+            // Effective result
+            os << la.effectiveResultAt(i);
+            os << std::endl;
+
+            pbPrev = pb;
+        }
     }
 
     return os;

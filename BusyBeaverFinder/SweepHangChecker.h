@@ -17,7 +17,43 @@
 #include "MetaLoopAnalysis.h"
 
 class SweepHangChecker : public HangChecker {
-public:
+  private:
+
+    struct SweepLoopPart {
+      public:
+        SweepLoopPart(int seqIndex, int rbIndex, int dpOffset)
+        : _seqIndex(seqIndex), _rbIndex(rbIndex), _dpOffset(dpOffset) {}
+
+        int seqIndex() const { return _seqIndex; }
+        int rbIndex() const { return _rbIndex; }
+        int dpOffset() const { return _dpOffset; }
+        int& seqIndex() { return _seqIndex; }
+        int& rbIndex() { return _rbIndex; }
+        int& dpOffset() { return _dpOffset; }
+
+      private:
+        // The index of the sequence within the sweep-loop
+        int _seqIndex;
+        // The index of the run block within the run-history
+        int _rbIndex;
+        // The DP when execution starts
+        int _dpOffset;
+    };
+
+    struct SweepLoopVisitState {
+        SweepLoopVisitState(const SweepHangChecker& checker,
+                            const ExecutionState& executionState,
+                            const SweepLoopPart& loopPart)
+        : checker(checker), executionState(executionState), loopPart(loopPart) {}
+
+        const SweepHangChecker& checker;
+        const ExecutionState& executionState;
+        const SweepLoopPart& loopPart;
+    };
+
+    using SweepLoopVisitor = std::function<void(const SweepLoopVisitState& state)>;
+
+  public:
     enum class LocationInSweep : int8_t {
         UNSET = 0,
         LEFT,
@@ -75,11 +111,12 @@ public:
         // Index of (one of) the incoming sweep-loop(s)
         int _incomingLoopSeqIndex;
         bool _isStationary;
+        std::optional<int> _minDp, _maxDp;
 
-        void addSequenceInstructions(const SweepHangChecker& checker, const ExecutionState& state,
-                                     int rbIndex, int dp);
-        void addLoopInstructions(const SweepHangChecker& checker, const ExecutionState& state,
-                                 int seqIndex, int rbIndex, int dp, bool incoming);
+        void addSequenceInstructions(const SweepLoopVisitState& vs);
+        void addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
+        void analyzeLoopPartPhase1(const SweepLoopVisitState& vs);
+        void analyzeLoopPartPhase2(const SweepLoopVisitState& vs);
         void analyzeTransitionAsLoop(const SweepHangChecker& checker, const ExecutionState& state);
     };
 
@@ -114,6 +151,21 @@ protected:
     // Returns sequence index for first incoming sweep loop of the given location
     int findIncomingSweepLoop(LocationInSweep location,
                               const ExecutionState& executionState) const;
+
+    // Add all contributions of the loop within the specified DP-range to the analysis
+    //
+    // Note: This may also include changes outside this range, as a continuous sequence of
+    // instructions is replayed from the program's run history.
+    void addContributionOfSweepLoopPass(const SweepHangChecker::SweepLoopVisitState vs,
+                                        SequenceAnalysis& analysis, int minDp, int maxDp) const;
+    void addContributionOfSweepLoopStart(const SweepHangChecker::SweepLoopVisitState vs,
+                                         SequenceAnalysis& analysis, int minDp, int maxDp) const;
+    void addContributionOfSweepLoopEnd(const SweepHangChecker::SweepLoopVisitState vs,
+                                       SequenceAnalysis& analysis, int minDp, int maxDp) const;
+
+    // Returns DP offset at end
+    int visitSweepLoopParts(const SweepLoopVisitor& visitor, const ExecutionState& executionState,
+                            int startSeqIndex, int dpStart) const;
 
     const Location& locationInSweep(int seqIndex) const { return _locationsInSweep.at(seqIndex); }
     const LoopBehavior& loopBehavior(int seqIndex) const {

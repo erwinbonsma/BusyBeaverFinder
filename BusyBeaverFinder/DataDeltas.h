@@ -99,4 +99,5 @@ public:
     const_iterator erase(const_iterator it) { return _dataDeltas.erase(it); }
 };
 
+std::ostream &operator<<(std::ostream &os, const DataDelta& dataDelta);
 std::ostream &operator<<(std::ostream &os, const DataDeltas& dataDeltas);

@@ -78,15 +78,20 @@ void DataDeltas::addDelta(int dpOffset, int delta) {
     _dataDeltas.push_back(DataDelta(dpOffset, delta));
 }
 
+std::ostream &operator<<(std::ostream &os, const DataDelta& dd) {
+    os << dd.delta() << "@" << dd.dpOffset();
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const DataDeltas& dataDeltas) {
     bool isFirst = true;
-    for (DataDelta dd : dataDeltas) {
+    for (auto& dd : dataDeltas) {
         if (!isFirst) {
             os << " ";
         } else {
             isFirst = false;
         }
-        os << dd.delta() << "@" << dd.dpOffset();
+        os << dd;
     }
 
     return os;

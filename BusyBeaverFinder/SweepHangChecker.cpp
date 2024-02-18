@@ -12,12 +12,7 @@
 
 void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& checker,
                                                         const ExecutionState &executionState) {
-    auto &runSummary = executionState.getRunSummary();
-    auto &runHistory = executionState.getRunHistory();
-    auto &metaAnalysis = checker._metaLoopAnalysis;
-    int loopSize = metaAnalysis->loopSize();
-
-    _analysis.analyzeMultiSequenceStart();
+    int loopSize = checker._metaLoopAnalysis->loopSize();
 
     // Determine the (maximum) size of the data deltas that represent how the data changes when
     // each sweep loop traversed the data once. It is the LCM of the (absolute) DP deltas of each
@@ -35,49 +30,11 @@ void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& 
         }
     }
 
-    int dpOffset = 0;
-    int seqIndex = _incomingLoopSeqIndex;
-    int rbIndex = metaAnalysis->firstRunBlockIndex() + seqIndex;
-    for (int i = 0; i < loopSize; ++i) {
-        auto &loc = checker.locationInSweep(seqIndex);
-        if (loc.isSweepLoop() && loc.isAt(_location)) {
-            // Add the constribution of this loop
-            auto& loopBehavior = checker.loopBehavior(seqIndex);
-            auto analysis = loopBehavior.loopAnalysis();
-            int dpDelta = analysis->dataPointerDelta();
+    _analysis.analyzeMultiSequenceStart();
 
-            // Determine number of iterations (so that all instructions that contribute to delta
-            // range are included)
-            //
-            // dpMax(i) = dpOffset + dpMax + i * dpDelta
-            // dpMin(i) = dpOffset + dpMin + i * dpDelta
-            int startIter, endIter;
-            if (dpDelta > 0) {
-                // Iteration where loop first enters DP range: dpMax(i) >= 0
-                startIter = ceildiv(-dpOffset - analysis->maxDp(), dpDelta);
-
-                // Iteration where loop fully exited DP range: dpMin(i) >= deltaRange
-                endIter = ceildiv(_deltaRange - dpOffset - analysis->minDp(), dpDelta);
-            } else {
-                // dpMin(i) <= deltaRange - 1  =>  i >= div(..., ...)
-                startIter = ceildiv(_deltaRange - 1 - analysis->minDp() - dpOffset, dpDelta);
-
-                // dpMax(i) < 0  =>  dpMax(i) <= -1  =>  i >= div(..., ...)
-                endIter = ceildiv(-1 - dpOffset - analysis->maxDp(), dpDelta);
-            }
-
-            // Determine DP start (so that's correctly aligned with the other loops)
-            int dpStart = dpOffset + startIter * dpDelta;
-            auto runBlock = runSummary.runBlockAt(rbIndex);
-            _analysis.analyzeMultiSequence(&runHistory.at(runBlock->getStartIndex()),
-                                           (endIter - startIter) * analysis->loopSize(),
-                                           dpStart);
-        }
-
-        dpOffset += metaAnalysis->dpDeltaOfRunBlock(runSummary, rbIndex);
-        seqIndex = (seqIndex + 1) % metaAnalysis->loopSize();
-        rbIndex += 1;
-    }
+    checker.visitSweepLoopParts([this, &checker](const SweepLoopVisitState& vs) {
+        checker.addContributionOfSweepLoopPass(vs, this->_analysis, 0, this->_deltaRange - 1);
+    }, executionState, _incomingLoopSeqIndex, 0);
 
     _analysis.analyzeMultiSequenceEnd(0);
 }
@@ -89,64 +46,26 @@ void SweepHangChecker::SweepLoop::analyze(const SweepHangChecker& checker,
     analyzeLoopAsSequence(checker, executionState);
 }
 
-void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangChecker& checker,
-                                                                const ExecutionState& state) {
-    auto &runSummary = state.getRunSummary();
-    auto &analysis = checker._metaLoopAnalysis;
-    int loopSize = analysis->loopSize();
-
-    _analysis.analyzeMultiSequenceStart();
-
-    int dp = 0;
-
-    // Start at instruction after incoming loop
-    int seqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
-    int rbIndex = analysis->firstRunBlockIndex() + seqIndex;
-    for (int i = 0; i < loopSize; ++i) {
-         std::cout << "seqIndex = " << seqIndex << ", dp = " << dp << ", rbIndex = " << rbIndex
-         << std::endl;
-        auto &loc = checker.locationInSweep(seqIndex);
-        if (loc.isAt(_location)) {
-            if (loc.isSweepLoop()) {
-                addLoopInstructions(checker, state, seqIndex, rbIndex, dp, loc.end == _location);
-            } else {
-                addSequenceInstructions(checker, state, rbIndex, dp);
-            }
-        }
-
-        dp += analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
-        seqIndex = (seqIndex + 1) % loopSize;
-        rbIndex += 1;
-    }
-
-    _analysis.analyzeMultiSequenceEnd(dp);
-}
-
-void SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepHangChecker& checker,
-                                                                const ExecutionState& state,
-                                                                int rbIndex,
-                                                                int dp) {
-    auto &runSummary = state.getRunSummary();
-    auto runBlock = runSummary.runBlockAt(rbIndex);
+void SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepLoopVisitState& vs) {
+    auto &runSummary = vs.executionState.getRunSummary();
+    auto &part = vs.loopPart;
+    auto runBlock = runSummary.runBlockAt(part.rbIndex());
     int pbIndex = runBlock->getStartIndex();
 
-    _analysis.analyzeMultiSequence(&state.getRunHistory().at(pbIndex),
-                                   runSummary.getRunBlockLength(rbIndex),
-                                   dp);
+    _analysis.analyzeMultiSequence(&vs.executionState.getRunHistory().at(pbIndex),
+                                   runSummary.getRunBlockLength(part.rbIndex()),
+                                   part.dpOffset());
 }
 
-void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepHangChecker& checker,
-                                                            const ExecutionState& state,
-                                                            int seqIndex, int rbIndex, int dp,
+void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepLoopVisitState& vs,
                                                             bool incoming) {
-    auto &runHistory = state.getRunHistory();
-    auto &runSummary = state.getRunSummary();
-    auto &loopBehavior = checker.loopBehavior(seqIndex);
+    auto &runHistory = vs.executionState.getRunHistory();
+    auto &runSummary = vs.executionState.getRunSummary();
+    auto &part = vs.loopPart;
+    auto &loopBehavior = vs.checker.loopBehavior(part.seqIndex());
     auto la = loopBehavior.loopAnalysis();
     int numIter = la->numBootstrapCycles();
     int len = numIter * la->loopSize();
-
-    // TODO: For mid-transition, also add contribution of loop that passes it
 
     // Range:
     // - DP-range of all sequences (which can be inside the sequence)
@@ -158,24 +77,89 @@ void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepHangCheck
 
     if (incoming) {
         // Incoming loop. Execute last "numIter" full loop iterations + any remaining instructions
-        auto &analysis = checker._metaLoopAnalysis;
+        auto &analysis = vs.checker._metaLoopAnalysis;
 
-        int dpEnd = dp + analysis->dpDeltaOfRunBlock(runSummary, rbIndex);
-        int loopIndex = analysis->loopIndexForSequence(seqIndex);
+        int dpEnd = part.dpOffset() + analysis->dpDeltaOfRunBlock(runSummary, part.rbIndex());
+        int loopIndex = analysis->loopIndexForSequence(part.seqIndex());
         int remainder = analysis->loopRemainder(loopIndex);
         int dpDeltaLastIter = ((remainder > 0)
                                ? la->effectiveResultAt(remainder - 1).dpOffset() : 0);
         int dpStart = dpEnd - dpDeltaLastIter - numIter * la->dataPointerDelta();
-        int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
+        int pbIndexNext = runSummary.runBlockAt(part.rbIndex() + 1)->getStartIndex();
         len += remainder;
 
         _analysis.analyzeMultiSequence(&runHistory.at(pbIndexNext - len), len, dpStart);
     } else {
         // Outgoing loop. Execute first "numIter" loop iterations
-        int pbIndex = runSummary.runBlockAt(rbIndex)->getStartIndex();
+        int pbIndex = runSummary.runBlockAt(part.rbIndex())->getStartIndex();
 
-        _analysis.analyzeMultiSequence(&runHistory.at(pbIndex), len, dp);
+        _analysis.analyzeMultiSequence(&runHistory.at(pbIndex), len, part.dpOffset());
     }
+}
+
+void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase1(const SweepLoopVisitState& vs) {
+//    std::cout << "seqIndex = " << vs.loopPart.seqIndex()
+//    << ", dp = " << vs.loopPart.dpOffset()
+//    << ", rbIndex = " << vs.loopPart.rbIndex()
+//    << std::endl;
+
+    auto &loc = vs.checker.locationInSweep(vs.loopPart.seqIndex());
+    if (loc.isAt(_location)) {
+        if (loc.isSweepLoop()) {
+            addLoopInstructions(vs, loc.end == _location);
+        } else {
+            addSequenceInstructions(vs);
+        }
+    }
+}
+
+void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVisitState& vs) {
+    auto& part = vs.loopPart;
+    std::cout << "seqIndex = " << part.seqIndex() << ", dp = " << part.dpOffset() << std::endl;
+
+    auto &loc = vs.checker.locationInSweep(vs.loopPart.seqIndex());
+    if (loc.isSweepLoop()) {
+        if (loc.start == _location) {
+            vs.checker.addContributionOfSweepLoopStart(vs, _analysis, *_minDp, *_maxDp);
+        } else if (loc.end == _location) {
+            vs.checker.addContributionOfSweepLoopEnd(vs, _analysis, *_minDp, *_maxDp);
+        } else if (_location == LocationInSweep::MID) {
+            vs.checker.addContributionOfSweepLoopPass(vs, _analysis, *_minDp, *_maxDp);
+        }
+    } else {
+        if (loc.isAt(_location)) {
+            addSequenceInstructions(vs);
+        }
+    }
+}
+
+void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangChecker& checker,
+                                                                const ExecutionState& state) {
+    const int loopSize = checker._metaLoopAnalysis->loopSize();
+
+    // Start at instruction after incoming loop
+    const int startSeqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
+
+    // First determine DP bounds
+    _analysis.analyzeMultiSequenceStart();
+
+    _minDp = {};
+    _maxDp = {};
+    checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
+        this->analyzeLoopPartPhase1(vs);
+    }, state, startSeqIndex, 0);
+
+    _minDp = _analysis.minDp();
+    _maxDp = _analysis.maxDp();
+    std::cout << "Bounds: " << *_minDp << " - " << *_maxDp << std::endl;
+
+    // Next collect all constributions within this range
+    _analysis.analyzeMultiSequenceStart();
+    int dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
+        this->analyzeLoopPartPhase2(vs);
+    }, state, startSeqIndex, 0);
+
+    _analysis.analyzeMultiSequenceEnd(dpOffset);
 }
 
 void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
@@ -202,6 +186,131 @@ int SweepHangChecker::findIncomingSweepLoop(LocationInSweep location,
     }
 
     return -1;
+}
+
+// Adds all contribitions from a sweep loop pass over the range [minDp, maxDp]
+// DP offset is only used to align the traversal of the loop over the sequence. The loop always
+// traverses the full range in this analysis.
+void SweepHangChecker::addContributionOfSweepLoopPass(const SweepLoopVisitState vs,
+                                                      SequenceAnalysis& multiPartAnalysis,
+                                                      int minDp, int maxDp) const {
+    assert(&vs.checker == this);
+
+    auto& part = vs.loopPart;
+    auto loopAnalysis = loopBehavior(part.seqIndex()).loopAnalysis();;
+    int dpDelta = loopAnalysis->dataPointerDelta();
+    int dpOffset = part.dpOffset();
+
+    // Determine number of iterations (so that all instructions that fall inside [minDp, maxDp] are
+    // included)
+    //
+    // dpMax(i) = dpOffset + dpMax + i * dpDelta
+    // dpMin(i) = dpOffset + dpMin + i * dpDelta
+    int startIter, endIter;
+    if (dpDelta > 0) {
+        // Iteration where loop first enters DP range: dpMax(i) >= 0
+        startIter = ceildiv(minDp - dpOffset - loopAnalysis->maxDp(), dpDelta);
+
+        // Iteration where loop fully exited DP range: dpMin(i) >= deltaRange
+        endIter = ceildiv(maxDp - dpOffset - loopAnalysis->minDp() + 1, dpDelta);
+    } else {
+        // dpMin(i) <= deltaRange - 1  =>  i >= div(..., ...)
+        startIter = ceildiv(maxDp - dpOffset - loopAnalysis->minDp(), dpDelta);
+
+        // dpMax(i) < 0  =>  dpMax(i) <= -1  =>  i >= div(..., ...)
+        endIter = ceildiv(minDp - dpOffset - loopAnalysis->maxDp() - 1, dpDelta);
+    }
+
+    // Determine DP start (so that's correctly aligned with the other loops)
+    int dpStart = dpOffset + startIter * dpDelta;
+    auto runBlock = vs.executionState.getRunSummary().runBlockAt(part.rbIndex());
+    auto& runHistory = vs.executionState.getRunHistory();
+    multiPartAnalysis.analyzeMultiSequence(&runHistory.at(runBlock->getStartIndex()),
+                                           (endIter - startIter) * loopAnalysis->loopSize(),
+                                           dpStart);
+}
+
+void SweepHangChecker::addContributionOfSweepLoopStart(const SweepLoopVisitState vs,
+                                                       SequenceAnalysis& multiPartAnalysis,
+                                                       int minDp, int maxDp) const {
+    assert(&vs.checker == this);
+
+    auto& part = vs.loopPart;
+    auto loopAnalysis = loopBehavior(part.seqIndex()).loopAnalysis();
+    int dpDelta = loopAnalysis->dataPointerDelta();
+    int dpOffset = part.dpOffset();
+
+    int endIter;
+    if (dpDelta > 0) {
+        // Iteration where loop fully exited DP range: dpMin(i) >= deltaRange
+        endIter = ceildiv(maxDp - dpOffset - loopAnalysis->minDp() + 1, dpDelta);
+    } else {
+        // dpMax(i) < 0  =>  dpMax(i) <= -1  =>  i >= div(..., ...)
+        endIter = ceildiv(minDp - dpOffset - loopAnalysis->maxDp() - 1, dpDelta);
+    }
+    assert(endIter > 0);
+
+    auto runBlock = vs.executionState.getRunSummary().runBlockAt(part.rbIndex());
+    auto& runHistory = vs.executionState.getRunHistory();
+    multiPartAnalysis.analyzeMultiSequence(&runHistory.at(runBlock->getStartIndex()),
+                                           endIter * loopAnalysis->loopSize(), dpOffset);
+}
+
+void SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState vs,
+                                                     SequenceAnalysis& multiPartAnalysis,
+                                                     int minDp, int maxDp) const {
+    auto& analysis = vs.checker._metaLoopAnalysis;
+    auto& part = vs.loopPart;
+    auto loopAnalysis = loopBehavior(part.seqIndex()).loopAnalysis();
+    auto& runSummary = vs.executionState.getRunSummary();
+
+    int dpEnd = part.dpOffset() + analysis->dpDeltaOfRunBlock(runSummary, part.rbIndex());
+    int loopIndex = analysis->loopIndexForSequence(part.seqIndex());
+    int remainder = analysis->loopRemainder(loopIndex);
+    int dpDeltaLastIter = ((remainder > 0)
+                           ? loopAnalysis->effectiveResultAt(remainder - 1).dpOffset() : 0);
+
+    int dpDelta = loopAnalysis->dataPointerDelta();
+    int dpOffset = dpEnd - dpDeltaLastIter;
+    int startIter;
+    if (dpDelta > 0) {
+        // Iteration where loop first enters DP range: dpMax(i) >= 0
+        startIter = ceildiv(minDp - dpOffset - loopAnalysis->maxDp(), dpDelta);
+    } else {
+        // dpMin(i) <= deltaRange - 1  =>  i >= div(..., ...)
+        startIter = ceildiv(maxDp - dpOffset - loopAnalysis->minDp(), dpDelta);
+    }
+    assert(startIter < 0);
+
+    int numIter = abs(startIter);
+    int dpStart = dpEnd - dpDeltaLastIter - numIter * loopAnalysis->dataPointerDelta();
+    int pbIndexNext = runSummary.runBlockAt(part.rbIndex() + 1)->getStartIndex();
+    int len = numIter * loopAnalysis->loopSize() + remainder;
+
+    auto& runHistory = vs.executionState.getRunHistory();
+    multiPartAnalysis.analyzeMultiSequence(&runHistory.at(pbIndexNext - len), len, dpStart);
+}
+
+int SweepHangChecker::visitSweepLoopParts(const SweepLoopVisitor& visitor,
+                                          const ExecutionState& state,
+                                          int startSeqIndex, int dpStart) const {
+    auto &runSummary = state.getRunSummary();
+    int loopSize = _metaLoopAnalysis->loopSize();
+
+    struct SweepLoopPart p {
+        startSeqIndex, _metaLoopAnalysis->firstRunBlockIndex() + startSeqIndex, dpStart
+    };
+    struct SweepLoopVisitState visitState(*this, state, p);
+
+    for (int i = 0; i < loopSize; ++i) {
+        visitor(visitState);
+
+        p.dpOffset() += _metaLoopAnalysis->dpDeltaOfRunBlock(runSummary, p.rbIndex());
+        p.seqIndex() = (p.seqIndex() + 1) % loopSize;
+        p.rbIndex() += 1;
+    }
+
+    return p.dpOffset();
 }
 
 bool SweepHangChecker::locateSweepLoops() {

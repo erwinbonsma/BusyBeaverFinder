@@ -150,6 +150,7 @@ public:
 
     // Returns the loop exit for the specified loop instruction
     const LoopExit& exit(int index) const { return _loopExits[index]; }
+    bool exitsAnalyzed() const { return _loopExits.size() > 0; }
 
     // Analyses the loop. Returns true if analysis was successful.
     bool analyzeLoop(RawProgramBlocks programBlocks, int len);
@@ -161,6 +162,8 @@ public:
     bool allValuesToBeConsumedAreZero(const Data &data) const;
 
     void dump() const;
+
+    friend std::ostream& operator<<(std::ostream&, const LoopAnalysis&);
 };
 
 std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la);
