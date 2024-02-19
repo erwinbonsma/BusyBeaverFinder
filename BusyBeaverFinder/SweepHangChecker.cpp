@@ -33,7 +33,10 @@ void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& 
     _analysis.analyzeMultiSequenceStart();
 
     checker.visitSweepLoopParts([this, &checker](const SweepLoopVisitState& vs) {
-        checker.addContributionOfSweepLoopPass(vs, this->_analysis, 0, this->_deltaRange - 1);
+        auto &loc = checker.locationInSweep(vs.loopPart.seqIndex());
+        if (loc.isSweepLoop() && loc.isAt(this->_location)) {
+            checker.addContributionOfSweepLoopPass(vs, this->_analysis, 0, this->_deltaRange - 1);
+        }
     }, executionState, _incomingLoopSeqIndex, 0);
 
     _analysis.analyzeMultiSequenceEnd(0);
@@ -114,17 +117,17 @@ void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase1(const SweepLoopVis
 }
 
 void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVisitState& vs) {
-    auto& part = vs.loopPart;
-    std::cout << "seqIndex = " << part.seqIndex() << ", dp = " << part.dpOffset() << std::endl;
+//    auto& part = vs.loopPart;
+//    std::cout << "seqIndex = " << part.seqIndex() << ", dp = " << part.dpOffset() << std::endl;
 
     auto &loc = vs.checker.locationInSweep(vs.loopPart.seqIndex());
     if (loc.isSweepLoop()) {
         if (loc.start == _location) {
-            vs.checker.addContributionOfSweepLoopStart(vs, _analysis, *_minDp, *_maxDp);
+            vs.checker.addContributionOfSweepLoopStart(vs, _analysis, _minDp, _maxDp);
         } else if (loc.end == _location) {
-            vs.checker.addContributionOfSweepLoopEnd(vs, _analysis, *_minDp, *_maxDp);
+            vs.checker.addContributionOfSweepLoopEnd(vs, _analysis, _minDp, _maxDp);
         } else if (_location == LocationInSweep::MID) {
-            vs.checker.addContributionOfSweepLoopPass(vs, _analysis, *_minDp, *_maxDp);
+            vs.checker.addContributionOfSweepLoopPass(vs, _analysis, _minDp, _maxDp);
         }
     } else {
         if (loc.isAt(_location)) {
@@ -143,15 +146,12 @@ void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangC
     // First determine DP bounds
     _analysis.analyzeMultiSequenceStart();
 
-    _minDp = {};
-    _maxDp = {};
     checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
         this->analyzeLoopPartPhase1(vs);
     }, state, startSeqIndex, 0);
 
     _minDp = _analysis.minDp();
     _maxDp = _analysis.maxDp();
-    std::cout << "Bounds: " << *_minDp << " - " << *_maxDp << std::endl;
 
     // Next collect all constributions within this range
     _analysis.analyzeMultiSequenceStart();
@@ -160,6 +160,14 @@ void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangC
     }, state, startSeqIndex, 0);
 
     _analysis.analyzeMultiSequenceEnd(dpOffset);
+
+    // Copy deltas within range (ignore deltas outside range)
+    _transitionDeltas.clear();
+    for (auto& dd : _analysis.dataDeltas()) {
+        if (dd.dpOffset() >= _minDp && dd.dpOffset() <= _maxDp) {
+            _transitionDeltas.addDelta(dd.dpOffset(), dd.delta());
+        }
+    }
 }
 
 void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,

@@ -46,7 +46,7 @@ class DataDeltas {
     void updateBounds() const;
 
 public:
-    void clear() { _dataDeltas.clear(); }
+    void clear() { _dataDeltas.clear(); _dpBoundsValid = false; }
 
     int size() const { return (int)_dataDeltas.size(); }
     const DataDelta& operator[](int index) const { return _dataDeltas[index]; }

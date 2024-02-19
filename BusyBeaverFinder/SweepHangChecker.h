@@ -99,7 +99,7 @@ class SweepHangChecker : public HangChecker {
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
         const bool isStationary() const { return _isStationary; }
-        const DataDeltas& transitionDeltas() const { return _analysis.squashedDataDeltas(); }
+        const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
 
         const LoopAnalysis& loopAnalysis() const { return _analysis; }
 
@@ -111,7 +111,8 @@ class SweepHangChecker : public HangChecker {
         // Index of (one of) the incoming sweep-loop(s)
         int _incomingLoopSeqIndex;
         bool _isStationary;
-        std::optional<int> _minDp, _maxDp;
+        int _minDp, _maxDp;
+        DataDeltas _transitionDeltas;
 
         void addSequenceInstructions(const SweepLoopVisitState& vs);
         void addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
