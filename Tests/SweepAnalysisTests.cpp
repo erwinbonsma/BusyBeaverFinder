@@ -404,13 +404,18 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Transition sequence. Converts exit to a body, and adds one to each of the two cells at
         // the right
         block[3].finalize(INC,  2, dummySteps, exitBlock, block + 4);
-        block[4].finalize(MOV,  1, dummySteps, block + 5, block + 5); // Shared exit
-        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
-        block[6].finalize(MOV,  1, dummySteps, block + 7, exitBlock);
-        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 8);
+        block[4].finalize(MOV,  1, dummySteps, block + 5, block + 6);
+
+        // Although the blocks are identical, they need to be different instances so that the exit
+        // condition can be correctly determined
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+        block[6].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+
+        block[7].finalize(MOV,  1, dummySteps, block + 8, exitBlock);
+        block[8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
 
         // Leftwards sweep loop
-        block[8].finalize(MOV, -1, dummySteps, block + 0, block + 8);
+        block[9].finalize(MOV, -1, dummySteps, block + 0, block + 9);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
@@ -419,53 +424,51 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         auto lb = mla.loopBehaviors();
 
         REQUIRE(result);
-        REQUIRE(mla.metaLoopPeriod() == 3);
+        REQUIRE(mla.metaLoopPeriod() == 6);
         REQUIRE(mla.loopSize() == 6);
         REQUIRE(lb.size() == 4);
 
         // Rightward sweep (followed by extend by two)
-        REQUIRE(mla.loopIterationDelta(0) == 2);
+        REQUIRE(mla.loopIterationDelta(0) == 3);
         REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
         REQUIRE(lb[0].iterationDelta() == 3);
         REQUIRE(lb[0].minDpDelta() == 0);
         REQUIRE(lb[0].maxDpDelta() == 3);
         // Leftward sweep
-        REQUIRE(mla.loopIterationDelta(1) == 2);
+        REQUIRE(mla.loopIterationDelta(1) == 3);
         REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
         REQUIRE(lb[1].iterationDelta() == 3);
         REQUIRE(lb[1].minDpDelta() == 0);
         REQUIRE(lb[1].maxDpDelta() == 3);
         // Rightward sweep (followed by extend by one)
-        REQUIRE(mla.loopIterationDelta(2) == 1);
+        REQUIRE(mla.loopIterationDelta(2) == 3);
         REQUIRE(lb[2].loopType() == LoopType::ANCHORED_SWEEP);
         REQUIRE(lb[2].iterationDelta() == 3);
         REQUIRE(lb[2].minDpDelta() == 0);
         REQUIRE(lb[2].maxDpDelta() == 3);
         // Leftward sweep
-        REQUIRE(mla.loopIterationDelta(3) == 1);
+        REQUIRE(mla.loopIterationDelta(3) == 3);
         REQUIRE(lb[3].loopType() == LoopType::ANCHORED_SWEEP);
         REQUIRE(lb[3].iterationDelta() == 3);
         REQUIRE(lb[3].minDpDelta() == 0);
         REQUIRE(lb[3].maxDpDelta() == 3);
 
-        // Raises an assert failure
-        // TODO: Fix
-//        result = hangChecker.init(&mla, hangExecutor);
-//        REQUIRE(result);
-//
-//        auto& tl = hangChecker.leftTransition();
-//        auto& tdl = tl.transitionDeltas();
-//        REQUIRE(tdl.size() == 0);
-//
-//        auto& tr = hangChecker.rightTransition();
-//        auto& tdr = tr.transitionDeltas();
-//        REQUIRE(tdr.size() == 3);
-//        REQUIRE(tdr.deltaAt(0) == 2);
-//        REQUIRE(tdr.deltaAt(1) == 2);
-//        REQUIRE(tdr.deltaAt(2) == 2);
-//
-//        auto& sll = hangChecker.leftSweepLoop();
-//        REQUIRE(sll.sweepLoopDeltas().size() == 0);
+        result = hangChecker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        auto& tl = hangChecker.leftTransition();
+        auto& tdl = tl.transitionDeltas();
+        REQUIRE(tdl.size() == 0);
+
+        auto& tr = hangChecker.rightTransition();
+        auto& tdr = tr.transitionDeltas();
+        REQUIRE(tdr.size() == 3);
+        REQUIRE(tdr.deltaAt(0) == 2);
+        REQUIRE(tdr.deltaAt(1) == 2);
+        REQUIRE(tdr.deltaAt(2) == 2);
+
+        auto& sll = hangChecker.leftSweepLoop();
+        REQUIRE(sll.sweepLoopDeltas().size() == 0);
     }
 
     SECTION("ConstantSweepBodyWithStationaryCounter") {
