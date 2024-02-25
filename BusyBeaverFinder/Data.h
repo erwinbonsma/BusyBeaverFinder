@@ -54,6 +54,7 @@ public:
 
     // Relatively slow but safe when dp+dpOffset might be out of bounds.
     int valueAt(DataPointer dp, int dpOffset) const;
+    int valueAt(int dpOffset) const { return valueAt(_dataP, dpOffset); }
 
     bool onlyZerosAhead(DataPointer dp, bool atRight) const;
 

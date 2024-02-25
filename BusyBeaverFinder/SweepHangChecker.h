@@ -69,8 +69,11 @@ class SweepHangChecker : public HangChecker {
 
         const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
         int deltaRange() const { return _deltaRange; }
+        int outgoingLoopSequenceIndex() const { return _outgoingLoopSeqIndex; }
 
-        const SequenceAnalysis& sequenceAnalysis() const { return _analysis; }
+        const LoopAnalysis& combinedAnalysis() const { return _analysis; }
+
+        bool continuesForever(const ExecutionState& executionState, int dpDelta) const;
 
       private:
         // Location should either be LEFT or RIGHT to uniquely identify the loop (as there are
@@ -78,16 +81,17 @@ class SweepHangChecker : public HangChecker {
         LocationInSweep _location;
 
         // The effective result of the loop after one meta-loop period
-        SequenceAnalysis _analysis;
+        LoopAnalysis _analysis;
 
         // The range of DP after which the sweep-loop behavior repeats. Only DP values in range of
         // [0, _deltaRange> should be considered when checking/proving hangs.
         int _deltaRange;
 
-        // Index of (one of) the incoming sweep-loop(s)
-        int _incomingLoopSeqIndex;
+        // Index of (one of) the outgoing sweep-loop(s). This is the loop that is the starting
+        // point for the analysis.
+        int _outgoingLoopSeqIndex;
 
-        void analyzeLoopAsSequence(const SweepHangChecker& checker,
+        void analyzeCombinedEffect(const SweepHangChecker& checker,
                                    const ExecutionState& executionState);
     };
 
@@ -101,7 +105,11 @@ class SweepHangChecker : public HangChecker {
         const bool isStationary() const { return _isStationary; }
         const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
 
-        const LoopAnalysis& loopAnalysis() const { return _analysis; }
+        int incomingLoopSequenceIndex() const { return _incomingLoopSeqIndex; }
+
+        const LoopAnalysis& combinedAnalysis() const { return _analysis; }
+
+        bool continuesForever(const ExecutionState& executionState) const;
 
       private:
         LocationInSweep _location;
@@ -118,7 +126,7 @@ class SweepHangChecker : public HangChecker {
         void addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
         void analyzeLoopPartPhase1(const SweepLoopVisitState& vs);
         void analyzeLoopPartPhase2(const SweepLoopVisitState& vs);
-        void analyzeTransitionAsLoop(const SweepHangChecker& checker, const ExecutionState& state);
+        void analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state);
     };
 
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
@@ -149,9 +157,9 @@ protected:
         bool isAt(LocationInSweep loc) const { return start == loc || end == loc; }
     };
 
-    // Returns sequence index for first incoming sweep loop of the given location
-    int findIncomingSweepLoop(LocationInSweep location,
-                              const ExecutionState& executionState) const;
+    // Returns sequence index for first sweep loop satisfying the predicate (input Location for
+    // the sweep loop)
+    template <class Pred> int findSweepLoop(Pred p) const;
 
     // Add all contributions of the loop within the specified DP-range to the analysis
     //
@@ -189,6 +197,10 @@ private:
     std::vector<Location> _locationsInSweep;
     // The sequence index of the first loop that is a sweep
     int _firstSweepLoopSeqIndex;
+
+    // How long (in total number of run blocks) to execute the proof checks before deciding the
+    // program hangs
+    int _proofUntil;
 
     // Set start and end locations for sweep loops
     bool locateSweepLoops();

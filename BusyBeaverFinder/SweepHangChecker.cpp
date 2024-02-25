@@ -10,7 +10,7 @@
 
 #include "Utils.h"
 
-void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& checker,
+void SweepHangChecker::SweepLoop::analyzeCombinedEffect(const SweepHangChecker& checker,
                                                         const ExecutionState &executionState) {
     int loopSize = checker._metaLoopAnalysis->loopSize();
 
@@ -37,16 +37,52 @@ void SweepHangChecker::SweepLoop::analyzeLoopAsSequence(const SweepHangChecker& 
         if (loc.isSweepLoop() && loc.isAt(this->_location)) {
             checker.addContributionOfSweepLoopPass(vs, this->_analysis, 0, this->_deltaRange - 1);
         }
-    }, executionState, _incomingLoopSeqIndex, 0);
+    }, executionState, _outgoingLoopSeqIndex, 0);
 
     _analysis.analyzeMultiSequenceEnd(0);
+
+    // Only consider exits inside the loop range.
+    _analysis.disableExits([this](LoopExit& exit) {
+        int dpOffset = exit.exitCondition.dpOffset();
+        return dpOffset < 0 || dpOffset >= this->_deltaRange;
+    });
 }
 
 void SweepHangChecker::SweepLoop::analyze(const SweepHangChecker& checker,
                                           const ExecutionState& executionState) {
-    _incomingLoopSeqIndex = checker.findIncomingSweepLoop(_location, executionState);
+    _outgoingLoopSeqIndex = checker.findSweepLoop([this](const Location& loc) {
+        return loc.start == this->_location;
+    });
 
-    analyzeLoopAsSequence(checker, executionState);
+    analyzeCombinedEffect(checker, executionState);
+}
+
+bool SweepHangChecker::SweepLoop::continuesForever(const ExecutionState& executionState,
+                                                   int dpDelta) const {
+    if (_analysis.squashedDataDeltas().size() == 0) {
+        // A sweep loop that does not permanently modify any values can be assumed to run forever.
+        // Although loops that toggle one or more values can still terminate this never happens in
+        // the context of a meta-loop, as this would happen in the first iteration of the meta-loop
+        // which prevents it from looping.
+        return true;
+    }
+
+    int dpDir = _location == LocationInSweep::LEFT ? 1 : -1;
+    assert(dpDir * dpDelta > 0);
+
+    int dpOffset = 0;
+    while (abs(dpOffset) < abs(dpDelta)) {
+        // TODO: Handle fact that analysis extends dpRange (and these values should be ignored)
+        if (_analysis.stationaryLoopExits(executionState.getData(), dpOffset)) {
+            return false;
+        }
+        dpOffset += dpDir * _deltaRange;
+    }
+
+    // TODO: Check if it is possible that the combined effects of a sweep loop shift between
+    // iterations of the meta-loop. If so, handle this (by invoking check once for each offset?)
+
+    return true;
 }
 
 void SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepLoopVisitState& vs) {
@@ -136,8 +172,8 @@ void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVis
     }
 }
 
-void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangChecker& checker,
-                                                                const ExecutionState& state) {
+void SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChecker& checker,
+                                                              const ExecutionState& state) {
     const int loopSize = checker._metaLoopAnalysis->loopSize();
 
     // Start at instruction after incoming loop
@@ -168,27 +204,42 @@ void SweepHangChecker::TransitionGroup::analyzeTransitionAsLoop(const SweepHangC
             _transitionDeltas.addDelta(dd.dpOffset(), dd.delta());
         }
     }
+
+    _analysis.disableExits([this](const LoopExit& exit) {
+        int dpOffset = exit.exitCondition.dpOffset();
+        return dpOffset < this->_minDp || dpOffset > this->_maxDp;
+    });
 }
 
 void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
                                                 const ExecutionState& executionState) {
-    _incomingLoopSeqIndex = checker.findIncomingSweepLoop(_location, executionState);
+    _incomingLoopSeqIndex = checker.findSweepLoop([this](const Location& loc) {
+        return loc.end == this->_location;
+    });
     auto &loopBehavior = checker.loopBehavior(_incomingLoopSeqIndex);
     _isStationary = _location == LocationInSweep::MID || (_location == LocationInSweep::RIGHT
                                                           ? loopBehavior.maxDpDelta() == 0
                                                           : loopBehavior.minDpDelta() == 0);
 
-    analyzeTransitionAsLoop(checker, executionState);
+    analyzeCombinedEffect(checker, executionState);
 }
 
-int SweepHangChecker::findIncomingSweepLoop(LocationInSweep location,
-                                            const ExecutionState& executionState) const {
+bool SweepHangChecker::TransitionGroup::continuesForever(const ExecutionState& execState) const {
+    if (_isStationary) {
+        return !_analysis.stationaryLoopExits(execState.getData(), 0);
+    } else {
+        return _analysis.allValuesToBeConsumedAreZero(execState.getData());
+    }
+}
+
+template <class Pred>
+int SweepHangChecker::findSweepLoop(Pred p) const {
     int loopSize = _metaLoopAnalysis->loopSize();
 
     for (int i = 0; i < loopSize; ++i) {
         auto& loc = locationInSweep(i);
-        if (loc.isAt(location) && loc.isSweepLoop() && loc.end == location) {
-            // Found an incoming sweep loop
+        if (loc.isSweepLoop() && p(loc)) {
+            // Found sweep loop satisfying the predicate
             return i;
         }
     }
@@ -429,6 +480,7 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
     _leftTransition.analyze(*this, executionState);
     _rightTransition.analyze(*this, executionState);
+
     if (_midTransition) {
         _midTransition.value().analyze(*this, executionState);
     }
@@ -438,15 +490,74 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
         _rightSweepLoop.value().analyze(*this, executionState);
     }
 
+    int bootstrapCycles = 0;
+    if (!_leftTransition.isStationary()) {
+        bootstrapCycles = _leftTransition.combinedAnalysis().numBootstrapCycles();
+    }
+    if (!_rightTransition.isStationary()) {
+        bootstrapCycles = std::max(bootstrapCycles,
+                                   _rightTransition.combinedAnalysis().numBootstrapCycles());
+    }
+    if (_midTransition) {
+        bootstrapCycles = std::max(bootstrapCycles,
+                                   _midTransition.value().combinedAnalysis().numBootstrapCycles());
+    }
+
+    _proofUntil = (executionState.getRunSummary().getNumRunBlocks()
+                   + _metaLoopAnalysis->loopSize() * bootstrapCycles);
+
     return true;
 }
 
 Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
-    // TODO: All sweep sections: value is fixed (over time) or moves away from zero
+    auto& runSummary = executionState.getRunSummary();
+    int numRunBlocks = runSummary.getNumRunBlocks();
 
-    // TODO: All stationary sequences (including mid-sweep): All values fixed or diverging.
+    if (numRunBlocks >= _proofUntil) {
+        return Trilian::YES;
+    }
 
-    // TODO: All gliding sequences: Only zeroes ahead and no-recently consumed exit-values.
+    int loopSize = _metaLoopAnalysis->loopSize();
+
+    // The index of the run block whose execution is just about to start
+    int seqIndex = (numRunBlocks - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
+    auto &loc = locationInSweep(seqIndex);
+
+    if (loc.isSweepLoop()) {
+        SweepLoop* loop = nullptr;
+        if (loc.start == LocationInSweep::LEFT) {
+            loop = &_leftSweepLoop;
+        } else if (loc.start == LocationInSweep::RIGHT && _rightSweepLoop) {
+            loop = &_rightSweepLoop.value();
+        }
+        if (loop && loop->outgoingLoopSequenceIndex() == seqIndex) {
+            int loopIndex = _metaLoopAnalysis->loopIndexForSequence(seqIndex);
+            int prevNumIter = _metaLoopAnalysis->lastNumLoopIterations(loopIndex);
+            int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta();
+            int expectedDpTravel =
+                expectedIter * _metaLoopAnalysis->sequenceAnalysis(seqIndex)->dataPointerDelta();
+            if (!loop->continuesForever(executionState, abs(expectedDpTravel))) {
+                return Trilian::NO;
+            }
+        }
+    } else {
+        int prevSeqIndex = (seqIndex + loopSize - 1) % loopSize;
+        if (locationInSweep(prevSeqIndex).isSweepLoop()) {
+            // This is the start of a transition sequence
+            TransitionGroup* transition;
+            switch (loc.start) {
+                case LocationInSweep::LEFT: transition = &_leftTransition; break;
+                case LocationInSweep::RIGHT: transition = &_rightTransition; break;
+                case LocationInSweep::MID: transition = &_midTransition.value(); break;
+                case LocationInSweep::UNSET: assert(false);
+            }
+
+            if (transition->incomingLoopSequenceIndex() == prevSeqIndex
+                && !transition->continuesForever(executionState)) {
+                return Trilian::NO;
+            }
+        }
+    }
 
     return Trilian::MAYBE;
 }

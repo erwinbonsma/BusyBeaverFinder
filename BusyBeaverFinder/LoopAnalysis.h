@@ -152,6 +152,16 @@ public:
     const LoopExit& exit(int index) const { return _loopExits[index]; }
     bool exitsAnalyzed() const { return _loopExits.size() > 0; }
 
+    // Disable exits for which the predicate returns true.
+    template <class Pred> void disableExits(Pred p) {
+        for (auto &loopExit : _loopExits) {
+            if (p(loopExit)) {
+                loopExit.exitWindow = ExitWindow::NEVER;
+                loopExit.firstForValue = false;
+            }
+        }
+    }
+
     // Analyses the loop. Returns true if analysis was successful.
     bool analyzeLoop(RawProgramBlocks programBlocks, int len);
 
@@ -160,6 +170,9 @@ public:
     // It should be invoked when the loop is just about to start executing its first instruction
     // (again).
     bool allValuesToBeConsumedAreZero(const Data &data) const;
+
+    // Checks for a stationary loop if it exits when it runs on the given data.
+    bool stationaryLoopExits(const Data& data, int dpOffset) const;
 
     void dump() const;
 

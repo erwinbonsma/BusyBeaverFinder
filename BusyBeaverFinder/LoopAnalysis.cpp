@@ -467,7 +467,8 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
                     // Abort. This is not expected to occur in practise for (small) programs that
                     // are actually locked in a periodic hang. It currently triggers for a (yet
                     // undetected) sweep hang where the body consists of zeroes in one sweep
-                    // direction. It can be replaced by an assert once this is detected.
+                    // direction.
+                    // TODO: Replace by an assert once this is detected.
                     return false;
                 }
             }
@@ -475,6 +476,21 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
     }
 
     return true;
+}
+
+bool LoopAnalysis::stationaryLoopExits(const Data& data, int dpOffset) const {
+    assert(dataPointerDelta() == 0);
+
+    for (auto &loopExit : _loopExits) {
+        if (loopExit.exitWindow != ExitWindow::NEVER) {
+            int value = data.valueAt(dpOffset + loopExit.exitCondition.dpOffset());
+            if (loopExit.exitCondition.isTrueForValue(value)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void LoopAnalysis::dump() const {

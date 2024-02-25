@@ -235,6 +235,10 @@ public:
         return _loopData[loopIndex].dataPointerDelta;
     }
 
+    int lastNumLoopIterations(int loopIndex) const {
+        return _loopData[loopIndex].lastNumIterations;
+    }
+
     int loopRemainder(int loopIndex) const {
         return _loopData[loopIndex].loopRemainder;
     }

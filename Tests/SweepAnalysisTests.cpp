@@ -192,8 +192,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         auto& sll = hangChecker.leftSweepLoop();
         REQUIRE(sll.deltaRange() == 2);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.deltaAt(0) == -1);
-        REQUIRE(sdl.deltaAt(1) == 1);
+        REQUIRE(sdl.deltaAt(0) == 1);
+        REQUIRE(sdl.deltaAt(1) == -1);
         REQUIRE(!hangChecker.rightSweepLoop());
     }
 
@@ -1115,8 +1115,8 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
         auto& sll = hangChecker.leftSweepLoop();
         REQUIRE(sll.deltaRange() == 2);
         auto& sdl = sll.sweepLoopDeltas();
-        REQUIRE(sdl.deltaAt(0) == 7);
-        REQUIRE(sdl.deltaAt(1) == 3);
+        REQUIRE(sdl.deltaAt(0) == 3);
+        REQUIRE(sdl.deltaAt(1) == 7);
     }
 
     SECTION("SweepWithComplexSweepLoop3") {
