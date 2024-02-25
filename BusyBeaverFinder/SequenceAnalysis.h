@@ -21,11 +21,18 @@ class PreCondition {
     int _value;
     bool _shouldEqual;
 
+    // Should normally not happen. Can happen in multi-sequence analysis for instructions that
+    // spill outside the DP range of intereset.
+    bool _invalid = false;
+
 public:
     PreCondition(int value, bool shouldEqual) : _value(value), _shouldEqual(shouldEqual) {}
 
     int value() const { return _value; }
     bool shouldEqual() const { return _shouldEqual; }
+
+    void invalidate() { _invalid = true; }
+    bool isValid() const { return _invalid; }
 
     bool holdsForValue(int value) const;
 

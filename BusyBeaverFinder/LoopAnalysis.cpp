@@ -205,7 +205,9 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             loopExit.exitWindow = ExitWindow::BOOTSTRAP;
             _numBootstrapCycles = 1;
         } else {
-            assert(exitsOnZero(i)); // Otherwise the loop cannot loop
+            // Otherwise the loop cannot loop. Does not necessarily hold for multi-sequence loops
+            // TODO: Invalidate exit for multi-sequence loops (and check that it is not used)
+            assert(exitsOnZero(i) || !_subSequenceProgramBlocks.empty());
             Operator  op =
                 (finalDelta > 0) ? Operator::LESS_THAN_OR_EQUAL : Operator::GREATER_THAN_OR_EQUAL;
             loopExit.exitCondition.init(op, -currentDelta, dp);

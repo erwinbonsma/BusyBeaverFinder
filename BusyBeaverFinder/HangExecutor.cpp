@@ -10,7 +10,6 @@
 #include "IrregularSweepHangDetector.h"
 #include "MetaLoopHangDetector.h"
 #include "PeriodicHangDetector.h"
-#include "PeriodicSweepHangDetector.h"
 
 #include "ProgramBlock.h"
 
@@ -28,7 +27,7 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
 
 void HangExecutor::addDefaultHangDetectors() {
     _hangDetectors.push_back(std::make_shared<PeriodicHangDetector>(*this));
-    _hangDetectors.push_back(std::make_shared<PeriodicSweepHangDetector>(*this));
+
     _hangDetectors.push_back(std::make_shared<IrregularSweepHangDetector>(*this));
     _hangDetectors.push_back(std::make_shared<MetaLoopHangDetector>(*this));
 }
@@ -174,6 +173,7 @@ RunResult HangExecutor::execute(std::string programSpec) {
     InterpretedProgramBuilder programBuilder = InterpretedProgramBuilder::fromProgram(program);
 
     std::cout << "Executing: " << programSpec << std::endl;
+//    programBuilder.dump();
 
     return execute(&programBuilder);
 }

@@ -92,6 +92,10 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
         return true;
     }
 
+    if (prepareSweepHangCheck()) {
+        return true;
+    }
+
     // TODO: Remove once all types of loops can be checked
     _metaLoopAnalysis.reset();
 

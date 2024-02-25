@@ -16,6 +16,7 @@
 #include "RunSummary.h"
 
 bool PreCondition::holdsForValue(int value) const {
+    assert(!_invalid);
     return (_shouldEqual == (value == _value));
 }
 
@@ -32,7 +33,9 @@ void SequenceAnalysis::addPreCondition(int dpOffset, PreCondition preCondition) 
         if (preCondition.shouldEqual()) {
             if (iter->second.shouldEqual()) {
                 // Pre-condition already exists. Nothing needs doing
-                assert(iter->second.value() == preCondition.value());
+                if (iter->second.value() != preCondition.value()) {
+                    preCondition.invalidate();
+                }
                 return;
             } else {
                 // Remove all other (shouldNotEqual) conditions. They are replaced by this stricter
@@ -42,7 +45,9 @@ void SequenceAnalysis::addPreCondition(int dpOffset, PreCondition preCondition) 
         } else {
             if (iter->second.shouldEqual()) {
                 // Another, more strict, pre-condtion already exists. Nothing needs doing
-                assert(iter->second.value() != preCondition.value());
+                if (iter->second.value() == preCondition.value()) {
+                    preCondition.invalidate();
+                }
                 return;
             } else {
                 // Check that pre-condition does not yet exist

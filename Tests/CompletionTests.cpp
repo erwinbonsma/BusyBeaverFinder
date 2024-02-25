@@ -65,6 +65,72 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
     hangExecutor.setMaxSteps(40000000);
     hangExecutor.addDefaultHangDetectors();
 
+    SECTION("7x7-OldFalsePositive3") {
+        // Program exhibits a behavior that resembles a simple hang. Steady growth at its right,
+        // and a fixed point at its left. However, this fixed point used to be classified
+        // incorrectly. The transition sequence (plus subsequent bootstrap of the outgoing loop)
+        // actually moves one cell towards zero.
+        //
+        //   *     * *
+        //   _ _ * o _ *
+        // * o _ o o o *
+        // * * * o * o
+        // o o o o * o
+        // _ * _ o _ o
+        // _     *   *
+        RunResult result = hangExecutor.execute("dyCgCSkVqmRVkIRAIg");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 348);
+    }
+    SECTION("7x7-OldFalsePositive4") {
+        // Program exhibits a behavior that resembles a simple hang. Steady growth at both sides.
+        // However, there is an isolated one at the left of the sequence that breaks the leftward
+        // growth and causes the program to terminate.
+        //
+        //       *
+        //     * o _ *
+        //     * o * _ *
+        // *   _ o * o
+        // o o o o o o *
+        // _ * _ _ _ o
+        // _     *   *
+        RunResult result = hangExecutor.execute("dwIAJICYoGRVWIBAIg");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 257);
+    }
+    SECTION("7x7-OldFalsePositive5") {
+        // Very similar in behavior to the previous program.
+        //
+        //   *   * *
+        // * o o _ _ *
+        //     * o o *
+        // *   _ o * _ *
+        // o o o o o o *
+        // _ * _ o o o *
+        // _   * *   *
+        RunResult result = hangExecutor.execute("dyKCUICWIGJVWIVgog");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 342);
+    }
+    SECTION("7x7-OldFalsePositive6") {
+        // Very similar in behavior to the previous program. Possibly a bit more subtle.
+        //
+        //       *
+        //     * o _ _ *
+        //     * o   *
+        // *   _ o * _
+        // o o o o o o *
+        // _ * _ _ _ o
+        // _     *   *
+        RunResult result = hangExecutor.execute("dwIAJCCSIGBVWIBAIg");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 317);
+    }
+
     SECTION("BB 7x7 #117273") {
         RunResult result = hangExecutor.execute("dwoAlShaIhJBYIGAKA");
 

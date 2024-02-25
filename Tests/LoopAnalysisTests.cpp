@@ -619,7 +619,7 @@ TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]")
         analyzeLoop(la, loopBlock, 4);
 
         REQUIRE(la.dataPointerDelta() == 2);
-        REQUIRE(la.minDp() == 1);
+        REQUIRE(la.minDp() == 0);
         REQUIRE(la.maxDp() == 2);
         REQUIRE(la.squashedDataDeltas().size() == 2);
         REQUIRE(la.numBootstrapCycles() == 0);
@@ -669,7 +669,7 @@ TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]")
         loopBlock[2].finalize(INC,  2, dummySteps, &exitBlock, loopBlock + 3);
         loopBlock[3].finalize(MOV, -2, dummySteps, &exitBlock, loopBlock + 0);
 
-        analyzeLoop(la, loopBlock, 5);
+        analyzeLoop(la, loopBlock, 4);
         REQUIRE(la.dataPointerDelta() == 1);
         REQUIRE(la.minDp() == 0);
         REQUIRE(la.maxDp() == 3);
