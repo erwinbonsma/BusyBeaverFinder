@@ -30,7 +30,10 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
     exitBlock->finalizeExit(dummySteps);
 
     SECTION("SweepLooksBeyondSweepExit") {
-        // Copy of program in SweepAnalysis tests
+        // The right sweep looks beyond the zero value that will cause it to exit, which must be
+        // non-zero. After the sweep terminates, the sweep extends one position to the right,
+        // again with a zero followed by a one. The sweep also extends one position to the left
+        // each time. Together this ensures that look-ahead is always non-zero.
 
         // Bootstrap
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
@@ -176,7 +179,36 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         RunResult result = hangExecutor.execute(&program);
-        hangExecutor.dump();
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+
+    SECTION("SweepTerminationOnMidSweepTransition") {
+        // Sweep with a mid-sweep transition, which decreases a counter and terminates when this
+        // counter reaches zero.
+
+        // Bootstrap
+        block[0].finalize(INC, 16, dummySteps, exitBlock, block + 1);
+
+        // Rightwards sweep
+        block[1].finalize(MOV,  1, dummySteps, block + 2, block + 1);
+
+        // Transition sequence, extending sequence by one
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+
+        // Leftwards sweep (on right side)
+        block[3].finalize(INC, -1, dummySteps, block + 4, block + 6);
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+
+        // Leftwards sweep (on left side)
+        block[6].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+
+        // Transition sequence extending sequence at left
+        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
