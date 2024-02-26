@@ -25,11 +25,14 @@ void ExitCondition::init(Operator op, int value, int dpOffset) {
     _operator = op;
     _value = value;
     _dpOffset = dpOffset;
+    _invalid = false;
 
     _modulus = 1;
 }
 
 bool ExitCondition::isTrueForValue(int value) const {
+    assert(!_invalid);
+
     switch (_operator) {
         case Operator::EQUALS:
             return (value == _value);
@@ -55,6 +58,12 @@ bool ExitCondition::isTrueForValue(int value) const {
 
 std::ostream &operator<<(std::ostream &os, const ExitCondition &ec) {
     os << "Data[" << ec.dpOffset() << "] ";
+
+    if (!ec.isValid()) {
+        os << "INVALID";
+        return os;
+    }
+
     switch (ec.getOperator()) {
         case Operator::EQUALS: os << "=="; break;
         case Operator::UNEQUAL: os << "!="; break;
@@ -205,9 +214,10 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             loopExit.exitWindow = ExitWindow::BOOTSTRAP;
             _numBootstrapCycles = 1;
         } else {
-            // Otherwise the loop cannot loop. Does not necessarily hold for multi-sequence loops
-            // TODO: Invalidate exit for multi-sequence loops (and check that it is not used)
-            assert(exitsOnZero(i) || !_subSequenceProgramBlocks.empty());
+            if (!exitsOnZero(i)) {
+                // Otherwise the loop cannot loop.
+                loopExit.exitCondition.invalidate();
+            }
             Operator  op =
                 (finalDelta > 0) ? Operator::LESS_THAN_OR_EQUAL : Operator::GREATER_THAN_OR_EQUAL;
             loopExit.exitCondition.init(op, -currentDelta, dp);

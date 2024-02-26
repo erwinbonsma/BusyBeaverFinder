@@ -43,6 +43,10 @@ class ExitCondition {
     unsigned int _modulus;
     Operator _operator;
 
+    // Should normally not happen. Can happen in multi-sequence analysis for instructions that
+    // spill outside the DP range of intereset.
+    bool _invalid = false;
+
 public:
     void init(Operator op, int value, int dpOffset);
 
@@ -54,6 +58,9 @@ public:
     unsigned int modulusConstraint() const { return _modulus; }
     void setModulusConstraint(unsigned int modulus) { _modulus = modulus; }
     void clearModulusConstraint() { _modulus = 1; }
+
+    void invalidate() { _invalid = true; }
+    bool isValid() const { return _invalid; }
 
     // Checks if the condition holds for the specified value. It's the responsibility of the caller
     // to pass the correct value(s), i.e. one which the instruction that can cause this exit will
