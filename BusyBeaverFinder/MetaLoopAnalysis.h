@@ -178,6 +178,7 @@ public:
     // Should be invoked when a loop in the run summary is about to finish,
     bool analyzeMetaLoop(const ExecutionState &executionState);
 
+    bool isInitialized() const { return _numRunBlocks > 0; }
     bool isAnalysisStillValid(const ExecutionState &executionState);
 
     // The meta-loop period (in run blocks). It is the period returned by the meta-run summary.

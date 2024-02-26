@@ -360,7 +360,7 @@ bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
     determineDpDeltas(executionState.getRunSummary());
     initLoopBehaviors();
 
-    // Mark results valid
+    // Mark results valid/initialized
     _numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
     _numMetaRunBlocks = executionState.getMetaRunSummary().getNumRunBlocks();
 

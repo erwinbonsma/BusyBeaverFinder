@@ -18,6 +18,7 @@ void MetaLoopHangDetector::reset() {
 
     _activeChecker = nullptr;
     _activeHang = HangType::UNKNOWN;
+    _activeHangProofResult = Trilian::MAYBE;
 }
 
 void MetaLoopHangDetector::clearAnalysis() {
@@ -48,6 +49,7 @@ bool MetaLoopHangDetector::preparePeriodicHangCheck() {
     _periodicHangChecker.init(&_loopAnalysis, loopStart);
     _activeChecker = &_periodicHangChecker;
     _activeHang = HangType::META_PERIODIC;
+    _activeHangProofResult = Trilian::MAYBE;
 
     return true;
 }
@@ -59,6 +61,7 @@ bool MetaLoopHangDetector::prepareGliderHangCheck() {
 
     _activeChecker = &_gliderHangChecker;
     _activeHang = HangType::APERIODIC_GLIDER;
+    _activeHangProofResult = Trilian::MAYBE;
 
     return true;
 }
@@ -71,13 +74,19 @@ bool MetaLoopHangDetector::prepareSweepHangCheck() {
 
     _activeChecker = &_sweepHangChecker;
     _activeHang = HangType::REGULAR_SWEEP;
+    _activeHangProofResult = Trilian::MAYBE;
 
     return true;
 }
 
 bool MetaLoopHangDetector::analyzeHangBehaviour() {
-    if (_metaLoopAnalysis.isAnalysisStillValid(_execution)) {
-        return true;
+    if (_metaLoopAnalysis.isInitialized()) {
+        if (_metaLoopAnalysis.isAnalysisStillValid(_execution)) {
+            return true;
+        } else {
+            // Clear any checker that is no longer valid
+            _activeChecker = nullptr;
+        }
     }
 
     if (!_metaLoopAnalysis.analyzeMetaLoop(_execution)) {
@@ -96,20 +105,16 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
         return true;
     }
 
-    // TODO: Remove once all types of loops can be checked
-    _metaLoopAnalysis.reset();
-
+    // TODO: Check which programs are not covered by the existing checkers
     return false;
 }
 
 Trilian MetaLoopHangDetector::proofHang() {
     assert(_activeChecker != nullptr);
 
-    Trilian result = _activeChecker->proofHang(_execution);
-    if (result == Trilian::NO) {
-        _activeChecker = nullptr;
-        _activeHang = HangType::UNKNOWN;
+    if (_activeHangProofResult == Trilian::MAYBE) {
+        _activeHangProofResult = _activeChecker->proofHang(_execution);
     }
 
-    return result;
+    return _activeHangProofResult;
 }

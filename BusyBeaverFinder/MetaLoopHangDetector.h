@@ -24,6 +24,7 @@ class MetaLoopHangDetector : public HangDetector {
 
     HangChecker* _activeChecker;
     HangType _activeHang;
+    Trilian _activeHangProofResult;
 
     bool preparePeriodicHangCheck();
     bool prepareGliderHangCheck();
