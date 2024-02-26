@@ -214,10 +214,6 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             loopExit.exitWindow = ExitWindow::BOOTSTRAP;
             _numBootstrapCycles = 1;
         } else {
-            if (!exitsOnZero(i)) {
-                // Otherwise the loop cannot loop.
-                loopExit.exitCondition.invalidate();
-            }
             Operator  op =
                 (finalDelta > 0) ? Operator::LESS_THAN_OR_EQUAL : Operator::GREATER_THAN_OR_EQUAL;
             loopExit.exitCondition.init(op, -currentDelta, dp);
@@ -225,6 +221,12 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
 
             // Reset to known state. May still be changed later
             loopExit.exitWindow = ExitWindow::ANYTIME;
+
+            // TODO: Re-enable
+//            if (!exitsOnZero(i)) {
+//                // Otherwise the loop cannot loop.
+//                loopExit.exitCondition.invalidate();
+//            }
         }
     }
 }
@@ -292,6 +294,7 @@ void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
             for (int j = i + 1; j < loopSize(); ++j) {
                 if (
                     dpOffset == _effectiveResult[j].dpOffset() &&
+                    _loopExits[j].exitCondition.isValid() &&
                     !_loopExits[j].exitCondition.isTrueForValue(
                         _effectiveResult[j].delta() - _effectiveResult[i].delta()
                     )

@@ -60,7 +60,7 @@ public:
     void clearModulusConstraint() { _modulus = 1; }
 
     void invalidate() { _invalid = true; }
-    bool isValid() const { return _invalid; }
+    bool isValid() const { return !_invalid; }
 
     // Checks if the condition holds for the specified value. It's the responsibility of the caller
     // to pass the correct value(s), i.e. one which the instruction that can cause this exit will

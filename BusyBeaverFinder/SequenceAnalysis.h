@@ -32,7 +32,7 @@ public:
     bool shouldEqual() const { return _shouldEqual; }
 
     void invalidate() { _invalid = true; }
-    bool isValid() const { return _invalid; }
+    bool isValid() const { return !_invalid; }
 
     bool holdsForValue(int value) const;
 

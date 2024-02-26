@@ -513,7 +513,7 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
     auto& runSummary = executionState.getRunSummary();
     int numRunBlocks = runSummary.getNumRunBlocks();
 
-    if (numRunBlocks >= _proofUntil) {
+    if (numRunBlocks > _proofUntil) {
         return Trilian::YES;
     }
 
@@ -540,24 +540,42 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
                 return Trilian::NO;
             }
         }
-    } else {
-        int prevSeqIndex = (seqIndex + loopSize - 1) % loopSize;
-        if (locationInSweep(prevSeqIndex).isSweepLoop()) {
-            // This is the start of a transition sequence
-            TransitionGroup* transition;
-            switch (loc.start) {
-                case LocationInSweep::LEFT: transition = &_leftTransition; break;
-                case LocationInSweep::RIGHT: transition = &_rightTransition; break;
-                case LocationInSweep::MID: transition = &_midTransition.value(); break;
-                case LocationInSweep::UNSET: assert(false);
-            }
+    }
 
-            if (transition->incomingLoopSequenceIndex() == prevSeqIndex
-                && !transition->continuesForever(executionState)) {
-                return Trilian::NO;
-            }
+    // Note: It is possible that a new loop now starts and there is a non-empty transition that
+    // needs to be checked as well. This happens when there is no sequence run block separating the
+    // outgoing loop from the incoming loop, but there's still an effective transition sequence due
+    // to incoming loop shutdown and outgoing loop bootstrap effects.
+    int prevSeqIndex = (seqIndex + loopSize - 1) % loopSize;
+    if (locationInSweep(prevSeqIndex).isSweepLoop()) {
+        // This is the start of a transition sequence
+        TransitionGroup* transition;
+        switch (loc.start) {
+            case LocationInSweep::LEFT: transition = &_leftTransition; break;
+            case LocationInSweep::RIGHT: transition = &_rightTransition; break;
+            case LocationInSweep::MID: transition = &_midTransition.value(); break;
+            case LocationInSweep::UNSET: assert(false);
+        }
+
+        if (transition->incomingLoopSequenceIndex() == prevSeqIndex
+            && !transition->continuesForever(executionState)) {
+            return Trilian::NO;
         }
     }
 
     return Trilian::MAYBE;
+}
+
+std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker) {
+    os << "Left transition: " << std::endl << checker.leftTransition().combinedAnalysis();
+    os << "Left sweep: " << std::endl << checker.leftSweepLoop().combinedAnalysis();
+    if (auto &transition = checker.midTransition()) {
+        os << "Mid transition: " << std::endl << transition->combinedAnalysis();
+    }
+    if (auto &loop = checker.rightSweepLoop()) {
+        os << "Right sweep: " << std::endl << loop->combinedAnalysis();
+    }
+    os << "Right transition: " << std::endl << checker.rightTransition().combinedAnalysis();
+
+    return os;
 }

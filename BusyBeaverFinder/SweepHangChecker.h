@@ -131,12 +131,12 @@ class SweepHangChecker : public HangChecker {
 
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 
-    const SweepLoop& leftSweepLoop() { return _leftSweepLoop; }
-    const std::optional<SweepLoop>& rightSweepLoop() { return _rightSweepLoop; }
+    const SweepLoop& leftSweepLoop() const { return _leftSweepLoop; }
+    const std::optional<SweepLoop>& rightSweepLoop() const { return _rightSweepLoop; }
 
-    const TransitionGroup& leftTransition() { return _leftTransition; }
-    const TransitionGroup& rightTransition() { return _rightTransition; }
-    const std::optional<TransitionGroup>& midTransition() { return _midTransition; }
+    const TransitionGroup& leftTransition() const { return _leftTransition; }
+    const TransitionGroup& rightTransition() const { return _rightTransition; }
+    const std::optional<TransitionGroup>& midTransition() const { return _midTransition; }
 
     Trilian proofHang(const ExecutionState& executionState) override;
 
@@ -211,3 +211,5 @@ private:
     bool initSweepLoops(const ExecutionState& executionState);
     bool initTransitionSequences(const ExecutionState& executionState);
 };
+
+std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker);
