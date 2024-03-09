@@ -52,4 +52,4 @@ Find a program that executes for as long as possible, yet terminates.
 ## More information
 
 For a detailed description of the search algorithm and its current results check my write-up
-[The Quest for 2LBB Busy Beavers](https://bonsma.home.xs4all.nl/BusyBeavers2L/index.html).
+[The Quest for 2LBB Busy Beavers](https://erwinbonsma.nl/BusyBeavers2L/index.html).
