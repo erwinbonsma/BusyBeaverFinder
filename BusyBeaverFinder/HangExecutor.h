@@ -13,6 +13,7 @@
 #include "Data.h"
 #include "ExecutionState.h"
 #include "ProgramExecutor.h"
+#include "RunBlockTransitions.h"
 #include "RunSummary.h"
 #include "Types.h"
 
@@ -43,6 +44,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     RunHistory _runHistory;
     RunSummary _runSummary;
     MetaRunSummary _metaRunSummary;
+    RunBlockTransitions _runBlockTransitions;
     int* _zArrayHelperBuf;
 
     void resetHangDetection();
@@ -86,4 +88,7 @@ public:
     const RunHistory& getRunHistory() const override { return _runHistory; }
     const RunSummary& getRunSummary() const override { return _runSummary; }
     const MetaRunSummary& getMetaRunSummary() const override { return _metaRunSummary; }
+    const RunBlockTransitions& getRunBlockTransitions() const override {
+        return _runBlockTransitions;
+    }
 };
