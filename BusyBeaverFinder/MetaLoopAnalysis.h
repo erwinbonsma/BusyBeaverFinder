@@ -88,10 +88,6 @@ public:
     int maxDpDelta() const { return _maxDpDelta; }
     int iterationDelta() const { return _iterationDelta; }
 
-    // TODO: Remove?
-    const LoopBehavior* prevLoop() const;
-    const LoopBehavior* nextLoop() const;
-
     LoopType loopType() const;
     bool isSweepLoop() const {
         LoopType tp = loopType();
