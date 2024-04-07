@@ -97,13 +97,17 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
         return preparePeriodicHangCheck();
     }
 
-    if (prepareGliderHangCheck()) {
-        return true;
+    if (_metaLoopAnalysis.isRegular()) {
+        if (prepareGliderHangCheck()) {
+            return true;
+        }
+
+        if (prepareSweepHangCheck()) {
+            return true;
+        }
     }
 
-    if (prepareSweepHangCheck()) {
-        return true;
-    }
+    // TODO: Support irregular sweeps
 
     // TODO: Check which programs are not covered by the existing checkers
     return false;

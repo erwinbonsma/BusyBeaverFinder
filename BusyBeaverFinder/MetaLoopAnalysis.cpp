@@ -30,9 +30,14 @@ LoopType LoopBehavior::loopType() const {
     return LoopType::DOUBLE_SWEEP;
 }
 
+// Replace by std::optional monadic operations after switch to C++23
+std::string optionalIntToString(std::optional<int> value) {
+    return value ? std::to_string(value.value()) : "N/A";
+}
+
 std::ostream &operator<<(std::ostream &os, const LoopBehavior &behavior) {
-    os << "minDpDelta = " << behavior.minDpDelta()
-    << ", maxDpDelta = " << behavior.maxDpDelta()
+    os << "minDpDelta = " << optionalIntToString(behavior.minDpDelta())
+    << ", maxDpDelta = " << optionalIntToString(behavior.maxDpDelta())
     << ", iterationDelta = " << behavior.iterationDelta();
 
     return os;
@@ -43,7 +48,6 @@ void MetaLoopAnalysis::initLoopData(const RunSummary &runSummary, int loopSize) 
     _loopData.clear();
     _loopIndexLookup.clear();
 
-    _isPeriodic = true;  // Initial assumption.
     _firstRunBlockIndex = runSummary.getNumRunBlocks() - loopSize * NUM_ITERATIONS_TO_ANALYZE;
     int rbIndex = _firstRunBlockIndex;
 
@@ -64,8 +68,10 @@ void MetaLoopAnalysis::initLoopData(const RunSummary &runSummary, int loopSize) 
     }
 }
 
-bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize) {
+MetaLoopType MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize) {
     initLoopData(runSummary, loopSize);
+
+    MetaLoopType loopType = MetaLoopType::PERIODIC;  // Initial assumption
 
     // Analyze loop iteration deltas. Loop twice. First to determine the delta, and next to check
     // if/how this delta changes.
@@ -77,32 +83,69 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
 
             assert(rb->isLoop());
 
+            bool isStationary = (_seqAnalysis[data.sequenceIndex
+                                              % _metaLoopPeriod]->dataPointerDelta() == 0);
+
             auto &dataPrev = _loopData[(data.loopIndex + _loopData.size() - numLoops())
                                        % _loopData.size()];
             int blockLen = runSummary.getRunBlockLength(rbIndex);
             int numIter = blockLen / rb->getLoopPeriod();
             int delta = numIter - dataPrev.lastNumIterations;
+
             if (delta < 0) {
-                // The number of iterations should not decrease
-                return false;
+                data.iterationDeltaType = LoopIterationDelta::IRREGULAR;
+
+                if (isStationary) {
+                    // The number of iterations for stationary loops cannot decrease.
+                    return MetaLoopType::UNSUPPORTED;
+                }
+
+                // A (temporary) decrease is possible for irregular sweep loops
+                loopType = MetaLoopType::IRREGULAR;
+            } else if (delta > 0) {
+                // Assume increase is linear
+                data.iterationDeltaType = std::max(data.iterationDeltaType,
+                                                   LoopIterationDelta::LINEAR_INCREASE);
+
+                // Meta-loop is not periodic. Assume it is regular instead.
+                loopType = std::max(loopType, MetaLoopType::REGULAR);
             }
 
-            _isPeriodic &= (delta == 0);
-
             if (i == 2) {
+                if (data.lastIterationDelta < 0 && delta <= data.lastIterationDelta) {
+                    // For irregular sweep loops, only analysis of binary-counting type behaviors
+                    // is supported. In this case, there should never be two subsequent decreases
+                    // of (sweep) loop iteration count.
+                    return MetaLoopType::UNSUPPORTED;
+                }
+
+                if (delta == data.lastIterationDelta) {
+                    // Nothing needs doing. iterationDeltaType is already correct
+                    assert((delta == 0
+                            && data.iterationDeltaType == LoopIterationDelta::CONSTANT) ||
+                           (delta > 0
+                            && data.iterationDeltaType == LoopIterationDelta::LINEAR_INCREASE));
+                }
                 if (delta < data.lastIterationDelta) {
-                    // The number of iterations should not decrease
-                    return false;
+                    data.iterationDeltaType = LoopIterationDelta::IRREGULAR;
+
+                    if (isStationary) {
+                        // The change in number of iterations for stationary loops cannot decrease.
+                        return MetaLoopType::UNSUPPORTED;
+                    }
+                    loopType = MetaLoopType::IRREGULAR;
                 }
                 if (delta > data.lastIterationDelta) {
-                    auto &seqAnalysis = _seqAnalysis[data.sequenceIndex % _metaLoopPeriod];
-                    if (seqAnalysis->dataPointerDelta() != 0) {
-                        // The number of iterations for non-stationary loops should be fixed or
-                        // increase linearly
-                        return false;
-                    } else {
-                        data.isLinear = false;
+                    data.iterationDeltaType = LoopIterationDelta::NONLINEAR_INCREASE;
+
+                    if (!isStationary) {
+                        // The number of iterations for non-stationary loops cannot increase non-
+                        // linearly
+                        return MetaLoopType::UNSUPPORTED;
                     }
+
+                    // Meta-loop is not periodic. Assume it is regular instead.
+                    loopType = std::max(loopType, MetaLoopType::REGULAR);
                 }
             }
 
@@ -111,7 +154,7 @@ bool MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize)
         }
     }
 
-    return true;
+    return loopType;
 }
 
 bool MetaLoopAnalysis::determineLoopSize(const ExecutionState &executionState) {
@@ -119,16 +162,33 @@ bool MetaLoopAnalysis::determineLoopSize(const ExecutionState &executionState) {
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
     int ln = metaRunSummary.getLoopIteration();
 
+    MetaLoopType bestLoopType = MetaLoopType::UNSUPPORTED;
+    int bestLoopSize = 0;
+
     int max_i = std::min(MAX_ITERATIONS_TO_UNROLL, ln / NUM_ITERATIONS_TO_ANALYZE);
     int loopSize = _metaLoopPeriod;
     for (int i = 0; i < max_i; ++i, loopSize += _metaLoopPeriod) {
-        if (checkLoopSize(runSummary, loopSize)) {
-            _loopSize = loopSize;
-            return true;
+        auto loopType = checkLoopSize(runSummary, loopSize);
+
+        if (loopType < bestLoopType) {
+            bestLoopType = loopType;
+            bestLoopSize= loopSize;
         }
     }
 
-    return false;
+    if (bestLoopType == MetaLoopType::UNSUPPORTED) {
+        return false;
+    }
+
+    if (bestLoopSize != loopSize) {
+        // Restore state to match the best found loop size
+        auto result = checkLoopSize(runSummary, bestLoopSize);
+        assert(result == bestLoopType);
+    }
+
+    _metaLoopType = bestLoopType;
+    _loopSize = bestLoopSize;
+    return true;
 }
 
 void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
@@ -191,6 +251,8 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     int start = end - _loopSize * 2;
     int rbIndex = start;
 
+    // Loop twice. First to determine the DP positions at the end of each loop.  Next to determine
+    // how it changed with respect to the previous loop execution.
     for (int i = 0; i < 2; ++i) {
         auto loopDataIt = _loopData.begin();
         for (int j = 0; j < _loopSize; ++j, ++rbIndex) {
@@ -225,24 +287,33 @@ void MetaLoopAnalysis::initLoopBehaviors() {
         auto sa = _seqAnalysis[index];
 
         assert(sa->isLoop());
-        int dpDeltaStart = 0;
-        int iterDelta = 0;
-        bool isLinear = true;
 
-        for (int j = data.loopIndex % numLoops(); j < _loopData.size(); j += numLoops()) {
-            auto &data = _loopData[j];
-            dpDeltaStart += data.dataPointerDelta;
-            iterDelta += data.lastIterationDelta;
-            isLinear &= data.isLinear;
+        if (_metaLoopType == MetaLoopType::IRREGULAR) {
+            _loopBehaviors.emplace_back(this, data.sequenceIndex,
+                                        std::dynamic_pointer_cast<LoopAnalysis>(sa));
+        } else {
+            int dpDeltaStart = 0;
+            int iterDelta = 0;
+            LoopIterationDelta loopDeltaType = LoopIterationDelta::CONSTANT;
+
+            for (int j = data.loopIndex % numLoops(); j < _loopData.size(); j += numLoops()) {
+                auto &data = _loopData[j];
+                dpDeltaStart += data.dataPointerDelta;
+                iterDelta += data.lastIterationDelta;
+                loopDeltaType = std::max(loopDeltaType, data.iterationDeltaType);
+            }
+            assert(loopDeltaType != LoopIterationDelta::IRREGULAR);
+            bool isLinear = (loopDeltaType == LoopIterationDelta::LINEAR_INCREASE ||
+                             loopDeltaType == LoopIterationDelta::CONSTANT);
+
+            int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
+
+            _loopBehaviors.emplace_back(this, data.sequenceIndex,
+                                        std::dynamic_pointer_cast<LoopAnalysis>(sa),
+                                        std::min(dpDeltaStart, dpDeltaEnd),
+                                        std::max(dpDeltaStart, dpDeltaEnd),
+                                        isLinear ? iterDelta : -1);
         }
-
-        int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
-
-        _loopBehaviors.emplace_back(this, data.sequenceIndex,
-                                    std::dynamic_pointer_cast<LoopAnalysis>(sa),
-                                    std::min(dpDeltaStart, dpDeltaEnd),
-                                    std::max(dpDeltaStart, dpDeltaEnd),
-                                    isLinear ? iterDelta : -1);
     }
 }
 

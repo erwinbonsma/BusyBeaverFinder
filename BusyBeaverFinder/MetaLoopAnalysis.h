@@ -18,6 +18,39 @@
 
 typedef const RunBlock *const * RawRunBlocks;
 
+enum class LoopIterationDelta : int8_t {
+    // The number of iterations does not change
+    CONSTANT = 0,
+
+    // The number of iterations increases linearly
+    LINEAR_INCREASE = 1,
+
+    // The number of iterations increases non-linearly
+    NONLINEAR_INCREASE = 2,
+
+    // The number of iterations changes irregularly and can even decrease
+    IRREGULAR = 3
+};
+
+enum class MetaLoopType : int8_t {
+    // The number of iterations for each loop is CONSTANT
+    PERIODIC = 1,
+
+    // The number of iterations for:
+    // - non-stationary loops is CONSTANT or LINEAR_INCREASE
+    // - stationary loops is CONSTANT, LINEAR_INCREASE or NONLINEAR_INCREASE
+    REGULAR = 2,
+
+    // The number of iterations for:
+    // - non-stationary loops is CONSTANT, LINEAR_INCREASE, or IRREGULAR
+    // - stationary loops is CONSTANT, LINEAR_INCREASE or NONLINEAR_INCREASE
+    IRREGULAR = 3,
+
+    // Any remaining cases. For example, meta-loops that contain stationary loops with decreasing
+    // number of iterations.
+    UNSUPPORTED = 4
+};
+
 struct MetaLoopData {
     // References which of the loops this data applies to.
     // Range: [0, numLoops>
@@ -40,7 +73,10 @@ struct MetaLoopData {
     int dataPointerPos = 0;
 
     int lastIterationDelta = 0;
-    bool isLinear = true;
+
+    // Start with most simple assumption, and adapt when needed.
+    LoopIterationDelta  iterationDeltaType = LoopIterationDelta::CONSTANT;
+
     int dataPointerDelta = 0;
 
     MetaLoopData() {}
@@ -64,13 +100,14 @@ class LoopBehavior {
     std::shared_ptr<LoopAnalysis> _loopAnalysis;
 
     // How much the mininum (left) and maximum (right) DP value changes on subsequent executions of
-    // the loop;
-    int _minDpDelta;
-    int _maxDpDelta;
+    // the loop. Not set when change is irregular.
+    std::optional<int> _minDpDelta;
+    std::optional<int> _maxDpDelta;
 
     int _iterationDelta;
 
 public:
+    // Contructor when meta-loop behavior is periodic or regular
     LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
                  std::shared_ptr<LoopAnalysis> loopAnalysis,
                  int minDpDelta, int maxDpDelta, int iterationDelta)
@@ -81,11 +118,25 @@ public:
     , _maxDpDelta(maxDpDelta)
     , _iterationDelta(iterationDelta) {}
 
+    // Constructor when meta-loop behavior is irregular. Less can be said about how loops behave
+    // in this case.
+    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
+                 std::shared_ptr<LoopAnalysis> loopAnalysis)
+    : _metaLoopAnalysis(metaLoopAnalysis)
+    , _sequenceIndex(sequenceIndex)
+    , _loopAnalysis(loopAnalysis)
+    , _minDpDelta()
+    , _maxDpDelta()
+    , _iterationDelta(-2) {}
+
     std::shared_ptr<LoopAnalysis> loopAnalysis() const { return _loopAnalysis; }
 
     int sequenceIndex() const { return _sequenceIndex; }
-    int minDpDelta() const { return _minDpDelta; }
-    int maxDpDelta() const { return _maxDpDelta; }
+    std::optional<int> minDpDelta() const { return _minDpDelta; }
+    std::optional<int> maxDpDelta() const { return _maxDpDelta; }
+
+    // When zero or positive represents actual delta.
+    // Otherwise: -1 => non-linear increase, -2 => irregular (matching values of LoopIterationDelta)
     int iterationDelta() const { return _iterationDelta; }
 
     LoopType loopType() const;
@@ -116,11 +167,7 @@ public:
 
 /* Analyses a meta-run loop.
  *
- * The following conditions need to hold:
- * - The loops contained in the meta-run loop should always exit at the same program block.
- * - The DP position at the start of each run block every meta-iteration should be fixed, or move
- *   at constant speed, which implies
- *   - The number of iterations for non-stationairy loops should be constant or increase linearly
+ * Analysis succeeds when the loop can be classified by one of the MetaLoopType enum values.
  */
 class MetaLoopAnalysis {
     // The meta-loop period in run blocks.
@@ -153,12 +200,12 @@ class MetaLoopAnalysis {
     // Maps sequence indices to loop indices.
     std::map<int, int> _loopIndexLookup;
 
-    bool _isPeriodic;
+    MetaLoopType _metaLoopType;
 
     void analyzeRunBlocks(const ExecutionState &executionState);
 
     void initLoopData(const RunSummary &runSummary, int loopSize);
-    bool checkLoopSize(const RunSummary &runSummary, int loopSize);
+    MetaLoopType checkLoopSize(const RunSummary &runSummary, int loopSize);
     bool determineLoopSize(const ExecutionState &executionState);
 
     // The number of loops in the meta-run block (the meta-loop may contain a multiple of this).
@@ -184,9 +231,13 @@ public:
     // when the number of iterations would otherwise increase non-linearly.
     int loopSize() const { return _loopSize; }
 
-    // Returns true iff the program block history is periodic. This is the case when the number of
-    // iterations for each loop inside the meta-loop remains constant.
-    bool isPeriodic() const { return _isPeriodic; }
+    // Returns true iff the program block history is periodic.
+    bool isPeriodic() const { return _metaLoopType == MetaLoopType::PERIODIC; }
+
+    // Returns true iff the program block history is regular.
+    bool isRegular() const { return _metaLoopType == MetaLoopType::REGULAR; }
+
+    MetaLoopType metaLoopType() const { return _metaLoopType; }
 
     // Returns the index of the first run block (with sequence index zero) from where this
     // meta-loop analysis is valid.

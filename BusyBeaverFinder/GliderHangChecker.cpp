@@ -25,7 +25,7 @@ bool GliderHangChecker::identifyLoopCounters() {
     }
 
     assert(loopBehavior.minDpDelta() == loopBehavior.maxDpDelta());
-    int loopShift = loopBehavior.minDpDelta();
+    int loopShift = loopBehavior.minDpDelta().value();
     auto &deltas = loopAnalysis->dataDeltas();
     int curCounterDelta = deltas.deltaAt(_counterDpOffset);
     int sumFutureDeltas = 0;

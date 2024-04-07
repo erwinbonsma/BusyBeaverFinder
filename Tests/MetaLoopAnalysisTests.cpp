@@ -442,7 +442,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]" ) {
     HangExecutor hangExecutor(1000, 1000);
     hangExecutor.setMaxSteps(1000);
-    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 99));
+    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
@@ -452,8 +452,11 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
     MetaLoopAnalysis mla;
 
-    SECTION( "IrregularSweep" ) {
-        // Sweep body consists ones and twos and used to perform a binary count
+    // TODO: Add test for basic irregular sweep
+
+    SECTION( "BodylessIrregularSweep" ) {
+        // Sweep does not have a plain body, only an appendix. As a result, it never enters a
+        // meta-loop for long enough (as some sweeps are too short and not looping)
 
         // Rightward sweep loop (exits on zero or one)
         block[0].finalize(MOV,  1, dummySteps, block + 3, block + 1);
@@ -478,13 +481,12 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        // It does not consistently fail. It depends when analysis is executed. Only higher-level
-        // analysis can reject it as a meta-periodic hang.
         REQUIRE(!result);
     }
 
-    SECTION( "CounterControlledSweep" ) {
-        // The number of sweeps is controlled by a counter, which increases each time.
+    SECTION( "SweepWithCounter" ) {
+        // Sweep with a gliding counter. The sweep behavior is regular, but the counter breaks the
+        // meta-loop occrasionally
 
         // Init counter
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
@@ -514,6 +516,8 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(!result);
+        REQUIRE(result);
+        // The meta-loop is regular (even thought it terminates non-regularly)
+        REQUIRE(mla.metaLoopType() == MetaLoopType::REGULAR);
     }
 }
