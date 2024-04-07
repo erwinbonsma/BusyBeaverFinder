@@ -23,7 +23,7 @@ const bool MOV = false;
 
 
 // Programs that end up in a permanent meta-loop
-TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
+TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
     HangExecutor hangExecutor(1000, 20000);
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
@@ -36,7 +36,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
 
     MetaLoopAnalysis mla;
 
-    SECTION( "SimpleGliderDeltaTwo" ) {
+    SECTION("SimpleGliderDeltaTwo") {
         // Glider counter increases by two each iteration
 
         // Bootstrap
@@ -70,7 +70,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(lb[0].maxDpDelta() == 1);
     }
 
-    SECTION( "DoubleCounterGlider" ) {
+    SECTION("DoubleCounterGlider") {
         // Glider that increases two counters during each meta-loop iteration, thereby ensuring
         // that iterations go up non-linearly. This behavior is also harder to analyze, as the
         // next loop counter is incremented one less than the current counter.
@@ -108,7 +108,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(lb[0].maxDpDelta() == 1);
     }
 
-    SECTION( "TwoIndependentGliders" ) {
+    SECTION("TwoIndependentGliders") {
         // Two chained gliders that independently update their counters. The first counter
         // increases by one each meta-loop iteration. The other counter doubles each time.
         // Data: C1_OLD C1_NEW C2_OLD C2_NEW
@@ -159,7 +159,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
-    SECTION( "TwoEntangledIndependentGliders" ) {
+    SECTION("TwoEntangledIndependentGliders") {
         // Two chained gliders that independently update their counters. The first counter
         // increases by one each meta-loop iteration. The other counter doubles each time.
         // Very similar to TwoIndependentGliders except that the data regions are now entangled.
@@ -212,7 +212,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(lb[1].maxDpDelta() == 2);
     }
 
-    SECTION( "TwoDependentGliders" ) {
+    SECTION("TwoDependentGliders") {
         // Two chained gliders with a dependency between their counters. The first loop updates its
         // own next counter by one each meta-loop iteration, but also updates the counter for the
         // other loop. The other counter doubles each time.
@@ -266,7 +266,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
-    SECTION( "StationaryLoop-PowersOfTwo" ) {
+    SECTION("StationaryLoop-PowersOfTwo") {
         // Calculates powers of two using two stationary counters that alternate between one being
         // decremented and the other being incremented
 
@@ -308,7 +308,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
         REQUIRE(lb[1].maxDpDelta() == 0);
     }
 
-    SECTION( "SweepWithGlider" ) {
+    SECTION("SweepWithGlider") {
         // Sweep body consists of only ones and extends by one position to the right.
         // At its right is a moving counter that is incremented by one each meta-loop iteration.
 
@@ -361,7 +361,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]" ) {
     }
 }
 
-TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][completion]" ) {
+TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][completion]") {
     HangExecutor hangExecutor(1000, 100000);
     hangExecutor.setMaxSteps(10000000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor));
@@ -374,7 +374,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 
     MetaLoopAnalysis mla;
 
-    SECTION( "TerminatingGlider" ) {
+    SECTION("TerminatingGlider") {
         // Glider that starts with a positive loop counter that decreases each iteration
 
         // Bootstrap
@@ -401,7 +401,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
         REQUIRE(!result);
     }
 
-    SECTION( "SweepConsumingGliderWake" ) {
+    SECTION("SweepConsumingGliderWake") {
         // Sweep connected to glider that leaves powers of three (minus one) in its wake.
         // The leftward sweep subtracts seven of all values. This eventually causes the program
         // to terminate, as (3^6 - 1) is divisible by seven. It requires 104 sweeps to get to
@@ -439,7 +439,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 }
 
 // Examples of programs that do not end up in a permanent meta-periodic loop, but still hang
-TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]" ) {
+TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]") {
     HangExecutor hangExecutor(1000, 1000);
     hangExecutor.setMaxSteps(1000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
@@ -452,9 +452,35 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
     MetaLoopAnalysis mla;
 
-    // TODO: Add test for basic irregular sweep
+    SECTION("BasicIrregularSweep") {
+        // Rightward sweep loop (exits on zero or one)
+        block[0].finalize(MOV,  1, dummySteps, block + 4, block + 1);
+        block[1].finalize(INC, -1, dummySteps, block + 3, block + 2);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
 
-    SECTION( "BodylessIrregularSweep" ) {
+        // Exit on one
+        block[3].finalize(INC,  2, dummySteps, exitBlock, block + 5);
+
+        // Exit on zero (extends sweep)
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+
+        // Leftward sweep loop (toggle all twos to ones)
+        block[5].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
+
+        // Transition at left (extends sweep)
+        block[7].finalize(INC, -1, dummySteps, exitBlock, block + 0);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+
+        REQUIRE(result);
+        REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
+    }
+
+    SECTION("BodylessIrregularSweep") {
         // Sweep does not have a plain body, only an appendix. As a result, it never enters a
         // meta-loop for long enough (as some sweeps are too short and not looping)
 
@@ -484,7 +510,7 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
         REQUIRE(!result);
     }
 
-    SECTION( "SweepWithCounter" ) {
+    SECTION("SweepWithCounter") {
         // Sweep with a gliding counter. The sweep behavior is regular, but the counter breaks the
         // meta-loop occrasionally
 
