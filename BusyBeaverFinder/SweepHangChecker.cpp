@@ -490,6 +490,15 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
         _rightSweepLoop.value().analyze(*this, executionState);
     }
 
+    return true;
+}
+
+bool RegularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
+                                   const ExecutionState& executionState) {
+    if (!SweepHangChecker::init(metaLoopAnalysis, executionState)) {
+        return false;
+    }
+
     int bootstrapCycles = 0;
     if (!_leftTransition.isStationary()) {
         bootstrapCycles = _leftTransition.combinedAnalysis().numBootstrapCycles();
@@ -509,7 +518,7 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     return true;
 }
 
-Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
+Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState) {
     auto& runSummary = executionState.getRunSummary();
     int numRunBlocks = runSummary.getNumRunBlocks();
 

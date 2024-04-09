@@ -19,7 +19,7 @@ class MetaLoopHangDetector : public HangDetector {
     MetaLoopAnalysis _metaLoopAnalysis;
     PeriodicHangChecker _periodicHangChecker;
     GliderHangChecker _gliderHangChecker;
-    SweepHangChecker _sweepHangChecker;
+    RegularSweepHangChecker _regularSweepHangChecker;
     LoopAnalysis _loopAnalysis;
 
     HangChecker* _activeChecker;
@@ -30,13 +30,13 @@ class MetaLoopHangDetector : public HangDetector {
     bool prepareGliderHangCheck();
     bool prepareSweepHangCheck();
 
-protected:
+  protected:
     void clearAnalysis() override;
     bool shouldCheckNow(bool loopContinues) const override;
     bool analyzeHangBehaviour() override;
     Trilian proofHang() override;
 
-public:
+  public:
     MetaLoopHangDetector(const ExecutionState& execution) : HangDetector(execution) {}
 
     void reset() override;

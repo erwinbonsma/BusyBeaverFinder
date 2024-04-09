@@ -68,11 +68,11 @@ bool MetaLoopHangDetector::prepareGliderHangCheck() {
 
 
 bool MetaLoopHangDetector::prepareSweepHangCheck() {
-    if (!_sweepHangChecker.init(&_metaLoopAnalysis, _execution)) {
+    if (!_regularSweepHangChecker.init(&_metaLoopAnalysis, _execution)) {
         return false;
     }
 
-    _activeChecker = &_sweepHangChecker;
+    _activeChecker = &_regularSweepHangChecker;
     _activeHang = HangType::REGULAR_SWEEP;
     _activeHangProofResult = Trilian::MAYBE;
 

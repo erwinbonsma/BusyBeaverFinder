@@ -129,7 +129,8 @@ class SweepHangChecker : public HangChecker {
         void analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state);
     };
 
-    bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
+    virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
+                      const ExecutionState& executionState);
 
     const SweepLoop& leftSweepLoop() const { return _leftSweepLoop; }
     const std::optional<SweepLoop>& rightSweepLoop() const { return _rightSweepLoop; }
@@ -138,9 +139,7 @@ class SweepHangChecker : public HangChecker {
     const TransitionGroup& rightTransition() const { return _rightTransition; }
     const std::optional<TransitionGroup>& midTransition() const { return _midTransition; }
 
-    Trilian proofHang(const ExecutionState& executionState) override;
-
-protected:
+  protected:
     static LocationInSweep opposite(LocationInSweep loc) {
         switch (loc) {
             case LocationInSweep::RIGHT: return LocationInSweep::LEFT;
@@ -183,7 +182,6 @@ protected:
         );
     }
 
-private:
     const MetaLoopAnalysis* _metaLoopAnalysis;
 
     TransitionGroup _leftTransition { LocationInSweep::LEFT };
@@ -198,10 +196,7 @@ private:
     // The sequence index of the first loop that is a sweep
     int _firstSweepLoopSeqIndex;
 
-    // How long (in total number of run blocks) to execute the proof checks before deciding the
-    // program hangs
-    int _proofUntil;
-
+  private:
     // Set start and end locations for sweep loops
     bool locateSweepLoops();
 
@@ -210,6 +205,19 @@ private:
 
     bool initSweepLoops(const ExecutionState& executionState);
     bool initTransitionSequences(const ExecutionState& executionState);
+};
+
+class RegularSweepHangChecker : public SweepHangChecker {
+  public:
+    virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
+                      const ExecutionState& executionState) override;
+
+    Trilian proofHang(const ExecutionState& executionState) override;
+
+  private:
+    // How long (in total number of run blocks) to execute the proof checks before deciding the
+    // program hangs
+    int _proofUntil;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker);

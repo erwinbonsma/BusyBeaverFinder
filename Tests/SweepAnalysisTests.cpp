@@ -24,7 +24,7 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
-    SweepHangChecker hangChecker;
+    RegularSweepHangChecker hangChecker;
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
@@ -885,7 +885,7 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
-    SweepHangChecker hangChecker;
+    RegularSweepHangChecker hangChecker;
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
@@ -1039,7 +1039,7 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
-    SweepHangChecker hangChecker;
+    RegularSweepHangChecker hangChecker;
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
