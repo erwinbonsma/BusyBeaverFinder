@@ -384,7 +384,6 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-        hangExecutor.dump();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);

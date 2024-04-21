@@ -113,6 +113,58 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
     }
+
+    SECTION("SweepConsumesRemoteContamination") {
+        // Sweep that consumes a remote contamination, and does not end.
+        // See also: SweepTerminatesOnRemoteContamination
+
+        // Bootstrap
+        block[0].finalize(INC, -2, dummySteps, exitBlock, block + 1); // Near-miss sentinel
+        block[1].finalize(MOV, -16, dummySteps, block + 5, exitBlock);
+
+        // Rightwards sweep
+        block[2].finalize(MOV,  1, dummySteps, block + 5, block + 3); // Normal exit
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4); // Hang-breaking exit
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 2);
+
+        // Transition sequence, extending sequence by one
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+
+        // Leftwards sweep
+        block[6].finalize(MOV, -1, dummySteps, block + 2, block + 6);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
+    }
+
+    SECTION("StripedSweepSkipsRemoteContamination") {
+        // Sweep that skips over a remote contamination and does not end.
+        // See also: StripedSweepTerminatesOnRemoteContamination
+
+        // Bootstrap
+        block[0].finalize(INC, -1, dummySteps, exitBlock, block + 1); // Sentinel
+        block[1].finalize(MOV, -17, dummySteps, block + 2, exitBlock);
+
+        // Rightwards sweep
+        block[2].finalize(MOV,  2, dummySteps, block + 5, block + 3); // Normal exit
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4); // Hang-breaking exit
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 2);
+
+        // Transition sequence, extending sequence by two
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+
+        // Leftwards sweep
+        block[6].finalize(MOV, -2, dummySteps, block + 2, block + 6);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
+    }
 }
 
 TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
@@ -206,6 +258,81 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
 
         // Transition sequence extending sequence at left
         block[7].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+
+    SECTION("SweepTerminatesOnRemoteContamination") {
+        // Sweep that terminates because there are not only zeroes ahead.
+
+        // Bootstrap
+        block[0].finalize(INC, -1, dummySteps, exitBlock, block + 1); // Sentinel
+        block[1].finalize(MOV, -16, dummySteps, block + 5, exitBlock);
+
+        // Rightwards sweep
+        block[2].finalize(MOV,  1, dummySteps, block + 5, block + 3); // Normal exit
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4); // Hang-breaking exit
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 2);
+
+        // Transition sequence, extending sequence by one
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+
+        // Leftwards sweep
+        block[6].finalize(MOV, -1, dummySteps, block + 2, block + 6);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+
+    SECTION("StripedSweepTerminatesOnRemoteContamination") {
+        // Variant of StripedSweepSkipsRemoteContamination
+        // This one terminates because the sentinel is offset differently and not skipped as a
+        // result
+
+        // Bootstrap
+        block[0].finalize(INC, -1, dummySteps, exitBlock, block + 1); // Sentinel
+        block[1].finalize(MOV, -16, dummySteps, block + 2, exitBlock);
+
+        // Rightwards sweep
+        block[2].finalize(MOV,  2, dummySteps, block + 5, block + 3); // Normal exit
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4); // Hang-breaking exit
+        block[4].finalize(INC, -1, dummySteps, exitBlock, block + 2);
+
+        // Transition sequence, extending sequence by two
+        block[5].finalize(INC,  1, dummySteps, exitBlock, block + 6);
+
+        // Leftwards sweep
+        block[6].finalize(MOV, -2, dummySteps, block + 2, block + 6);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+
+    SECTION("StripedSweepTerminatesOnRemoteContamination2") {
+        // Variant of previous program.
+        // This one terminates because the sweep examines all values, and the sentinel breaks
+        // the hang as it is non-zero.
+
+        // Bootstrap
+        block[0].finalize(INC, 3, dummySteps, exitBlock, block + 1); // Sentinel
+        block[1].finalize(MOV, -17, dummySteps, block + 2, exitBlock);
+
+        // Rightwards sweep
+        block[2].finalize(MOV,  1, dummySteps, block + 3, exitBlock); // Hang-breaking exit
+        block[3].finalize(MOV,  1, dummySteps, block + 4, block + 2); // Normal exit
+
+        // Transition sequence, extending sequence by two
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+
+        // Leftwards sweep
+        block[5].finalize(MOV, -2, dummySteps, block + 2, block + 5);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         RunResult result = hangExecutor.execute(&program);
