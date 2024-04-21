@@ -527,25 +527,43 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         REQUIRE(result);
         REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
+        REQUIRE(mla.loopSize() == 4);
+
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(lb.size() == 2);
+
+        // Rightward sweep
+        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
+        REQUIRE(lb[0].minDpDelta() == -1);
+        REQUIRE(!lb[0].maxDpDelta()); // Irregular growth
+        REQUIRE(!lb[0].endDpGrowth());
+
+        // Leftward sweep
+        REQUIRE(lb[1].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
+        REQUIRE(lb[1].minDpDelta() == -1);
+        REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
+        REQUIRE(lb[1].endDpGrowth() == 1);
     }
 
     SECTION("BodylessIrregularSweep") {
-        // Sweep does not have a plain body, only an appendix. As a result, it never enters a
-        // meta-loop for long enough (as some sweeps are too short and not looping)
+        // Sweep does not have a plain body, only an appendix.
 
         // Rightward sweep loop (exits on zero or one)
         block[0].finalize(MOV,  1, dummySteps, block + 3, block + 1);
-        block[1].finalize(INC, -1, dummySteps, block + 5, block + 2);
+        block[1].finalize(INC, -1, dummySteps, block + 4, block + 2);
         block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
 
         // Exit on zero
-        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 4);
-
-        // Leftward sweep loop (only move)
-        block[4].finalize(MOV, -1, dummySteps, block + 0, block + 4);
+        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 5);
 
         // Exit on one
-        block[5].finalize(INC,  2, dummySteps, exitBlock, block + 6);
+        block[4].finalize(INC,  2, dummySteps, exitBlock, block + 6);
+
+        // Leftward sweep loop (only move)
+        block[5].finalize(MOV, -1, dummySteps, block + 0, block + 5);
 
         // Leftward sweep loop (toggle all twos to ones)
         block[6].finalize(MOV, -1, dummySteps, block + 0, block + 7);
@@ -556,12 +574,33 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
-        REQUIRE(!result);
+        REQUIRE(result);
+
+        REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
+        REQUIRE(mla.loopSize() == 4);
+
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(lb.size() == 2);
+
+        // Leftward sweep
+        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
+        REQUIRE(lb[0].minDpDelta() == 0);
+        REQUIRE(!lb[0].maxDpDelta()); // Irregular growth
+        REQUIRE(lb[0].endDpGrowth() == 0);
+
+        // Rightward sweep
+        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
+        REQUIRE(lb[1].minDpDelta() == 0);
+        REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
+        REQUIRE(!lb[1].endDpGrowth());
     }
 
     SECTION("SweepWithCounter") {
         // Sweep with a gliding counter. The sweep behavior is regular, but the counter breaks the
-        // meta-loop occrasionally
+        // meta-loop occasionally
 
         // Init counter
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);

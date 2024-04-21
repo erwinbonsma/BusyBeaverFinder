@@ -134,16 +134,15 @@ MetaLoopType MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int l
                     loopType = MetaLoopType::IRREGULAR;
                 }
                 if (delta > data.lastIterationDelta) {
-                    data.iterationDeltaType = LoopIterationDeltaType::NONLINEAR_INCREASE;
 
-                    if (!isStationary) {
-                        // The number of iterations for non-stationary loops cannot increase non-
-                        // linearly
-                        return MetaLoopType::UNSUPPORTED;
+                    if (isStationary) {
+                        // Meta-loop is not periodic. Assume it is regular instead.
+                        loopType = std::max(loopType, MetaLoopType::REGULAR);
+                        data.iterationDeltaType = LoopIterationDeltaType::NONLINEAR_INCREASE;
+                    } else {
+                        loopType = MetaLoopType::IRREGULAR;
+                        data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
                     }
-
-                    // Meta-loop is not periodic. Assume it is regular instead.
-                    loopType = std::max(loopType, MetaLoopType::REGULAR);
                 }
             }
 

@@ -111,6 +111,9 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
 
         if (_runSummary.isInsideLoop()) {
             bool loopContinues = _runSummary.loopContinues(_block->getStartIndex());
+//            if (!loopContinues) {
+//                _data.dump();
+//            }
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
                     _detectedHang = hangDetector;
