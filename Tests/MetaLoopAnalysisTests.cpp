@@ -359,6 +359,55 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         REQUIRE(lb[2].minDpDelta() == 0);
         REQUIRE(lb[2].maxDpDelta() == 1);
     }
+
+    SECTION("GlidingSweep") {
+        // Sweep where one end shrinks, but the other end grows faster so that the meta-hang is
+        // still non-periodic
+
+        // Bootstrap sequence
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+
+        // Rightwards sweep
+        block[1].finalize(MOV,  1, dummySteps, block + 2, block + 1);
+
+        // Transition sequence (extend by two)
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV,  1, dummySteps, block + 4, exitBlock);
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+
+        // Leftwards sweep
+        block[5].finalize(MOV, -1, dummySteps, block + 6, block + 5);
+
+        // Transition sequence (shrink by one)
+        block[6].finalize(MOV,  1, dummySteps, exitBlock, block + 7);
+        block[7].finalize(INC, -1, dummySteps, block + 1, exitBlock);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+        hangExecutor.dump();
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        REQUIRE(result);
+        REQUIRE(mla.loopSize() == 4);
+
+        auto lb = mla.loopBehaviors();
+
+        REQUIRE(lb.size() == 2);
+
+        // Rightward sweep
+        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[0].iterationDelta() == 1);
+        REQUIRE(lb[0].minDpDelta() == 1);
+        REQUIRE(lb[0].maxDpDelta() == 2);
+        REQUIRE(lb[0].endDpGrowth() == 2);
+
+        // Leftward sweep
+        REQUIRE(lb[1].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[1].iterationDelta() == 1);
+        REQUIRE(lb[1].minDpDelta() == 1);
+        REQUIRE(lb[1].maxDpDelta() == 2);
+        REQUIRE(lb[1].endDpGrowth() == -1);
+    }
 }
 
 TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][completion]") {
