@@ -86,11 +86,9 @@ MetaLoopType MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int l
             bool isStationary = (_seqAnalysis[data.sequenceIndex
                                               % _metaLoopPeriod]->dataPointerDelta() == 0);
 
-            auto &dataPrev = _loopData[(data.loopIndex + _loopData.size() - numLoops())
-                                       % _loopData.size()];
             int blockLen = runSummary.getRunBlockLength(rbIndex);
             int numIter = blockLen / rb->getLoopPeriod();
-            int delta = numIter - dataPrev.lastNumIterations;
+            int delta = numIter - data.lastNumIterations;
 
             if (delta < 0) {
                 data.iterationDeltaType = LoopIterationDelta::IRREGULAR;
@@ -187,7 +185,7 @@ bool MetaLoopAnalysis::determineLoopSize(const ExecutionState &executionState) {
     }
 
     _metaLoopType = bestLoopType;
-    _loopSize = bestLoopSize;
+    _analysisLoopSize = bestLoopSize;
     return true;
 }
 
@@ -244,28 +242,29 @@ int MetaLoopAnalysis::dpDeltaOfRunBlock(const RunSummary& runSummary, int rbInde
     return delta;
 }
 
+// Determine how the DP position at the end of each loop changes wrt to the its DP position at
+// the end of the loop in the previous iteration of the _analyzed_ meta-loop.
 void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     int dp = 0;
 
     int end = runSummary.getNumRunBlocks();
-    int start = end - _loopSize * 2;
+    int start = end - _analysisLoopSize * 2;
     int rbIndex = start;
 
-    // Loop twice. First to determine the DP positions at the end of each loop.  Next to determine
-    // how it changed with respect to the previous loop execution.
+    // Loop twice. First to determine the DP positions at the start of each loop. Next to determine
+    // how it changed with respect to the previous loop execution (in the context of the analyzed
+    // meta-loop).
     for (int i = 0; i < 2; ++i) {
         auto loopDataIt = _loopData.begin();
-        for (int j = 0; j < _loopSize; ++j, ++rbIndex) {
+        for (int j = 0; j < _analysisLoopSize; ++j, ++rbIndex) {
             const RunBlock *rb = runSummary.runBlockAt(rbIndex);
             if (rb->isLoop()) {
                 auto &data = *loopDataIt++;
 
                 if (i == 1) {
-                    auto &dataPrev = _loopData[(data.loopIndex + _loopData.size() - numLoops())
-                                               % _loopData.size()];
-                    data.dataPointerDelta = dp - dataPrev.dataPointerPos;
+                    data.dataPointerDelta = dp - data.lastDataPointerStartPos;
                 }
-                data.dataPointerPos = dp;
+                data.lastDataPointerStartPos = dp;
             }
             dp += dpDeltaOfRunBlock(runSummary, rbIndex);
         }
@@ -289,19 +288,14 @@ void MetaLoopAnalysis::initLoopBehaviors() {
         assert(sa->isLoop());
 
         if (_metaLoopType == MetaLoopType::IRREGULAR) {
+            // TODO: Also set dpDelta for "regular" side (if any) of irregular sweep
             _loopBehaviors.emplace_back(this, data.sequenceIndex,
                                         std::dynamic_pointer_cast<LoopAnalysis>(sa));
         } else {
-            int dpDeltaStart = 0;
-            int iterDelta = 0;
-            LoopIterationDelta loopDeltaType = LoopIterationDelta::CONSTANT;
+            int dpDeltaStart = data.dataPointerDelta;
+            int iterDelta = data.lastIterationDelta;
+            LoopIterationDelta loopDeltaType = data.iterationDeltaType;
 
-            for (int j = data.loopIndex % numLoops(); j < _loopData.size(); j += numLoops()) {
-                auto &data = _loopData[j];
-                dpDeltaStart += data.dataPointerDelta;
-                iterDelta += data.lastIterationDelta;
-                loopDeltaType = std::max(loopDeltaType, data.iterationDeltaType);
-            }
             assert(loopDeltaType != LoopIterationDelta::IRREGULAR);
             bool isLinear = (loopDeltaType == LoopIterationDelta::LINEAR_INCREASE ||
                              loopDeltaType == LoopIterationDelta::CONSTANT);
@@ -369,7 +363,7 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
     auto &runSummary = executionState.getRunSummary();
 
     while (rbIndex < runSummary.getNumRunBlocks()) {
-        int relIndex = (rbIndex - _firstRunBlockIndex) % _loopSize;
+        int relIndex = (rbIndex - _firstRunBlockIndex) % _analysisLoopSize;
         auto sa = _seqAnalysis[relIndex % _metaLoopPeriod];
 
         if (sa->isLoop()) {

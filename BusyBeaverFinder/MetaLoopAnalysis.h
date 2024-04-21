@@ -68,15 +68,20 @@ struct MetaLoopData {
     // setting and checking iterationDelta.
     int lastNumIterations = 0;
 
-    // (An approximation of) the data pointer position of the last analyzed run-block. It is a
-    // temporary value for setting dataPointerDelta.
-    int dataPointerPos = 0;
+    // (An approximation of) the data pointer position at the start of the last analyzed run-block.
+    // It is a temporary value for setting dataPointerDelta.
+    int lastDataPointerStartPos = 0;
 
     int lastIterationDelta = 0;
 
     // Start with most simple assumption, and adapt when needed.
     LoopIterationDelta  iterationDeltaType = LoopIterationDelta::CONSTANT;
 
+    // How the DP of at the end of the loop changed wrt to the its end position in the previous
+    // iteration of the meta-loop.
+    //
+    // Note: Tracking the delta in the end-position instead of the start-position so that sweep
+    // loops can be (easily) characterized by how the sweep terminated.
     int dataPointerDelta = 0;
 
     MetaLoopData() {}
@@ -135,8 +140,20 @@ public:
     std::optional<int> minDpDelta() const { return _minDpDelta; }
     std::optional<int> maxDpDelta() const { return _maxDpDelta; }
 
+    // For sweep loops only: How much the sequence grows at the of the sweep.
+    // Can return a negative value when sweep shrinks with constant rate.
+    std::optional<int> endDpGrowth() const {
+        if (!isSweepLoop()) return {};
+
+        // TODO: Use std::transform when switching to c++23
+        return (_loopAnalysis->dataPointerDelta() > 0
+                ? _maxDpDelta
+                : (_minDpDelta ? -_minDpDelta.value() : _minDpDelta));
+    }
+
     // When zero or positive represents actual delta.
-    // Otherwise: -1 => non-linear increase, -2 => irregular (matching values of LoopIterationDelta)
+    // Otherwise: -1 => non-linear increase, -2 => irregular
+    // TODO: Make optional and add extra LoopIterationDelta enum (for clarity)
     int iterationDelta() const { return _iterationDelta; }
 
     LoopType loopType() const;
@@ -173,9 +190,9 @@ class MetaLoopAnalysis {
     // The meta-loop period in run blocks.
     int _metaLoopPeriod;
 
-    // The size of the meta-loop in run blocks. This could be a multiple of the meta-loop period
-    // to satisfy the meta-run loop conditions
-    int _loopSize;
+    // The size of the analyzed meta-loop in run blocks. This could be a multiple of the meta-loop
+    // period to satisfy the meta-run loop conditions
+    int _analysisLoopSize;
 
     // The index of the run block from which this meta-loop analysis applies
     int _firstRunBlockIndex;
@@ -229,7 +246,7 @@ public:
 
     // The loop size (in run blocks). It can be a multiple of the meta-loop period. This happens
     // when the number of iterations would otherwise increase non-linearly.
-    int loopSize() const { return _loopSize; }
+    int loopSize() const { return _analysisLoopSize; }
 
     // Returns true iff the program block history is periodic.
     bool isPeriodic() const { return _metaLoopType == MetaLoopType::PERIODIC; }
