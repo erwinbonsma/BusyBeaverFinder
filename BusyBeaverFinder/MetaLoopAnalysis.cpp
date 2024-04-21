@@ -248,13 +248,15 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     int dp = 0;
 
     int end = runSummary.getNumRunBlocks();
-    int start = end - _analysisLoopSize * 2;
+    int start = end - _analysisLoopSize * 3;
     int rbIndex = start;
 
-    // Loop twice. First to determine the DP positions at the start of each loop. Next to determine
-    // how it changed with respect to the previous loop execution (in the context of the analyzed
-    // meta-loop).
-    for (int i = 0; i < 2; ++i) {
+    // Loop three times:
+    // First to determine the DP positions at the start of each loop.
+    // Second to determine how it changed with respect to the previous loop execution (in the
+    //   context of the analyze meta-loop).
+    // Third to check if this delta is constant.
+    for (int i = 0; i < 3; ++i) {
         auto loopDataIt = _loopData.begin();
         for (int j = 0; j < _analysisLoopSize; ++j, ++rbIndex) {
             const RunBlock *rb = runSummary.runBlockAt(rbIndex);
@@ -263,6 +265,15 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
 
                 if (i == 1) {
                     data.dataPointerDelta = dp - data.lastDataPointerStartPos;
+                } else if (i == 2) {
+                    if (data.dataPointerDelta != (dp - data.lastDataPointerStartPos)) {
+                        // Clear delta as it is not constant
+                        data.dataPointerDelta = {};
+
+                        // TODO: Find out why this is needed. I.e. when the delta is not regular
+                        // but the meta-loop type still was.
+                        _metaLoopType = MetaLoopType::IRREGULAR;
+                    }
                 }
                 data.lastDataPointerStartPos = dp;
             }
@@ -281,33 +292,29 @@ void MetaLoopAnalysis::initLoopBehaviors() {
     // loopBehavior[j] when i % loopPeriod == j % loopPeriod. That's okay for now. This is fairly
     // rare, and when analysis is extended, the equality may not hold anymore.
 
-    for (auto &data : _loopData) {
-        int index = data.sequenceIndex % _metaLoopPeriod;
-        auto sa = _seqAnalysis[index];
+    size_t loopDataSize = _loopData.size();
+    for (int i = 0; i < loopDataSize; ++i) {
+        auto &data = _loopData[i];
+        auto dpDeltaStart = data.dataPointerDelta;
 
+        auto sa = _seqAnalysis[data.sequenceIndex % _metaLoopPeriod];
         assert(sa->isLoop());
 
-        if (_metaLoopType == MetaLoopType::IRREGULAR) {
-            // TODO: Also set dpDelta for "regular" side (if any) of irregular sweep
-            _loopBehaviors.emplace_back(this, data.sequenceIndex,
-                                        std::dynamic_pointer_cast<LoopAnalysis>(sa));
-        } else {
-            int dpDeltaStart = data.dataPointerDelta;
-            int iterDelta = data.lastIterationDelta;
-            LoopIterationDelta loopDeltaType = data.iterationDeltaType;
+        LoopIterationDelta loopDeltaType = data.iterationDeltaType;
+        bool isLinear = (loopDeltaType == LoopIterationDelta::LINEAR_INCREASE ||
+                         loopDeltaType == LoopIterationDelta::CONSTANT);
 
-            assert(loopDeltaType != LoopIterationDelta::IRREGULAR);
-            bool isLinear = (loopDeltaType == LoopIterationDelta::LINEAR_INCREASE ||
-                             loopDeltaType == LoopIterationDelta::CONSTANT);
+        auto &dataNext = _loopData[(i + 1) % loopDataSize];
+        auto dpDeltaEnd = dataNext.dataPointerDelta;
 
-            int dpDeltaEnd = dpDeltaStart + iterDelta * sa->dataPointerDelta();
+        assert(sa->dataPointerDelta() != 0 || dpDeltaStart == dpDeltaEnd);
+        bool movesLeft = sa->dataPointerDelta() < 0;
 
-            _loopBehaviors.emplace_back(this, data.sequenceIndex,
-                                        std::dynamic_pointer_cast<LoopAnalysis>(sa),
-                                        std::min(dpDeltaStart, dpDeltaEnd),
-                                        std::max(dpDeltaStart, dpDeltaEnd),
-                                        isLinear ? iterDelta : -1);
-        }
+        _loopBehaviors.emplace_back(this, data.sequenceIndex,
+                                    std::dynamic_pointer_cast<LoopAnalysis>(sa),
+                                    movesLeft ? dpDeltaEnd : dpDeltaStart,
+                                    movesLeft ? dpDeltaStart : dpDeltaEnd,
+                                    isLinear ? data.lastIterationDelta : -1);
     }
 }
 

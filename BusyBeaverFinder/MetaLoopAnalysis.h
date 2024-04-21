@@ -77,12 +77,9 @@ struct MetaLoopData {
     // Start with most simple assumption, and adapt when needed.
     LoopIterationDelta  iterationDeltaType = LoopIterationDelta::CONSTANT;
 
-    // How the DP of at the end of the loop changed wrt to the its end position in the previous
+    // How the DP at the start of the loop changed wrt to the its start position in the previous
     // iteration of the meta-loop.
-    //
-    // Note: Tracking the delta in the end-position instead of the start-position so that sweep
-    // loops can be (easily) characterized by how the sweep terminated.
-    int dataPointerDelta = 0;
+    std::optional<int> dataPointerDelta {};
 
     MetaLoopData() {}
     MetaLoopData(int loopIndex, int sequenceIndex, int numIterations, int loopRemainder)
@@ -115,7 +112,7 @@ public:
     // Contructor when meta-loop behavior is periodic or regular
     LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
                  std::shared_ptr<LoopAnalysis> loopAnalysis,
-                 int minDpDelta, int maxDpDelta, int iterationDelta)
+                 std::optional<int> minDpDelta, std::optional<int> maxDpDelta, int iterationDelta)
     : _metaLoopAnalysis(metaLoopAnalysis)
     , _sequenceIndex(sequenceIndex)
     , _loopAnalysis(loopAnalysis)
@@ -296,7 +293,7 @@ public:
 
     // Returns how much the data pointer has shifted when execution of the run block starts
     // compared to previous invocation of the run block in the meta-loop.
-    int dataPointerDelta(int loopIndex) const {
+    std::optional<int> dataPointerDelta(int loopIndex) const {
         return _loopData[loopIndex].dataPointerDelta;
     }
 
