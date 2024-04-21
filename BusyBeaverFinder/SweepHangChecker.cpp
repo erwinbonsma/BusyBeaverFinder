@@ -542,7 +542,7 @@ Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState)
         if (loop && loop->outgoingLoopSequenceIndex() == seqIndex) {
             int loopIndex = _metaLoopAnalysis->loopIndexForSequence(seqIndex);
             int prevNumIter = _metaLoopAnalysis->lastNumLoopIterations(loopIndex);
-            int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta();
+            int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta().value();
             int expectedDpTravel =
                 expectedIter * _metaLoopAnalysis->sequenceAnalysis(seqIndex)->dataPointerDelta();
             if (!loop->continuesForever(executionState, abs(expectedDpTravel))) {

@@ -103,7 +103,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
 
         // Glider loop
         REQUIRE(lb[0].loopType() == LoopType::GLIDER);
-        REQUIRE(lb[0].iterationDelta() == -1);
+        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[0].minDpDelta() == 1);
         REQUIRE(lb[0].maxDpDelta() == 1);
     }
@@ -154,7 +154,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         REQUIRE(lb[0].maxDpDelta() == 1);
         // Glider loop 1
         REQUIRE(lb[1].loopType() == LoopType::GLIDER);
-        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[1].minDpDelta() == 1);
         REQUIRE(lb[1].maxDpDelta() == 1);
     }
@@ -207,7 +207,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         REQUIRE(lb[0].maxDpDelta() == 2);
         // Glider loop 1
         REQUIRE(lb[1].loopType() == LoopType::GLIDER);
-        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[1].minDpDelta() == 2);
         REQUIRE(lb[1].maxDpDelta() == 2);
     }
@@ -261,7 +261,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         REQUIRE(lb[0].maxDpDelta() == 1);
         // Glider loop 2
         REQUIRE(lb[1].loopType() == LoopType::GLIDER);
-        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[1].minDpDelta() == 1);
         REQUIRE(lb[1].maxDpDelta() == 1);
     }
@@ -298,12 +298,12 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
 
         // Stationary loop 1
         REQUIRE(lb[0].loopType() == LoopType::STATIONARY);
-        REQUIRE(lb[0].iterationDelta() == -1);
+        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[0].minDpDelta() == 0);
         REQUIRE(lb[0].maxDpDelta() == 0);
         // Stationary loop 2
         REQUIRE(lb[1].loopType() == LoopType::STATIONARY);
-        REQUIRE(lb[1].iterationDelta() == -1);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[1].minDpDelta() == 0);
         REQUIRE(lb[1].maxDpDelta() == 0);
     }

@@ -18,7 +18,7 @@
 
 typedef const RunBlock *const * RawRunBlocks;
 
-enum class LoopIterationDelta : int8_t {
+enum class LoopIterationDeltaType : int8_t {
     // The number of iterations does not change
     CONSTANT = 0,
 
@@ -75,7 +75,7 @@ struct MetaLoopData {
     int lastIterationDelta = 0;
 
     // Start with most simple assumption, and adapt when needed.
-    LoopIterationDelta  iterationDeltaType = LoopIterationDelta::CONSTANT;
+    LoopIterationDeltaType  iterationDeltaType = LoopIterationDeltaType::CONSTANT;
 
     // How the DP at the start of the loop changed wrt to the its start position in the previous
     // iteration of the meta-loop.
@@ -106,30 +106,22 @@ class LoopBehavior {
     std::optional<int> _minDpDelta;
     std::optional<int> _maxDpDelta;
 
-    int _iterationDelta;
+    LoopIterationDeltaType _iterationDeltaType;
+    std::optional<int> _iterationDelta;
 
 public:
     // Contructor when meta-loop behavior is periodic or regular
     LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
                  std::shared_ptr<LoopAnalysis> loopAnalysis,
-                 std::optional<int> minDpDelta, std::optional<int> maxDpDelta, int iterationDelta)
+                 std::optional<int> minDpDelta, std::optional<int> maxDpDelta,
+                 LoopIterationDeltaType iterationDeltaType, std::optional<int> iterationDelta)
     : _metaLoopAnalysis(metaLoopAnalysis)
     , _sequenceIndex(sequenceIndex)
     , _loopAnalysis(loopAnalysis)
     , _minDpDelta(minDpDelta)
     , _maxDpDelta(maxDpDelta)
+    , _iterationDeltaType(iterationDeltaType)
     , _iterationDelta(iterationDelta) {}
-
-    // Constructor when meta-loop behavior is irregular. Less can be said about how loops behave
-    // in this case.
-    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
-                 std::shared_ptr<LoopAnalysis> loopAnalysis)
-    : _metaLoopAnalysis(metaLoopAnalysis)
-    , _sequenceIndex(sequenceIndex)
-    , _loopAnalysis(loopAnalysis)
-    , _minDpDelta()
-    , _maxDpDelta()
-    , _iterationDelta(-2) {}
 
     std::shared_ptr<LoopAnalysis> loopAnalysis() const { return _loopAnalysis; }
 
@@ -148,10 +140,10 @@ public:
                 : (_minDpDelta ? -_minDpDelta.value() : _minDpDelta));
     }
 
-    // When zero or positive represents actual delta.
-    // Otherwise: -1 => non-linear increase, -2 => irregular
-    // TODO: Make optional and add extra LoopIterationDelta enum (for clarity)
-    int iterationDelta() const { return _iterationDelta; }
+    LoopIterationDeltaType iterationDeltaType() const { return _iterationDeltaType; }
+
+    // Set when delta type is constant or linear
+    std::optional<int> iterationDelta() const { return _iterationDelta; }
 
     LoopType loopType() const;
     bool isSweepLoop() const {

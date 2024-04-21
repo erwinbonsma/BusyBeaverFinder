@@ -107,7 +107,7 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
 
         // Glider loop
         REQUIRE(lb[0].loopType() == LoopType::GLIDER);
-        REQUIRE(lb[0].iterationDelta() == -1);
+        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[0].minDpDelta() == 1);
         REQUIRE(lb[0].maxDpDelta() == 1);
 
