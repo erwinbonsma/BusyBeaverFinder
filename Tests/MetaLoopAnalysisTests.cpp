@@ -499,6 +499,7 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
 
     MetaLoopAnalysis mla;
+    IrregularSweepHangChecker checker;
 
     SECTION("BasicIrregularSweep") {
         // Rightward sweep loop (exits on zero or one)
@@ -545,6 +546,12 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
         REQUIRE(lb[1].minDpDelta() == -1);
         REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
         REQUIRE(lb[1].endDpGrowth() == 1);
+
+        result = checker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        REQUIRE(!checker.leftIsIrregular());
+        REQUIRE(checker.rightIsIrregular());
     }
 
     SECTION("BodylessIrregularSweep") {
@@ -595,6 +602,12 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
         REQUIRE(lb[1].minDpDelta() == 0);
         REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
         REQUIRE(!lb[1].endDpGrowth());
+
+        result = checker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        REQUIRE(!checker.leftIsIrregular());
+        REQUIRE(checker.rightIsIrregular());
     }
 
     SECTION("SweepWithCounter") {

@@ -220,4 +220,21 @@ class RegularSweepHangChecker : public SweepHangChecker {
     int _proofUntil;
 };
 
+class IrregularSweepHangChecker : public SweepHangChecker {
+  public:
+    virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
+                      const ExecutionState& executionState) override;
+
+    Trilian proofHang(const ExecutionState& executionState) override;
+
+    bool leftIsIrregular() const { return _leftIsIrregular; }
+    bool rightIsIrregular() const { return _rightIsIrregular; }
+
+private:
+    bool findIrregularEnds();
+
+    bool _leftIsIrregular {};
+    bool _rightIsIrregular {};
+};
+
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker);

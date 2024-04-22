@@ -575,6 +575,73 @@ Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState)
     return Trilian::MAYBE;
 }
 
+bool IrregularSweepHangChecker::findIrregularEnds() {
+    // Tracks for each sweep location:
+    // 1: How many sweeps end there, 2: How many sweep ends are irregular
+    std::map<LocationInSweep, std::pair<int, int>> map;
+
+    size_t loopSize = _metaLoopAnalysis->loopSize();
+    for (int i = 0; i < loopSize; ++i) {
+        auto& location = locationInSweep(i);
+        if (!location.isSweepLoop()) {
+            continue;
+        }
+
+        int loopIndex = _metaLoopAnalysis->loopIndexForSequence(i);
+        auto& behavior = _metaLoopAnalysis->loopBehaviors().at(loopIndex);
+
+        auto& entry = map[location.end];
+        entry.first += 1;
+
+        bool endIsIrregular = !behavior.endDpGrowth();
+        if (!endIsIrregular) {
+            continue;
+        }
+
+        if (endIsIrregular && location.end == LocationInSweep::MID) {
+            // This should not happen
+            return false;
+        }
+        entry.second += 1;
+    }
+
+    for (auto [location, counts] : map) {
+        if (!counts.second) {
+            continue;
+        }
+
+        if (counts.second != counts.first) {
+            // All sweeps to the same location should be irregular
+            return false;
+        }
+
+        switch (location) {
+            case LocationInSweep::LEFT: _leftIsIrregular = true; break;
+            case LocationInSweep::RIGHT: _rightIsIrregular = true; break;
+            default: assert(false);
+        }
+    }
+
+    return _leftIsIrregular || _rightIsIrregular;
+}
+
+bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
+                                     const ExecutionState& executionState) {
+    if (!SweepHangChecker::init(metaLoopAnalysis, executionState)) {
+        return false;
+    }
+
+    if (!findIrregularEnds()) {
+        return false;
+    }
+
+    return true;
+}
+
+Trilian IrregularSweepHangChecker::proofHang(const ExecutionState& executionState) {
+    return Trilian::MAYBE;
+}
+
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker) {
     os << "Left transition: " << std::endl << checker.leftTransition().combinedAnalysis();
     os << "Left sweep: " << std::endl << checker.leftSweepLoop().combinedAnalysis();
