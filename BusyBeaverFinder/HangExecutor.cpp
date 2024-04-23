@@ -19,11 +19,13 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _data(dataSize),
     _runSummary(_runHistory),
     _metaRunSummary(_runSummary.getRunBlocks()),
+    _metaMetaRunSummary(_metaRunSummary.getRunBlocks()),
     _runBlockTransitions(_runSummary)
 {
     _zArrayHelperBuf = new int[maxHangDetectionSteps / 2];
     _runSummary.setHelperBuffer(_zArrayHelperBuf);
     _metaRunSummary.setHelperBuffer(_zArrayHelperBuf);
+    _metaMetaRunSummary.setHelperBuffer(_zArrayHelperBuf);
 }
 
 void HangExecutor::addDefaultHangDetectors() {
@@ -101,7 +103,9 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
         _runHistory.push_back(_block);
         if (_runSummary.processNewRunUnits()) {
             _runBlockTransitions.processNewRunBlocks();
-            _metaRunSummary.processNewRunUnits();
+            if (_metaRunSummary.processNewRunUnits()) {
+                _metaMetaRunSummary.processNewRunUnits();
+            }
         }
 
         RunResult result = executeBlock();

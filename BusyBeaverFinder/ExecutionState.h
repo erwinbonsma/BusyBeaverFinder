@@ -25,6 +25,7 @@ public:
     virtual const RunHistory& getRunHistory() const = 0;
     virtual const RunSummary& getRunSummary() const = 0;
     virtual const MetaRunSummary& getMetaRunSummary() const = 0;
+    virtual const MetaRunSummary& getMetaMetaRunSummary() const = 0;
     virtual const RunBlockTransitions& getRunBlockTransitions() const = 0;
 
     virtual void dumpExecutionState() const;

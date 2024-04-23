@@ -44,6 +44,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     RunHistory _runHistory;
     RunSummary _runSummary;
     MetaRunSummary _metaRunSummary;
+    MetaRunSummary _metaMetaRunSummary;
     RunBlockTransitions _runBlockTransitions;
     int* _zArrayHelperBuf;
 
@@ -88,6 +89,7 @@ public:
     const RunHistory& getRunHistory() const override { return _runHistory; }
     const RunSummary& getRunSummary() const override { return _runSummary; }
     const MetaRunSummary& getMetaRunSummary() const override { return _metaRunSummary; }
+    const MetaRunSummary& getMetaMetaRunSummary() const override { return _metaMetaRunSummary; }
     const RunBlockTransitions& getRunBlockTransitions() const override {
         return _runBlockTransitions;
     }

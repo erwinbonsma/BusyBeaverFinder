@@ -130,6 +130,7 @@ public:
     int getNumRunBlocks() const { return (int)_runBlocks.size(); }
     const RunBlock* runBlockAt(int index) const { return &_runBlocks[index]; }
     const RunBlock* getLastRunBlock() const { return &_runBlocks.back(); }
+    const std::vector<RunBlock>& getRunBlocks() const { return _runBlocks; }
 
     // Gets the length in run units of a sequence run blocks. The endIndex is exclusive.
     int getRunBlockLength(int startIndex, int endIndex) const;
@@ -179,8 +180,6 @@ public:
     // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
     // to lastRunBlock (exclusive).
     int getDpDelta(int firstRunBlock, int lastRunBlock) const;
-
-    const std::vector<RunBlock>& getRunBlocks() const { return _runBlocks; }
 
     bool processNewRunUnits() override { return processNewHistory(_runHistory); };
 };
