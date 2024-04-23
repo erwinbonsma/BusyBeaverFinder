@@ -490,7 +490,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]") {
     HangExecutor hangExecutor(1000, 1000);
     hangExecutor.setMaxSteps(1000);
-    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
+    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
@@ -533,19 +533,19 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         REQUIRE(lb.size() == 2);
 
-        // Rightward sweep
+        // Leftward sweep
         REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
         REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
         REQUIRE(lb[0].minDpDelta() == -1);
         REQUIRE(!lb[0].maxDpDelta()); // Irregular growth
-        REQUIRE(!lb[0].endDpGrowth());
+        REQUIRE(lb[0].endDpGrowth() == 1);
 
-        // Leftward sweep
+        // Rightward sweep
         REQUIRE(lb[1].loopType() == LoopType::DOUBLE_SWEEP);
         REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
         REQUIRE(lb[1].minDpDelta() == -1);
         REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
-        REQUIRE(lb[1].endDpGrowth() == 1);
+        REQUIRE(!lb[1].endDpGrowth());
 
         result = checker.init(&mla, hangExecutor);
         REQUIRE(result);

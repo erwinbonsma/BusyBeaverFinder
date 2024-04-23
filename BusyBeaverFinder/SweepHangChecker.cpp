@@ -575,6 +575,47 @@ Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState)
     return Trilian::MAYBE;
 }
 
+// Checks that the program execution is in a meta-meta loop consisting of:
+// 1: a meta-loop (where the sweep is toggling cells inside the binary-counting appendix,
+// 2: a transition (which extends the appendix)
+bool IrregularSweepHangChecker::checkMetaMetaLoop(const ExecutionState& executionState) {
+    auto& metaMetaRunSummary = executionState.getMetaMetaRunSummary();
+    auto& metaRunSummary = executionState.getMetaRunSummary();
+
+    if (!metaMetaRunSummary.isInsideLoop()) {
+        return false;
+    }
+
+    auto metaMetaRunBlock = metaMetaRunSummary.getLastRunBlock();
+    constexpr int ExpectedMetaMetaLoopPeriod = 2;
+    if (metaMetaRunBlock->getLoopPeriod() != ExpectedMetaMetaLoopPeriod) {
+        return false;
+    }
+
+    int numMetaLoops = 0;
+    for (int i = 0; i < ExpectedMetaMetaLoopPeriod; ++i) {
+        int rbIndex = metaMetaRunBlock->getStartIndex() + i;
+        auto metaRunBlock = metaRunSummary.runBlockAt(rbIndex);
+        if (metaRunBlock->isLoop()) {
+            numMetaLoops += 1;
+        } else {
+            if (metaRunSummary.getRunBlockLength(rbIndex) > 2) {
+                // The appendix extending transition should be plain. It should contain at most
+                // one loop (e.g. a different return sweep that behaves similarly to the normal
+                // one)
+                return false;
+            }
+        }
+    }
+    if (numMetaLoops != 1) {
+        return false;
+    }
+
+    // TODO: More checks?
+
+    return true;
+}
+
 bool IrregularSweepHangChecker::findIrregularEnds() {
     // Tracks for each sweep location:
     // 1: How many sweeps end there, 2: How many sweep ends are irregular
@@ -627,6 +668,10 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
 
 bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
                                      const ExecutionState& executionState) {
+    if (!checkMetaMetaLoop(executionState)) {
+        return false;
+    }
+
     if (!SweepHangChecker::init(metaLoopAnalysis, executionState)) {
         return false;
     }

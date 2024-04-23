@@ -30,3 +30,18 @@ public:
     RunUntilMetaLoop(const ExecutionState& execution, int numIterations = 3)
     : HangDetector(execution), _numIterations(numIterations) {}
 };
+
+class RunUntilMetaMetaLoop : public RunUntilMetaLoop {
+protected:
+    bool shouldCheckNow(bool loopContinues) const override {
+        return (_execution.getMetaMetaRunSummary().isInsideLoop()
+                && RunUntilMetaLoop::shouldCheckNow(loopContinues));
+    }
+
+    bool analyzeHangBehaviour() override { return true; };
+    Trilian proofHang() override { return Trilian::YES; };
+
+public:
+    RunUntilMetaMetaLoop(const ExecutionState& execution, int numIterations)
+    : RunUntilMetaLoop(execution, numIterations) {}
+};

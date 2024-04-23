@@ -231,6 +231,7 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     bool rightIsIrregular() const { return _rightIsIrregular; }
 
 private:
+    bool checkMetaMetaLoop(const ExecutionState& executionState);
     bool findIrregularEnds();
 
     bool _leftIsIrregular {};
