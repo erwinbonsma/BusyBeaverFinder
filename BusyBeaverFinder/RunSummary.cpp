@@ -25,6 +25,7 @@ void RunSummaryBase::reset() {
     _sequenceBlocks.clear();
     _sequenceBlocks.emplace_back(0, -1);
 
+    _lastOccurenceBeforeLoop.clear();
     _rotationEqualityCache.clear();
 }
 
@@ -70,8 +71,16 @@ int RunSummaryBase::sequenceId(int start, int end) {
     return (int)(sequenceNodeP - &_sequenceBlocks[0]);
 }
 
+void RunSummaryBase::addRunBlock(int start, int sequenceId, int loopPeriod) {
+    if (loopPeriod && _runBlocks.size()) {
+        _lastOccurenceBeforeLoop[_runBlocks.back().getSequenceId()] =
+            static_cast<int>(_runBlocks.size() - 1);
+    }
+    _runBlocks.emplace_back(start, sequenceId, loopPeriod);
+}
+
 void RunSummaryBase::createRunBlock(int start, int end, int loopPeriod) {
-    _runBlocks.emplace_back(start, sequenceId(start, end), loopPeriod);
+    addRunBlock(start, sequenceId(start, end), loopPeriod);
 }
 
 void RunSummaryBase::createRunBlocks(int start, int end) {
@@ -91,22 +100,16 @@ void RunSummaryBase::createRunBlocks(int start, int end) {
     int mid = start;
     while (mid != end) {
         // Find last time when this run block was followed by another loop
-        const RunBlock* nextBlock = nullptr;
-        const RunBlock* loopBlock = nullptr;
-        for (auto it = _runBlocks.crbegin(); it != _runBlocks.crend(); ++it) {
-            const RunBlock& rb = *it;
-            if (rb.getSequenceId() == prevSeqId && nextBlock && nextBlock->isLoop()) {
-                loopBlock = nextBlock;
-                break;
-            }
-            nextBlock = &rb;
-        }
+        auto result = _lastOccurenceBeforeLoop.find(prevSeqId);
 
-        if (loopBlock) {
+        if (result != _lastOccurenceBeforeLoop.end()) {
             // Check if the run history matches the loop
-            auto seqNode = _sequenceBlocks[loopBlock->getSequenceId()];
+            auto& loopBlock = _runBlocks[result->second + 1];
+            assert(loopBlock.isLoop());
+
+            auto seqNode = _sequenceBlocks[loopBlock.getSequenceId()];
             int loopStart = seqNode._startIndex;
-            int loopPeriod = loopBlock->getLoopPeriod();
+            int loopPeriod = loopBlock.getLoopPeriod();
 
             int matchLen = 0;
             while (mid + matchLen < end &&
@@ -123,9 +126,10 @@ void RunSummaryBase::createRunBlocks(int start, int end) {
                     createRunBlock(start, mid, 0);
                 }
 
-                _runBlocks.emplace_back(mid, loopBlock->getSequenceId(), loopPeriod);
+                addRunBlock(mid, loopBlock.getSequenceId(), loopPeriod);
 
                 createRunBlocks(mid + matchLen, end); // Recurse
+
                 return;
             }
         }

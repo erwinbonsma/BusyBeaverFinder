@@ -82,6 +82,11 @@ class RunSummaryBase {
 
     std::vector<RunBlockSequenceNode> _sequenceBlocks;
 
+    // Tracks for each sequence when it was last followed by a loop.
+    // Key: Sequence ID
+    // Value: Index of last run block with this ID that was followed by a loop
+    std::map<int, int> _lastOccurenceBeforeLoop;
+
     // Cache for areLoopsRotationEqual method.
     // Key: Pair of loop sequence indices (smallest first)
     // Value: Pair of results with first the equality result, and second the offset (if applicable)
@@ -101,6 +106,7 @@ class RunSummaryBase {
 
     int sequenceId(int start, int end);
 
+    void addRunBlock(int start, int sequenceId, int loopPeriod);
     void createRunBlock(int start, int end, int loopPeriod);
 
     // Creates run blocks for the transition from start to end. By default, creates a single run
