@@ -27,8 +27,12 @@ class RunBlockSequenceNode {
     int _childIndex = 0;
     int _siblingIndex = 0;
 
+    // Index of first run unit that starts the sequence that reaches here
+    int _startIndex = 0;
+
 public:
-    RunBlockSequenceNode(RunUnitId runUnitId) : _runUnitId(runUnitId) {}
+    RunBlockSequenceNode(RunUnitId runUnitId, int startIndex)
+    : _runUnitId(runUnitId), _startIndex(startIndex) {}
 
     RunUnitId getRunUnitId() const { return _runUnitId; }
 };
@@ -87,13 +91,22 @@ class RunSummaryBase {
     // Note: It is not owned by this class (and should therefore not be freed by it)
     int* _helperBuf;
 
-    RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, RunUnitId targetId);
+    bool _identifyShortLoops {};
+
+    RunBlockSequenceNode* getChildNode(RunBlockSequenceNode* parent, RunUnitId targetId, int start);
 
     int getNumRunUnits() const { return _processed; }
     // Returns the identifier for the run unit at the given index in the run history
     virtual int getRunUnitIdAt(int runUnitIndex) const = 0;
 
+    int sequenceId(int start, int end);
+
     void createRunBlock(int start, int end, int loopPeriod);
+
+    // Creates run blocks for the transition from start to end. By default, creates a single run
+    // block. If configured to identify short loops, it creates loop run blocks for loops that ran
+    // less than two iterations.
+    void createRunBlocks(int start, int end);
 
     //--------------------------------------------------------------------------------------------
 
@@ -114,6 +127,8 @@ public:
     RunSummaryBase() { reset(); }
 
     void setHelperBuffer(int* helperBuf) { _helperBuf = helperBuf; }
+
+    void setIdentifyShortLoops(bool flag) { _identifyShortLoops = flag; }
 
     void reset();
     virtual bool processNewRunUnits() = 0;
@@ -149,6 +164,10 @@ public:
         return getRunBlockLength((int)(block - &_runBlocks[0]));
     }
 
+    int getStartIndexForSequence(int sequenceId) const {
+        return _sequenceBlocks[sequenceId]._startIndex;
+    }
+
     // Returns "true" if both loop run blocks are equal when rotations are allowed. E.g. it returns
     // true when comparing "A B C" and "B C A". When this is the case, indexOffset gives the
     // conversion of an index of loop2 to that of loop1: index1 = (index2 + indexOffset) % period
@@ -159,7 +178,7 @@ public:
     auto cend() const { return _runBlocks.cend(); }
 
     void dumpSequenceTree() const;
-    void dumpCondensed() const;
+    void dumpCondensed(bool hideLegend = false) const;
     void dump() const;
 };
 
@@ -208,9 +227,7 @@ bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
             if (loopPeriod > 0) {                           // Start of new loop
                 _loop = _processed + 1 - loopPeriod * 2;
 
-                if (_loop != _pending) {
-                    createRunBlock(_pending, _loop, 0);
-                }
+                createRunBlocks(_pending, _loop);
                 createRunBlock(_loop, _processed + 1, loopPeriod);
                 _pending = -1;
                 newRunBlocks = true;

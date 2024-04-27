@@ -206,7 +206,8 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
 
         if (rb->isLoop()) {
             auto loopAnalysis = _loopAnalysisPool.pop();
-            loopAnalysis->analyzeLoop(&runHistory[rb->getStartIndex()], rb->getLoopPeriod());
+            int loopStartIndex = runSummary.getStartIndexForSequence(rb->getSequenceId());
+            loopAnalysis->analyzeLoop(&runHistory[loopStartIndex], rb->getLoopPeriod());
             analysis = loopAnalysis;
         } else {
             auto sequenceAnalysis = _sequenceAnalysisPool.pop();

@@ -23,20 +23,20 @@ void RunSummaryBase::reset() {
     _loop = -1;
 
     _sequenceBlocks.clear();
-    _sequenceBlocks.emplace_back(0);
+    _sequenceBlocks.emplace_back(0, -1);
 
     _rotationEqualityCache.clear();
 }
 
 RunBlockSequenceNode* RunSummaryBase::getChildNode(
-    RunBlockSequenceNode* parent, RunUnitId targetId
+    RunBlockSequenceNode* parent, RunUnitId targetId, int start
 ) {
     RunBlockSequenceNode* node = parent;
 
     if (!node->_childIndex) {
         // This node does not yet have any children. Add the first.
         node->_childIndex = (int)_sequenceBlocks.size();
-        _sequenceBlocks.emplace_back(targetId);
+        _sequenceBlocks.emplace_back(targetId, start);
         return &_sequenceBlocks.back();
     }
 
@@ -56,20 +56,87 @@ RunBlockSequenceNode* RunSummaryBase::getChildNode(
     }
 
     node->_siblingIndex = (int)_sequenceBlocks.size();
-    _sequenceBlocks.emplace_back(targetId);
+    _sequenceBlocks.emplace_back(targetId, start);
     return &_sequenceBlocks.back();
 }
 
-void RunSummaryBase::createRunBlock(int start, int end, int loopPeriod) {
-    RunBlockSequenceNode* sequenceNodeP = &_sequenceBlocks[0];
+int RunSummaryBase::sequenceId(int start, int end) {
+    RunBlockSequenceNode* sequenceNodeP = &_sequenceBlocks.at(0);
 
     for (int i = start; i < end; ++i) {
-        sequenceNodeP = getChildNode(sequenceNodeP, getRunUnitIdAt(i));
+        sequenceNodeP = getChildNode(sequenceNodeP, getRunUnitIdAt(i), start);
     }
 
-    int sequenceId = (int)(sequenceNodeP - &_sequenceBlocks[0]);
+    return (int)(sequenceNodeP - &_sequenceBlocks[0]);
+}
 
-    _runBlocks.emplace_back(start, sequenceId, loopPeriod);
+void RunSummaryBase::createRunBlock(int start, int end, int loopPeriod) {
+    _runBlocks.emplace_back(start, sequenceId(start, end), loopPeriod);
+}
+
+void RunSummaryBase::createRunBlocks(int start, int end) {
+    if (start == end) return;
+
+    if (!_identifyShortLoops || !_runBlocks.size()) {
+        createRunBlock(start, end, 0);
+        return;
+    }
+
+    auto prevBlock = getLastRunBlock();
+    assert(prevBlock->isLoop());
+
+    RunBlockSequenceNode* sequenceNodeP = &_sequenceBlocks.at(0);
+    int prevSeqId = prevBlock->getSequenceId();
+
+    int mid = start;
+    while (mid != end) {
+        // Find last time when this run block was followed by another loop
+        const RunBlock* nextBlock = nullptr;
+        const RunBlock* loopBlock = nullptr;
+        for (auto it = _runBlocks.crbegin(); it != _runBlocks.crend(); ++it) {
+            const RunBlock& rb = *it;
+            if (rb.getSequenceId() == prevSeqId && nextBlock && nextBlock->isLoop()) {
+                loopBlock = nextBlock;
+                break;
+            }
+            nextBlock = &rb;
+        }
+
+        if (loopBlock) {
+            // Check if the run history matches the loop
+            auto seqNode = _sequenceBlocks[loopBlock->getSequenceId()];
+            int loopStart = seqNode._startIndex;
+            int loopPeriod = loopBlock->getLoopPeriod();
+
+            int matchLen = 0;
+            while (mid + matchLen < end &&
+                   getRunUnitIdAt(mid + matchLen) ==
+                   getRunUnitIdAt(loopStart + matchLen % loopPeriod)) {
+                ++matchLen;
+            }
+
+            if (matchLen > 0) {
+                // Create (short) loop run block for this sequence
+
+                if (mid != start) {
+                    // First add run block for sequence that precedes it
+                    createRunBlock(start, mid, 0);
+                }
+
+                _runBlocks.emplace_back(mid, loopBlock->getSequenceId(), loopPeriod);
+
+                createRunBlocks(mid + matchLen, end); // Recurse
+                return;
+            }
+        }
+
+        // Failed to start a loop from here. Add it to preceding sequence
+        sequenceNodeP = getChildNode(sequenceNodeP, getRunUnitIdAt(mid), start);
+        prevSeqId = static_cast<int>(sequenceNodeP - &_sequenceBlocks[0]);
+        mid += 1;
+    }
+
+    createRunBlock(start, end, 0);
 }
 
 int RunSummaryBase::getRunBlockLength(int startIndex, int endIndex) const {
@@ -219,7 +286,7 @@ void RunSummaryBase::dumpSequenceTree() const {
     dumpRunBlockSequenceNode(0, 0);
 }
 
-void RunSummaryBase::dumpCondensed() const {
+void RunSummaryBase::dumpCondensed(bool hideLegend) const {
     for (int i = 0; i < getNumRunBlocks(); i++) {
         const RunBlock* runBlock = runBlockAt(i);
         int sequenceIndex = runBlock->getSequenceId();
@@ -238,6 +305,8 @@ void RunSummaryBase::dumpCondensed() const {
         }
     }
     std::cout << std::endl;
+
+    if (hideLegend) return;
 
     int numUnique = 0;
     int helperArray[64];
