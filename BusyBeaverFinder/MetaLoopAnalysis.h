@@ -188,6 +188,7 @@ class MetaLoopAnalysis {
     // The number of meta-run blocks for which this meta-loop analysis is valid
     int _numMetaRunBlocks = 0;
     int _numRunBlocks = 0;
+    int _numRewrites = 0;
 
     mutable SimplePool<SequenceAnalysis> _sequenceAnalysisPool;
     mutable SimplePool<LoopAnalysis> _loopAnalysisPool;

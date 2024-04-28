@@ -143,6 +143,14 @@ void RunSummaryBase::createRunBlocks(int start, int end) {
     createRunBlock(start, end, 0);
 }
 
+void RunSummaryBase::resetPending() {
+    auto rb = getLastRunBlock();
+    assert(rb->isLoop());
+    _loop = rb->getStartIndex();
+    _processed = _loop + 2 * rb->getLoopPeriod();
+    _pending = -1;
+}
+
 int RunSummaryBase::getRunBlockLength(int startIndex, int endIndex) const {
     bool isLast = endIndex == getNumRunBlocks();
     int runUnitStartIndex = _runBlocks[startIndex].getStartIndex();
@@ -411,4 +419,65 @@ int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
     }
 
     return dpDelta;
+}
+
+void MetaRunSummary::newHistoryProcessed() {
+    if (!_metaLoopDetector) {
+        _metaLoopDetector = std::make_unique<MetaRunSummary>(getRunBlocks());
+        _metaLoopDetector->setHelperBuffer(getHelperBuffer());
+    }
+
+    if (_metaLoopDetector->processNewRunUnits()) {
+        // New meta-loop detected. Check if run blocks can be grouped into larger ones so that it
+        // is a loop at this level.
+        auto metaRunBlock = _metaLoopDetector->getLastRunBlock();
+        assert(metaRunBlock->isLoop());
+
+//        std::cout << "Before: ";
+//        dumpCondensed();
+
+        // Period in old run-blocks
+        int loopPeriod = metaRunBlock->getLoopPeriod();
+        int loopStart = metaRunBlock->getStartIndex();
+
+        int unitStart = runBlockAt(loopStart)->getStartIndex();
+        int unitLoopPeriod = getRunBlockLength(loopStart, loopStart + loopPeriod);
+
+        // The meta-loop detector ignores varying run length of loops. For collapse at this level
+        // the run units need to exactly repeat. Check if this is the case.
+
+        for (int i = 0; i < loopPeriod; ++i) {
+            if (!runBlockAt(loopStart + i)->isLoop()) {
+                continue;
+            }
+
+            int len1 = getRunBlockLength(loopStart + i);
+            int len2 = getRunBlockLength(loopStart + loopPeriod + i);
+
+            if (len1 == len2) {
+                continue;
+            }
+            if (len2 < len1 && i == loopPeriod - 1) {
+                // The last loop may be shorter as it is still ongoing.
+                continue;
+            }
+
+            // Cannot re-group as run unit history does not repeat exactly
+            return;
+        }
+
+        // Remove previous blocks
+        _runBlocks.erase(_runBlocks.begin() + loopStart, _runBlocks.end());
+
+        // Replace by bigger loop-block
+        createRunBlock(unitStart, unitStart + 2 * unitLoopPeriod, unitLoopPeriod);
+
+        resetPending();
+
+//        std::cout << "After: ";
+//        dumpCondensed();
+
+        _rewriteCount += 1;
+        _metaLoopDetector.reset();
+    }
 }

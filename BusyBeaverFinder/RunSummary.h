@@ -107,7 +107,6 @@ class RunSummaryBase {
     int sequenceId(int start, int end);
 
     void addRunBlock(int start, int sequenceId, int loopPeriod);
-    void createRunBlock(int start, int end, int loopPeriod);
 
     // Creates run blocks for the transition from start to end. By default, creates a single run
     // block. If configured to identify short loops, it creates loop run blocks for loops that ran
@@ -125,6 +124,10 @@ protected:
     // Stack of recently executed run blocks
     std::vector<RunBlock> _runBlocks;
 
+    void resetPending();
+    void createRunBlock(int start, int end, int loopPeriod);
+    virtual void newHistoryProcessed() {}
+
     // Returns true if this resulted in the creation of one or more RunBlocks
     template <class RunUnitHistory>
     bool processNewHistory(const RunUnitHistory& history);
@@ -133,6 +136,7 @@ public:
     RunSummaryBase() { reset(); }
 
     void setHelperBuffer(int* helperBuf) { _helperBuf = helperBuf; }
+    int* getHelperBuffer() const { return _helperBuf; }
 
     void setIdentifyShortLoops(bool flag) { _identifyShortLoops = flag; }
 
@@ -212,13 +216,20 @@ public:
 class MetaRunSummary : public RunSummaryBase {
     const std::vector<RunBlock> &_runHistory;
 
+    std::unique_ptr<MetaRunSummary> _metaLoopDetector;
+    int _rewriteCount {};
+
     int getRunUnitIdAt(int runUnitIndex) const override {
         return _runHistory[runUnitIndex].getSequenceId();
     };
 
+protected:
+    void newHistoryProcessed() override;
+
 public:
     MetaRunSummary(const std::vector<RunBlock> &runHistory) : _runHistory(runHistory) {}
 
+    int rewriteCount() const { return _rewriteCount; }
     bool processNewRunUnits() override { return processNewHistory(_runHistory); };
 };
 
@@ -245,6 +256,10 @@ bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
             }
         }
         ++_processed;
+    }
+
+    if (newRunBlocks) {
+        newHistoryProcessed();
     }
 
     return newRunBlocks;

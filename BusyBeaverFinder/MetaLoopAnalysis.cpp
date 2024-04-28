@@ -204,6 +204,8 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
         const RunBlock *rb = runSummary.runBlockAt(startIndex + i);
         std::shared_ptr<SequenceAnalysis> analysis = nullptr;
 
+        // TODO: Check if analysis already exists for sequence ID and if so, re-use that.
+
         if (rb->isLoop()) {
             auto loopAnalysis = _loopAnalysisPool.pop();
             int loopStartIndex = runSummary.getStartIndexForSequence(rb->getSequenceId());
@@ -363,7 +365,8 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
         return false;  // There is no analysis yet
     }
 
-    if (_numMetaRunBlocks != executionState.getMetaRunSummary().getNumRunBlocks()) {
+    if (_numMetaRunBlocks != executionState.getMetaRunSummary().getNumRunBlocks() ||
+        _numRewrites != executionState.getMetaRunSummary().rewriteCount()) {
         return false;  // The meta-loop changed
     }
 
@@ -427,6 +430,7 @@ bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
     // Mark results valid/initialized
     _numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
     _numMetaRunBlocks = executionState.getMetaRunSummary().getNumRunBlocks();
+    _numRewrites = executionState.getMetaRunSummary().rewriteCount();
 
     return true;
 }

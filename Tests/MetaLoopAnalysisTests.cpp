@@ -436,27 +436,13 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
     }
-}
-
-// Programs that end up in a permanent meta-meta-loop
-TEST_CASE( "Meta-meta-loop (positive)", "[meta-loop-analysis][hang]") {
-    HangExecutor hangExecutor(1000, 20000);
-    hangExecutor.setMaxSteps(20000);
-    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
-
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
-    ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
-
-    MetaLoopAnalysis mla;
 
     SECTION("SweepWithPeriodicGrowth_PeriodThree") {
         // Sweep that extends every three sweeps
         //
         // Very similar to SweepWithPeriodicGrowth_PeriodTwo. The only difference is the period by
-        // which it extends the sequence. However, as a result, it does not end up in a meta-loop.
+        // which it extends the sequence. This causes the eager loop-detection logic to fire for
+        // part of the meta-loop.
 
         // Bootstrap
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
@@ -481,7 +467,7 @@ TEST_CASE( "Meta-meta-loop (positive)", "[meta-loop-analysis][hang]") {
         hangExecutor.execute(&program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
-        REQUIRE(!result);
+        REQUIRE(result);
     }
 }
 
