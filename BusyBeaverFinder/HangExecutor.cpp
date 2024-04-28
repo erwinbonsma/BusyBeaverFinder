@@ -26,6 +26,8 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _runSummary.setHelperBuffer(_zArrayHelperBuf);
     _metaRunSummary.setHelperBuffer(_zArrayHelperBuf);
     _metaMetaRunSummary.setHelperBuffer(_zArrayHelperBuf);
+
+    _runSummary.setIdentifyShortLoops(true);
 }
 
 void HangExecutor::addDefaultHangDetectors() {
@@ -117,6 +119,7 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
             bool loopContinues = _runSummary.loopContinues(_block->getStartIndex());
 //            if (!loopContinues) {
 //                _data.dump();
+//                _runSummary.dumpCondensed(true);
 //            }
             for (auto hangDetector : _hangDetectors) {
                 if (hangDetector->detectHang(loopContinues)) {
