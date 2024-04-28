@@ -21,7 +21,8 @@ class RunSummaryTest : public RunSummaryBase {
     int getRunUnitIdAt(int runUnitIndex) const override { return _runHistory[runUnitIndex]; };
 
 public:
-    RunSummaryTest(const std::vector<int> &runHistory) : _runHistory(runHistory) {}
+    RunSummaryTest(const std::vector<int> &runHistory, int* helperBuf)
+    : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
 
     bool processNewRunUnits() override { return processNewHistory(_runHistory); };
 };
@@ -72,10 +73,9 @@ bool checkRunSummary(RunSummaryTest& runSummary, std::vector<int>& expected) {
 }
 
 bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns) {
-    RunSummaryTest runSummary(blocks);
     int zArrayHelperBuf[32];
+    RunSummaryTest runSummary(blocks, zArrayHelperBuf);
 
-    runSummary.setHelperBuffer(zArrayHelperBuf);
     runSummary.processNewRunUnits();
 
     return checkRunSummary(runSummary, expectedRuns);
@@ -152,9 +152,8 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
 
 TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence]" ) {
     std::vector<int> history;
-    RunSummaryTest runSummary(history);
     int zArrayHelperBuf[32];
-    runSummary.setHelperBuffer(zArrayHelperBuf);
+    RunSummaryTest runSummary(history, zArrayHelperBuf);
     int loopOffset;
 
     SECTION( "EqualThreeBlockLoops" ) {

@@ -42,11 +42,11 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     // meta-summary summarizes the first run summary. In particular, it signals repeated patterns
     // in the first summary.
     RunHistory _runHistory;
+    std::vector<int> _zArrayHelperBuf;
     RunSummary _runSummary;
     MetaRunSummary _metaRunSummary;
     MetaRunSummary _metaMetaRunSummary;
     RunBlockTransitions _runBlockTransitions;
-    int* _zArrayHelperBuf;
 
     void resetHangDetection();
 
@@ -59,7 +59,6 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
 
 public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
-    ~HangExecutor();
 
     void addDefaultHangDetectors();
     void addHangDetector(std::shared_ptr<HangDetector> hangDetector) {

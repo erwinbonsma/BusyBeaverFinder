@@ -133,9 +133,8 @@ protected:
     bool processNewHistory(const RunUnitHistory& history);
 
 public:
-    RunSummaryBase() { reset(); }
+    RunSummaryBase(int* helperBuf) : _helperBuf(helperBuf) { reset(); }
 
-    void setHelperBuffer(int* helperBuf) { _helperBuf = helperBuf; }
     int* getHelperBuffer() const { return _helperBuf; }
 
     void setIdentifyShortLoops(bool flag) { _identifyShortLoops = flag; }
@@ -204,7 +203,8 @@ class RunSummary : public RunSummaryBase {
     };
 
 public:
-    RunSummary(const RunHistory &runHistory) : _runHistory(runHistory) {}
+    RunSummary(const RunHistory &runHistory, int* helperBuf)
+    : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
 
     // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
     // to lastRunBlock (exclusive).
@@ -227,7 +227,8 @@ protected:
     void newHistoryProcessed() override;
 
 public:
-    MetaRunSummary(const std::vector<RunBlock> &runHistory) : _runHistory(runHistory) {}
+    MetaRunSummary(const std::vector<RunBlock> &runHistory, int* helperBuf)
+    : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
 
     int rewriteCount() const { return _rewriteCount; }
     bool processNewRunUnits() override { return processNewHistory(_runHistory); };

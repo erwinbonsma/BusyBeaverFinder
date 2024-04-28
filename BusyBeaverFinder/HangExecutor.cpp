@@ -17,16 +17,12 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _hangDetectionStart(0),
     _maxHangDetectionSteps(maxHangDetectionSteps),
     _data(dataSize),
-    _runSummary(_runHistory),
-    _metaRunSummary(_runSummary.getRunBlocks()),
-    _metaMetaRunSummary(_metaRunSummary.getRunBlocks()),
+    _zArrayHelperBuf(maxHangDetectionSteps / 2),
+    _runSummary(_runHistory, _zArrayHelperBuf.data()),
+    _metaRunSummary(_runSummary.getRunBlocks(), _zArrayHelperBuf.data()),
+    _metaMetaRunSummary(_metaRunSummary.getRunBlocks(), _zArrayHelperBuf.data()),
     _runBlockTransitions(_runSummary)
 {
-    _zArrayHelperBuf = new int[maxHangDetectionSteps / 2];
-    _runSummary.setHelperBuffer(_zArrayHelperBuf);
-    _metaRunSummary.setHelperBuffer(_zArrayHelperBuf);
-    _metaMetaRunSummary.setHelperBuffer(_zArrayHelperBuf);
-
     _runSummary.setIdentifyShortLoops(true);
 }
 
@@ -35,10 +31,6 @@ void HangExecutor::addDefaultHangDetectors() {
 
     _hangDetectors.push_back(std::make_shared<IrregularSweepHangDetector>(*this));
     _hangDetectors.push_back(std::make_shared<MetaLoopHangDetector>(*this));
-}
-
-HangExecutor::~HangExecutor() {
-    delete[] _zArrayHelperBuf;
 }
 
 void HangExecutor::resetHangDetection() {

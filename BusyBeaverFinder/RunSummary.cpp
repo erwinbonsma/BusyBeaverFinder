@@ -423,8 +423,7 @@ int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
 
 void MetaRunSummary::newHistoryProcessed() {
     if (!_metaLoopDetector) {
-        _metaLoopDetector = std::make_unique<MetaRunSummary>(getRunBlocks());
-        _metaLoopDetector->setHelperBuffer(getHelperBuffer());
+        _metaLoopDetector = std::make_unique<MetaRunSummary>(getRunBlocks(), getHelperBuffer());
     }
 
     if (_metaLoopDetector->processNewRunUnits()) {
