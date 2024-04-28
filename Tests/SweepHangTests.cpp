@@ -626,6 +626,39 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
 //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
 //        REQUIRE((rightSweepEndType(hangExecutor) == SweepEndType::IRREGULAR_GROWTH);
     }
+    SECTION("6x6-SweepWithPeriodicGrowth9") {
+        // This sweep has a complex growth at its right side and simple growth at its left side.
+        // These impact each other, as the right side toggles between two extensions based on the
+        // total length of the sweep body.
+        //
+        // In the simple case it converts:  [body] -1 1 1 ...
+        //                           into:  [body] -1 2 -1 1 1
+        // In the complex case it converts: [body] -1 1 1 ...
+        //                            into: [body] -1 2 -1 2 -1 1 1 ...
+        //
+        // The complex extension itself includes a (fixed size) mini-sweep. This caused detection
+        // to fail before the meta-loop detection was improved to make the loop as large as
+        // possible.
+        //
+        // Relevant part of run summary:
+        // ...
+        // #7*4.0 #8 #32*2.0 #54 #7*12.0 #8 #32* 6.0 #54 #7*15.0 #8 #32* 7.0 #47
+        // #7*4.0 #8 #32*2.0 #54 #7*20.0 #8 #32*10.0 #54 #7*23.0 #8 #32*11.0 #47
+        // #7*4.0 #8 #32*2.0 #54 #7*28.0 #8 #32*14.0 #54 #7*31.0 #8 #32*15.0 #47
+        // #7*4.0 #8 #32*2.0 #54 #7*36.0 #8 #32*18.0 #54 #7*39.0 #8 #32*19.0 #47
+        // <--- mini sweep  --->
+        //
+        //       *
+        //   * * o _ *
+        // * o o o *
+        // * _ _ o _ *
+        // o _ o *
+        // _ *
+        RunResult result = hangExecutor.execute("Zv7+kpW4Ekby/w");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
+    }
     SECTION("6x6-SweepLoopExceedsMidSequencePoint") {
         // Program where DP during its leftwards sweep briefly extends beyond the mid-sequence
         // point before initiating the turn.
