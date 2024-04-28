@@ -193,6 +193,9 @@ class MetaLoopAnalysis {
     mutable SimplePool<SequenceAnalysis> _sequenceAnalysisPool;
     mutable SimplePool<LoopAnalysis> _loopAnalysisPool;
 
+    // Analysis cache. Key: Sequence ID
+    std::map<int, std::shared_ptr<SequenceAnalysis>> _analysisCache;
+
     // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
     std::vector<std::shared_ptr<SequenceAnalysis>> _seqAnalysis;
 

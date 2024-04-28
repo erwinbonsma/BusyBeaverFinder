@@ -194,6 +194,7 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
 
     _seqAnalysis.clear();
+    _analysisCache.clear();
     _sequenceAnalysisPool.reset();
     _loopAnalysisPool.reset();
 
@@ -204,18 +205,24 @@ void MetaLoopAnalysis::analyzeRunBlocks(const ExecutionState &executionState) {
         const RunBlock *rb = runSummary.runBlockAt(startIndex + i);
         std::shared_ptr<SequenceAnalysis> analysis = nullptr;
 
-        // TODO: Check if analysis already exists for sequence ID and if so, re-use that.
-
-        if (rb->isLoop()) {
-            auto loopAnalysis = _loopAnalysisPool.pop();
-            int loopStartIndex = runSummary.getStartIndexForSequence(rb->getSequenceId());
-            loopAnalysis->analyzeLoop(&runHistory[loopStartIndex], rb->getLoopPeriod());
-            analysis = loopAnalysis;
+        auto lookupResult = _analysisCache.lower_bound(rb->getSequenceId());
+        if (lookupResult != _analysisCache.end() && lookupResult->first == rb->getSequenceId()) {
+            // Result found in cache. Re-use it
+            analysis = lookupResult->second;
         } else {
-            auto sequenceAnalysis = _sequenceAnalysisPool.pop();
-            sequenceAnalysis->analyzeSequence(&runHistory[rb->getStartIndex()],
-                                              runSummary.getRunBlockLength(startIndex + i));
-            analysis = sequenceAnalysis;
+            if (rb->isLoop()) {
+                auto loopAnalysis = _loopAnalysisPool.pop();
+                int loopStartIndex = runSummary.getStartIndexForSequence(rb->getSequenceId());
+                loopAnalysis->analyzeLoop(&runHistory[loopStartIndex], rb->getLoopPeriod());
+                analysis = loopAnalysis;
+            } else {
+                auto sequenceAnalysis = _sequenceAnalysisPool.pop();
+                sequenceAnalysis->analyzeSequence(&runHistory[rb->getStartIndex()],
+                                                  runSummary.getRunBlockLength(startIndex + i));
+                analysis = sequenceAnalysis;
+            }
+
+            _analysisCache.insert(lookupResult, std::make_pair(rb->getSequenceId(), analysis));
         }
 
         _seqAnalysis.push_back(analysis);
@@ -308,7 +315,6 @@ void MetaLoopAnalysis::initLoopBehaviors() {
             iterationDeltaType == LoopIterationDeltaType::CONSTANT) {
             iterationDelta = data.lastIterationDelta;
         }
-
 
         auto &dataNext = _loopData[(i + 1) % loopDataSize];
         auto dpDeltaEnd = dataNext.dataPointerDelta;
