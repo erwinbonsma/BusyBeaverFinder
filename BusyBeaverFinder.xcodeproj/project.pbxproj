@@ -51,6 +51,7 @@
 		AA5D7E99257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */; };
 		AA5D7E9A257D2F030054FC4E /* IrregularSweepHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */; };
 		AA639B32254C232200DD5129 /* IrregularSweepHangTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA639B31254C232200DD5129 /* IrregularSweepHangTests.cpp */; };
+		AA75332A2BE02EF4003A0D77 /* IrregularSweepAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7533292BE02EF4003A0D77 /* IrregularSweepAnalysisTests.cpp */; };
 		AA7A2DE12ABF634200C35C07 /* ProgramTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE02ABF634200C35C07 /* ProgramTests.cpp */; };
 		AA7A2DE42ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */; };
 		AA7A2DE52ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */; };
@@ -165,6 +166,7 @@
 		AA5D7E97257D2F030054FC4E /* IrregularSweepHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IrregularSweepHangDetector.cpp; sourceTree = "<group>"; };
 		AA5D7E98257D2F030054FC4E /* IrregularSweepHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IrregularSweepHangDetector.h; sourceTree = "<group>"; };
 		AA639B31254C232200DD5129 /* IrregularSweepHangTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IrregularSweepHangTests.cpp; sourceTree = "<group>"; };
+		AA7533292BE02EF4003A0D77 /* IrregularSweepAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = IrregularSweepAnalysisTests.cpp; sourceTree = "<group>"; };
 		AA7A2DE02ABF634200C35C07 /* ProgramTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProgramTests.cpp; sourceTree = "<group>"; };
 		AA7A2DE22ADBE96500C35C07 /* MetaLoopAnalysis.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopAnalysis.cpp; sourceTree = "<group>"; };
 		AA7A2DE32ADBE96500C35C07 /* MetaLoopAnalysis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetaLoopAnalysis.h; sourceTree = "<group>"; };
@@ -304,6 +306,7 @@
 				AA7A2DE62ADFE29900C35C07 /* MetaLoopAnalysisTests.cpp */,
 				AAEB55C32B2DE99600695567 /* GliderAnalysisTests.cpp */,
 				AAEB55C52B2DEA6500695567 /* SweepAnalysisTests.cpp */,
+				AA7533292BE02EF4003A0D77 /* IrregularSweepAnalysisTests.cpp */,
 				AA4F44FE223E57A10069FF36 /* NoExitHangTests.cpp */,
 				AA4F4502223E77350069FF36 /* PeriodicHangTests.cpp */,
 				AA28C0A322073D2A00F7EC25 /* SweepHangTests.cpp */,
@@ -491,6 +494,7 @@
 				AAF43BD323EC8B0100D1EB33 /* SequenceAnalysis.cpp in Sources */,
 				AA28C0A122073A1500F7EC25 /* Program.cpp in Sources */,
 				AA8BB5302BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */,
+				AA75332A2BE02EF4003A0D77 /* IrregularSweepAnalysisTests.cpp in Sources */,
 				AACC27252541FFB2007E83C3 /* DataDeltas.cpp in Sources */,
 				AA639B32254C232200DD5129 /* IrregularSweepHangTests.cpp in Sources */,
 				AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */,

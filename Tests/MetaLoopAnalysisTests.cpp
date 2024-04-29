@@ -11,7 +11,6 @@
 #include "HangDetector.h"
 #include "ProgramBlock.h"
 #include "MetaLoopAnalysis.h"
-#include "SweepHangChecker.h"
 
 #include "RunUntilMetaLoop.h"
 
@@ -23,9 +22,8 @@ const bool MOV = false;
 
 
 // Programs that end up in a permanent meta-loop
-TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
+TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
     HangExecutor hangExecutor(1000, 20000);
-    hangExecutor.setMaxSteps(20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
@@ -471,7 +469,7 @@ TEST_CASE( "Meta-loop (positive)", "[meta-loop-analysis][hang]") {
     }
 }
 
-TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][completion]") {
+TEST_CASE("Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][completion]") {
     HangExecutor hangExecutor(1000, 100000);
     hangExecutor.setMaxSteps(10000000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor));
@@ -550,8 +548,7 @@ TEST_CASE( "Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][
 
 // Examples of programs that do not end up in a permanent meta-periodic loop, but still hang
 TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]") {
-    HangExecutor hangExecutor(1000, 1000);
-    hangExecutor.setMaxSteps(10000);
+    HangExecutor hangExecutor(1000, 20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaMetaLoop>(hangExecutor, 6));
 
     ProgramBlock block[maxSequenceLen];
@@ -561,137 +558,6 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
 
     MetaLoopAnalysis mla;
-    IrregularSweepHangChecker checker;
-
-    SECTION("BasicIrregularSweep") {
-        // Rightward sweep loop (exits on zero or one)
-        block[0].finalize(MOV,  1, dummySteps, block + 4, block + 1);
-        block[1].finalize(INC, -1, dummySteps, block + 3, block + 2);
-        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
-
-        // Exit on one
-        block[3].finalize(INC,  2, dummySteps, exitBlock, block + 5);
-
-        // Exit on zero (extends sweep)
-        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
-
-        // Leftward sweep loop (toggle all twos to ones)
-        block[5].finalize(MOV, -1, dummySteps, block + 7, block + 6);
-        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
-
-        // Transition at left (extends sweep)
-        block[7].finalize(INC, -1, dummySteps, exitBlock, block + 0);
-
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
-
-        bool result = mla.analyzeMetaLoop(hangExecutor);
-
-        REQUIRE(result);
-        REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
-        REQUIRE(mla.loopSize() == 4);
-
-        auto lb = mla.loopBehaviors();
-
-        REQUIRE(lb.size() == 2);
-
-        // Leftward sweep
-        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
-        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
-        REQUIRE(lb[0].minDpDelta() == -1);
-        REQUIRE(!lb[0].maxDpDelta()); // Irregular growth
-        REQUIRE(lb[0].endDpGrowth() == 1);
-
-        // Rightward sweep
-        REQUIRE(lb[1].loopType() == LoopType::DOUBLE_SWEEP);
-        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
-        REQUIRE(lb[1].minDpDelta() == -1);
-        REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
-        REQUIRE(!lb[1].endDpGrowth());
-
-        result = checker.init(&mla, hangExecutor);
-        REQUIRE(result);
-
-        REQUIRE(!checker.leftIsIrregular());
-        REQUIRE(checker.rightIsIrregular());
-    }
-
-    SECTION("BodylessIrregularSweep") {
-        // Rightward sweep loop (exits on zero or one)
-        block[0].finalize(MOV,  1, dummySteps, block + 4, block + 1);
-        block[1].finalize(INC, -1, dummySteps, block + 3, block + 2);
-        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
-
-        // Exit on one
-        block[3].finalize(INC,  2, dummySteps, exitBlock, block + 5);
-
-        // Exit on zero (extends sweep)
-        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
-
-        // Leftward sweep loop (toggle all twos to ones)
-        block[5].finalize(MOV, -1, dummySteps, block + 0, block + 6);
-        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
-
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
-    }
-
-    SECTION("BodylessIrregularSweep-2") {
-        // Sweep does not have a plain body, only an appendix.
-        // Furthermore, the leftward sweep varies per exit
-
-        // Rightward sweep loop (exits on zero or one)
-        block[0].finalize(MOV,  1, dummySteps, block + 3, block + 1);
-        block[1].finalize(INC, -1, dummySteps, block + 4, block + 2);
-        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
-
-        // Exit on zero
-        block[3].finalize(INC,  1, dummySteps, exitBlock, block + 5);
-
-        // Exit on one
-        block[4].finalize(INC,  2, dummySteps, exitBlock, block + 6);
-
-        // Leftward sweep loop (only move)
-        block[5].finalize(MOV, -1, dummySteps, block + 0, block + 5);
-
-        // Leftward sweep loop (toggle all twos to ones)
-        block[6].finalize(MOV, -1, dummySteps, block + 0, block + 7);
-        block[7].finalize(INC, -1, dummySteps, exitBlock, block + 6);
-
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
-
-        bool result = mla.analyzeMetaLoop(hangExecutor);
-
-        REQUIRE(result);
-
-        REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
-        REQUIRE(mla.loopSize() == 4);
-
-        auto lb = mla.loopBehaviors();
-
-        REQUIRE(lb.size() == 2);
-
-        // Leftward sweep
-        REQUIRE(lb[0].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
-        REQUIRE(lb[0].minDpDelta() == 0);
-        REQUIRE(!lb[0].maxDpDelta()); // Irregular growth
-        REQUIRE(lb[0].endDpGrowth() == 0);
-
-        // Rightward sweep
-        REQUIRE(lb[1].loopType() == LoopType::ANCHORED_SWEEP);
-        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
-        REQUIRE(lb[1].minDpDelta() == 0);
-        REQUIRE(!lb[1].maxDpDelta()); // Irregular growth
-        REQUIRE(!lb[1].endDpGrowth());
-
-        result = checker.init(&mla, hangExecutor);
-        REQUIRE(result);
-
-        REQUIRE(!checker.leftIsIrregular());
-        REQUIRE(checker.rightIsIrregular());
-    }
 
     SECTION("IrregularSweepWithMidSweepTransition") {
         // Right: Rightward sweep loop (exits on zero or one)
@@ -712,7 +578,7 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
         // Left: Leftward sweep loop (plain)
         block[7].finalize(MOV, -1, dummySteps, block + 8, block + 7);
 
-        // Extension at left:
+        // Extension at left
         block[8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
 
         // Left: Rightward sweep

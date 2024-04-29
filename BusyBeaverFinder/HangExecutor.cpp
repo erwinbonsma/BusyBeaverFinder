@@ -24,6 +24,7 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
     _runBlockTransitions(_runSummary)
 {
     _runSummary.setIdentifyShortLoops(true);
+    setMaxSteps(maxHangDetectionSteps);
 }
 
 void HangExecutor::addDefaultHangDetectors() {
