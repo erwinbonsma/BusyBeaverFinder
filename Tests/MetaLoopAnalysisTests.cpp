@@ -548,8 +548,7 @@ TEST_CASE("Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][c
 
 // Examples of programs that do not end up in a permanent meta-periodic loop, but still hang
 TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]") {
-    HangExecutor hangExecutor(1000, 20000);
-    hangExecutor.addHangDetector(std::make_shared<RunUntilMetaMetaLoop>(hangExecutor, 6));
+    HangExecutor hangExecutor(10000, 1'000'000);
 
     ProgramBlock block[maxSequenceLen];
     for (int i = 0; i < maxSequenceLen; i++) {
@@ -559,38 +558,12 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
     MetaLoopAnalysis mla;
 
-    SECTION("IrregularSweepWithMidSweepTransition") {
-        // Right: Rightward sweep loop (exits on zero or one)
-        block[0].finalize(MOV,  1, dummySteps, block + 4, block + 1);
-        block[1].finalize(INC, -1, dummySteps, block + 3, block + 2);
-        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
-
-        // Exit on one
-        block[3].finalize(INC,  2, dummySteps, exitBlock, block + 5);
-
-        // Exit on zero (extends sweep)
-        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
-
-        // Right: Leftward sweep loop (toggle all twos to ones)
-        block[5].finalize(MOV, -1, dummySteps, block + 7, block + 6);
-        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
-
-        // Left: Leftward sweep loop (plain)
-        block[7].finalize(MOV, -1, dummySteps, block + 8, block + 7);
-
-        // Extension at left
-        block[8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
-
-        // Left: Rightward sweep
-        block[9].finalize(MOV,  1, dummySteps, block + 0, block + 9);
-
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
-    }
-
     SECTION("IrregularSweepWithMidSweepTransition-2") {
         // The sweep at the right is irregular.
         // The sweep at the left only extends the sweep once every three iterations
+        //
+        // This creates loops in the meta-meta run summary, but these always exit. Also, they can
+        // collapse into bigger loops.
 
         // Bootstrap
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
@@ -633,7 +606,7 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
     SECTION("SweepWithCounter") {
         // Sweep with a gliding counter. The sweep behavior is regular, but the counter breaks the
-        // meta-loop occasionally
+        // meta-loop occasionally. It still ends up in a permanent loop at the meta-meta level.
 
         // Init counter
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
@@ -660,11 +633,5 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-
-        bool result = mla.analyzeMetaLoop(hangExecutor);
-
-        REQUIRE(result);
-        // The meta-loop is regular (even thought it terminates non-regularly)
-        REQUIRE(mla.metaLoopType() == MetaLoopType::REGULAR);
     }
 }

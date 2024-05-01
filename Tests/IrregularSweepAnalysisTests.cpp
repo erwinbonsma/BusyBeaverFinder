@@ -170,4 +170,48 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         REQUIRE(!checker.leftIsIrregular());
         REQUIRE(checker.rightIsIrregular());
     }
+
+    SECTION("IrregularSweepWithMidSweepTransition") {
+        // Right: Rightward sweep loop (exits on zero or one)
+        block[0].finalize(MOV,  1, dummySteps, block + 4, block + 1);
+        block[1].finalize(INC, -1, dummySteps, block + 3, block + 2);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 0);
+
+        // Exit on one
+        block[3].finalize(INC,  2, dummySteps, exitBlock, block + 5);
+
+        // Exit on zero (extends sweep)
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+
+        // Right: Leftward sweep loop (toggle all twos to ones)
+        block[5].finalize(MOV, -1, dummySteps, block + 7, block + 6);
+        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
+
+        // Left: Leftward sweep loop (plain)
+        block[7].finalize(MOV, -1, dummySteps, block + 8, block + 7);
+
+        // Extension at left
+        block[8].finalize(INC,  1, dummySteps, exitBlock, block + 9);
+
+        // Left: Rightward sweep
+        block[9].finalize(MOV,  1, dummySteps, block + 0, block + 9);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        REQUIRE(result);
+
+        REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
+        REQUIRE(mla.loopSize() == 6);
+
+        auto lb = mla.loopBehaviors();
+        REQUIRE(lb.size() == 4);
+
+        result = checker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        REQUIRE(!checker.leftIsIrregular());
+        REQUIRE(checker.rightIsIrregular());
+    }
 }
