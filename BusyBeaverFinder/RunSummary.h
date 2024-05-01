@@ -126,7 +126,7 @@ protected:
 
     void resetPending();
     void createRunBlock(int start, int end, int loopPeriod);
-    virtual void newHistoryProcessed() {}
+    virtual void exitedLoop() {}
 
     // Returns true if this resulted in the creation of one or more RunBlocks
     template <class RunUnitHistory>
@@ -224,7 +224,7 @@ class MetaRunSummary : public RunSummaryBase {
     };
 
 protected:
-    void newHistoryProcessed() override;
+    void exitedLoop() override;
 
 public:
     MetaRunSummary(const std::vector<RunBlock> &runHistory, int* helperBuf)
@@ -237,6 +237,7 @@ public:
 template <class RunUnitHistory>
 bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
     bool newRunBlocks = false;
+    bool didExitLoop = false;
 
     while (_processed < history.size()) {
         if (_loop < 0) {
@@ -254,13 +255,14 @@ bool RunSummaryBase::processNewHistory(const RunUnitHistory& history) {
             if (history[_loop++] != history[_processed]) {  // Loop is broken
                 _pending = _processed;
                 _loop = -1;
+                didExitLoop = true;
             }
         }
         ++_processed;
     }
 
-    if (newRunBlocks) {
-        newHistoryProcessed();
+    if (didExitLoop) {
+        exitedLoop();
     }
 
     return newRunBlocks;

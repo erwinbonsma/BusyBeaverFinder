@@ -421,7 +421,7 @@ int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
     return dpDelta;
 }
 
-void MetaRunSummary::newHistoryProcessed() {
+void MetaRunSummary::exitedLoop() {
     if (!_metaLoopDetector) {
         _metaLoopDetector = std::make_unique<MetaRunSummary>(getRunBlocks(), getHelperBuffer());
     }
@@ -442,16 +442,8 @@ void MetaRunSummary::newHistoryProcessed() {
         int unitStart = runBlockAt(loopStart)->getStartIndex();
         int unitLoopPeriod = getRunBlockLength(loopStart, loopStart + loopPeriod);
 
-        if (unitLoopPeriod > 16) {
-            // This is a temporary (but arbitrary) safe-guard that ensures collapse only happens
-            // when needed.
-            // TODO: Remove after addressing TODO below
-            return;
-        }
-
         // The meta-loop detector ignores varying run length of loops. For collapse at this level
         // the run units need to exactly repeat. Check if this is the case.
-
         for (int i = 0; i < loopPeriod; ++i) {
             if (!runBlockAt(loopStart + i)->isLoop()) {
                 continue;
@@ -460,24 +452,10 @@ void MetaRunSummary::newHistoryProcessed() {
             int len1 = getRunBlockLength(loopStart + i);
             int len2 = getRunBlockLength(loopStart + loopPeriod + i);
 
-            if (len1 == len2) {
-                continue;
+            if (len1 != len2) {
+                // Cannot re-group as run unit history does not repeat exactly
+                return;
             }
-            if (len2 < len1 && i == loopPeriod - 1) {
-                // The last loop may be shorter as it is still ongoing.
-
-                // TODO: Also for last loop, only collapse when it is of equal length.
-                // Right now it collapse prematurely which creates a messy/useless/incorrect? run
-                // summary for IrregularSweepWithMidSweepTransition
-                //
-                // Do so by activating check now and check once loop is same size. Then also check
-                // that the loop is terminating.
-
-                continue;
-            }
-
-            // Cannot re-group as run unit history does not repeat exactly
-            return;
         }
 
         // Remove previous blocks
