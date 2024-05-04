@@ -611,8 +611,6 @@ bool IrregularSweepHangChecker::checkMetaMetaLoop(const ExecutionState& executio
         return false;
     }
 
-    // TODO: More checks?
-
     return true;
 }
 
@@ -646,6 +644,7 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
         entry.second += 1;
     }
 
+    _endProps.clear();
     for (auto [location, counts] : map) {
         if (!counts.second) {
             continue;
@@ -657,13 +656,17 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
         }
 
         switch (location) {
-            case LocationInSweep::LEFT: _leftIsIrregular = true; break;
-            case LocationInSweep::RIGHT: _rightIsIrregular = true; break;
+            case LocationInSweep::LEFT: _endProps.insert({DataDirection::LEFT, {}}); break;
+            case LocationInSweep::RIGHT: _endProps.insert({DataDirection::RIGHT, {}}); break;
             default: assert(false);
         }
     }
 
-    return _leftIsIrregular || _rightIsIrregular;
+    return _endProps.size();
+}
+
+bool IrregularSweepHangChecker::checkIrregularEnds() {
+    return true;
 }
 
 bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
@@ -677,6 +680,10 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     }
 
     if (!findIrregularEnds()) {
+        return false;
+    }
+
+    if (!checkIrregularEnds()) {
         return false;
     }
 

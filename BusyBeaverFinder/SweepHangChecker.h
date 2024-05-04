@@ -227,15 +227,21 @@ class IrregularSweepHangChecker : public SweepHangChecker {
 
     Trilian proofHang(const ExecutionState& executionState) override;
 
-    bool leftIsIrregular() const { return _leftIsIrregular; }
-    bool rightIsIrregular() const { return _rightIsIrregular; }
+    bool isIrregular(DataDirection sweepEnd) const {
+        return _endProps.find(sweepEnd) != _endProps.end();
+    }
 
 private:
+    struct IrregularEndProps {
+        // The value of the in-sweep exit
+        int insweepExit {};
+    };
+
     bool checkMetaMetaLoop(const ExecutionState& executionState);
     bool findIrregularEnds();
+    bool checkIrregularEnds();
 
-    bool _leftIsIrregular {};
-    bool _rightIsIrregular {};
+    std::map<DataDirection, IrregularEndProps> _endProps;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker);

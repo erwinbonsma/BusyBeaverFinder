@@ -83,8 +83,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         result = checker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        REQUIRE(!checker.leftIsIrregular());
-        REQUIRE(checker.rightIsIrregular());
+        REQUIRE(!checker.isIrregular(DataDirection::LEFT));
+        REQUIRE(checker.isIrregular(DataDirection::RIGHT));
     }
 
     SECTION("BodylessIrregularSweep") {
@@ -112,8 +112,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         result = checker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        REQUIRE(!checker.leftIsIrregular());
-        REQUIRE(checker.rightIsIrregular());
+        REQUIRE(!checker.isIrregular(DataDirection::LEFT));
+        REQUIRE(checker.isIrregular(DataDirection::RIGHT));
     }
 
     SECTION("BodylessIrregularSweep-2") {
@@ -167,8 +167,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         result = checker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        REQUIRE(!checker.leftIsIrregular());
-        REQUIRE(checker.rightIsIrregular());
+        REQUIRE(!checker.isIrregular(DataDirection::LEFT));
+        REQUIRE(checker.isIrregular(DataDirection::RIGHT));
     }
 
     SECTION("IrregularSweepWithMidSweepTransition") {
@@ -211,7 +211,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         result = checker.init(&mla, hangExecutor);
         REQUIRE(result);
 
-        REQUIRE(!checker.leftIsIrregular());
-        REQUIRE(checker.rightIsIrregular());
+        REQUIRE(!checker.isIrregular(DataDirection::LEFT));
+        REQUIRE(checker.isIrregular(DataDirection::RIGHT));
     }
 }
