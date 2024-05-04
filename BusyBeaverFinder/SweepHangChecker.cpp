@@ -37,6 +37,7 @@ void SweepHangChecker::SweepLoop::analyzeCombinedEffect(const SweepHangChecker& 
         if (loc.isSweepLoop() && loc.isAt(this->_location)) {
             checker.addContributionOfSweepLoopPass(vs, this->_analysis, 0, this->_deltaRange - 1);
         }
+        return true;
     }, executionState, _outgoingLoopSeqIndex, 0);
 
     _analysis.analyzeMultiSequenceEnd(0);
@@ -152,16 +153,18 @@ void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase1(const SweepLoopVis
     }
 }
 
-void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVisitState& vs) {
+bool SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVisitState& vs) {
 //    auto& part = vs.loopPart;
 //    std::cout << "seqIndex = " << part.seqIndex() << ", dp = " << part.dpOffset() << std::endl;
+
+    bool result = true;
 
     auto &loc = vs.checker.locationInSweep(vs.loopPart.seqIndex());
     if (loc.isSweepLoop()) {
         if (loc.start == _location) {
             vs.checker.addContributionOfSweepLoopStart(vs, _analysis, _minDp, _maxDp);
         } else if (loc.end == _location) {
-            vs.checker.addContributionOfSweepLoopEnd(vs, _analysis, _minDp, _maxDp);
+            result = vs.checker.addContributionOfSweepLoopEnd(vs, _analysis, _minDp, _maxDp);
         } else if (_location == LocationInSweep::MID) {
             vs.checker.addContributionOfSweepLoopPass(vs, _analysis, _minDp, _maxDp);
         }
@@ -170,9 +173,11 @@ void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVis
             addSequenceInstructions(vs);
         }
     }
+
+    return result;
 }
 
-void SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChecker& checker,
+bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChecker& checker,
                                                               const ExecutionState& state) {
     const int loopSize = checker._metaLoopAnalysis->loopSize();
 
@@ -184,6 +189,7 @@ void SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
 
     checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
         this->analyzeLoopPartPhase1(vs);
+        return true;
     }, state, startSeqIndex, 0);
 
     _minDp = _analysis.minDp();
@@ -191,11 +197,13 @@ void SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
 
     // Next collect all constributions within this range
     _analysis.analyzeMultiSequenceStart();
-    int dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
-        this->analyzeLoopPartPhase2(vs);
+    auto dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
+        return this->analyzeLoopPartPhase2(vs);
     }, state, startSeqIndex, 0);
-
-    _analysis.analyzeMultiSequenceEnd(dpOffset);
+    if (!dpOffset) {
+        return false;
+    }
+    _analysis.analyzeMultiSequenceEnd(dpOffset.value());
 
     // Copy deltas within range (ignore deltas outside range)
     _transitionDeltas.clear();
@@ -209,9 +217,11 @@ void SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
         int dpOffset = exit.exitCondition.dpOffset();
         return dpOffset < this->_minDp || dpOffset > this->_maxDp;
     });
+
+    return true;
 }
 
-void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
+bool SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
                                                 const ExecutionState& executionState) {
     _incomingLoopSeqIndex = checker.findSweepLoop([this](const Location& loc) {
         return loc.end == this->_location;
@@ -221,7 +231,7 @@ void SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
                                                           ? loopBehavior.maxDpDelta() == 0
                                                           : loopBehavior.minDpDelta() == 0);
 
-    analyzeCombinedEffect(checker, executionState);
+    return analyzeCombinedEffect(checker, executionState);
 }
 
 bool SweepHangChecker::TransitionGroup::continuesForever(const ExecutionState& execState) const {
@@ -315,7 +325,7 @@ void SweepHangChecker::addContributionOfSweepLoopStart(const SweepLoopVisitState
                                            endIter * loopAnalysis->loopSize(), dpOffset);
 }
 
-void SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState vs,
+bool SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState vs,
                                                      SequenceAnalysis& multiPartAnalysis,
                                                      int minDp, int maxDp) const {
     auto& analysis = vs.checker._metaLoopAnalysis;
@@ -343,16 +353,35 @@ void SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState v
 
     int numIter = abs(startIter);
     int dpStart = dpEnd - dpDeltaLastIter - numIter * loopAnalysis->dataPointerDelta();
-    int pbIndexNext = runSummary.runBlockAt(part.rbIndex() + 1)->getStartIndex();
     int len = numIter * loopAnalysis->loopSize() + remainder;
 
+    int rbIndex = part.rbIndex();
+    int sequenceId = runSummary.runBlockAt(rbIndex)->getSequenceId();
+    while (runSummary.getRunBlockLength(rbIndex) < len) {
+        // There are not enough run blocks in the history. This can for example happen for
+        // irregular sweeps. Go forward in until there is a sequence that is long enough.
+
+        rbIndex += analysis->loopSize();
+        if (rbIndex >= runSummary.getNumRunBlocks() - 1) {
+            return false;
+        }
+        if (runSummary.runBlockAt(rbIndex)->getSequenceId() != sequenceId) {
+            return false;
+        }
+    }
+
+    // Analyse the end of the loop run history, as the first instruction of the next block is also
+    // analyzed.
+    int pbIndexNext = runSummary.runBlockAt(rbIndex + 1)->getStartIndex();
     auto& runHistory = vs.executionState.getRunHistory();
     multiPartAnalysis.analyzeMultiSequence(&runHistory.at(pbIndexNext - len), len, dpStart);
+
+    return true;
 }
 
-int SweepHangChecker::visitSweepLoopParts(const SweepLoopVisitor& visitor,
-                                          const ExecutionState& state,
-                                          int startSeqIndex, int dpStart) const {
+std::optional<int> SweepHangChecker::visitSweepLoopParts(const SweepLoopVisitor& visitor,
+                                                         const ExecutionState& state,
+                                                         int startSeqIndex, int dpStart) const {
     auto &runSummary = state.getRunSummary();
     int loopSize = _metaLoopAnalysis->loopSize();
 
@@ -362,7 +391,10 @@ int SweepHangChecker::visitSweepLoopParts(const SweepLoopVisitor& visitor,
     struct SweepLoopVisitState visitState(*this, state, p);
 
     for (int i = 0; i < loopSize; ++i) {
-        visitor(visitState);
+        if (!visitor(visitState)) {
+            // The visitor aborted its visit
+            return {};
+        }
 
         p.dpOffset() += _metaLoopAnalysis->dpDeltaOfRunBlock(runSummary, p.rbIndex());
         p.seqIndex() = (p.seqIndex() + 1) % loopSize;
@@ -511,8 +543,12 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     }
     locateSweepTransitions();
 
-    _leftTransition.analyze(*this, executionState);
-    _rightTransition.analyze(*this, executionState);
+    if (!_leftTransition.analyze(*this, executionState)) {
+        return false;
+    }
+    if (!_rightTransition.analyze(*this, executionState)) {
+        return false;
+    }
 
     if (_midTransition) {
         _midTransition.value().analyze(*this, executionState);
@@ -698,7 +734,7 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
     return _endProps.size();
 }
 
-bool IrregularSweepHangChecker::checkIrregularEnds() {
+bool IrregularSweepHangChecker::determineInSweepExits() {
     for (auto& [location, props] : _endProps) {
         auto& incomingSweeps = (location == DataDirection::LEFT ? leftSweepLoop().incomingLoops()
                                 : rightSweepLoop() ? rightSweepLoop().value().incomingLoops()
@@ -736,6 +772,17 @@ bool IrregularSweepHangChecker::checkIrregularEnds() {
     return true;
 }
 
+bool IrregularSweepHangChecker::determineInSweepToggles() {
+    auto p = this;
+    for (auto& [location, props] : _endProps) {
+        auto& transition = location == DataDirection::LEFT ? leftTransition() : rightTransition();
+
+        props.insweepToggle = transition.transitionDeltas().deltaAt(0);
+    }
+
+    return true;
+}
+
 bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
                                      const ExecutionState& executionState) {
     if (!checkMetaMetaLoop(executionState)) {
@@ -750,7 +797,11 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
         return false;
     }
 
-    if (!checkIrregularEnds()) {
+    if (!determineInSweepExits()) {
+        return false;
+    }
+
+    if (!determineInSweepToggles()) {
         return false;
     }
 

@@ -20,7 +20,7 @@ const bool INC = true;
 const bool MOV = false;
 
 // Sweep programs that may or may not hang.
-TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]") {
+TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][irregular]") {
     constexpr int maxSteps = 10000;
     HangExecutor hangExecutor(1000, maxSteps);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaMetaLoop>(hangExecutor, 6));
@@ -89,6 +89,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
         REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
+        REQUIRE(checker.insweepToggle(DataDirection::RIGHT) == 2);
     }
 
     SECTION("BasicIrregularSweepAtLeft") {
@@ -143,6 +144,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         REQUIRE(checker.isIrregular(DataDirection::LEFT));
         REQUIRE(!checker.isIrregular(DataDirection::RIGHT));
         REQUIRE(checker.insweepExit(DataDirection::LEFT) == -2);
+        REQUIRE(checker.insweepToggle(DataDirection::LEFT) == -1);
     }
 
     SECTION("BodylessIrregularSweep") {
@@ -173,6 +175,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
         REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
+        REQUIRE(checker.insweepToggle(DataDirection::RIGHT) == 2);
     }
 
     SECTION("BodylessIrregularSweep-2") {
@@ -229,6 +232,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
         REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
+        REQUIRE(checker.insweepToggle(DataDirection::RIGHT) == 2);
     }
 
     SECTION("IrregularSweepWithMidSweepTransition") {
@@ -258,6 +262,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
+        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -274,5 +279,6 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
         REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
+        REQUIRE(checker.insweepToggle(DataDirection::RIGHT) == 2);
     }
 }

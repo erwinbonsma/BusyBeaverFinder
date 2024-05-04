@@ -51,7 +51,7 @@ class SweepHangChecker : public HangChecker {
         const SweepLoopPart& loopPart;
     };
 
-    using SweepLoopVisitor = std::function<void(const SweepLoopVisitState& state)>;
+    using SweepLoopVisitor = std::function<bool(const SweepLoopVisitState& state)>;
 
   public:
     enum class LocationInSweep : int8_t {
@@ -121,9 +121,9 @@ class SweepHangChecker : public HangChecker {
       public:
         TransitionGroup(LocationInSweep loc) : _location(loc) {}
 
-        void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
+        bool analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
-        const bool isStationary() const { return _isStationary; }
+        bool isStationary() const { return _isStationary; }
         const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
 
         int incomingLoopSequenceIndex() const { return _incomingLoopSeqIndex; }
@@ -146,8 +146,8 @@ class SweepHangChecker : public HangChecker {
         void addSequenceInstructions(const SweepLoopVisitState& vs);
         void addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
         void analyzeLoopPartPhase1(const SweepLoopVisitState& vs);
-        void analyzeLoopPartPhase2(const SweepLoopVisitState& vs);
-        void analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state);
+        bool analyzeLoopPartPhase2(const SweepLoopVisitState& vs);
+        bool analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state);
     };
 
     virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
@@ -189,12 +189,13 @@ class SweepHangChecker : public HangChecker {
                                         SequenceAnalysis& analysis, int minDp, int maxDp) const;
     void addContributionOfSweepLoopStart(const SweepHangChecker::SweepLoopVisitState vs,
                                          SequenceAnalysis& analysis, int minDp, int maxDp) const;
-    void addContributionOfSweepLoopEnd(const SweepHangChecker::SweepLoopVisitState vs,
+    bool addContributionOfSweepLoopEnd(const SweepHangChecker::SweepLoopVisitState vs,
                                        SequenceAnalysis& analysis, int minDp, int maxDp) const;
 
-    // Returns DP offset at end
-    int visitSweepLoopParts(const SweepLoopVisitor& visitor, const ExecutionState& executionState,
-                            int startSeqIndex, int dpStart) const;
+    // When successful returns DP offset at end
+    std::optional<int> visitSweepLoopParts(const SweepLoopVisitor& visitor,
+                                           const ExecutionState& executionState,
+                                           int startSeqIndex, int dpStart) const;
 
     const Location& locationInSweep(int seqIndex) const { return _locationsInSweep.at(seqIndex); }
     const LoopBehavior& loopBehavior(int seqIndex) const {
@@ -254,16 +255,23 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     int insweepExit(DataDirection sweepEnd) const {
         return _endProps.at(sweepEnd).insweepExit;
     }
+    int insweepToggle(DataDirection sweepEnd) const {
+        return _endProps.at(sweepEnd).insweepToggle;
+    }
 
 private:
     struct IrregularEndProps {
         // The value of the in-sweep exit
         int insweepExit {};
+
+        // The value that is toggled to an in-sweep exit
+        int insweepToggle {};
     };
 
     bool checkMetaMetaLoop(const ExecutionState& executionState);
     bool findIrregularEnds();
-    bool checkIrregularEnds();
+    bool determineInSweepExits();
+    bool determineInSweepToggles();
 
     std::map<DataDirection, IrregularEndProps> _endProps;
 };
