@@ -65,6 +65,19 @@ class SweepHangChecker : public HangChecker {
       public:
         SweepLoop(LocationInSweep loc) : _location(loc) {}
 
+        void reset() {
+            _incomingLoops.clear();
+            _outgoingLoops.clear();
+        }
+        void addIncomingLoop(std::shared_ptr<LoopAnalysis> loop) {
+            _incomingLoops.insert(loop);
+        }
+        void addOutgoingLoop(std::shared_ptr<LoopAnalysis> loop) {
+            _outgoingLoops.insert(loop);
+        }
+        std::set<std::shared_ptr<LoopAnalysis>>& incomingLoops() { return _incomingLoops; }
+        std::set<std::shared_ptr<LoopAnalysis>>& outgoingLoops() { return _outgoingLoops; }
+
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
         const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
@@ -90,6 +103,10 @@ class SweepHangChecker : public HangChecker {
         // Index of (one of) the outgoing sweep-loop(s). This is the loop that is the starting
         // point for the analysis.
         int _outgoingLoopSeqIndex;
+
+        // The analysis of incoming and outgoing loops. Only one entry for each unique loop
+        std::set<std::shared_ptr<LoopAnalysis>> _incomingLoops;
+        std::set<std::shared_ptr<LoopAnalysis>> _outgoingLoops;
 
         void analyzeCombinedEffect(const SweepHangChecker& checker,
                                    const ExecutionState& executionState);

@@ -377,12 +377,13 @@ bool SweepHangChecker::locateSweepLoops() {
     _locationsInSweep.insert(_locationsInSweep.end(), _metaLoopAnalysis->loopSize(), {});
     _firstSweepLoopSeqIndex = _metaLoopAnalysis->loopSize();
 
+    _leftSweepLoop.reset();
     _midTransition.reset();
-    _rightSweepLoop.reset();
 
-    // Extract sweep loops. There should be at least two (one in each direction), and at most
-    // four (when double-ended sweeps are broken up by a mid-sweep transition in both directions)
-    std::array<int, 2> numOut {0, 0}, numIn {0, 0};
+    // Assume there is a mid-sweep transition and collect its incoming and outgoing loops
+    _rightSweepLoop.emplace(LocationInSweep::RIGHT);
+
+    // Extract sweep loops. There should be at least two (one in each direction)
     for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
         if (behavior.loopType() == LoopType::STATIONARY ||
             behavior.loopType() == LoopType::GLIDER) {
@@ -396,39 +397,60 @@ bool SweepHangChecker::locateSweepLoops() {
         // This is a sweep loop
         _firstSweepLoopSeqIndex = std::min(_firstSweepLoopSeqIndex, behavior.sequenceIndex());
         auto &loc = _locationsInSweep[behavior.sequenceIndex()];
-        int dpDelta = behavior.loopAnalysis()->dataPointerDelta();
+        auto analysis = behavior.loopAnalysis();
+        int dpDelta = analysis->dataPointerDelta();
 
         if (behavior.loopType() == LoopType::DOUBLE_SWEEP) {
-            loc.start = dpDelta > 0 ? LocationInSweep::LEFT : LocationInSweep::RIGHT;
-            loc.end = dpDelta > 0 ? LocationInSweep::RIGHT : LocationInSweep::LEFT;
-            numOut[loc.start == LocationInSweep::LEFT] += 1;
-            numIn[loc.end == LocationInSweep::LEFT] += 1;
+            if (dpDelta > 0) {
+                loc.start = LocationInSweep::LEFT;
+                loc.end = LocationInSweep::RIGHT;
+                _leftSweepLoop.addOutgoingLoop(analysis);
+                _rightSweepLoop.value().addIncomingLoop(analysis);
+            } else {
+                loc.start = LocationInSweep::RIGHT;
+                loc.end = LocationInSweep::LEFT;
+                _leftSweepLoop.addIncomingLoop(analysis);
+                _rightSweepLoop.value().addOutgoingLoop(analysis);
+            }
         } else {
             assert(behavior.loopType() == LoopType::ANCHORED_SWEEP);
-            int i = behavior.minDpDelta() != 0 ? 0 : 1;
-            if ((dpDelta > 0) == (i == 0)) {
+            bool extendsLeft = behavior.minDpDelta() != 0;
+            if ((dpDelta > 0) == extendsLeft) {
                 // This is an outgoing loop
                 loc.start = dpDelta > 0 ? LocationInSweep::LEFT : LocationInSweep::RIGHT;
-                numOut[loc.start == LocationInSweep::LEFT] += 1;
+                if (extendsLeft) {
+                    _leftSweepLoop.addOutgoingLoop(analysis);
+                } else {
+                    _rightSweepLoop.value().addOutgoingLoop(analysis);
+                }
             } else {
                 // This is an incoming loop
                 loc.end = dpDelta > 0 ? LocationInSweep::RIGHT : LocationInSweep::LEFT;
-                numIn[loc.end == LocationInSweep::LEFT] += 1;
+                if (extendsLeft) {
+                    _leftSweepLoop.addIncomingLoop(analysis);
+                } else {
+                    _rightSweepLoop.value().addIncomingLoop(analysis);
+                }
             }
         }
     }
 
-    if (numOut[0] != numIn[0] || numOut[1] != numIn[1]) {
-        // The incoming and outgoing count should match
-        return false;
-    }
+    bool extendsLeft = _leftSweepLoop.incomingLoops().size() > 0;
+    bool extendsRight = _rightSweepLoop.value().incomingLoops().size() > 0;
 
-    if (numOut[0] == 0 && numOut[1] == 0) {
+    if (!extendsLeft && !extendsRight) {
         // There should be at least some sweep loops
         return false;
     }
 
-    bool oneSideFixed = numOut[0] == 0 || numOut[1] == 0;
+    if ((extendsLeft && _leftSweepLoop.outgoingLoops().size() == 0) ||
+        (extendsRight && _rightSweepLoop.value().outgoingLoops().size() == 0)) {
+        // When there are incoming loops, there must be outgoing loops
+        return false;
+    }
+
+    // Check if there is a mid-sweep transition
+    bool oneSideFixed = !extendsLeft || !extendsRight;
     bool hasMidTransition = false;
     for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
         if (behavior.loopType() == LoopType::ANCHORED_SWEEP) {
@@ -438,13 +460,17 @@ bool SweepHangChecker::locateSweepLoops() {
             } else {
                 loc.end = oneSideFixed ? opposite(loc.start) : LocationInSweep::MID;
             }
+
+            // There is a mid-sweep transition when the sweep behavior extends both ends, but there
+            // is an anchored sweep loop.
             hasMidTransition |= !oneSideFixed;
         }
     }
 
     if (hasMidTransition) {
         _midTransition.emplace(LocationInSweep::MID);
-        _rightSweepLoop.emplace(LocationInSweep::RIGHT);
+    } else {
+        _rightSweepLoop.reset();
     }
 
     return true;
