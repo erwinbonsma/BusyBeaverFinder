@@ -37,6 +37,9 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
     IrregularSweepHangChecker checker;
 
     SECTION("BasicIrregularSweep") {
+        // Irregular sweep appendix at right side values 1 and 2. The first 1 exits the sweep and
+        // toggles to 2. All swept 2's toggle to 1 on sweep return.
+
         // Rightward sweep loop (exits on zero or one)
         block[0].finalize(MOV,  1, dummySteps, block + 4, block + 1);
         block[1].finalize(INC, -1, dummySteps, block + 3, block + 2);
@@ -85,6 +88,61 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
 
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
+        REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
+    }
+
+    SECTION("BasicIrregularSweepAtLeft") {
+        // Irregular sweep appendix at left side with values -2 and -1. The first -2 exits the
+        // sweep and toggles to -1. All swept -1's toggle to -2 on sweep return.
+        // Leftward sweep loop (exits on zero or minus two)
+        block[0].finalize(MOV, -1, dummySteps, block + 4, block + 1);
+        block[1].finalize(INC,  2, dummySteps, block + 3, block + 2);
+        block[2].finalize(INC, -2, dummySteps, exitBlock, block + 0);
+
+        // Exit on minus two
+        block[3].finalize(INC, -1, dummySteps, exitBlock, block + 5);
+
+        // Exit on zero (extends sweep)
+        block[4].finalize(INC, -2, dummySteps, exitBlock, block + 5);
+
+        // Rightward sweep loop (toggle all -1's to -2's)
+        block[5].finalize(MOV,  1, dummySteps, block + 7, block + 6);
+        block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
+
+        // Transition at left (extends sweep)
+        block[7].finalize(INC, -3, dummySteps, exitBlock, block + 0);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        hangExecutor.execute(&program);
+
+        bool result = mla.analyzeMetaLoop(hangExecutor);
+        REQUIRE(result);
+        REQUIRE(mla.metaLoopType() == MetaLoopType::IRREGULAR);
+        REQUIRE(mla.loopSize() == 4);
+
+        auto lb = mla.loopBehaviors();
+        REQUIRE(lb.size() == 2);
+
+        // Leftward sweep
+        REQUIRE(lb[0].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
+        REQUIRE(!lb[0].minDpDelta()); // Irregular growth
+        REQUIRE(lb[0].maxDpDelta() == 1);
+        REQUIRE(!lb[0].endDpGrowth());
+
+        // Leftward sweep
+        REQUIRE(lb[1].loopType() == LoopType::DOUBLE_SWEEP);
+        REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::IRREGULAR);
+        REQUIRE(!lb[1].minDpDelta()); // Irregular growth
+        REQUIRE(lb[1].maxDpDelta() == 1);
+        REQUIRE(lb[1].endDpGrowth() == 1);
+
+        result = checker.init(&mla, hangExecutor);
+        REQUIRE(result);
+
+        REQUIRE(checker.isIrregular(DataDirection::LEFT));
+        REQUIRE(!checker.isIrregular(DataDirection::RIGHT));
+        REQUIRE(checker.insweepExit(DataDirection::LEFT) == -2);
     }
 
     SECTION("BodylessIrregularSweep") {
@@ -114,6 +172,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
 
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
+        REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
     }
 
     SECTION("BodylessIrregularSweep-2") {
@@ -169,6 +228,7 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
 
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
+        REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
     }
 
     SECTION("IrregularSweepWithMidSweepTransition") {
@@ -213,5 +273,6 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][irregular]
 
         REQUIRE(!checker.isIrregular(DataDirection::LEFT));
         REQUIRE(checker.isIrregular(DataDirection::RIGHT));
+        REQUIRE(checker.insweepExit(DataDirection::RIGHT) == 1);
     }
 }

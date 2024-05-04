@@ -157,6 +157,7 @@ public:
 
     // Returns the loop exit for the specified loop instruction
     const LoopExit& exit(int index) const { return _loopExits[index]; }
+    const std::vector<LoopExit>& loopExits() const { return _loopExits; }
     bool exitsAnalyzed() const { return _loopExits.size() > 0; }
 
     // Disable exits for which the predicate returns true.

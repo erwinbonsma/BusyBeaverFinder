@@ -470,6 +470,13 @@ bool SweepHangChecker::locateSweepLoops() {
     if (hasMidTransition) {
         _midTransition.emplace(LocationInSweep::MID);
     } else {
+        // There's only a single sweep. Transfer loops registered at right to the left
+        for (auto loop : _rightSweepLoop.value().incomingLoops()) {
+            _leftSweepLoop.addOutgoingLoop(loop);
+        }
+        for (auto loop : _rightSweepLoop.value().outgoingLoops()) {
+            _leftSweepLoop.addIncomingLoop(loop);
+        }
         _rightSweepLoop.reset();
     }
 
@@ -692,6 +699,40 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
 }
 
 bool IrregularSweepHangChecker::checkIrregularEnds() {
+    for (auto& [location, props] : _endProps) {
+        auto& incomingSweeps = (location == DataDirection::LEFT ? leftSweepLoop().incomingLoops()
+                                : rightSweepLoop() ? rightSweepLoop().value().incomingLoops()
+                                : leftSweepLoop().outgoingLoops());
+        bool exitsOnZero = false;
+        for (auto& analysis : incomingSweeps) {
+            for (auto& exit : analysis->loopExits()) {
+                if (exit.exitWindow != ExitWindow::ANYTIME) {
+                    continue;
+                }
+
+                // The <= and >= operators only apply for stationary loops.
+                // The != cannot apply for an irregular sweep loop, as its a solitary exit.
+                assert(exit.exitCondition.getOperator() == Operator::EQUALS);
+
+                if (exit.exitCondition.value() == 0) {
+                    exitsOnZero = true;
+                } else {
+                    if (props.insweepExit != 0) {
+                        // For now, only support sweep loops with a single non-zero exit
+                        return false;
+                    }
+                    props.insweepExit = exit.exitCondition.value();
+                }
+            }
+        }
+
+        if (!exitsOnZero || props.insweepExit == 0) {
+            // For now, only support irregular sweep with two exits. The zero-exit extends the
+            // sequence. The non-zero exit ends the sweep inside the irregular appendix.
+            return false;
+        }
+    }
+
     return true;
 }
 

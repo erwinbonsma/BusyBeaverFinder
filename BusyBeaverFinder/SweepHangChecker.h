@@ -75,8 +75,12 @@ class SweepHangChecker : public HangChecker {
         void addOutgoingLoop(std::shared_ptr<LoopAnalysis> loop) {
             _outgoingLoops.insert(loop);
         }
-        std::set<std::shared_ptr<LoopAnalysis>>& incomingLoops() { return _incomingLoops; }
-        std::set<std::shared_ptr<LoopAnalysis>>& outgoingLoops() { return _outgoingLoops; }
+        const std::set<std::shared_ptr<LoopAnalysis>>& incomingLoops() const {
+            return _incomingLoops;
+        }
+        const std::set<std::shared_ptr<LoopAnalysis>>& outgoingLoops() const {
+            return _outgoingLoops;
+        }
 
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
@@ -246,6 +250,9 @@ class IrregularSweepHangChecker : public SweepHangChecker {
 
     bool isIrregular(DataDirection sweepEnd) const {
         return _endProps.find(sweepEnd) != _endProps.end();
+    }
+    int insweepExit(DataDirection sweepEnd) const {
+        return _endProps.at(sweepEnd).insweepExit;
     }
 
 private:
