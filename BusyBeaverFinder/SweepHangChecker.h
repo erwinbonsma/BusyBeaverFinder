@@ -40,6 +40,7 @@ class SweepHangChecker : public HangChecker {
         int _dpOffset;
     };
 
+  protected:
     struct SweepLoopVisitState {
         SweepLoopVisitState(const SweepHangChecker& checker,
                             const ExecutionState& executionState,
@@ -195,7 +196,8 @@ class SweepHangChecker : public HangChecker {
     // When successful returns DP offset at end
     std::optional<int> visitSweepLoopParts(const SweepLoopVisitor& visitor,
                                            const ExecutionState& executionState,
-                                           int startSeqIndex, int dpStart) const;
+                                           int startSeqIndex, int dpStart,
+                                           int numLoopIterations = 1) const;
 
     const Location& locationInSweep(int seqIndex) const { return _locationsInSweep.at(seqIndex); }
     const LoopBehavior& loopBehavior(int seqIndex) const {
@@ -250,11 +252,11 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     Trilian proofHang(const ExecutionState& executionState) override;
 
     bool isIrregular(DataDirection sweepEnd) const {
-        return _endProps.find(sweepEnd) != _endProps.end();
+        return _endProps.find(mapDataDir(sweepEnd)) != _endProps.end();
     }
     // The in-sweep exit is the value inside the sweep appendix that ends the sweep loop.
     int insweepExit(DataDirection sweepEnd) const {
-        return _endProps.at(sweepEnd).insweepExit;
+        return _endProps.at(mapDataDir(sweepEnd)).insweepExit;
     }
     // The in-sweep toggle is the value inside the sweep appendix that does not cause the sweep to
     // exit, but is toggled to an exit value when it is traversed.
@@ -263,24 +265,32 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     // are also chained. In practise these do not occur for small programs so these are not (yet?)
     // supported.
     int insweepToggle(DataDirection sweepEnd) const {
-        return _endProps.at(sweepEnd).insweepToggle;
+        return _endProps.at(mapDataDir(sweepEnd)).insweepToggle;
     }
 
-private:
+  private:
+    LocationInSweep mapDataDir(DataDirection dir) const {
+        return dir == DataDirection::LEFT ? LocationInSweep::LEFT : LocationInSweep::RIGHT;
+    }
+
     struct IrregularEndProps {
         // The value of the in-sweep exit
         int insweepExit {};
 
         // The value that is toggled to an in-sweep exit
         int insweepToggle {};
+
+        // The DP where the appendix starts
+        DataPointer appendixStart;
     };
 
     bool checkMetaMetaLoop(const ExecutionState& executionState);
     bool findIrregularEnds();
     bool determineInSweepExits();
     bool determineInSweepToggles();
+    bool determineAppendixStarts(const ExecutionState& executionState);
 
-    std::map<DataDirection, IrregularEndProps> _endProps;
+    std::map<LocationInSweep, IrregularEndProps> _endProps;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker);

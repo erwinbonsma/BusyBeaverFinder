@@ -177,18 +177,20 @@ public:
  */
 class MetaLoopAnalysis {
     // The meta-loop period in run blocks.
-    int _metaLoopPeriod;
+    int _metaLoopPeriod {};
 
     // The size of the analyzed meta-loop in run blocks. This could be a multiple of the meta-loop
     // period to satisfy the meta-run loop conditions
-    int _analysisLoopSize;
+    int _analysisLoopSize {};
 
     // The index of the run block from which this meta-loop analysis applies
-    int _firstRunBlockIndex;
+    int _firstRunBlockIndex {};
+    DataPointer _startDataPointer {};
+
     // The number of meta-run blocks for which this meta-loop analysis is valid
-    int _numMetaRunBlocks = 0;
-    int _numRunBlocks = 0;
-    int _numRewrites = 0;
+    int _numMetaRunBlocks {};
+    int _numRunBlocks {};
+    int _numRewrites {};
 
     mutable SimplePool<SequenceAnalysis> _sequenceAnalysisPool;
     mutable SimplePool<LoopAnalysis> _loopAnalysisPool;
@@ -224,6 +226,7 @@ class MetaLoopAnalysis {
 
     void determineDpDeltas(const RunSummary &runSummary);
     void initLoopBehaviors();
+    int totalDpDelta(const RunSummary &runSummary);
 
 public:
     void reset();
@@ -252,6 +255,10 @@ public:
     // Returns the index of the first run block (with sequence index zero) from where this
     // meta-loop analysis is valid.
     int firstRunBlockIndex() const { return _firstRunBlockIndex; }
+
+    // Returns the position of the data pointer at the moment from where this meta-loop analysis
+    // is valid.
+    DataPointer startDataPointer() const { return _startDataPointer; }
 
     const std::vector<std::shared_ptr<SequenceAnalysis>> sequenceAnalysisResults() const {
         return _seqAnalysis;

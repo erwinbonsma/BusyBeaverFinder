@@ -7,6 +7,7 @@
 //
 
 #include "MetaLoopAnalysis.h"
+#include "Data.h"
 
 // The maximum number of meta-run loop iterations to unroll to construct a meta-loop that meets
 // the criteria.
@@ -330,6 +331,19 @@ void MetaLoopAnalysis::initLoopBehaviors() {
     }
 }
 
+int MetaLoopAnalysis::totalDpDelta(const RunSummary &runSummary) {
+    int dpDelta = 0;
+
+    int end = runSummary.getNumRunBlocks();
+    int rbIndex = _firstRunBlockIndex;
+
+    while (rbIndex < end) {
+        dpDelta += dpDeltaOfRunBlock(runSummary, rbIndex);
+        rbIndex++;
+    }
+
+    return dpDelta;
+}
 
 std::shared_ptr<SequenceAnalysis>
     MetaLoopAnalysis::unrolledLoopSequenceAnalysis(const ExecutionState &executionState,
@@ -422,7 +436,10 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
 }
 
 bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
-    assert(executionState.getMetaRunSummary().isInsideLoop());
+    auto& runSummary = executionState.getRunSummary();
+    auto& metaRunSummary = executionState.getMetaRunSummary();
+
+    assert(metaRunSummary.isInsideLoop());
 
     analyzeRunBlocks(executionState);
 
@@ -430,13 +447,14 @@ bool MetaLoopAnalysis::analyzeMetaLoop(const ExecutionState &executionState) {
         return false;
     }
 
-    determineDpDeltas(executionState.getRunSummary());
+    determineDpDeltas(runSummary);
     initLoopBehaviors();
+    _startDataPointer = executionState.getData().getDataPointer() - totalDpDelta(runSummary);
 
     // Mark results valid/initialized
-    _numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
-    _numMetaRunBlocks = executionState.getMetaRunSummary().getNumRunBlocks();
-    _numRewrites = executionState.getMetaRunSummary().rewriteCount();
+    _numRunBlocks = runSummary.getNumRunBlocks();
+    _numMetaRunBlocks = metaRunSummary.getNumRunBlocks();
+    _numRewrites = metaRunSummary.rewriteCount();
 
     return true;
 }

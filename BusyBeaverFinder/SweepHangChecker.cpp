@@ -10,6 +10,9 @@
 
 #include "Utils.h"
 
+const int& (&FUN_MAX)(const int&, const int&) = std::max;
+const int& (&FUN_MIN)(const int&, const int&) = std::min;
+
 void SweepHangChecker::SweepLoop::analyzeCombinedEffect(const SweepHangChecker& checker,
                                                         const ExecutionState &executionState) {
     int loopSize = checker._metaLoopAnalysis->loopSize();
@@ -381,27 +384,33 @@ bool SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState v
 
 std::optional<int> SweepHangChecker::visitSweepLoopParts(const SweepLoopVisitor& visitor,
                                                          const ExecutionState& state,
-                                                         int startSeqIndex, int dpStart) const {
+                                                         int startSeqIndex, int dpStart,
+                                                         int numLoopIterations) const {
     auto &runSummary = state.getRunSummary();
     int loopSize = _metaLoopAnalysis->loopSize();
 
-    struct SweepLoopPart p {
+    struct SweepLoopPart part {
         startSeqIndex, _metaLoopAnalysis->firstRunBlockIndex() + startSeqIndex, dpStart
     };
-    struct SweepLoopVisitState visitState(*this, state, p);
+    struct SweepLoopVisitState visitState(*this, state, part);
 
-    for (int i = 0; i < loopSize; ++i) {
+    for (int i = loopSize * numLoopIterations; --i >= 0; ) {
+        if (part.rbIndex() >= runSummary.getNumRunBlocks()) {
+            // Cannot go into the future
+            return {};
+        }
+
         if (!visitor(visitState)) {
             // The visitor aborted its visit
             return {};
         }
 
-        p.dpOffset() += _metaLoopAnalysis->dpDeltaOfRunBlock(runSummary, p.rbIndex());
-        p.seqIndex() = (p.seqIndex() + 1) % loopSize;
-        p.rbIndex() += 1;
+        part.dpOffset() += _metaLoopAnalysis->dpDeltaOfRunBlock(runSummary, part.rbIndex());
+        part.seqIndex() = (part.seqIndex() + 1) % loopSize;
+        part.rbIndex() += 1;
     }
 
-    return p.dpOffset();
+    return part.dpOffset();
 }
 
 bool SweepHangChecker::locateSweepLoops() {
@@ -725,8 +734,8 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
         }
 
         switch (location) {
-            case LocationInSweep::LEFT: _endProps.insert({DataDirection::LEFT, {}}); break;
-            case LocationInSweep::RIGHT: _endProps.insert({DataDirection::RIGHT, {}}); break;
+            case LocationInSweep::LEFT: _endProps.insert({LocationInSweep::LEFT, {}}); break;
+            case LocationInSweep::RIGHT: _endProps.insert({LocationInSweep::RIGHT, {}}); break;
             default: assert(false);
         }
     }
@@ -736,7 +745,7 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
 
 bool IrregularSweepHangChecker::determineInSweepExits() {
     for (auto& [location, props] : _endProps) {
-        auto& incomingSweeps = (location == DataDirection::LEFT ? leftSweepLoop().incomingLoops()
+        auto& incomingSweeps = (location == LocationInSweep::LEFT ? leftSweepLoop().incomingLoops()
                                 : rightSweepLoop() ? rightSweepLoop().value().incomingLoops()
                                 : leftSweepLoop().outgoingLoops());
         bool exitsOnZero = false;
@@ -774,13 +783,13 @@ bool IrregularSweepHangChecker::determineInSweepExits() {
 
 bool IrregularSweepHangChecker::determineInSweepToggles() {
     for (auto& [location, props] : _endProps) {
-        auto& transition = location == DataDirection::LEFT ? leftTransition() : rightTransition();
+        auto& transition = location == LocationInSweep::LEFT ? leftTransition() : rightTransition();
 
         // Toggle values change to in-sweep exits, but vice versa, an in-sweep exit is changed to
         // a toggle value when it caused an exit. This reverse relation is used here.
         props.insweepToggle = transition.transitionDeltas().deltaAt(0);
 
-        auto& sweepLoop = (location == DataDirection::RIGHT && _rightSweepLoop
+        auto& sweepLoop = (location == LocationInSweep::RIGHT && _rightSweepLoop
                            ? _rightSweepLoop.value()
                            : _leftSweepLoop);
 
@@ -796,6 +805,36 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
                 // (yet).
                 return false;
             }
+        }
+    }
+
+    return true;
+}
+
+bool IrregularSweepHangChecker::determineAppendixStarts(const ExecutionState& executionState) {
+    for (auto& [location, props] : _endProps) {
+        std::optional<int> start;
+        auto targetLocation = location;
+        auto &cmp = location == LocationInSweep::LEFT ? FUN_MAX : FUN_MIN;
+
+        auto visitor = [targetLocation, &start, &cmp, this](const SweepLoopVisitState& vs) {
+            auto &loc = locationInSweep(vs.loopPart.seqIndex());
+            if (loc.start == targetLocation) {
+                if (!start) {
+                    start = vs.loopPart.dpOffset();
+                } else {
+                    start = cmp(start.value(), vs.loopPart.dpOffset());
+                }
+            }
+
+            return true;
+        };
+
+        // TODO: How to correctly initialize DP?
+        if (auto result = visitSweepLoopParts(visitor, executionState, 0, 0, 2); !result) {
+            return false;
+        } else {
+            props.appendixStart = _metaLoopAnalysis->startDataPointer() + start.value();
         }
     }
 
@@ -821,6 +860,10 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     }
 
     if (!determineInSweepToggles()) {
+        return false;
+    }
+
+    if (!determineAppendixStarts(executionState)) {
         return false;
     }
 
