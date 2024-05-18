@@ -779,6 +779,24 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
         // Toggle values change to in-sweep exits, but vice versa, an in-sweep exit is changed to
         // a toggle value when it caused an exit. This reverse relation is used here.
         props.insweepToggle = transition.transitionDeltas().deltaAt(0);
+
+        auto& sweepLoop = (location == DataDirection::RIGHT && _rightSweepLoop
+                           ? _rightSweepLoop.value()
+                           : _leftSweepLoop);
+
+        // The toggle value should change to an in-sweep exit
+        auto& deltas = sweepLoop.sweepLoopDeltas();
+        if (!deltas.size()) {
+            // The sweep should change some values to realize an irregular sweep
+            return false;
+        }
+        for (auto dd : deltas) {
+            if (props.insweepToggle + dd.delta() != props.insweepExit) {
+                // It does not (immediatly) change it to an in-sweep exit. This is not supported
+                // (yet).
+                return false;
+            }
+        }
     }
 
     return true;
