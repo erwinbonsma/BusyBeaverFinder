@@ -773,10 +773,11 @@ bool IrregularSweepHangChecker::determineInSweepExits() {
 }
 
 bool IrregularSweepHangChecker::determineInSweepToggles() {
-    auto p = this;
     for (auto& [location, props] : _endProps) {
         auto& transition = location == DataDirection::LEFT ? leftTransition() : rightTransition();
 
+        // Toggle values change to in-sweep exits, but vice versa, an in-sweep exit is changed to
+        // a toggle value when it caused an exit. This reverse relation is used here.
         props.insweepToggle = transition.transitionDeltas().deltaAt(0);
     }
 

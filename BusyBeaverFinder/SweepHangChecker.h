@@ -252,9 +252,16 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     bool isIrregular(DataDirection sweepEnd) const {
         return _endProps.find(sweepEnd) != _endProps.end();
     }
+    // The in-sweep exit is the value inside the sweep appendix that ends the sweep loop.
     int insweepExit(DataDirection sweepEnd) const {
         return _endProps.at(sweepEnd).insweepExit;
     }
+    // The in-sweep toggle is the value inside the sweep appendix that does not cause the sweep to
+    // exit, but is toggled to an exit value when it is traversed.
+    //
+    // Note: In complex programs there could be more than one toggle value, where toggle values
+    // are also chained. In practise these do not occur for small programs so these are not (yet?)
+    // supported.
     int insweepToggle(DataDirection sweepEnd) const {
         return _endProps.at(sweepEnd).insweepToggle;
     }
