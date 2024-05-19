@@ -19,7 +19,7 @@ class MetaLoopHangDetector : public HangDetector {
     MetaLoopAnalysis _metaLoopAnalysis;
     PeriodicHangChecker _periodicHangChecker;
     GliderHangChecker _gliderHangChecker;
-    RegularSweepHangChecker _regularSweepHangChecker;
+    SweepHangChecker _regularSweepHangChecker;
     LoopAnalysis _loopAnalysis;
 
     HangChecker* _activeChecker;

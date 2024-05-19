@@ -154,6 +154,8 @@ class SweepHangChecker : public HangChecker {
     virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
                       const ExecutionState& executionState);
 
+    Trilian proofHang(const ExecutionState& executionState) override;
+
     const SweepLoop& leftSweepLoop() const { return _leftSweepLoop; }
     const std::optional<SweepLoop>& rightSweepLoop() const { return _rightSweepLoop; }
 
@@ -206,6 +208,13 @@ class SweepHangChecker : public HangChecker {
         );
     }
 
+    // Checks if the sweep loop or transition, with sequence index seqIndex, that is about to start
+    // continues forever.
+    virtual bool sweepLoopContinuesForever(const ExecutionState& executionState,
+                                           SweepLoop* loop, int seqIndex);
+    virtual bool transitionContinuesForever(const ExecutionState& executionState,
+                                            TransitionGroup* transition, int seqIndex);
+
     const MetaLoopAnalysis* _metaLoopAnalysis;
 
     TransitionGroup _leftTransition { LocationInSweep::LEFT };
@@ -220,7 +229,11 @@ class SweepHangChecker : public HangChecker {
     // The sequence index of the first loop that is a sweep
     int _firstSweepLoopSeqIndex;
 
-  private:
+    // How long (in total number of run blocks) to execute the proof checks before deciding the
+    // program hangs
+    int _proofUntil;
+
+private:
     // Set start and end locations for sweep loops
     bool locateSweepLoops();
 
@@ -229,19 +242,6 @@ class SweepHangChecker : public HangChecker {
 
     bool initSweepLoops(const ExecutionState& executionState);
     bool initTransitionSequences(const ExecutionState& executionState);
-};
-
-class RegularSweepHangChecker : public SweepHangChecker {
-  public:
-    virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
-                      const ExecutionState& executionState) override;
-
-    Trilian proofHang(const ExecutionState& executionState) override;
-
-  private:
-    // How long (in total number of run blocks) to execute the proof checks before deciding the
-    // program hangs
-    int _proofUntil;
 };
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker);

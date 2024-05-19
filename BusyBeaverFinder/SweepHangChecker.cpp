@@ -565,35 +565,43 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
         _rightSweepLoop.value().analyze(*this, executionState);
     }
 
-    return true;
-}
+    // Analyze all sweeps and transitions at least once
+    int cyclesToCheck = 1;
 
-bool RegularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
-                                   const ExecutionState& executionState) {
-    if (!SweepHangChecker::init(metaLoopAnalysis, executionState)) {
-        return false;
-    }
-
-    int bootstrapCycles = 0;
     if (!_leftTransition.isStationary()) {
-        bootstrapCycles = _leftTransition.combinedAnalysis().numBootstrapCycles();
+        cyclesToCheck = _leftTransition.combinedAnalysis().numBootstrapCycles();
     }
     if (!_rightTransition.isStationary()) {
-        bootstrapCycles = std::max(bootstrapCycles,
-                                   _rightTransition.combinedAnalysis().numBootstrapCycles());
+        cyclesToCheck = std::max(cyclesToCheck,
+                                 _rightTransition.combinedAnalysis().numBootstrapCycles());
     }
     if (_midTransition) {
-        bootstrapCycles = std::max(bootstrapCycles,
-                                   _midTransition.value().combinedAnalysis().numBootstrapCycles());
+        cyclesToCheck = std::max(cyclesToCheck,
+                                 _midTransition.value().combinedAnalysis().numBootstrapCycles());
     }
 
     _proofUntil = (executionState.getRunSummary().getNumRunBlocks()
-                   + _metaLoopAnalysis->loopSize() * bootstrapCycles);
+                   + _metaLoopAnalysis->loopSize() * cyclesToCheck);
 
     return true;
 }
 
-Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState) {
+bool SweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
+                                                 SweepLoop* loop, int seqIndex) {
+    int loopIndex = _metaLoopAnalysis->loopIndexForSequence(seqIndex);
+    int prevNumIter = _metaLoopAnalysis->lastNumLoopIterations(loopIndex);
+    int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta().value();
+    int expectedDpTravel =
+        expectedIter * _metaLoopAnalysis->sequenceAnalysis(seqIndex)->dataPointerDelta();
+    return loop->continuesForever(executionState, abs(expectedDpTravel));
+}
+
+bool SweepHangChecker::transitionContinuesForever(const ExecutionState& executionState,
+                                                  TransitionGroup* transition, int seqIndex) {
+    return transition->continuesForever(executionState);
+}
+
+Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
     auto& runSummary = executionState.getRunSummary();
     int numRunBlocks = runSummary.getNumRunBlocks();
 
@@ -607,6 +615,10 @@ Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState)
     int seqIndex = (numRunBlocks - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
     auto &loc = locationInSweep(seqIndex);
 
+    // Check if a sweep loop is about to start and if we should check if it runs forever.
+    //
+    // Note, as the combined results of the left- and rightward sweep loops are used, only the
+    // sweep loop that follows the outgoing loop for the combined analysis should be checked.
     if (loc.isSweepLoop()) {
         SweepLoop* loop = nullptr;
         if (loc.start == LocationInSweep::LEFT) {
@@ -615,19 +627,16 @@ Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState)
             loop = &_rightSweepLoop.value();
         }
         if (loop && loop->outgoingLoopSequenceIndex() == seqIndex) {
-            int loopIndex = _metaLoopAnalysis->loopIndexForSequence(seqIndex);
-            int prevNumIter = _metaLoopAnalysis->lastNumLoopIterations(loopIndex);
-            int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta().value();
-            int expectedDpTravel =
-                expectedIter * _metaLoopAnalysis->sequenceAnalysis(seqIndex)->dataPointerDelta();
-            if (!loop->continuesForever(executionState, abs(expectedDpTravel))) {
+            if (!sweepLoopContinuesForever(executionState, loop, seqIndex)) {
                 return Trilian::NO;
             }
         }
     }
 
-    // Note: It is possible that a new loop now starts and there is a non-empty transition that
-    // needs to be checked as well. This happens when there is no sequence run block separating the
+    // Check if a transition is about to start. If so, it should be checked that it runs forever.
+    //
+    // Note: It is possible that a new loop starts but there is also a non-empty transition that
+    // needs to be checked. This happens when there is no sequence run block separating the
     // outgoing loop from the incoming loop, but there's still an effective transition sequence due
     // to incoming loop shutdown and outgoing loop bootstrap effects.
     int prevSeqIndex = (seqIndex + loopSize - 1) % loopSize;
@@ -641,9 +650,10 @@ Trilian RegularSweepHangChecker::proofHang(const ExecutionState& executionState)
             case LocationInSweep::UNSET: assert(false);
         }
 
-        if (transition->incomingLoopSequenceIndex() == prevSeqIndex
-            && !transition->continuesForever(executionState)) {
-            return Trilian::NO;
+        if (transition->incomingLoopSequenceIndex() == prevSeqIndex) {
+            if (!transitionContinuesForever(executionState, transition, seqIndex)) {
+                return Trilian::NO;
+            }
         }
     }
 
