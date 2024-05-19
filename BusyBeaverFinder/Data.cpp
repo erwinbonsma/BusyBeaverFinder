@@ -22,26 +22,24 @@ enum class DataOp : int8_t {
     SHIFT = 0x01,
 };
 
-Data::Data(int size) {
-    _size = size;
-    _data.reserve(_size + 2 * dataSentinelBufferSize);
-
-    _midDataP = &_data[dataSentinelBufferSize + _size / 2];
+Data::Data(int size) : _data(size + 2 * dataSentinelBufferSize, 0) {
+    _midDataP = &_data[dataSentinelBufferSize + size / 2];
     _minDataP = &_data[dataSentinelBufferSize]; // Inclusive
-    _maxDataP = &_data[dataSentinelBufferSize + _size - 1]; // Inclusive
+    _maxDataP = &_data[dataSentinelBufferSize + size - 1]; // Inclusive
 
-    reset();
+    resetPointers();
+}
+
+void Data::resetPointers() {
+    _dataP = _midDataP;
+    _minBoundP = _midDataP;
+    _maxBoundP = _minBoundP - 1; // Empty bounds
 }
 
 void Data::reset() {
-    for (int i = _size + 2 * dataSentinelBufferSize; --i >= 0; ) {
-        _data[i] = 0;
-    }
+    resetPointers();
 
-    _dataP = _midDataP;
-
-    _minBoundP = _midDataP;
-    _maxBoundP = _minBoundP - 1; // Empty bounds
+    std::fill(_data.begin(), _data.end(), 0);
 
     _undoStack.clear();
     _undoEnabled = true;
@@ -73,12 +71,6 @@ void Data::updateBounds() {
     }
 
     assert((*_minBoundP && *_maxBoundP) || (_maxBoundP < _minBoundP));
-}
-
-int Data::valueAt(DataPointer dp, int dpOffset) const {
-    int index = (int)(dp - _minDataP) + dpOffset;
-
-    return (index >= 0 && index < _size) ? *(_minDataP + index) : 0;
 }
 
 // Note: Analysis skips the value at DP. It only considers the values beyond that.
