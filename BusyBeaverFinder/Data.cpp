@@ -75,29 +75,7 @@ void Data::updateBounds() {
 
 // Note: Analysis skips the value at DP. It only considers the values beyond that.
 bool Data::onlyZerosAhead(DataPointer dp, bool atRight) const {
-    if (atRight) {
-        if (dp >= _maxBoundP) {
-            return true;
-        }
-
-        while (true) {
-            dp++;
-            if (*dp) { return false; }
-            if (dp == _maxBoundP) { break; }
-        }
-    } else {
-        if (dp <= _minBoundP) {
-            return true;
-        }
-
-        while (true) {
-            dp--;
-            if (*dp) { return false; }
-            if (dp == _minBoundP) { break; }
-        }
-    }
-
-    return true;
+    return atRight ? dp >= _maxBoundP : dp <= _minBoundP;
 }
 
 void Data::delta(int delta) {
