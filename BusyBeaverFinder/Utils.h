@@ -60,7 +60,6 @@ bool deltasCanSumTo(std::set<int> deltas, int target);
 void loadResumeStackFromStream(std::istream &input, std::vector<Ins> &resumeStack);
 bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStack);
 
-void dumpDataBuffer(int* buf, int* dataP, int size);
 void dumpInstructionStack(const std::vector<Ins> &stack);
 
 template <class T>

@@ -235,22 +235,6 @@ bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStac
     return !resumeStack.empty();
 }
 
-void dumpDataBuffer(int* buf, int* dataP, int size) {
-    for (int i = 0; i < size; i++) {
-        if (&buf[i] == dataP) {
-            std::cout << "[";
-        }
-        std::cout << buf[i];
-        if (&buf[i] == dataP) {
-            std::cout << "] ";
-        } else {
-            std::cout << " ";
-        }
-
-    }
-    std::cout << std::endl;
-}
-
 void dumpInstructionStack(const std::vector<Ins> &stack) {
     for (const Ins& ins : stack) {
         std::cout << (int)ins << ",";

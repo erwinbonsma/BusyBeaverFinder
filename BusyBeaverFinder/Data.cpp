@@ -24,17 +24,13 @@ enum class DataOp : int8_t {
 
 Data::Data(int size) {
     _size = size;
-    _data = new int[_size + 2 * dataSentinelBufferSize];
+    _data.reserve(_size + 2 * dataSentinelBufferSize);
 
     _midDataP = &_data[dataSentinelBufferSize + _size / 2];
     _minDataP = &_data[dataSentinelBufferSize]; // Inclusive
     _maxDataP = &_data[dataSentinelBufferSize + _size - 1]; // Inclusive
 
     reset();
-}
-
-Data::~Data() {
-    delete[] _data;
 }
 
 void Data::reset() {
@@ -172,12 +168,4 @@ void Data::dumpWithCursor(DataPointer cursor) const {
         }
     }
     std::cout << ", dp = " << (cursor - _midDataP) << std::endl;
-}
-
-void Data::dumpHangInfo() const {
-    std::cout << "DATA: min = " << (_minBoundP - _data)
-    << ", p = " << (_dataP - _data)
-    << ", max = " << (_maxBoundP - _data)
-    << std::endl;
-    dumpDataBuffer(_data, _dataP, getSize());
 }

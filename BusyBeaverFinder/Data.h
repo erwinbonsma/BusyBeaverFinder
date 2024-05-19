@@ -21,8 +21,7 @@ class Data {
     // Delimits the data cells that are non-zero.
     DataPointer _minBoundP, _maxBoundP;
 
-    // Array with data values
-    int *_data;
+    std::vector<int> _data;
 
     bool _undoEnabled;
     std::vector<int8_t> _undoStack;
@@ -31,7 +30,6 @@ class Data {
 
 public:
     Data(int size);
-    ~Data();
 
     void reset();
 
@@ -42,7 +40,6 @@ public:
 
     int getSize() const { return _size; }
 
-    int* getDataBuffer() { return _data; }
     DataPointer getMinDataP() const { return _minDataP; }
     DataPointer getMaxDataP() const { return _maxDataP; }
 
@@ -66,5 +63,4 @@ public:
 
     void dumpWithCursor(DataPointer cursor) const;
     void dump() const { dumpWithCursor(_dataP); };
-    void dumpHangInfo() const;
 };
