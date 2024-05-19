@@ -11,7 +11,7 @@
 #include "MetaLoopAnalysis.h"
 #include "ProgramBlock.h"
 #include "RunUntilMetaLoop.h"
-#include "SweepHangChecker.h"
+#include "IrregularSweepHangChecker.h"
 
 const int dummySteps = 1;
 const int maxSequenceLen = 16;
@@ -262,7 +262,6 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         hangExecutor.execute(&program);
-        hangExecutor.dumpExecutionState();
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
