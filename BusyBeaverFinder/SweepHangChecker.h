@@ -85,7 +85,7 @@ class SweepHangChecker : public HangChecker {
 
         void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
-        const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
+        const DataDeltas& sweepLoopDeltas() const { return _sweepDeltas; }
         int deltaRange() const { return _deltaRange; }
         int outgoingLoopSequenceIndex() const { return _outgoingLoopSeqIndex; }
 
@@ -100,6 +100,8 @@ class SweepHangChecker : public HangChecker {
 
         // The effective result of the loop after one meta-loop period
         LoopAnalysis _analysis;
+
+        DataDeltas _sweepDeltas;
 
         // The range of DP after which the sweep-loop behavior repeats. Only DP values in range of
         // [0, _deltaRange> should be considered when checking/proving hangs.

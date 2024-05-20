@@ -7,9 +7,15 @@
 //
 
 #include "IrregularSweepHangChecker.h"
+#include "Data.h"
 
-const int& (&FUN_MAX)(const int&, const int&) = std::max;
-const int& (&FUN_MIN)(const int&, const int&) = std::min;
+using CompFun = const int&(const int&, const int&);
+CompFun &FUN_MAX = std::max;
+CompFun &FUN_MIN = std::min;
+
+using CompFunPtr = const int *const &(const int *const &, const int *const &);
+CompFunPtr &FUN_MAX_PTR = std::max;
+CompFunPtr &FUN_MIN_PTR = std::min;
 
 // Checks that the program execution is in a meta-meta loop consisting of:
 // 1: a meta-loop (where the sweep is toggling cells inside the binary-counting appendix,
@@ -91,14 +97,13 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
             return false;
         }
 
-        switch (location) {
-            case LocationInSweep::LEFT: _endProps.insert({LocationInSweep::LEFT, {}}); break;
-            case LocationInSweep::RIGHT: _endProps.insert({LocationInSweep::RIGHT, {}}); break;
-            default: assert(false);
-        }
+        _irregularEnd = location;
+        _endProps.insert({location, {}});
     }
 
-    return _endProps.size();
+    // Do not (yet) supports sweeps where both ends are irregular. Doing so would complicate
+    // proofHang checks.
+    return _endProps.size() == 1;
 }
 
 bool IrregularSweepHangChecker::determineInSweepExits() {
@@ -145,7 +150,12 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
 
         // Toggle values change to in-sweep exits, but vice versa, an in-sweep exit is changed to
         // a toggle value when it caused an exit. This reverse relation is used here.
-        props.insweepToggle = transition.transitionDeltas().deltaAt(0);
+        props.insweepToggle = props.insweepExit + transition.transitionDeltas().deltaAt(0);
+
+        // TODO: Fix above calculation
+        // Due to the irregular sweeping, the transition analysis is not (always) correct. This is
+        // currently causing the BasicIrregularSweep analysis test to fail. Either fix transition
+        // analysis, or find a different way to calculate the in-sweep toggle
 
         auto& sweepLoop = (location == LocationInSweep::RIGHT && _rightSweepLoop
                            ? _rightSweepLoop.value()
@@ -200,6 +210,8 @@ bool IrregularSweepHangChecker::determineAppendixStarts(const ExecutionState& ex
 
 bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
                                      const ExecutionState& executionState) {
+    executionState.dumpExecutionState();
+
     if (!checkMetaMetaLoop(executionState)) {
         return false;
     }
@@ -227,6 +239,106 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     return true;
 }
 
-Trilian IrregularSweepHangChecker::proofHang(const ExecutionState& executionState) {
-    return Trilian::MAYBE;
+bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
+                                                          SweepLoop* loop, int seqIndex) {
+    bool departsFromIrregularEnd {};
+    if (_irregularEnd == LocationInSweep::LEFT) {
+        if (loop == &_leftSweepLoop) {
+            departsFromIrregularEnd = true;
+        } else {
+            assert(_midTransition);
+
+            // There is a mid-sweep transition, the irregular end is at the left, and this loop
+            // departs from the right, so this is a regular sweep
+            return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
+        }
+    } else {
+        assert(_irregularEnd == LocationInSweep::RIGHT);
+
+        if (loop == &_leftSweepLoop) {
+            if (_rightSweepLoop) {
+                assert(_midTransition);
+
+                // There is a mid-sweep transition, the irregular end is at the right, and this
+                // loop departs from the left, so this is a regular sweep
+                return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
+            } else {
+                // There is no mid-sweep transition; we are moving towards the irregular end at the
+                // right
+                departsFromIrregularEnd = false;
+            }
+        } else {
+            // There is a mid-sweep transition, and we are moving from the irregular end at the
+            // right towards it.
+            departsFromIrregularEnd = true;
+        }
+    }
+
+    // TODO:
+    // Check that sweep over body continues forever
+
+    return true;
+}
+
+bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState& executionState,
+                                                           TransitionGroup* transition,
+                                                           int seqIndex) {
+    bool checkAppendix = false;
+    bool atLeft = _irregularEnd == LocationInSweep::LEFT;
+
+    if (atLeft) {
+        if (transition == &_leftTransition) {
+            checkAppendix = true;
+        }
+    } else {
+        if (transition == &_rightTransition) {
+            checkAppendix = true;
+        }
+    }
+
+    if (!checkAppendix) {
+        // Use regular transition check
+        return SweepHangChecker::transitionContinuesForever(executionState, transition, seqIndex);
+    }
+
+    // Check the appendix. It should consist of only in-sweep exits, in-sweep toggles and
+    // pollution that moves away from zero. Beyond the appendix there should only be zeroes ahead.
+    const Data& data = executionState.getData();
+    data.dump();
+
+    auto &dpCmpFun = atLeft ? FUN_MAX_PTR : FUN_MIN_PTR;
+    int dpDelta = atLeft ? -1 : 1;
+    DataPointer dpLimit = atLeft ? data.getMinBoundP() : data.getMaxBoundP();
+    auto &props = (atLeft
+                   ? _endProps.at(LocationInSweep::LEFT)
+                   : _endProps.at(LocationInSweep::RIGHT));
+    DataPointer appendixStart = props.appendixStart;
+    auto &dvCmpFun = props.insweepToggle > props.insweepExit ? FUN_MIN : FUN_MAX;
+
+    if (dpCmpFun(data.getDataPointer(), appendixStart) != appendixStart) {
+        // DP should be "beyond" the appendix start
+        return false;
+    }
+
+    DataPointer dp = appendixStart;
+    while (dpCmpFun(dp, dpLimit) == dp) {
+        if (*dp != props.insweepExit && *dp != props.insweepToggle) {
+            if (*dp == 0) {
+                if (dp != data.getDataPointer()) {
+                    // There should not be any zeroes in between non-zero values. The exception is
+                    // the current in-sweep exit value which just became zero.
+                    return false;
+                }
+            } else {
+                if (dvCmpFun(*dp, 0) == 0) {
+                    // Pollution should move away from zero
+                    return false;
+                }
+            }
+        }
+
+        dp += dpDelta;
+    }
+
+    return true;
 }

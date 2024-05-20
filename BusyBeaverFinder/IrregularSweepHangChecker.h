@@ -16,8 +16,6 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
                       const ExecutionState& executionState) override;
 
-    Trilian proofHang(const ExecutionState& executionState) override;
-
     bool isIrregular(DataDirection sweepEnd) const {
         return _endProps.find(mapDataDir(sweepEnd)) != _endProps.end();
     }
@@ -34,6 +32,12 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     int insweepToggle(DataDirection sweepEnd) const {
         return _endProps.at(mapDataDir(sweepEnd)).insweepToggle;
     }
+
+  protected:
+    bool sweepLoopContinuesForever(const ExecutionState& executionState,
+                                   SweepLoop* loop, int seqIndex) override;
+    bool transitionContinuesForever(const ExecutionState& executionState,
+                                    TransitionGroup* transition, int seqIndex) override;
 
   private:
     LocationInSweep mapDataDir(DataDirection dir) const {
@@ -57,7 +61,12 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     bool determineInSweepToggles();
     bool determineAppendixStarts(const ExecutionState& executionState);
 
+    // Most of analysis supports case where both ends are irregular, so use a map to store
+    // properties
     std::map<LocationInSweep, IrregularEndProps> _endProps;
+
+    // However, proof currently supports only one irregular end. Track it here.
+    LocationInSweep _irregularEnd;
 };
 
 #endif /* IrregularSweepHangChecker_hpp */

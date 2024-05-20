@@ -42,6 +42,14 @@ void SweepHangChecker::SweepLoop::analyzeCombinedEffect(const SweepHangChecker& 
 
     _analysis.analyzeMultiSequenceEnd(0);
 
+    // Copy deltas within range (ignore deltas outside range)
+    _sweepDeltas.clear();
+    for (auto& dd : _analysis.dataDeltas()) {
+        if (dd.dpOffset() >= 0 && dd.dpOffset() < _deltaRange) {
+            _sweepDeltas.addDelta(dd.dpOffset(), dd.delta());
+        }
+    }
+
     // Only consider exits inside the loop range.
     _analysis.disableExits([this](LoopExit& exit) {
         int dpOffset = exit.exitCondition.dpOffset();
@@ -359,7 +367,7 @@ bool SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState v
     int sequenceId = runSummary.runBlockAt(rbIndex)->getSequenceId();
     while (runSummary.getRunBlockLength(rbIndex) < len) {
         // There are not enough run blocks in the history. This can for example happen for
-        // irregular sweeps. Go forward in until there is a sequence that is long enough.
+        // irregular sweeps. Go forward in time until there is a sequence that is long enough.
 
         rbIndex += analysis->loopSize();
         if (rbIndex >= runSummary.getNumRunBlocks() - 1) {

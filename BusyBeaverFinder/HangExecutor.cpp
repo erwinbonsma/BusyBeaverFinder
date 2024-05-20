@@ -30,7 +30,7 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
 void HangExecutor::addDefaultHangDetectors() {
     _hangDetectors.push_back(std::make_shared<PeriodicHangDetector>(*this));
 
-    _hangDetectors.push_back(std::make_shared<IrregularSweepHangDetector>(*this));
+//    _hangDetectors.push_back(std::make_shared<IrregularSweepHangDetector>(*this));
     _hangDetectors.push_back(std::make_shared<MetaLoopHangDetector>(*this));
 }
 
