@@ -41,4 +41,5 @@ class MetaLoopHangDetector : public HangDetector {
 
     void reset() override;
     HangType hangType() const override { return _activeHang; }
+    const MetaLoopAnalysis& metaLoopAnalysis() { return _metaLoopAnalysis; };
 };

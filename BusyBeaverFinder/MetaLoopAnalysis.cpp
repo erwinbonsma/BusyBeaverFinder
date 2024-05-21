@@ -11,7 +11,7 @@
 
 // The maximum number of meta-run loop iterations to unroll to construct a meta-loop that meets
 // the criteria.
-constexpr int MAX_ITERATIONS_TO_UNROLL = 2;
+constexpr int MAX_ITERATIONS_TO_UNROLL = 3;
 
 // The number of meta-loop iterations that are analyzed.
 // Note: It should not be changed as its inherent to the analysis; using this constant avoids a

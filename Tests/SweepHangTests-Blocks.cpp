@@ -9,7 +9,8 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
-#include "SweepHangDetector.h"
+//#include "SweepHangDetector.h"
+#include "MetaLoopHangDetector.h"
 
 const int dummySteps = 1;
 const int maxSequenceLen = 16;
@@ -164,6 +165,42 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
+    }
+
+    SECTION("SweepWithRegularNonConstantGrowth") {
+        // This sweep grows regularly but the extension is not constant. More specifically, the
+        // sweep extensions repeat with period three. Typically the sweep range is extended by one
+        // unit, but once every three sweeps it is extended by four units. This is done by also
+        // clearing a zero three units beyond the sweep exit. Once these values connect with the
+        // sweeped range the sweep body is extended with an additional three values.
+        //
+        // Analyzing this hang correctly requires that regular meta-loop behavior occurs only when
+        // unrolling three iterations of the meta-loop.
+
+        // Rightward sweep
+        block[0].finalize(INC, 1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV, 1, dummySteps, block + 2, block + 0);
+
+        // Transition sequence at right. Extends sweep by one, plus a future extension
+        block[2].finalize(INC, 1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, 3, dummySteps, block + 4, exitBlock);
+        block[4].finalize(INC, 1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV, -3, dummySteps, exitBlock, block + 6);
+
+        // Leftward sweep
+        block[6].finalize(MOV, -1, dummySteps, block + 1, block + 6);
+
+        InterpretedProgramFromArray program(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(&program);
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
+
+        auto *mlhd = dynamic_cast<MetaLoopHangDetector *>(hangExecutor.detectedHang().get());
+        REQUIRE(mlhd != nullptr);
+        auto &mla = mlhd->metaLoopAnalysis();
+        REQUIRE(mla.metaLoopPeriod() == 3);
+        REQUIRE(mla.loopSize() == mla.metaLoopPeriod() * 3);
     }
 }
 
