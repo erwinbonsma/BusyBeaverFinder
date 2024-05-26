@@ -152,11 +152,6 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
         // a toggle value when it caused an exit. This reverse relation is used here.
         props.insweepToggle = props.insweepExit + transition.transitionDeltas().deltaAt(0);
 
-        // TODO: Fix above calculation
-        // Due to the irregular sweeping, the transition analysis is not (always) correct. This is
-        // currently causing the BasicIrregularSweep analysis test to fail. Either fix transition
-        // analysis, or find a different way to calculate the in-sweep toggle
-
         auto& sweepLoop = (location == LocationInSweep::RIGHT && _rightSweepLoop
                            ? _rightSweepLoop.value()
                            : _leftSweepLoop);
@@ -198,7 +193,8 @@ bool IrregularSweepHangChecker::determineAppendixStarts(const ExecutionState& ex
             return true;
         };
 
-        if (auto result = visitSweepLoopParts(visitor, executionState, 0, 0, 2); !result) {
+        SweepVisitOptions options = { .numLoopIterations = 2 };
+        if (auto result = visitSweepLoopParts(visitor, executionState, 0, options); !result) {
             return false;
         } else {
             props.appendixStart = _metaLoopAnalysis->startDataPointer() + start.value();
@@ -222,6 +218,18 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
     if (!findIrregularEnds()) {
         return false;
+    }
+
+    // Redo transition analysis of irregular end with forced stationary analysis, to ensure it is
+    // analyzed correctly.
+    if (_irregularEnd == LocationInSweep::LEFT) {
+        if (!_leftTransition.analyze(*this, executionState, true)) {
+            return false;
+        }
+    } else {
+        if (!_rightTransition.analyze(*this, executionState, true)) {
+            return false;
+        }
     }
 
     if (!determineInSweepExits()) {
@@ -304,7 +312,6 @@ bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState&
     // Check the appendix. It should consist of only in-sweep exits, in-sweep toggles and
     // pollution that moves away from zero. Beyond the appendix there should only be zeroes ahead.
     const Data& data = executionState.getData();
-    data.dump();
 
     auto &dpCmpFun = atLeft ? FUN_MAX_PTR : FUN_MIN_PTR;
     int dpDelta = atLeft ? -1 : 1;

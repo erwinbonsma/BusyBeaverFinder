@@ -38,7 +38,7 @@ void SweepHangChecker::SweepLoop::analyzeCombinedEffect(const SweepHangChecker& 
             checker.addContributionOfSweepLoopPass(vs, this->_analysis, 0, this->_deltaRange - 1);
         }
         return true;
-    }, executionState, _outgoingLoopSeqIndex, 0);
+    }, executionState, _outgoingLoopSeqIndex);
 
     _analysis.analyzeMultiSequenceEnd(0);
 
@@ -186,11 +186,17 @@ bool SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVis
 }
 
 bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChecker& checker,
-                                                              const ExecutionState& state) {
+                                                              const ExecutionState& state,
+                                                              bool forceStationary) {
     const int loopSize = checker._metaLoopAnalysis->loopSize();
 
-    // Start at instruction after incoming loop
+    // Start at instruction after incoming loop. This is required for correct analysis, as the
+    // analyzed combined effect is used to check if the "transition loop" continues forever after
+    // the incoming sweep loop just terminated. It ensures that the DP offset is zero at the start,
+    // and that the exit conditions are relative to the data values as they are then.
     const int startSeqIndex = (_incomingLoopSeqIndex + 1) % loopSize;
+
+    SweepVisitOptions options = { .forceStationary = forceStationary };
 
     // First determine DP bounds
     _analysis.analyzeMultiSequenceStart();
@@ -198,7 +204,7 @@ bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
     checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
         this->analyzeLoopPartPhase1(vs);
         return true;
-    }, state, startSeqIndex, 0);
+    }, state, startSeqIndex, options);
 
     _minDp = _analysis.minDp();
     _maxDp = _analysis.maxDp();
@@ -207,7 +213,7 @@ bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
     _analysis.analyzeMultiSequenceStart();
     auto dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
         return this->analyzeLoopPartPhase2(vs);
-    }, state, startSeqIndex, 0);
+    }, state, startSeqIndex, options);
     if (!dpOffset) {
         return false;
     }
@@ -230,16 +236,19 @@ bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
 }
 
 bool SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
-                                                const ExecutionState& executionState) {
+                                                const ExecutionState& executionState,
+                                                bool forceStationary) {
     _incomingLoopSeqIndex = checker.findSweepLoop([this](const Location& loc) {
         return loc.end == this->_location;
     });
     auto &loopBehavior = checker.loopBehavior(_incomingLoopSeqIndex);
-    _isStationary = _location == LocationInSweep::MID || (_location == LocationInSweep::RIGHT
-                                                          ? loopBehavior.maxDpDelta() == 0
-                                                          : loopBehavior.minDpDelta() == 0);
+    _isStationary = (forceStationary
+                     || _location == LocationInSweep::MID
+                     || (_location == LocationInSweep::RIGHT
+                         ? loopBehavior.maxDpDelta() == 0
+                         : loopBehavior.minDpDelta() == 0));
 
-    return analyzeCombinedEffect(checker, executionState);
+    return analyzeCombinedEffect(checker, executionState, forceStationary);
 }
 
 bool SweepHangChecker::TransitionGroup::continuesForever(const ExecutionState& execState) const {
@@ -389,20 +398,27 @@ bool SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState v
 
 std::optional<int> SweepHangChecker::visitSweepLoopParts(const SweepLoopVisitor& visitor,
                                                          const ExecutionState& state,
-                                                         int startSeqIndex, int dpStart,
-                                                         int numLoopIterations) const {
+                                                         int startSeqIndex,
+                                                         SweepVisitOptions options) const {
     auto &runSummary = state.getRunSummary();
     int loopSize = _metaLoopAnalysis->loopSize();
 
     struct SweepLoopPart part {
-        startSeqIndex, _metaLoopAnalysis->firstRunBlockIndex() + startSeqIndex, dpStart
+        startSeqIndex, _metaLoopAnalysis->firstRunBlockIndex() + startSeqIndex, options.dpStart
     };
     struct SweepLoopVisitState visitState(*this, state, part);
 
-    for (int i = loopSize * numLoopIterations; --i >= 0; ) {
+    for (int i = loopSize * options.numLoopIterations; --i >= 0; ) {
         if (part.rbIndex() >= runSummary.getNumRunBlocks()) {
             // Cannot go into the future
             return {};
+        }
+
+        if (i == 0 && options.forceStationary) {
+            // Force that analysis ends where it started. This is a hack to ensure transitions for
+            // irregular loops are analyzed correctly.
+            part.dpOffset() = (options.dpStart
+                               - _metaLoopAnalysis->dpDeltaOfRunBlock(runSummary, part.rbIndex()));
         }
 
         if (!visitor(visitState)) {
