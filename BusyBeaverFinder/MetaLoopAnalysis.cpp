@@ -320,7 +320,13 @@ void MetaLoopAnalysis::initLoopBehaviors() {
         auto &dataNext = _loopData[(i + 1) % loopDataSize];
         auto dpDeltaEnd = dataNext.dataPointerDelta;
 
-        assert(sa->dataPointerDelta() != 0 || dpDeltaStart == dpDeltaEnd);
+        if (sa->dataPointerDelta() == 0 && dpDeltaStart != dpDeltaEnd) {
+            // This should never happen when the loop is reggular, but may happen when the loop is
+            // irregular
+            assert(_metaLoopType == MetaLoopType::IRREGULAR);
+            dpDeltaStart = {};
+            dpDeltaEnd = {};
+        }
         bool movesLeft = sa->dataPointerDelta() < 0;
 
         _loopBehaviors.emplace_back(this, data.sequenceIndex,

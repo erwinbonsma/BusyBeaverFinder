@@ -210,7 +210,7 @@ bool IrregularSweepHangChecker::determineAppendixStarts(const ExecutionState& ex
 
 bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
                                      const ExecutionState& executionState) {
-    executionState.dumpExecutionState();
+//    executionState.dumpExecutionState();
 
     if (!checkMetaMetaLoop(executionState)) {
         return false;
