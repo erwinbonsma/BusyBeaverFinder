@@ -91,7 +91,7 @@ class SweepHangChecker : public HangChecker {
             return _outgoingLoops;
         }
 
-        void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
+        bool analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
         const DataDeltas& sweepLoopDeltas() const { return _sweepDeltas; }
         int deltaRange() const { return _deltaRange; }
@@ -123,7 +123,7 @@ class SweepHangChecker : public HangChecker {
         std::set<std::shared_ptr<LoopAnalysis>> _incomingLoops;
         std::set<std::shared_ptr<LoopAnalysis>> _outgoingLoops;
 
-        void analyzeCombinedEffect(const SweepHangChecker& checker,
+        bool analyzeCombinedEffect(const SweepHangChecker& checker,
                                    const ExecutionState& executionState);
     };
 
@@ -200,7 +200,7 @@ class SweepHangChecker : public HangChecker {
     //
     // Note: This may also include changes outside this range, as a continuous sequence of
     // instructions is replayed from the program's run history.
-    void addContributionOfSweepLoopPass(const SweepHangChecker::SweepLoopVisitState vs,
+    bool addContributionOfSweepLoopPass(const SweepHangChecker::SweepLoopVisitState vs,
                                         SequenceAnalysis& analysis, int minDp, int maxDp) const;
     void addContributionOfSweepLoopStart(const SweepHangChecker::SweepLoopVisitState vs,
                                          SequenceAnalysis& analysis, int minDp, int maxDp) const;
