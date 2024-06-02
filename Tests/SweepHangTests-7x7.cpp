@@ -77,4 +77,19 @@ TEST_CASE("7x7 irregular sweep hangs", "[hang][7x7][sweep][irregular]") {
 //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
 //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
+    SECTION("7x7-UndetectedHang2") {
+        // Irregular sweep.
+        //
+        // *       *
+        // o _ * _ o _ *
+        // _ _ * * o _
+        // _ _ o o _ *
+        // _ o _ * o _
+        // _ * * _ o o *
+        // _       * *
+        RunResult result = hangExecutor.execute("d4CBISCkAUgSQKFgCg");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+    }
 }

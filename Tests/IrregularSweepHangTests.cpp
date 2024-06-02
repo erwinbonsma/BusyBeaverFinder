@@ -203,4 +203,23 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
 //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
 //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
+    SECTION("6x6-IrregularSweepHangWithHeavilyPollutedAppendix") {
+        // A non-standard irregular sweep. The leftward sweep loop moves DP two cells and creates
+        // a heavily polluted a-periodically growing appendix. The sweep loops exits on -1 cells,
+        // which it then converts to the limbo value -2, which the sweep can convert to the -1
+        // value again. In between pairs of -1/-2 values are postives values. Interestingly, their
+        // value decrease exponentially. After approximately 2.25 M steps: 200 > 100 > 50 > 26 >
+        // 13 > 7 > 4 > 2.
+        //
+        //     *
+        //   * o _ _ *
+        //   * o o _
+        //   o o * *
+        // * _ o _ *
+        // o o *
+        RunResult result = hangExecutor.execute("ZggCQiUBaISFgA");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+    }
 }

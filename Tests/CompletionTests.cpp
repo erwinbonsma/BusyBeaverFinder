@@ -363,4 +363,39 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 33207907);
     }
+    SECTION("7x7-OldFalsePositive1") {
+        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
+        // appendix at its right. However, the leftwards sweep moves DP by two cells each
+        // iteration. All leftward sweeps, however, seem to end on the first zero at the left. This
+        // is caused by how the "bits" in the binary appendix at the right toggle. However, after
+        // 2000 steps the left sweep lands on the second zero, which causes the program to exit.
+        //
+        // *     * *
+        // o _ * _ _ _ *
+        // _ _ * o o _
+        // _ _ o o o *
+        // _ o _ o _ *
+        // _ * _ o o *
+        // _   * * *
+        RunResult result = hangExecutor.execute("d4KBICCUAVgRIIWAqA");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+    SECTION("7x7-OldFalsePositive2") {
+        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
+        // appendix at its right. However, the sequence that changes a -1 bit in the binary
+        // appendix to a -2 requires that the cell located two cells to its left has a non-zero
+        // value. This is not the case for a -1 value near the end of the appendix.
+        //
+        //     *     *
+        //   * _ _ * o *
+        // * _ o o o _ *
+        // *   _ * o _
+        // o o o * o *
+        // _   * _ o *
+        // _       *
+        RunResult result = hangExecutor.execute("dwgggmhUoJBWYCGACA");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
 }
