@@ -9,7 +9,6 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
-#include "SweepHangDetector.h"
 
 TEST_CASE("7x7 sweep hangs", "[hang][7x7][sweep][regular]") {
     HangExecutor hangExecutor(16384, 100000);

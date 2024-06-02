@@ -9,7 +9,6 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
-#include "SweepHangDetector.h"
 
 const int dummySteps = 1;
 const int maxSequenceLen = 16;

@@ -12,7 +12,6 @@
 
 #include "ExhaustiveSearcher.h"
 #include "HangDetector.h"
-#include "SweepHangDetector.h"
 #include "Program.h"
 
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
