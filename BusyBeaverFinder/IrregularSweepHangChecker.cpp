@@ -17,15 +17,21 @@ using CompFunPtr = const int *const &(const int *const &, const int *const &);
 CompFunPtr &FUN_MAX_PTR = std::max;
 CompFunPtr &FUN_MIN_PTR = std::min;
 
-// Checks that the program execution is in a meta-meta loop consisting of:
+// Checks if the program execution is in a meta-meta loop. If it is, it should consist of:
 // 1: a meta-loop (where the sweep is toggling cells inside the binary-counting appendix,
 // 2: a transition (which extends the appendix)
+//
+// Note, also succeeds when the program is not in a meta-meta loop, as there are irregular
+// sweeps that are stuck in a meta-loop. This is the case when there in-sweep exit is the same
+// as the sweep extending exit.
 bool IrregularSweepHangChecker::checkMetaMetaLoop(const ExecutionState& executionState) {
     auto& metaMetaRunSummary = executionState.getMetaMetaRunSummary();
     auto& metaRunSummary = executionState.getMetaRunSummary();
 
-    if (!metaMetaRunSummary.isInsideLoop()) {
-        return false;
+    _isInsideMetaMetaLoop = metaMetaRunSummary.isInsideLoop();
+    if (!_isInsideMetaMetaLoop) {
+        // Irregular sweeps with a zero in-sweep exit do not end up in a meta-meta loop.
+        return true;
     }
 
     auto metaMetaRunBlock = metaMetaRunSummary.getLastRunBlock();
@@ -136,10 +142,22 @@ bool IrregularSweepHangChecker::determineInSweepExits() {
             }
         }
 
-        if (!exitsOnZero || props.insweepExit == 0) {
-            // For now, only support irregular sweep with two exits. The zero-exit extends the
-            // sequence. The non-zero exit ends the sweep inside the irregular appendix.
+        if (!exitsOnZero) {
+            // The sweep always should stop when there are only zeroes ahead.
             return false;
+        }
+
+        if (_isInsideMetaMetaLoop) {
+            if (props.insweepExit == 0) {
+                // There should a non-zero insweep exit inside the irregular appendix.
+                return false;
+            }
+        } else {
+            if (props.insweepExit != 0) {
+                // Programs not in a meta-meta loop should have an insweep exit of zero (so that
+                // the execution paths of the insweep turn and appendix extension are the same)
+                return false;
+            }
         }
     }
 

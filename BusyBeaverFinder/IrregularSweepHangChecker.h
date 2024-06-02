@@ -67,6 +67,8 @@ class IrregularSweepHangChecker : public SweepHangChecker {
 
     // However, proof currently supports only one irregular end. Track it here.
     LocationInSweep _irregularEnd;
+
+    bool _isInsideMetaMetaLoop;
 };
 
 #endif /* IrregularSweepHangChecker_hpp */

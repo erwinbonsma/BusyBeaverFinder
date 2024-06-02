@@ -222,4 +222,19 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
     }
+    SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
+        // A truly binary counter. It actually uses ones and zeros, and also properly generates
+        // binary numbers (only with most-significant bit at the right).
+        //
+        //   *   * *
+        // * o _ _ _ *
+        // o o * o o *
+        // o   * o *
+        // _ * _ o *
+        // _     *
+        RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+    }
 }

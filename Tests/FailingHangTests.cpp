@@ -21,21 +21,7 @@ TEST_CASE("6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x
     hangExecutor.setMaxSteps(1000000);
     hangExecutor.addDefaultHangDetectors();
 
-    SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
-        // A truly binary counter. It actually uses ones and zeros, and also properly generates
-        // binary numbers (only with most-significant bit at the right).
-        //
-        //   *   * *
-        // * o _ _ _ *
-        // o o * o o *
-        // o   * o *
-        // _ * _ o *
-        // _     *
-        RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::DATA_ERROR);
-    }
+    // No known failures yet
 }
 
 TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
