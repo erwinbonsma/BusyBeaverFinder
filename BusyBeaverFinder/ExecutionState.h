@@ -29,4 +29,5 @@ public:
     virtual const RunBlockTransitions& getRunBlockTransitions() const = 0;
 
     virtual void dumpExecutionState() const;
+    virtual bool isVerbose() const { return false; }
 };

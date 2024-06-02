@@ -16,8 +16,9 @@
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
-    Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN,
-    Ins::TURN, Ins::NOOP,  Ins::UNSET
+    Ins::DATA, Ins::TURN, Ins::DATA, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::NOOP, Ins::DATA,
+    Ins::TURN, Ins::DATA, Ins::TURN, Ins::DATA, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::DATA,
+    Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
 };
 
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
@@ -190,6 +191,9 @@ void ExhaustiveSearcher::branch() {
 
 //        if (atTargetProgram()) {
 //            _program.dump();
+//            _hangExecutor.setVerbose(true);
+//        } else {
+//            _hangExecutor.setVerbose(false);
 //        }
 
         extendBlock();
