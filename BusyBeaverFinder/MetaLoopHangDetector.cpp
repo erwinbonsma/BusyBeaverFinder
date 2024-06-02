@@ -66,7 +66,6 @@ bool MetaLoopHangDetector::prepareGliderHangCheck() {
     return true;
 }
 
-
 bool MetaLoopHangDetector::prepareSweepHangCheck() {
     if (!_regularSweepHangChecker.init(&_metaLoopAnalysis, _execution)) {
         return false;
@@ -74,6 +73,18 @@ bool MetaLoopHangDetector::prepareSweepHangCheck() {
 
     _activeChecker = &_regularSweepHangChecker;
     _activeHang = HangType::REGULAR_SWEEP;
+    _activeHangProofResult = Trilian::MAYBE;
+
+    return true;
+}
+
+bool MetaLoopHangDetector::prepareIrregularSweepHangCheck() {
+    if (!_irregularSweepHangChecker.init(&_metaLoopAnalysis, _execution)) {
+        return false;
+    }
+
+    _activeChecker = &_irregularSweepHangChecker;
+    _activeHang = HangType::IRREGULAR_SWEEP;
     _activeHangProofResult = Trilian::MAYBE;
 
     return true;
@@ -98,16 +109,10 @@ bool MetaLoopHangDetector::analyzeHangBehaviour() {
     }
 
     if (_metaLoopAnalysis.isRegular()) {
-        if (prepareGliderHangCheck()) {
-            return true;
-        }
-
-        if (prepareSweepHangCheck()) {
-            return true;
-        }
+        return prepareGliderHangCheck() || prepareSweepHangCheck();
     }
 
-    // TODO: Support irregular sweeps
+    return prepareIrregularSweepHangCheck();
 
     // TODO: Check which programs are not covered by the existing checkers
     return false;

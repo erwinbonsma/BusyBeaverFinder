@@ -16,6 +16,14 @@
 #include "LoopAnalysis.h"
 #include "MetaLoopAnalysis.h"
 
+// Defined outside SweepHangChecker so that default-constructed instances can be passed as a
+// default argument.
+struct SweepVisitOptions {
+    int numLoopIterations { 1 };
+    int dpStart { 0 };
+    bool forceStationary { false };
+};
+
 class SweepHangChecker : public HangChecker {
   private:
 
@@ -83,9 +91,9 @@ class SweepHangChecker : public HangChecker {
             return _outgoingLoops;
         }
 
-        void analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
+        bool analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
 
-        const DataDeltas& sweepLoopDeltas() const { return _analysis.dataDeltas(); }
+        const DataDeltas& sweepLoopDeltas() const { return _sweepDeltas; }
         int deltaRange() const { return _deltaRange; }
         int outgoingLoopSequenceIndex() const { return _outgoingLoopSeqIndex; }
 
@@ -101,6 +109,8 @@ class SweepHangChecker : public HangChecker {
         // The effective result of the loop after one meta-loop period
         LoopAnalysis _analysis;
 
+        DataDeltas _sweepDeltas;
+
         // The range of DP after which the sweep-loop behavior repeats. Only DP values in range of
         // [0, _deltaRange> should be considered when checking/proving hangs.
         int _deltaRange;
@@ -113,7 +123,7 @@ class SweepHangChecker : public HangChecker {
         std::set<std::shared_ptr<LoopAnalysis>> _incomingLoops;
         std::set<std::shared_ptr<LoopAnalysis>> _outgoingLoops;
 
-        void analyzeCombinedEffect(const SweepHangChecker& checker,
+        bool analyzeCombinedEffect(const SweepHangChecker& checker,
                                    const ExecutionState& executionState);
     };
 
@@ -122,7 +132,8 @@ class SweepHangChecker : public HangChecker {
       public:
         TransitionGroup(LocationInSweep loc) : _location(loc) {}
 
-        bool analyze(const SweepHangChecker& checker, const ExecutionState& executionState);
+        bool analyze(const SweepHangChecker& checker, const ExecutionState& executionState,
+                     bool forceStationary = false);
 
         bool isStationary() const { return _isStationary; }
         const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
@@ -148,7 +159,8 @@ class SweepHangChecker : public HangChecker {
         void addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
         void analyzeLoopPartPhase1(const SweepLoopVisitState& vs);
         bool analyzeLoopPartPhase2(const SweepLoopVisitState& vs);
-        bool analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state);
+        bool analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state,
+                                   bool forceStationary);
     };
 
     virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
@@ -188,7 +200,7 @@ class SweepHangChecker : public HangChecker {
     //
     // Note: This may also include changes outside this range, as a continuous sequence of
     // instructions is replayed from the program's run history.
-    void addContributionOfSweepLoopPass(const SweepHangChecker::SweepLoopVisitState vs,
+    bool addContributionOfSweepLoopPass(const SweepHangChecker::SweepLoopVisitState vs,
                                         SequenceAnalysis& analysis, int minDp, int maxDp) const;
     void addContributionOfSweepLoopStart(const SweepHangChecker::SweepLoopVisitState vs,
                                          SequenceAnalysis& analysis, int minDp, int maxDp) const;
@@ -198,8 +210,7 @@ class SweepHangChecker : public HangChecker {
     // When successful returns DP offset at end
     std::optional<int> visitSweepLoopParts(const SweepLoopVisitor& visitor,
                                            const ExecutionState& executionState,
-                                           int startSeqIndex, int dpStart,
-                                           int numLoopIterations = 1) const;
+                                           int startSeqIndex, SweepVisitOptions options = {}) const;
 
     const Location& locationInSweep(int seqIndex) const { return _locationsInSweep.at(seqIndex); }
     const LoopBehavior& loopBehavior(int seqIndex) const {

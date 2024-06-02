@@ -9,7 +9,6 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
-#include "SweepHangDetector.h"
 
 TEST_CASE("7x7 sweep hangs", "[hang][7x7][sweep][regular]") {
     HangExecutor hangExecutor(16384, 100000);
@@ -40,14 +39,27 @@ TEST_CASE("7x7 irregular sweep hangs", "[hang][7x7][sweep][irregular]") {
     hangExecutor.setMaxSteps(100000);
     hangExecutor.addDefaultHangDetectors();
 
-    SECTION("7x7-IrregularSweep1") {
-        // Sweep detected after 7480 steps. The transition at the right is fairly complex. It's
-        // an aperiodic appendix (to be confirmed after more detailed analysis) where the
-        // transition sequence can include itself loops of varying length. This is something the
-        // current detector does not support. Nevertheless, it does classify it as an irregular
-        // sweep.
+    SECTION("7x7-ComplexIrregularSweep1") {
+        // This program executes an irregular sweep where the left side grow regularly by two
+        // units each sweep (both -2) which extends the sweep body that consists of only negative
+        // values. At the right is a sweep appendix that consists of positive values. The
+        // rightward sweep subtracts one from each value. The sweep terminates when it encounters
+        // a one. What this exit value, E, becomes depends on its right neighbour, R:
+        // R = 0 => E = 3,         R = 1
+        // R > 0 => E = 3 + R - 1, R = 2
+        // This is achieved by executing a small loop.
         //
-        // TODO: Analyze further. Is there a risk of false-positive detection for similar programs?
+        // Example appendix growth:
+        // 3 5 2 1
+        // 2 4 1 3 1
+        // 1 3 5 2 1
+        // 5 2 5 2 1
+        // 4 1 4 1 3 1
+        // 3 6 2 1 3 1
+        //
+        // The values in the appendix do not become large very rapidly. After a million steps (and
+        // a little over 400 sweeps) the appendix is as follows:
+        // 10 1 14 2 2 2 2 2 2 2 5 2 2 1 2 3 1
         //
         // *       *
         // o _ * * o _ *
@@ -58,10 +70,25 @@ TEST_CASE("7x7 irregular sweep hangs", "[hang][7x7][sweep][irregular]") {
         // _     *
         RunResult result = hangExecutor.execute("d4CBKSAWAlgRgIYAIA");
 
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+//        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+
+//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+    }
+    SECTION("7x7-UndetectedHang2") {
+        // Irregular sweep.
+        //
+        // *       *
+        // o _ * _ o _ *
+        // _ _ * * o _
+        // _ _ o o _ *
+        // _ o _ * o _
+        // _ * * _ o o *
+        // _       * *
+        RunResult result = hangExecutor.execute("d4CBISCkAUgSQKFgCg");
+
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
-
-        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
 }

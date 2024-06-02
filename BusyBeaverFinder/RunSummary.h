@@ -177,6 +177,9 @@ public:
         return _sequenceBlocks[sequenceId]._startIndex;
     }
 
+    // Returns the index of the last loop with given sequenceId that has at least the given length.
+    std::optional<int> findLoopOfLength(int sequenceId, int length) const;
+
     // Returns "true" if both loop run blocks are equal when rotations are allowed. E.g. it returns
     // true when comparing "A B C" and "B C A". When this is the case, indexOffset gives the
     // conversion of an index of loop2 to that of loop1: index1 = (index2 + indexOffset) % period

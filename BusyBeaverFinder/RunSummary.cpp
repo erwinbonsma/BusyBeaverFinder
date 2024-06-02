@@ -156,15 +156,38 @@ int RunSummaryBase::getRunBlockLength(int startIndex, int endIndex) const {
     int runUnitStartIndex = _runBlocks[startIndex].getStartIndex();
 
     if (isLast) {
-        if (_pending > 0) {
-            // Last run block is completed. There are still some unassigned run units though
-            return _pending - runUnitStartIndex;
-        } else {
-            return getNumRunUnits() - runUnitStartIndex;
-        }
+        return (_pending > 0 ? _pending : _processed) - runUnitStartIndex;
     } else {
         return _runBlocks[endIndex].getStartIndex() - runUnitStartIndex;
     }
+}
+
+std::optional<int> RunSummaryBase::findLoopOfLength(int sequenceId, int length) const {
+    assert(sequenceId < _sequenceBlocks.size());
+
+    auto it = _runBlocks.rbegin();
+    if (it == _runBlocks.rend()) return {};
+
+    // Handle last run block as special case
+    if (it->getSequenceId() == sequenceId) {
+        int len = (_pending > 0 ? _pending : _processed) - it->getStartIndex();
+        if (len >= length) {
+            return &*it - &_runBlocks[0];
+        }
+    }
+
+    auto rbNext = it;
+    while (++it != _runBlocks.rend()) {
+        if (it->getSequenceId() == sequenceId) {
+            int len = rbNext->getStartIndex() - it->getStartIndex();
+            if (len >= length) {
+                return &*it - &_runBlocks[0];
+            }
+        }
+        rbNext = it;
+    }
+
+    return {};
 }
 
 int RunSummaryBase::getLoopIteration() const {

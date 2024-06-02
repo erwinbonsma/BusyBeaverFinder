@@ -9,7 +9,6 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
-//#include "SweepHangDetector.h"
 #include "MetaLoopHangDetector.h"
 
 const int dummySteps = 1;

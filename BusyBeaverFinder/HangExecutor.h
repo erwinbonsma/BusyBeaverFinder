@@ -48,6 +48,8 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     MetaRunSummary _metaMetaRunSummary;
     RunBlockTransitions _runBlockTransitions;
 
+    bool _verbose {};
+
     void resetHangDetection();
 
     RunResult executeBlock();
@@ -64,6 +66,8 @@ public:
     void addHangDetector(std::shared_ptr<HangDetector> hangDetector) {
         _hangDetectors.push_back(hangDetector);
     }
+
+    void setVerbose(bool setting) { _verbose = setting; }
 
     // Only applies to the next invocation of execute, after which it is reset to zero.
     void setHangDetectionStart(int numSteps) { _hangDetectionStart = numSteps; }
@@ -92,4 +96,6 @@ public:
     const RunBlockTransitions& getRunBlockTransitions() const override {
         return _runBlockTransitions;
     }
+
+    bool isVerbose() const override { return _verbose; };
 };
