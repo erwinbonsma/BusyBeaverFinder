@@ -443,7 +443,6 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         // _   * * *
         RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqA");
 
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
     }
