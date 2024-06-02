@@ -139,7 +139,7 @@ public:
 
     void setIdentifyShortLoops(bool flag) { _identifyShortLoops = flag; }
 
-    void reset();
+    virtual void reset();
     virtual bool processNewRunUnits() = 0;
 
     bool isInsideLoop() const { return _loop >= 0; }
@@ -232,6 +232,8 @@ protected:
 public:
     MetaRunSummary(const std::vector<RunBlock> &runHistory, int* helperBuf)
     : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
+
+    void reset() override;
 
     int rewriteCount() const { return _rewriteCount; }
     bool processNewRunUnits() override { return processNewHistory(_runHistory); };

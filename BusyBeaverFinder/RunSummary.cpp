@@ -496,3 +496,10 @@ void MetaRunSummary::exitedLoop() {
         _metaLoopDetector.reset();
     }
 }
+
+void MetaRunSummary::reset() {
+    RunSummaryBase::reset();
+
+    _metaLoopDetector.reset();
+    _rewriteCount = 0;
+}
