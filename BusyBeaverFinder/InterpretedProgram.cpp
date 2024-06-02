@@ -43,7 +43,9 @@ void InterpretedProgram::dumpBlock(const ProgramBlock* block, std::ostream &os) 
 }
 
 void InterpretedProgram::dump() const {
-    for (int i = 0; i < numProgramBlocks(); ++i) {
+    size_t numBlocks = numProgramBlocks();
+    std::cout << "numBlocks = " << numBlocks << std::endl;
+    for (int i = 0; i < numBlocks; ++i) {
         dumpBlock(programBlockAt(i), std::cout);
 
         std::cout << std::endl;
