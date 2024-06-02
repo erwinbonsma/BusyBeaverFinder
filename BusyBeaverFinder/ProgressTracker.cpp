@@ -29,6 +29,12 @@ ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
 }
 
 void ProgressTracker::report() {
+//    if (_searcher.getProgram().toString().rfind("Zv7+ktS9FoAlaw", 0) == 0) {
+//        std::cout << "At target program" << std::endl;
+//        _searcher.getProgram().dump();
+//        _searcher.dumpInstructionStack();
+//    }
+
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
     }
@@ -124,6 +130,7 @@ void ProgressTracker::reportAssumedHang() {
 
         if (_dumpUndetectedHangs) {
             std::cout << "Undetected hang: " << _searcher.getProgram().toString() << std::endl;
+            _searcher.getProgram().dump();
 //            _searcher.dumpInstructionStack();
         }
     }
