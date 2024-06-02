@@ -36,6 +36,7 @@ void HangExecutor::resetHangDetection() {
     _runSummary.reset();
     _metaRunSummary.reset();
     _metaMetaRunSummary.reset();
+    _runBlockTransitions.reset();
 
     for (auto hangDetector : _hangDetectors) {
         hangDetector->reset();
