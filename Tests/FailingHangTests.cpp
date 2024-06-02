@@ -46,7 +46,23 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // * _ _ _ _ *
         // * * o o *
         // o _ o *
-        RunResult result = hangExecutor.execute("ZgKCkpUoAqWEYA");
+        RunResult result = hangExecutor.execute("Zv6+kpUoAqW0bw");
+        hangExecutor.getInterpretedProgram()->dump();
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
+    SECTION("6x6-IrregularSweepWithTwoInSweepToggleValues") {
+        // Sweep where 1 is the in-sweep exit, and two toggle values, 2 and 3. The in-sweep exit
+        // is converted to a 3, and the toggle values are decreased by one each sweep.
+        //
+        //     * * *
+        //   * o o _ *
+        // * _ o o *
+        //   _ * o _ *
+        // * o _ _ *
+        // o _ o *
+        RunResult result = hangExecutor.execute("Zvq+UoW8n5C0bw");
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
