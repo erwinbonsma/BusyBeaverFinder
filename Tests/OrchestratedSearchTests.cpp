@@ -37,7 +37,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
 TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
     SearchSettings settings = defaultSearchSettings;
     settings.dataSize = 6000;
-    settings.maxHangDetectionSteps = 20000;
+    settings.maxHangDetectionSteps = 100000;
     settings.maxSteps = 100000;
 //    settings.testHangDetection = true;
 
@@ -57,6 +57,6 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
         REQUIRE(tracker.getTotalSuccess() == 6475715);
         REQUIRE(tracker.getTotalHangs() == 1546939);
         REQUIRE(tracker.getTotalErrors() == 0);
-        REQUIRE(tracker.getTotalDetectedHangs() == 1546929);
+        REQUIRE(tracker.getTotalDetectedHangs() == 1546932);
     }
 }
