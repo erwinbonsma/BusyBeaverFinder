@@ -120,7 +120,9 @@ bool IrregularSweepHangChecker::determineInSweepExits() {
 
                 // The <= and >= operators only apply for stationary loops.
                 // The != cannot apply for an irregular sweep loop, as its a solitary exit.
-                assert(exit.exitCondition.getOperator() == Operator::EQUALS);
+                if (exit.exitCondition.getOperator() != Operator::EQUALS) {
+                    return false;
+                }
 
                 if (exit.exitCondition.value() == 0) {
                     exitsOnZero = true;
@@ -158,15 +160,29 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
 
         // The toggle value should change to an in-sweep exit
         auto& deltas = sweepLoop.sweepLoopDeltas();
-        if (!deltas.size()) {
-            // The sweep should change some values to realize an irregular sweep
-            return false;
-        }
-        for (auto dd : deltas) {
-            if (props.insweepToggle + dd.delta() != props.insweepExit) {
-                // It does not (immediatly) change it to an in-sweep exit. This is not supported
-                // (yet).
+        if (deltas.size()) {
+            // Case 1: The sweep loop should change toggle values to in-sweep exits
+            for (auto dd : deltas) {
+                if (props.insweepToggle + dd.delta() != props.insweepExit) {
+                    // It does not (immediatly) change it to an in-sweep exit. This is not
+                    // supported (yet).
+                    return false;
+                }
+            }
+        } else {
+            // Case 2: The transition sequence changes a toggle value to an in-sweep exit.
+            auto& deltas = transition.transitionDeltas();
+            if (deltas.size() < 2) {
+                // There should be at least two deltas. One that changes the current in-sweep exit
+                // to a toggle, and a second that changes a toggle value to an in-sweep exit.
                 return false;
+            }
+            for (auto dd : deltas) {
+                if (dd.dpOffset() != 0 && props.insweepToggle + dd.delta() != props.insweepExit) {
+                    // It does not (immediatly) change it to an in-sweep exit. This is not
+                    // supported (yet).
+                    return false;
+                }
             }
         }
     }
@@ -235,6 +251,8 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     if (!determineInSweepExits()) {
         return false;
     }
+
+//    std::cout << *this;
 
     if (!determineInSweepToggles()) {
         return false;
