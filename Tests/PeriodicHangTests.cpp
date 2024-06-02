@@ -390,6 +390,21 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::PERIODIC);
     }
+    SECTION("6x6-PeriodicHangOverThreeMetaLoopIterations") {
+        // The meta-loop is only periodic when collapsing three iterations of the meta loop. Each
+        // meta-loop iteration it extends the sweep at the left with values 1 8 -3.
+        //
+        // ..***.
+        // .*oo_*
+        // .ooo*.
+        // .oo_*.
+        // *_oo_*
+        // oo**..
+        RunResult result = hangExecutor.execute("Zvq+UtW9S4Ulrw");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+    }
 }
 
 TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
