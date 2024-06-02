@@ -19,6 +19,8 @@ void MetaLoopHangDetector::reset() {
     _activeChecker = nullptr;
     _activeHang = HangType::UNKNOWN;
     _activeHangProofResult = Trilian::MAYBE;
+
+    clearAnalysis();
 }
 
 void MetaLoopHangDetector::clearAnalysis() {
