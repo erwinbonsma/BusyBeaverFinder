@@ -51,6 +51,10 @@ class IrregularSweepHangChecker : public SweepHangChecker {
         // The value that is toggled to an in-sweep exit
         int insweepToggle {};
 
+        // The delta that is applied to the values in the appendix. The following should hold:
+        // insweepToggle + n * insweepDelta = insweepExit, with n > 0
+        int insweepDelta {};
+
         // The DP where the appendix starts
         DataPointer appendixStart;
     };

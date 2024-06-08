@@ -236,4 +236,19 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
     }
+    SECTION("6x6-IrregularSweepWithTwoInSweepToggleValues") {
+        // Sweep where 1 is the in-sweep exit, and two toggle values, 2 and 3. The in-sweep exit
+        // is converted to a 3, and the toggle values are decreased by one each sweep.
+        //
+        //     * * *
+        //   * o o _ *
+        // * _ o o *
+        //   _ * o _ *
+        // * o _ _ *
+        // o _ o *
+        RunResult result = hangExecutor.execute("Zvq+UoW8n5C0bw");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+    }
 }

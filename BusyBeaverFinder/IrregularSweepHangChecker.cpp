@@ -178,14 +178,24 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
 
         // The toggle value should change to an in-sweep exit
         auto& deltas = sweepLoop.sweepLoopDeltas();
+        props.insweepDelta = 0;
         if (deltas.size()) {
             // Case 1: The sweep loop should change toggle values to in-sweep exits
             for (auto dd : deltas) {
-                if (props.insweepToggle + dd.delta() != props.insweepExit) {
-                    // It does not (immediatly) change it to an in-sweep exit. This is not
-                    // supported (yet).
+                if (!props.insweepDelta) {
+                    props.insweepDelta = dd.delta();
+                } else if (props.insweepDelta != dd.delta()) {
+                    // There should only be a single delta value. This ensures that each toggle
+                    // value eventually changes into an in-sweep exit
                     return false;
                 }
+            }
+
+            // The following should hold: insweepToggle + n * delta = insweepExit, with n > 0
+            int diff = props.insweepExit - props.insweepToggle;
+            if (diff % props.insweepDelta != 0 || diff * props.insweepDelta < 0) {
+                // Repeated addition of delta to toggle does not result in an insweep exit
+                return false;
             }
         } else {
             // Case 2: The transition sequence changes a toggle value to an in-sweep exit.
@@ -196,12 +206,17 @@ bool IrregularSweepHangChecker::determineInSweepToggles() {
                 return false;
             }
             for (auto dd : deltas) {
-                if (dd.dpOffset() != 0 && props.insweepToggle + dd.delta() != props.insweepExit) {
+                if (dd.dpOffset() == 0) {
+                    continue;
+                }
+                if (props.insweepToggle + dd.delta() != props.insweepExit) {
                     // It does not (immediatly) change it to an in-sweep exit. This is not
                     // supported (yet).
                     return false;
                 }
             }
+
+            props.insweepDelta = props.insweepExit - props.insweepToggle;
         }
     }
 
@@ -374,8 +389,16 @@ bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState&
                 }
             } else {
                 if (dvCmpFun(*dp, 0) == 0) {
-                    // Pollution should move away from zero
-                    return false;
+                    // This value moves towards zero. It should change into an insweep exit.
+                    //
+                    // This check ensures that the number of active values in the appendix does not
+                    // decrease. Programs may initially fail this check, but can pass it when this
+                    // limited set of values has become pollution that moves away from zero.
+                    if ((*dp - props.insweepExit) % props.insweepDelta != 0) {
+                        return false;
+                    }
+                } else {
+                    // The appendix is polluted with values that move away from zero. That is okay.
                 }
             }
         }
