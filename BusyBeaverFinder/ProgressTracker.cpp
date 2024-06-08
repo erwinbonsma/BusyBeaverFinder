@@ -42,7 +42,6 @@ void ProgressTracker::report() {
         _searcher.dumpInstructionStack();
     }
 
-//    _searcher.dumpInstructionStack();
 //    _searcher.getProgram().dump();
 //    _searcher.getInterpretedProgram().dump();
 //    _searcher.dumpExecutionState();
@@ -65,18 +64,16 @@ void ProgressTracker::reportDone(int totalSteps) {
     _totalSuccess++;
 
     if (_dumpDone) {
-        std::cout << "Done(" << totalSteps << "): ";
-        _searcher.dumpInstructionStack();
+        std::cout << "Done(" << totalSteps << "): "
+        << _searcher.getProgram().toString() << std::endl;
     }
 
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
 
-        std::cout << "Faulty hang, type = " << (int)_detectedHang
-        << ", steps = " << totalSteps << std::endl;
-        _searcher.getProgram().dump();
-        _searcher.dumpInstructionStack();
+        std::cout << "False positive, type = " << (int)_detectedHang << ", steps = " << totalSteps
+        << ": " << _searcher.getProgram().toString() << std::endl;
 
         _detectedHang = HangType::UNDETECTED;
     }
@@ -85,9 +82,8 @@ void ProgressTracker::reportDone(int totalSteps) {
         _maxStepsSofar = totalSteps;
         _searcher.getProgram().clone(_bestProgram);
         if (_maxStepsSofar > _dumpBestSofarLimit) {
-            std::cout << "Best sofar = " << _maxStepsSofar << std::endl;
-            _bestProgram.dump();
-            _searcher.dumpInstructionStack();
+            std::cout << "Best sofar = " << _maxStepsSofar
+            << ": " << _bestProgram.toString() << std::endl;
 //            _searcher.getData().dump();
             dumpStats();
         }
@@ -106,8 +102,7 @@ void ProgressTracker::reportError() {
         _totalErrorsByType[(int)HangType::UNDETECTED]++;
 
         if (_dumpUndetectedHangs) {
-            std::cout << "Error: ";
-            _searcher.dumpInstructionStack();
+            std::cout << "Error: " << _searcher.getProgram().toString() << std::endl;
         }
     }
 
@@ -123,15 +118,13 @@ void ProgressTracker::reportAssumedHang() {
     } else {
         _totalHangsByType[(int)HangType::UNDETECTED]++;
 
-//        _searcher.dumpInstructionStack();
 //        _searcher.getProgram().dump();
 //        _searcher.getInterpretedProgram().dump();
 //        _searcher.getProgram().dumpWeb();
 
         if (_dumpUndetectedHangs) {
             std::cout << "Undetected hang: " << _searcher.getProgram().toString() << std::endl;
-            _searcher.getProgram().dump();
-//            _searcher.dumpInstructionStack();
+//            _searcher.getProgram().dump();
         }
     }
 
@@ -141,16 +134,15 @@ void ProgressTracker::reportAssumedHang() {
 void ProgressTracker::reportLateEscape(int numSteps) {
     _totalLateEscapes++;
 
-    std::cout << "Late escape (" << numSteps << "): ";
-    _searcher.dumpInstructionStack();
+    std::cout << "Late escape (" << numSteps << "): "
+    << _searcher.getProgram().toString() << std::endl;
 
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
 
-        std::cout << "Faulty hang, type = " << (int)_detectedHang << std::endl;
-        _searcher.getProgram().dump();
-        _searcher.dumpInstructionStack();
+        std::cout << "False positive, type = " << (int)_detectedHang
+        << ": " << _searcher.getProgram().toString() << std::endl;
 
         _detectedHang = HangType::UNDETECTED;
     }
@@ -169,9 +161,8 @@ void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillCo
         return;
     }
 
-//    std::cout << "Detected hang" << std::endl;
+//    std::cout << "Detected hang: " << _searcher.getProgram().toString() << std::endl;
 //    _searcher.getProgram().dump();
-//    _searcher.dumpInstructionStack();
 //    _searcher.getData().dump();
 
     _totalHangsByType[(int)hangType]++;
@@ -225,7 +216,7 @@ void ProgressTracker::dumpStats() {
         std::cout << getTotalDetectedErrors() << "/";
     }
     std::cout << getTotalErrors()
-    << ", Hangs=" << getTotalDetectedHangs() << "/" << getTotalHangs()
+    << ", Hangs=" << (getTotalHangs() - getTotalDetectedHangs()) << "/" << getTotalDetectedHangs()
     << ", Fast execs=" << getTotalLateEscapes() << "/" << getTotalFastExecutions()
     << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
     << ", Max steps until hang detected=" << _maxStepsUntilHangDetection << " steps"
