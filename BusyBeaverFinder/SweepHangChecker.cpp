@@ -711,6 +711,7 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker) {
     os << "Left transition: " << std::endl << checker.leftTransition().combinedAnalysis();
+    os << checker.leftTransition().transitionDeltas() << std::endl;
     os << "Left sweep: " << std::endl << checker.leftSweepLoop().combinedAnalysis();
     if (auto &transition = checker.midTransition()) {
         os << "Mid transition: " << std::endl << transition->combinedAnalysis();
@@ -719,6 +720,7 @@ std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker) {
         os << "Right sweep: " << std::endl << loop->combinedAnalysis();
     }
     os << "Right transition: " << std::endl << checker.rightTransition().combinedAnalysis();
+    os << checker.rightTransition().transitionDeltas() << std::endl;
 
     return os;
 }

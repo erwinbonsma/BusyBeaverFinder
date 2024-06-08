@@ -204,6 +204,15 @@ bool IrregularSweepHangChecker::determineInSweepToggles(IrregularAppendixProps& 
             // Repeated addition of delta to toggle does not result in an insweep exit
             return false;
         }
+
+        // Any values that the transition modifies next to the exit should apply the same in-sweep
+        // delta. Otherwise there can be false positive detections (e.g. for BB 7x7 #117273)
+        auto& transDeltas = transition.transitionDeltas();
+        for (auto dd : transDeltas) {
+            if (dd.dpOffset() != 0 && dd.delta() != props.insweepDelta) {
+                return false;
+            }
+        }
     } else {
         // Case 2: The transition sequence changes a toggle value to an in-sweep exit.
         auto& deltas = transition.transitionDeltas();
