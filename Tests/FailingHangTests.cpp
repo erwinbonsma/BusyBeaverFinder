@@ -106,5 +106,9 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
     hangExecutor.setMaxSteps(100000);
     hangExecutor.addDefaultHangDetectors();
 
-    // No known failures currently!
-}
+    SECTION("7x7-FalsePositive") {
+        RunResult result = hangExecutor.execute("d7+tCSNFjgc0bJSzu8");
+
+        // TEMP: Should not be detected as hang
+        REQUIRE(result == RunResult::DETECTED_HANG);
+    }}
