@@ -51,6 +51,30 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
+    SECTION("6x6-DualEndedIrregularSweep") {
+        // Sweep hang with an irregularly growing appendix at both ends.
+        //
+        // On top of that, the behavior at the right side is unusual. Here, the in-sweep exit is
+        // zero and the toggle value is one. It toggles values in the appendix when the sweep
+        // returns, but only (about) half of the appendix values it traverses. It sets the
+        // immediate neighbour to zero, and every second value in the appendix.
+        //
+        // The appendix at the left has an in-sweep exit of -1, and toggle value of -2. The sweep
+        // body consists of two values that both move towards negative infinity.
+        //
+        // The data after 1000 steps is: ... 0 -2 -2 -2 -1 -4 -13 1 1 1 1 1 1 0 ...
+        //
+        //     * * *
+        //   * o o _ *
+        //   * o o o *
+        // * _ o o *
+        // * o * *
+        // o o *
+        RunResult result = hangExecutor.execute("Zvq+UuVoW5r1vw");
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
 }
 
 TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
