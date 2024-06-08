@@ -47,30 +47,9 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // * * o o *
         // o _ o *
         RunResult result = hangExecutor.execute("Zv6+kpUoAqW0bw");
-        hangExecutor.getInterpretedProgram()->dump();
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
-    }
-    SECTION("6x6-IrregularShrinkingSweep") {
-        // A sweep with at the left a regular end that extends each sweep by one. At the right,
-        // after a few bootstrapping sweeps, the sweep body shrinks every few iterations. The
-        // number of sweeps in between these shrinkages increases linearly. This happens because
-        // at the right there is a counter that is decreased each sweep, but after every shrinkage
-        // its start value is increased by one.
-        //
-        //     * * *
-        //   * o o _ *
-        //   o o o *
-        // * o _ o _ *
-        // * _ _ *
-        // o o *
-        RunResult result = hangExecutor.execute("Zvq+UtW5EoL1vw");
-        hangExecutor.dumpExecutionState();
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::ASSUMED_HANG);
-
     }
 }
 

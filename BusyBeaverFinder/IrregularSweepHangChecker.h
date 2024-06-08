@@ -12,37 +12,11 @@
 #include "SweepHangChecker.h"
 
 class IrregularSweepHangChecker : public SweepHangChecker {
-  public:
-    virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
-                      const ExecutionState& executionState) override;
+    struct EndProps {
+        explicit EndProps(LocationInSweep location) : location(location) {}
 
-    bool isIrregular(DataDirection sweepEnd) const {
-        return _endProps.find(mapDataDir(sweepEnd)) != _endProps.end();
-    }
-    // The in-sweep exit is the value inside the sweep appendix that ends the sweep loop.
-    int insweepExit(DataDirection sweepEnd) const {
-        return _endProps.at(mapDataDir(sweepEnd)).insweepExit;
-    }
-    // The in-sweep toggle is the value inside the sweep appendix that does not cause the sweep to
-    // exit, but is toggled to an exit value when it is traversed.
-    //
-    // Note: In complex programs there could be more than one toggle value, where toggle values
-    // are also chained. In practise these do not occur for small programs so these are not (yet?)
-    // supported.
-    int insweepToggle(DataDirection sweepEnd) const {
-        return _endProps.at(mapDataDir(sweepEnd)).insweepToggle;
-    }
-
-  protected:
-    bool sweepLoopContinuesForever(const ExecutionState& executionState,
-                                   SweepLoop* loop, int seqIndex) override;
-    bool transitionContinuesForever(const ExecutionState& executionState,
-                                    TransitionGroup* transition, int seqIndex) override;
-
-  private:
-    LocationInSweep mapDataDir(DataDirection dir) const {
-        return dir == DataDirection::LEFT ? LocationInSweep::LEFT : LocationInSweep::RIGHT;
-    }
+        LocationInSweep location {};
+    };
 
     // Used for irregular sweep-ends with a (growing) appendix.
     //
@@ -51,13 +25,9 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     //   in-sweep exit (or the appendix end is reached)
     // - Appendices with a counter where the sweep exit only toggles the exit value and a
     //   neighouring value
-    //
-    // Note: Not used when end is irregular but the sequence shrinks. This happens with this
-    // behavior:
-    // - The sweep shrinks when an insweep counter reaches zero. The start value of the next
-    //   counter has a higher start value, which results in irregular shrinkage.
-    struct IrregularAppendixProps {
-        LocationInSweep location {};
+    struct IrregularAppendixProps : public EndProps {
+        explicit IrregularAppendixProps(LocationInSweep location) : EndProps(location) {}
+        IrregularAppendixProps(const IrregularAppendixProps&) = default;
 
         // The value of the in-sweep exit
         int insweepExit {};
@@ -73,23 +43,84 @@ class IrregularSweepHangChecker : public SweepHangChecker {
         DataPointer appendixStart;
     };
 
+    // Used for irregular sweeps that shrink the sequence at their end. This happens with this
+    // behavior:
+    // - The sweep shrinks when an in-sweep counter reaches zero. The start value of the next
+    //   counter has a higher start value, which results in irregular shrinkage.
+    struct ShrinkingEndProps : public EndProps {
+        explicit ShrinkingEndProps(LocationInSweep location) : EndProps(location) {}
+        ShrinkingEndProps(const ShrinkingEndProps&) = default;
+
+        // The value that causes the sweep loop to exit
+        int loopExit;
+
+        // The sign of the counter value
+        bool counterIsPositive;
+    };
+
+  public:
+    virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
+                      const ExecutionState& executionState) override;
+
+    bool isIrregular(DataDirection sweepEnd) const {
+        return _endProps.find(mapDataDir(sweepEnd)) != _endProps.end();
+    }
+    bool isGrowing(DataDirection sweepEnd) const {
+        return std::holds_alternative<IrregularAppendixProps>(_endProps.at(mapDataDir(sweepEnd)));
+    }
+
+    // The in-sweep exit is the value inside the sweep appendix that ends the sweep loop.
+    int insweepExit(DataDirection sweepEnd) const {
+        return std::get<IrregularAppendixProps>(_endProps.at(mapDataDir(sweepEnd))).insweepExit;
+    }
+    // The in-sweep toggle is the value inside the sweep appendix that does not cause the sweep to
+    // exit, but is toggled to an exit value when it is traversed.
+    //
+    // Note: In complex programs there could be more than one toggle value, where toggle values
+    // are also chained. In practise these do not occur for small programs so these are not (yet?)
+    // supported.
+    int insweepToggle(DataDirection sweepEnd) const {
+        return std::get<IrregularAppendixProps>(_endProps.at(mapDataDir(sweepEnd))).insweepToggle;
+    }
+
+  protected:
+    bool sweepLoopContinuesForever(const ExecutionState& executionState,
+                                   SweepLoop* loop, int seqIndex) override;
+    bool transitionContinuesForever(const ExecutionState& executionState,
+                                    TransitionGroup* transition, int seqIndex) override;
+
+    bool growingTransitionContinuesForever(const ExecutionState& executionState,
+                                            TransitionGroup* transition, int seqIndex);
+    bool shrinkingTransitionContinuesForever(const ExecutionState& executionState,
+                                             TransitionGroup* transition, int seqIndex);
+  private:
+    LocationInSweep mapDataDir(DataDirection dir) const {
+        return dir == DataDirection::LEFT ? LocationInSweep::LEFT : LocationInSweep::RIGHT;
+    }
+
     bool checkMetaMetaLoop(const ExecutionState& executionState);
     bool findIrregularEnds();
 
     // Determines if there is a growing appendix and if it behaves as expected
     bool checkForAppendix(LocationInSweep location, const ExecutionState& executionState);
 
-    // For the irregular ends where there is a (growing) appendix
+    bool checkForShrinkage(LocationInSweep location);
+
+    // For irregular ends where with a (growing) appendix
     bool determineInSweepExits(IrregularAppendixProps& props);
     bool determineInSweepToggles(IrregularAppendixProps& props);
     bool determineAppendixStarts(IrregularAppendixProps& props,
                                  const ExecutionState& executionState);
 
+    // For irregular ends that shrink.
+    bool determineLoopExitValue(ShrinkingEndProps& props);
+    bool determineCounterDelta(ShrinkingEndProps& props);
+
     std::vector<LocationInSweep> _irregularEnds;
 
     // Most of analysis supports case where both ends are irregular, so use a map to store
     // properties
-    std::map<LocationInSweep, IrregularAppendixProps> _endProps;
+    std::map<LocationInSweep, std::variant<IrregularAppendixProps, ShrinkingEndProps>> _endProps;
 
     // However, proof currently supports only one irregular end. Track it here.
     LocationInSweep _irregularEnd;

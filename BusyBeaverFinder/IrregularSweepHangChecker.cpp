@@ -240,7 +240,7 @@ bool IrregularSweepHangChecker::determineInSweepToggles(IrregularAppendixProps& 
 
 bool IrregularSweepHangChecker::determineAppendixStarts(IrregularAppendixProps& props,
                                                         const ExecutionState& executionState) {
-    std::optional<int> start;
+    std::optional<int> start {};
     auto targetLocation = props.location;
     auto &cmp = props.location == LocationInSweep::LEFT ? FUN_MAX : FUN_MIN;
 
@@ -269,7 +269,7 @@ bool IrregularSweepHangChecker::determineAppendixStarts(IrregularAppendixProps& 
 
 bool IrregularSweepHangChecker::checkForAppendix(LocationInSweep location,
                                                  const ExecutionState& executionState) {
-    IrregularAppendixProps props { .location = location };
+    IrregularAppendixProps props { location };
 
     if (!determineInSweepExits(props)) {
         return false;
@@ -283,7 +283,140 @@ bool IrregularSweepHangChecker::checkForAppendix(LocationInSweep location,
         return false;
     }
 
-    _endProps[location] = props;
+    _endProps.insert({ location, props });
+
+    return true;
+}
+
+bool IrregularSweepHangChecker::determineLoopExitValue(ShrinkingEndProps& props) {
+    auto& incomingSweeps = (props.location == LocationInSweep::LEFT
+                            ? leftSweepLoop().incomingLoops()
+                            : rightSweepLoop() ? rightSweepLoop().value().incomingLoops()
+                            : leftSweepLoop().outgoingLoops());
+
+    std::optional<int> loopExit {};
+    for (auto& analysis : incomingSweeps) {
+        // Check that the loop exits on zero
+        for (auto& exit : analysis->loopExits()) {
+            if (exit.exitWindow != ExitWindow::ANYTIME) {
+                continue;
+            }
+
+            if (exit.exitCondition.getOperator() != Operator::EQUALS) {
+                return false;
+            }
+
+            if (exit.exitCondition.value() == 0) {
+                // The loop should never reach a zero. It should end when the non-zero counter
+                // becomes zero
+                return false;
+            }
+
+            if (!loopExit) {
+                loopExit = exit.exitCondition.value();
+            } else {
+                if (loopExit.value() != exit.exitCondition.value()) {
+                    // Only support a single delta for the loop counter
+                    return false;
+                }
+            }
+        }
+    }
+
+    if (!loopExit) {
+        return false;
+    }
+
+    props.loopExit = loopExit.value();
+
+    return true;
+}
+
+bool IrregularSweepHangChecker::determineCounterDelta(ShrinkingEndProps& props) {
+    auto& transition = (props.location == LocationInSweep::LEFT
+                        ? leftTransition()
+                        : rightTransition());
+
+    // Check that the following holds:
+    // 1. The loop exit remains unchanged (it does not cause the sweep to move)
+    // 2. There is an in-sweep delta that moves a counter towards zero that eventually becomes the
+    //    new loop exit.
+    // 3. There is another in-sweep delta, even more inside the sweep, that increments the next
+    //    counter.
+
+    auto& deltas = transition.transitionDeltas();
+    bool atLeft = props.location == LocationInSweep::LEFT;
+    std::optional<DataDelta> curDelta;
+    std::optional<DataDelta> nxtDelta;
+
+    for (auto dd : deltas) {
+        if (dd.dpOffset() == 0) {
+            // The loop exit should remain unchanged
+            return false;
+        }
+
+        bool inside = atLeft == (dd.dpOffset() > 0);
+        if (inside) {
+            if (!curDelta) {
+                curDelta = dd;
+            } else if (!nxtDelta) {
+                if (atLeft == (dd.dpOffset() > curDelta.value().dpOffset())) {
+                    nxtDelta = dd;
+                } else {
+                    nxtDelta = curDelta;
+                    curDelta = dd;
+                }
+            } else {
+                // Only support two in-sweep deltas
+                return false;
+            }
+        } else {
+            // The values outside the sweep should move away from zero
+            if ((props.loopExit > 0) != (dd.delta() > 0)) {
+                return false;
+            }
+        }
+    }
+
+    if (!nxtDelta) {
+        // There should be two in-sweep deltas
+        return false;
+    }
+
+    if (nxtDelta.value().delta() * curDelta.value().delta() >= 0) {
+        // The values should have opposite signs
+        return false;
+    }
+
+    if (abs(curDelta.value().delta()) != 1) {
+        // For now only support decrementing the counter by one. This ensures that the counter
+        // will reach zero (as long as its sign is correct).
+        return false;
+    }
+
+    props.counterIsPositive = curDelta.value().delta() > 0;
+
+    return true;
+}
+
+bool IrregularSweepHangChecker::checkForShrinkage(LocationInSweep location) {
+    ShrinkingEndProps props { location };
+
+    if (!determineCounterDelta(props)) {
+        return false;
+    }
+
+    if (!determineCounterDelta(props)) {
+        return false;
+    }
+
+    auto& oppTransition = location == LocationInSweep::LEFT ? rightTransition() : leftTransition();
+    if (oppTransition.isStationary()) {
+        // The sweep needs to grow at the other side for the program to hang
+        return false;
+    }
+
+    _endProps.insert({ location, props });
 
     return true;
 }
@@ -318,7 +451,7 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
     _endProps.clear();
     for (auto location : _irregularEnds) {
-        if (!checkForAppendix(location, executionState)) {
+        if (!checkForAppendix(location, executionState) && !checkForShrinkage(location)) {
             return false;
         }
     }
@@ -367,26 +500,10 @@ bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& 
     return true;
 }
 
-bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState& executionState,
-                                                           TransitionGroup* transition,
-                                                           int seqIndex) {
-    bool checkAppendix = false;
+bool IrregularSweepHangChecker::growingTransitionContinuesForever
+    (const ExecutionState& executionState, TransitionGroup* transition, int seqIndex) {
+
     bool atLeft = _irregularEnd == LocationInSweep::LEFT;
-
-    if (atLeft) {
-        if (transition == &_leftTransition) {
-            checkAppendix = true;
-        }
-    } else {
-        if (transition == &_rightTransition) {
-            checkAppendix = true;
-        }
-    }
-
-    if (!checkAppendix) {
-        // Use regular transition check
-        return SweepHangChecker::transitionContinuesForever(executionState, transition, seqIndex);
-    }
 
     // Check the appendix. It should consist of only in-sweep exits, in-sweep toggles and
     // pollution that moves away from zero. Beyond the appendix there should only be zeroes ahead.
@@ -395,9 +512,7 @@ bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState&
     auto &dpCmpFun = atLeft ? FUN_MAX_PTR : FUN_MIN_PTR;
     int dpDelta = atLeft ? -1 : 1;
     DataPointer dpLimit = atLeft ? data.getMinBoundP() : data.getMaxBoundP();
-    auto &props = (atLeft
-                   ? _endProps.at(LocationInSweep::LEFT)
-                   : _endProps.at(LocationInSweep::RIGHT));
+    auto &props = std::get<IrregularAppendixProps>(_endProps.at(_irregularEnd));
     DataPointer appendixStart = props.appendixStart;
     auto &dvCmpFun = props.insweepToggle > props.insweepExit ? FUN_MIN : FUN_MAX;
 
@@ -435,4 +550,40 @@ bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState&
     }
 
     return true;
+}
+
+bool IrregularSweepHangChecker::shrinkingTransitionContinuesForever
+    (const ExecutionState& executionState, TransitionGroup* transition, int seqIndex) {
+
+    // TODO
+
+    return true;
+}
+
+bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState& executionState,
+                                                           TransitionGroup* transition,
+                                                           int seqIndex) {
+    bool atIrregularEnd = false;
+    bool atLeft = _irregularEnd == LocationInSweep::LEFT;
+
+    if (atLeft) {
+        if (transition == &_leftTransition) {
+            atIrregularEnd = true;
+        }
+    } else {
+        if (transition == &_rightTransition) {
+            atIrregularEnd = true;
+        }
+    }
+
+    if (!atIrregularEnd) {
+        // Use regular transition check
+        return SweepHangChecker::transitionContinuesForever(executionState, transition, seqIndex);
+    }
+
+    if (std::holds_alternative<IrregularAppendixProps>(_endProps.at(_irregularEnd))) {
+        return growingTransitionContinuesForever(executionState, transition, seqIndex);
+    } else {
+        return shrinkingTransitionContinuesForever(executionState, transition, seqIndex);
+    }
 }

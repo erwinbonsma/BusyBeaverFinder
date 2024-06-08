@@ -251,4 +251,22 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
     }
+    SECTION("6x6-IrregularShrinkingSweep") {
+        // A sweep with at the left a regular end that extends each sweep by one. At the right,
+        // after a few bootstrapping sweeps, the sweep body shrinks every few iterations. The
+        // number of sweeps in between these shrinkages increases linearly. This happens because
+        // at the right there is a counter that is decreased each sweep, but after every shrinkage
+        // its start value is increased by one.
+        //
+        //     * * *
+        //   * o o _ *
+        //   o o o *
+        // * o _ o _ *
+        // * _ _ *
+        // o o *
+        RunResult result = hangExecutor.execute("Zvq+UtW5EoL1vw");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+    }
 }
