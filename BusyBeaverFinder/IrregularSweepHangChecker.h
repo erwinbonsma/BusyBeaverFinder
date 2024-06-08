@@ -44,11 +44,25 @@ class IrregularSweepHangChecker : public SweepHangChecker {
         return dir == DataDirection::LEFT ? LocationInSweep::LEFT : LocationInSweep::RIGHT;
     }
 
-    struct IrregularEndProps {
+    // Used for irregular sweep-ends with a (growing) appendix.
+    //
+    // This includes the following behaviors:
+    // - Appendices with a binary-like counter, where the sweep toggles values until the
+    //   in-sweep exit (or the appendix end is reached)
+    // - Appendices with a counter where the sweep exit only toggles the exit value and a
+    //   neighouring value
+    //
+    // Note: Not used when end is irregular but the sequence shrinks. This happens with this
+    // behavior:
+    // - The sweep shrinks when an insweep counter reaches zero. The start value of the next
+    //   counter has a higher start value, which results in irregular shrinkage.
+    struct IrregularAppendixProps {
+        LocationInSweep location {};
+
         // The value of the in-sweep exit
         int insweepExit {};
 
-        // The value that is toggled to an in-sweep exit
+        // The value that is an in-sweep exit toggles to
         int insweepToggle {};
 
         // The delta that is applied to the values in the appendix. The following should hold:
@@ -61,13 +75,21 @@ class IrregularSweepHangChecker : public SweepHangChecker {
 
     bool checkMetaMetaLoop(const ExecutionState& executionState);
     bool findIrregularEnds();
-    bool determineInSweepExits();
-    bool determineInSweepToggles();
-    bool determineAppendixStarts(const ExecutionState& executionState);
+
+    // Determines if there is a growing appendix and if it behaves as expected
+    bool checkForAppendix(LocationInSweep location, const ExecutionState& executionState);
+
+    // For the irregular ends where there is a (growing) appendix
+    bool determineInSweepExits(IrregularAppendixProps& props);
+    bool determineInSweepToggles(IrregularAppendixProps& props);
+    bool determineAppendixStarts(IrregularAppendixProps& props,
+                                 const ExecutionState& executionState);
+
+    std::vector<LocationInSweep> _irregularEnds;
 
     // Most of analysis supports case where both ends are irregular, so use a map to store
     // properties
-    std::map<LocationInSweep, IrregularEndProps> _endProps;
+    std::map<LocationInSweep, IrregularAppendixProps> _endProps;
 
     // However, proof currently supports only one irregular end. Track it here.
     LocationInSweep _irregularEnd;
