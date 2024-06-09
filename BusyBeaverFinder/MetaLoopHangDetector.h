@@ -35,7 +35,7 @@ class MetaLoopHangDetector : public HangDetector {
 
   protected:
     void clearAnalysis() override;
-    bool shouldCheckNow(bool loopContinues) const override;
+    bool shouldCheckNow() const override;
     bool analyzeHangBehaviour() override;
     Trilian proofHang() override;
 

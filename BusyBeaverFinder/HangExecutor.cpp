@@ -27,7 +27,7 @@ HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
 }
 
 void HangExecutor::addDefaultHangDetectors() {
-    _hangDetectors.push_back(std::make_shared<PeriodicHangDetector>(*this));
+//    _hangDetectors.push_back(std::make_shared<PeriodicHangDetector>(*this));
     _hangDetectors.push_back(std::make_shared<MetaLoopHangDetector>(*this));
 }
 
@@ -95,7 +95,8 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
         _runHistory.push_back(_block);
-        if (_runSummary.processNewRunUnits()) {
+        bool runBlockAdded = _runSummary.processNewRunUnits();
+        if (runBlockAdded) {
             _runBlockTransitions.processNewRunBlocks();
             if (_metaRunSummary.processNewRunUnits()) {
                 _metaMetaRunSummary.processNewRunUnits();
@@ -108,13 +109,18 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
         }
 
         if (_runSummary.isInsideLoop()) {
-            bool loopContinues = _runSummary.loopContinues(_block->getStartIndex());
+            _loopRunState = (runBlockAdded
+                             ? LoopRunState::STARTED
+                             : (_runSummary.loopContinues(_block->getStartIndex())
+                                ? LoopRunState::RUNNING
+                                : LoopRunState::ENDED));
 //            if (!loopContinues) {
 //                _data.dump();
 //                _runSummary.dumpCondensed(true);
 //            }
+//            std::cout << "loopPhase = " << static_cast<int>(loopPhase) << std::endl;
             for (auto hangDetector : _hangDetectors) {
-                if (hangDetector->detectHang(loopContinues)) {
+                if (hangDetector->detectHang()) {
                     _detectedHang = hangDetector;
                     return RunResult::DETECTED_HANG;
                 }

@@ -13,8 +13,9 @@
 PeriodicHangDetector::PeriodicHangDetector(const ExecutionState& execution)
     : HangDetector(execution) {}
 
-bool PeriodicHangDetector::shouldCheckNow(bool loopContinues) const {
-    return loopContinues && _execution.getRunSummary().isAtEndOfLoop();
+bool PeriodicHangDetector::shouldCheckNow() const {
+    return (_execution.getLoopRunState() == LoopRunState::RUNNING
+            && _execution.getRunSummary().isAtEndOfLoop());
 }
 
 bool PeriodicHangDetector::analyzeHangBehaviour() {

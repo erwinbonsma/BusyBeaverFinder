@@ -47,6 +47,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     MetaRunSummary _metaRunSummary;
     MetaRunSummary _metaMetaRunSummary;
     RunBlockTransitions _runBlockTransitions;
+    LoopRunState _loopRunState;
 
     bool _verbose {};
 
@@ -89,6 +90,7 @@ public:
 
     const Data& getData() const override { return _data; }
 
+    LoopRunState getLoopRunState() const override { return _loopRunState; }
     const RunHistory& getRunHistory() const override { return _runHistory; }
     const RunSummary& getRunSummary() const override { return _runSummary; }
     const MetaRunSummary& getMetaRunSummary() const override { return _metaRunSummary; }

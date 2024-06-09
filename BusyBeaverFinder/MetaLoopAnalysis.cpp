@@ -397,7 +397,7 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
     }
 
     // Check if the previous analysis still applies
-    assert(_numRunBlocks < executionState.getRunSummary().getNumRunBlocks());
+    assert(_numRunBlocks <= executionState.getRunSummary().getNumRunBlocks());
 
     int rbIndex = _numRunBlocks;
     auto &runSummary = executionState.getRunSummary();

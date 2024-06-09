@@ -659,10 +659,20 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
     }
 
     int loopSize = _metaLoopAnalysis->loopSize();
-
-    // The index of the run block whose execution is just about to start
-    int seqIndex = (numRunBlocks - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
+    int seqIndex;
+    auto loopRunState = executionState.getLoopRunState();
+    if (loopRunState == LoopRunState::ENDED) {
+        // The index of the run block whose execution is just about to start
+        seqIndex = (numRunBlocks - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
+    } else {
+        assert(loopRunState == LoopRunState::STARTED);
+        // The index of the running loop
+        seqIndex = (numRunBlocks - 1 - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
+    }
     auto &loc = locationInSweep(seqIndex);
+//    std::cout << "seqIndex = " << seqIndex
+//    << ", start = " << static_cast<int>(loc.start)
+//    << ", end = " << static_cast<int>(loc.end) << std::endl;
 
     // Check if a sweep loop is about to start and if we should check if it runs forever.
     //
@@ -711,14 +721,20 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker) {
     os << "Left transition: " << std::endl << checker.leftTransition().combinedAnalysis();
-    os << checker.leftTransition().transitionDeltas() << std::endl;
+    os << checker.leftTransition().transitionDeltas() << std::endl << std::endl;
+
     os << "Left sweep: " << std::endl << checker.leftSweepLoop().combinedAnalysis();
+    os << checker.leftSweepLoop().sweepLoopDeltas() << std::endl << std::endl;
+
     if (auto &transition = checker.midTransition()) {
         os << "Mid transition: " << std::endl << transition->combinedAnalysis();
     }
+
     if (auto &loop = checker.rightSweepLoop()) {
         os << "Right sweep: " << std::endl << loop->combinedAnalysis();
+        os << loop->sweepLoopDeltas() << std::endl << std::endl;
     }
+
     os << "Right transition: " << std::endl << checker.rightTransition().combinedAnalysis();
     os << checker.rightTransition().transitionDeltas() << std::endl;
 

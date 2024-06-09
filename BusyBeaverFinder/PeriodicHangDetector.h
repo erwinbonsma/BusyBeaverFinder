@@ -20,7 +20,7 @@ protected:
     LoopAnalysis _loop;
     PeriodicHangChecker _checker;
 
-    bool shouldCheckNow(bool loopContinues) const override;
+    bool shouldCheckNow() const override;
 
     // Analyses the loop. Returns YES if it exhibits periodic hang behavior. In that case, _loop
     // and _loopStart should point to the analyzed periodic loop and its starting point.

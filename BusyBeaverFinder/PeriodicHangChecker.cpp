@@ -87,5 +87,7 @@ Trilian PeriodicHangChecker::proofHang(const ExecutionState& execution) {
         return Trilian::MAYBE;
     }
 
+//    execution.dumpExecutionState();
+
     return _proofPhase == 1 ? proofHangPhase1(execution) : proofHangPhase2(execution);
 }

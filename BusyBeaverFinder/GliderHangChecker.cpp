@@ -129,10 +129,13 @@ bool GliderHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
 Trilian GliderHangChecker::proofHang(const ExecutionState& executionState) {
     // The glider loop should just have finished
-    if ((executionState.getRunSummary().getNumRunBlocks() - _firstGliderLoopRunBlockIndex)
-        % _metaLoopAnalysis->loopSize() != 1) {
+    if (executionState.getLoopRunState() != LoopRunState::ENDED
+        || ((executionState.getRunSummary().getNumRunBlocks() - _firstGliderLoopRunBlockIndex)
+            % _metaLoopAnalysis->loopSize() != 1)) {
         return Trilian::MAYBE;
     }
+
+    executionState.dumpExecutionState();
 
     if (_proofEnd == 0) {
         if (!_transitionLoopAnalysis.allValuesToBeConsumedAreZero(executionState.getData())) {

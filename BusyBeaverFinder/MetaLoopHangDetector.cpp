@@ -8,9 +8,16 @@
 
 #include "MetaLoopHangDetector.h"
 
-bool MetaLoopHangDetector::shouldCheckNow(bool loopContinues) const {
-    // Should wait for the inner-loop to finish
-    return !loopContinues && _execution.getMetaRunSummary().isInsideLoop();
+bool MetaLoopHangDetector::shouldCheckNow() const {
+    auto loopRunState = _execution.getLoopRunState();
+    return (// Only check at start and end of loops
+            (loopRunState == LoopRunState::STARTED || loopRunState == LoopRunState::ENDED)
+            // There should be a meta-loop
+            && _execution.getMetaRunSummary().isInsideLoop()
+            && (// The proof phase should also consider loop starts
+                _activeChecker != nullptr
+                // Perform analysis only when the inner-loop to finish
+                || loopRunState == LoopRunState::ENDED));
 }
 
 void MetaLoopHangDetector::reset() {
@@ -125,6 +132,10 @@ Trilian MetaLoopHangDetector::proofHang() {
 
     if (_activeHangProofResult == Trilian::MAYBE) {
         _activeHangProofResult = _activeChecker->proofHang(_execution);
+
+//        if (_activeHangProofResult != Trilian::MAYBE) {
+//            _execution.dumpExecutionState();
+//        }
     }
 
     return _activeHangProofResult;

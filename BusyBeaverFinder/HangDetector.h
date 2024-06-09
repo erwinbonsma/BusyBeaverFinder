@@ -28,7 +28,7 @@ protected:
     // hang that is being detected.
     int currentCheckPoint() { return _execution.getRunSummary().getNumRunBlocks(); }
 
-    virtual bool shouldCheckNow(bool loopContinues) const = 0;
+    virtual bool shouldCheckNow() const = 0;
 
     // Checks if the run summary and possibly meta-run summary exhibits the characteristic behaviour
     // for the hang that is being detected. Returns true iff this is the case. It should then also
@@ -60,10 +60,13 @@ public:
 
     virtual void reset();
 
-    // Returns true if a hang is detected. It should only be executed when the program is inside a
-    // loop. The loopContinues flag signals if the loop will also continue. This flag is useful as
-    // some hang detectors want the loop to continue (e.g. simple periodic hangs), whereas in case
-    // of nested loops, termination of an inner-loop is often a good synchronization point to
-    // initiate a check
-    bool detectHang(bool loopContinues);
+    // Returns true if a hang is detected. It is only executed when the program is inside a loop.
+    // The execution state indicates if the loop just started, is continuing, or just finished.
+    //
+    // Most detectors only analyze behavior when a loop just finished, but for some hangs (e.g.
+    // simple periodic hangs) the loop will never exit.
+    //
+    // After analysis, to verify that the program really is hanging, it can also be useful to
+    // examing the data at the start of a loop, e.g. to see if a sweep continues forever.
+    bool detectHang();
 };
