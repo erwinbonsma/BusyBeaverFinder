@@ -166,6 +166,13 @@ class SweepHangChecker : public HangChecker {
     virtual bool init(const MetaLoopAnalysis* metaLoopAnalysis,
                       const ExecutionState& executionState);
 
+    // A loop is about to start. Check if we can/should check if it continues forever.
+    bool verifyLoop(const ExecutionState& executionState);
+
+    // Check if a transition is about to start, and if so, if we can/should check if it runs
+    // forever.
+    bool verifyTransition(const ExecutionState& executionState);
+
     Trilian proofHang(const ExecutionState& executionState) override;
 
     const SweepLoop& leftSweepLoop() const { return _leftSweepLoop; }

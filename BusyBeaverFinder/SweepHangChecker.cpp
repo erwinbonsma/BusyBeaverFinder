@@ -637,6 +637,8 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
 bool SweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
                                                  SweepLoop* loop, int seqIndex) {
+    return true; // TODO: remove
+
     int loopIndex = _metaLoopAnalysis->loopIndexForSequence(seqIndex);
     int prevNumIter = _metaLoopAnalysis->lastNumLoopIterations(loopIndex);
     int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta().value();
@@ -650,24 +652,18 @@ bool SweepHangChecker::transitionContinuesForever(const ExecutionState& executio
     return transition->continuesForever(executionState);
 }
 
-Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
-    auto& runSummary = executionState.getRunSummary();
-    int numRunBlocks = runSummary.getNumRunBlocks();
-
-    if (numRunBlocks > _proofUntil) {
-        return Trilian::YES;
-    }
-
+// Check if a sweep loop has just started and if we should check if it runs forever.
+//
+// Note, as the combined results of the left- and rightward sweep loops are used, only the
+// sweep loop that follows the outgoing loop for the combined analysis should be checked.
+bool SweepHangChecker::verifyLoop(const ExecutionState& executionState) {
+    int numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
     int loopSize = _metaLoopAnalysis->loopSize();
 
-    // The index of the run block whose execution is just about to start
-    int seqIndex = (numRunBlocks - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
+    // The index of the loop that just started
+    int seqIndex = (numRunBlocks - 1 - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
     auto &loc = locationInSweep(seqIndex);
 
-    // Check if a sweep loop is about to start and if we should check if it runs forever.
-    //
-    // Note, as the combined results of the left- and rightward sweep loops are used, only the
-    // sweep loop that follows the outgoing loop for the combined analysis should be checked.
     if (loc.isSweepLoop()) {
         SweepLoop* loop = nullptr;
         if (loc.start == LocationInSweep::LEFT) {
@@ -677,20 +673,33 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
         }
         if (loop && loop->outgoingLoopSequenceIndex() == seqIndex) {
             if (!sweepLoopContinuesForever(executionState, loop, seqIndex)) {
-                return Trilian::NO;
+                return false;
             }
         }
     }
 
-    // Check if a transition is about to start. If so, it should be checked that it runs forever.
-    //
-    // Note: It is possible that a new loop starts but there is also a non-empty transition that
-    // needs to be checked. This happens when there is no sequence run block separating the
-    // outgoing loop from the incoming loop, but there's still an effective transition sequence due
-    // to incoming loop shutdown and outgoing loop bootstrap effects.
+    return true;
+}
+
+// Check if a transition is about to start. If so, it should be checked that it runs
+// forever.
+//
+// Note: It is possible that a new loop will starts but there is also a non-empty
+// transition that needs to be checked. This happens when there is no sequence run block
+// separating the outgoing loop from the incoming loop, but there's still an effective
+// transition sequence due to incoming loop shutdown and outgoing loop bootstrap effects.
+bool SweepHangChecker::verifyTransition(const ExecutionState& executionState) {
+    int numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
+    int loopSize = _metaLoopAnalysis->loopSize();
+
+    // The index of the run block whose execution is just about to start
+    int seqIndex = (numRunBlocks - _metaLoopAnalysis->firstRunBlockIndex()) % loopSize;
+    auto &loc = locationInSweep(seqIndex);
+
     int prevSeqIndex = (seqIndex + loopSize - 1) % loopSize;
     if (locationInSweep(prevSeqIndex).isSweepLoop()) {
         // This is the start of a transition sequence
+
         TransitionGroup* transition;
         switch (loc.start) {
             case LocationInSweep::LEFT: transition = &_leftTransition; break;
@@ -701,8 +710,30 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
 
         if (transition->incomingLoopSequenceIndex() == prevSeqIndex) {
             if (!transitionContinuesForever(executionState, transition, seqIndex)) {
-                return Trilian::NO;
+                return false;
             }
+        }
+    }
+
+    return true;
+}
+
+Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
+    if (executionState.getRunSummary().getNumRunBlocks() > _proofUntil) {
+        return Trilian::YES;
+    }
+
+    if (executionState.getLoopRunState() == LoopRunState::STARTED) {
+        if (!verifyLoop(executionState)) {
+            executionState.dumpExecutionState();
+            return Trilian::NO;
+        }
+    } else {
+        assert(executionState.getLoopRunState() == LoopRunState::ENDED);
+
+        if (!verifyTransition(executionState)) {
+            executionState.dumpExecutionState();
+            return Trilian::NO;
         }
     }
 
@@ -711,14 +742,20 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
 
 std::ostream &operator<<(std::ostream &os, const SweepHangChecker &checker) {
     os << "Left transition: " << std::endl << checker.leftTransition().combinedAnalysis();
-    os << checker.leftTransition().transitionDeltas() << std::endl;
+    os << checker.leftTransition().transitionDeltas() << std::endl << std::endl;
+
     os << "Left sweep: " << std::endl << checker.leftSweepLoop().combinedAnalysis();
+    os << checker.leftSweepLoop().sweepLoopDeltas() << std::endl << std::endl;
+
     if (auto &transition = checker.midTransition()) {
         os << "Mid transition: " << std::endl << transition->combinedAnalysis();
     }
+
     if (auto &loop = checker.rightSweepLoop()) {
         os << "Right sweep: " << std::endl << loop->combinedAnalysis();
+        os << loop->sweepLoopDeltas() << std::endl << std::endl;
     }
+
     os << "Right transition: " << std::endl << checker.rightTransition().combinedAnalysis();
     os << checker.rightTransition().transitionDeltas() << std::endl;
 

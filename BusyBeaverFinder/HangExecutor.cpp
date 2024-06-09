@@ -95,7 +95,8 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
         // Record block before executing it. This way, when signalling a loop exit, the value
         // that triggered this, which typically is zero, is still present in the data values.
         _runHistory.push_back(_block);
-        if (_runSummary.processNewRunUnits()) {
+        bool runBlockAdded = _runSummary.processNewRunUnits();
+        if (runBlockAdded) {
             _runBlockTransitions.processNewRunBlocks();
             if (_metaRunSummary.processNewRunUnits()) {
                 _metaMetaRunSummary.processNewRunUnits();
@@ -108,13 +109,14 @@ RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
         }
 
         if (_runSummary.isInsideLoop()) {
-            bool loopContinues = _runSummary.loopContinues(_block->getStartIndex());
-//            if (!loopContinues) {
-//                _data.dump();
-//                _runSummary.dumpCondensed(true);
-//            }
+            _loopRunState = (runBlockAdded
+                             ? LoopRunState::STARTED
+                             : (_runSummary.loopContinues(_block->getStartIndex())
+                                ? LoopRunState::RUNNING
+                                : LoopRunState::ENDED));
+
             for (auto hangDetector : _hangDetectors) {
-                if (hangDetector->detectHang(loopContinues)) {
+                if (hangDetector->detectHang()) {
                     _detectedHang = hangDetector;
                     return RunResult::DETECTED_HANG;
                 }

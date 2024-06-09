@@ -397,12 +397,17 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
     }
 
     // Check if the previous analysis still applies
-    assert(_numRunBlocks < executionState.getRunSummary().getNumRunBlocks());
+    assert(_numRunBlocks <= executionState.getRunSummary().getNumRunBlocks());
 
     int rbIndex = _numRunBlocks;
     auto &runSummary = executionState.getRunSummary();
+    int rbIndexLimit = runSummary.getNumRunBlocks();
 
-    while (rbIndex < runSummary.getNumRunBlocks()) {
+    if (executionState.getLoopRunState() != LoopRunState::ENDED) {
+        rbIndexLimit -= 1;
+    }
+
+    while (rbIndex < rbIndexLimit) {
         int relIndex = (rbIndex - _firstRunBlockIndex) % _analysisLoopSize;
         auto sa = _seqAnalysis[relIndex % _metaLoopPeriod];
 

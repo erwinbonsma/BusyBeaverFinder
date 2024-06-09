@@ -24,12 +24,12 @@ void HangDetector::reset() {
     clearAnalysis();
 }
 
-bool HangDetector::detectHang(bool loopContinues) {
-    if (!shouldCheckNow(loopContinues)) {
+bool HangDetector::detectHang() {
+    if (!shouldCheckNow()) {
         return false;
     }
 
-    int now = currentCheckPoint() + !loopContinues;
+    int now = currentCheckPoint(); // + (_execution.getLoopRunState() == LoopRunState::ENDED);
 
     if (now == _lastFailedCheckPoint) {
         // We already checked this and it failed. Ignore.
