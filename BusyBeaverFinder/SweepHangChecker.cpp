@@ -732,7 +732,7 @@ Trilian SweepHangChecker::proofHang(const ExecutionState& executionState) {
         assert(executionState.getLoopRunState() == LoopRunState::ENDED);
 
         if (!verifyTransition(executionState)) {
-            executionState.dumpExecutionState();
+//            executionState.dumpExecutionState();
             return Trilian::NO;
         }
     }

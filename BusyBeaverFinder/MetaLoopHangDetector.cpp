@@ -95,17 +95,26 @@ bool MetaLoopHangDetector::prepareIrregularSweepHangCheck() {
 
 bool MetaLoopHangDetector::analyzeHangBehaviour() {
     if (_metaLoopAnalysis.isInitialized()) {
-        if (_metaLoopAnalysis.isAnalysisStillValid(_execution)) {
-            return true;
-        } else {
-            // Clear any checker that is no longer valid
+        if (!_metaLoopAnalysis.isAnalysisStillValid(_execution)) {
+            _metaLoopAnalysis.reset();
             _activeChecker = nullptr;
         }
     }
 
-    if (!_metaLoopAnalysis.analyzeMetaLoop(_execution)) {
-        return false;
+    // Redo meta-loop analysis if it is not valid, or there is no active checker. The latter may
+    // happen when the meta-loop analysis did not (yet) latch onto the desired regularity.
+    if (!_metaLoopAnalysis.isInitialized() || !_activeChecker) {
+        if (!_metaLoopAnalysis.analyzeMetaLoop(_execution)) {
+            return false;
+        }
     }
+
+    if (_activeChecker && _activeHangProofResult == Trilian::MAYBE) {
+        // Preserve checker
+        return true;
+    }
+
+//    _execution.dumpExecutionState();
 
     if (_metaLoopAnalysis.isPeriodic()) {
         return preparePeriodicHangCheck();
@@ -127,9 +136,9 @@ Trilian MetaLoopHangDetector::proofHang() {
     if (_activeHangProofResult == Trilian::MAYBE) {
         _activeHangProofResult = _activeChecker->proofHang(_execution);
 
-//        if (_activeHangProofResult != Trilian::MAYBE) {
-//            _execution.dumpExecutionState();
-//        }
+        if (_activeHangProofResult == Trilian::NO) {
+            _activeChecker = nullptr;
+        }
     }
 
     return _activeHangProofResult;
