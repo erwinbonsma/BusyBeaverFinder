@@ -37,8 +37,6 @@ void ProgressTracker::report() {
 
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
-    }
-    if (_total % _dumpStackPeriod == 0) {
         _searcher.dumpInstructionStack();
     }
 
