@@ -13,12 +13,8 @@ class RunUntilMetaLoop : public HangDetector {
     int _numIterations;
 
 protected:
-    bool shouldCheckNow(bool loopContinues) const override {
-//        if (!loopContinues) {
-//            _execution.dumpExecutionState();
-//        }
-
-        return (!loopContinues
+    bool shouldCheckNow() const override {
+        return (_execution.getLoopRunState() == LoopRunState::ENDED
                 && _execution.getMetaRunSummary().isInsideLoop()
                 && _execution.getMetaRunSummary().getLoopIteration() >= _numIterations);
     }
@@ -33,9 +29,9 @@ public:
 
 class RunUntilMetaMetaLoop : public RunUntilMetaLoop {
 protected:
-    bool shouldCheckNow(bool loopContinues) const override {
+    bool shouldCheckNow() const override {
         return (_execution.getMetaMetaRunSummary().isInsideLoop()
-                && RunUntilMetaLoop::shouldCheckNow(loopContinues));
+                && RunUntilMetaLoop::shouldCheckNow());
     }
 
     bool analyzeHangBehaviour() override { return true; };
