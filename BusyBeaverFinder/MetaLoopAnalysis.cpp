@@ -441,7 +441,7 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
         rbIndex += 1;
     }
 
-    _numRunBlocks = executionState.getRunSummary().getNumRunBlocks();
+    _numRunBlocks = rbIndexLimit;
 
     return true;
 }
