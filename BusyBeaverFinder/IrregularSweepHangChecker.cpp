@@ -241,24 +241,37 @@ bool IrregularSweepHangChecker::determineInSweepToggle(IrregularAppendixProps& p
 bool IrregularSweepHangChecker::determineAppendixStart(IrregularAppendixProps& props,
                                                        const ExecutionState& executionState) {
     std::optional<int> start {};
-    auto targetLocation = props.location;
-    auto &cmp = props.location == LocationInSweep::LEFT ? FUN_MAX : FUN_MIN;
+    bool foundMinimum = false;
+    auto location = props.location;
+    auto &cmp = location == LocationInSweep::LEFT ? FUN_MAX : FUN_MIN;
 
-    auto visitor = [targetLocation, &start, &cmp, this](const SweepLoopVisitState& vs) {
+    auto visitor = [location, cmp, &start, &foundMinimum , this](const SweepLoopVisitState& vs) {
         auto &loc = locationInSweep(vs.loopPart.seqIndex());
-        if (loc.start == targetLocation) {
+        if (loc.start == location && !loc.isSweepLoop()) {
             if (!start) {
                 start = vs.loopPart.dpOffset();
             } else {
-                start = cmp(start.value(), vs.loopPart.dpOffset());
+                int oldStart = start.value();
+                start = cmp(oldStart, vs.loopPart.dpOffset());
+                foundMinimum = (start == oldStart);
             }
         }
 
         return true;
     };
 
-    SweepVisitOptions options = { .numLoopIterations = 2 };
+    SweepVisitOptions options = { .numLoopIterations = 3 };
     if (auto result = visitSweepLoopParts(visitor, executionState, 0, options); !result) {
+        return false;
+    } else if (!foundMinimum) {
+        // The appendix start is the "minimum" position where the incoming sweep-loop terminates.
+        // The minimum can be recognized because it is the only position that is followed by a
+        // turning point further in the appendix. Unless the first point where the sweep terminated
+        // was smaller than the second, we cannot be sure we found the minimum. Let the check fail.
+        // It will pass a later time.
+        //
+        // Often, for binary-like counting appendices, the sweep will turn at the appendix start
+        // every two sweeps. However, this does not hold for all irregularly growing appendices.
         return false;
     } else {
         props.appendixStart = _metaLoopAnalysis->startDataPointer() + start.value();
@@ -504,6 +517,14 @@ bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& 
 
     // TODO:
     // Check that sweep over body continues forever
+
+    // For sweep from irregular end: check that the sweep loop exit conditions are not met until
+    // the end of the body.
+    // Q: How to establish? There may be pollution before terminating zero.
+
+    // For sweep towards irregular end: check that the sweep loop exit conditions are not met
+    // until the appendix is reached.
+    // Q: How to establish?
 
     return true;
 }
