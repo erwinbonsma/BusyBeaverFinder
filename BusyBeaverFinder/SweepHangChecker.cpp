@@ -637,8 +637,6 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
 bool SweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
                                                  SweepLoop* loop, int seqIndex) {
-    return true; // TODO: remove
-
     int loopIndex = _metaLoopAnalysis->loopIndexForSequence(seqIndex);
     int prevNumIter = _metaLoopAnalysis->lastNumLoopIterations(loopIndex);
     int expectedIter = prevNumIter + loopBehavior(seqIndex).iterationDelta().value();

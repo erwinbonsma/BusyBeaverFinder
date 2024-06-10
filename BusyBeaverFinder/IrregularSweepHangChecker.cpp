@@ -461,38 +461,46 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
 bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
                                                           SweepLoop* loop, int seqIndex) {
-    bool departsFromIrregularEnd {};
-    if (_irregularEnd == LocationInSweep::LEFT) {
-        if (loop == &_leftSweepLoop) {
-            departsFromIrregularEnd = true;
-        } else {
-            assert(_midTransition);
-
-            // There is a mid-sweep transition, the irregular end is at the left, and this loop
-            // departs from the right, so this is a regular sweep
-            return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
-        }
-    } else {
-        assert(_irregularEnd == LocationInSweep::RIGHT);
-
-        if (loop == &_leftSweepLoop) {
-            if (_rightSweepLoop) {
-                assert(_midTransition);
-
-                // There is a mid-sweep transition, the irregular end is at the right, and this
-                // loop departs from the left, so this is a regular sweep
-                return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
-            } else {
-                // There is no mid-sweep transition; we are moving towards the irregular end at the
-                // right
-                departsFromIrregularEnd = false;
-            }
-        } else {
-            // There is a mid-sweep transition, and we are moving from the irregular end at the
-            // right towards it.
-            departsFromIrregularEnd = true;
-        }
+//    bool departsFromIrregularEnd {};
+//    if (_irregularEnd == LocationInSweep::LEFT) {
+//        if (loop == &_leftSweepLoop) {
+//            departsFromIrregularEnd = true;
+//        } else {
+//            assert(_midTransition);
+//
+//            // There is a mid-sweep transition, the irregular end is at the left, and this loop
+//            // departs from the right, so this is a regular sweep
+//            return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
+//        }
+//    } else {
+//        assert(_irregularEnd == LocationInSweep::RIGHT);
+//
+//        if (loop == &_leftSweepLoop) {
+//            if (_rightSweepLoop) {
+//                assert(_midTransition);
+//
+//                // There is a mid-sweep transition, the irregular end is at the right, and this
+//                // loop departs from the left, so this is a regular sweep
+//                return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
+//            } else {
+//                // There is no mid-sweep transition; we are moving towards the irregular end at the
+//                // right
+//                departsFromIrregularEnd = false;
+//            }
+//        } else {
+//            // There is a mid-sweep transition, and we are moving from the irregular end at the
+//            // right towards it.
+//            departsFromIrregularEnd = true;
+//        }
+//    }
+    auto &lb = loopBehavior(seqIndex);
+    if (lb.iterationDeltaType() == LoopIterationDeltaType::LINEAR_INCREASE) {
+        // This is a regular sweep. This happens when it departs from the regular end of the sweep
+        // and terminates at a mid-sweep transition.
+        return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
     }
+
+    // This is a sweep-loop that either departs from an irregular end, or reaches it.
 
     // TODO:
     // Check that sweep over body continues forever
