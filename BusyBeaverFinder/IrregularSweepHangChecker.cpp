@@ -119,7 +119,7 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
     return true;
 }
 
-bool IrregularSweepHangChecker::determineInSweepExits(IrregularAppendixProps& props) {
+bool IrregularSweepHangChecker::determineInSweepExit(IrregularAppendixProps& props) {
     auto& incomingSweeps = (props.location == LocationInSweep::LEFT
                             ? leftSweepLoop().incomingLoops()
                             : rightSweepLoop() ? rightSweepLoop().value().incomingLoops()
@@ -170,7 +170,7 @@ bool IrregularSweepHangChecker::determineInSweepExits(IrregularAppendixProps& pr
     return true;
 }
 
-bool IrregularSweepHangChecker::determineInSweepToggles(IrregularAppendixProps& props) {
+bool IrregularSweepHangChecker::determineInSweepToggle(IrregularAppendixProps& props) {
     auto& transition = (props.location == LocationInSweep::LEFT
                         ? leftTransition()
                         : rightTransition());
@@ -238,8 +238,8 @@ bool IrregularSweepHangChecker::determineInSweepToggles(IrregularAppendixProps& 
     return true;
 }
 
-bool IrregularSweepHangChecker::determineAppendixStarts(IrregularAppendixProps& props,
-                                                        const ExecutionState& executionState) {
+bool IrregularSweepHangChecker::determineAppendixStart(IrregularAppendixProps& props,
+                                                       const ExecutionState& executionState) {
     std::optional<int> start {};
     auto targetLocation = props.location;
     auto &cmp = props.location == LocationInSweep::LEFT ? FUN_MAX : FUN_MIN;
@@ -271,15 +271,15 @@ bool IrregularSweepHangChecker::checkForAppendix(LocationInSweep location,
                                                  const ExecutionState& executionState) {
     IrregularAppendixProps props { location };
 
-    if (!determineInSweepExits(props)) {
+    if (!determineInSweepExit(props)) {
         return false;
     }
 
-    if (!determineInSweepToggles(props)) {
+    if (!determineInSweepToggle(props)) {
         return false;
     }
 
-    if (!determineAppendixStarts(props, executionState)) {
+    if (!determineAppendixStart(props, executionState)) {
         return false;
     }
 

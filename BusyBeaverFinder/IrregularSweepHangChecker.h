@@ -107,10 +107,10 @@ class IrregularSweepHangChecker : public SweepHangChecker {
     bool checkForShrinkage(LocationInSweep location);
 
     // For irregular ends where with a (growing) appendix
-    bool determineInSweepExits(IrregularAppendixProps& props);
-    bool determineInSweepToggles(IrregularAppendixProps& props);
-    bool determineAppendixStarts(IrregularAppendixProps& props,
-                                 const ExecutionState& executionState);
+    bool determineInSweepExit(IrregularAppendixProps& props);
+    bool determineInSweepToggle(IrregularAppendixProps& props);
+    bool determineAppendixStart(IrregularAppendixProps& props,
+                                const ExecutionState& executionState);
 
     // For irregular ends that shrink.
     bool determineLoopExitValue(ShrinkingEndProps& props);
