@@ -25,6 +25,7 @@ enum class Operator : int8_t {
     GREATER_THAN_OR_EQUAL = 3
 };
 
+// When a loop exit can happen, relative to the loop's execution
 enum class ExitWindow : int8_t {
     // This exit can happen in any iteration of the loop
     ANYTIME = 0,
@@ -40,11 +41,11 @@ class ExitCondition {
     int _dpOffset;
 
     int _value;
-    unsigned int _modulus;
+    int _modulus;
     Operator _operator;
 
     // Should normally not happen. Can happen in multi-sequence analysis for instructions that
-    // spill outside the DP range of intereset.
+    // spill outside the DP range of interest.
     bool _invalid = false;
 
 public:
@@ -55,7 +56,7 @@ public:
 
     // An (optional) modulus constraint. This is required when DP is stationary and values increase
     // (or decrease) by more than one, as this may result in skipping the zero.
-    unsigned int modulusConstraint() const { return _modulus; }
+    int modulusConstraint() const { return _modulus; }
     void setModulusConstraint(unsigned int modulus) { _modulus = modulus; }
     void clearModulusConstraint() { _modulus = 1; }
 
@@ -66,6 +67,10 @@ public:
     // to pass the correct value(s), i.e. one which the instruction that can cause this exit will
     // actually consume. To ensure this you need to use dpOffset().
     bool isTrueForValue(int value) const;
+
+    // Returns the number of completed iterations before the loop exits. I.e. it returns zero when
+    // it exits while executing its first iteration.
+    std::optional<int> exitIteration(int value) const;
 
     // Specifies which data value the condition applies to. How to interpret this depends on whether
     // the DP is Travelling during loop execution. Let d = abs(dataPointerDelta)
@@ -179,8 +184,9 @@ public:
     // (again).
     bool allValuesToBeConsumedAreZero(const Data &data) const;
 
-    // Checks for a stationary loop if it exits when it runs on the given data.
-    bool stationaryLoopExits(const Data& data, int dpOffset) const;
+    // Checks for a stationary loop if it exits when it runs on the given data. If so, returns a
+    // pair (iteration when it exits, DP offset of value causing exit)
+    std::optional<std::pair<int, int>> stationaryLoopExits(const Data& data, int dpOffset) const;
 
     void dump() const;
 

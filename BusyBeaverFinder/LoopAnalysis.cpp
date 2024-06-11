@@ -50,10 +50,22 @@ bool ExitCondition::isTrueForValue(int value) const {
             break;
     }
 
-    int mod1 = value % _modulus;
-    int mod2 = _value % _modulus;
+    return (value - _value) % _modulus == 0;
+}
 
-    return mod1 == mod2 || (mod1 + _modulus) % _modulus == (mod2 + _modulus) % _modulus;
+std::optional<int> ExitCondition::exitIteration(int value) const {
+    if (!isTrueForValue(value)) {
+        return {};
+    }
+
+    switch (_operator) {
+        case Operator::EQUALS:
+        case Operator::UNEQUAL:
+            return 0;
+        case Operator::LESS_THAN_OR_EQUAL:
+        case Operator::GREATER_THAN_OR_EQUAL:
+            return abs((value - _value) / _modulus);
+    }
 }
 
 std::ostream &operator<<(std::ostream &os, const ExitCondition &ec) {
@@ -493,23 +505,33 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
     return true;
 }
 
-bool LoopAnalysis::stationaryLoopExits(const Data& data, int dpOffset) const {
+std::optional<std::pair<int, int>> LoopAnalysis::stationaryLoopExits(const Data& data,
+                                                                     int dpOffset) const {
     if (dataPointerDelta() != 0) {
         // TODO: Find out when this check fails.
         // Is it due to faulty analysis or an incorrect assumption?
-        return false;
+        return {};
     }
 
+    std::optional<std::pair<int, int>> result;
     for (auto &loopExit : _loopExits) {
         if (loopExit.exitWindow != ExitWindow::NEVER) {
             int value = data.valueAt(dpOffset + loopExit.exitCondition.dpOffset());
-            if (loopExit.exitCondition.isTrueForValue(value)) {
-                return true;
+            auto exits = loopExit.exitCondition.exitIteration(value);
+            if (exits && (!result || exits.value() < result.value().first)) {
+                // Record when the loop exits and which value caused it to exit.
+                //
+                // Note: the DP offset is not necessarily correct when there is more than one
+                // exit condition that is met in the same iteration.
+                // TODO: Fix once this matters.
+                result = std::make_pair(exits.value(),
+                                        dpOffset + loopExit.exitCondition.dpOffset());
             }
+
         }
     }
 
-    return false;
+    return result;
 }
 
 void LoopAnalysis::dump() const {
