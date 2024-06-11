@@ -130,6 +130,66 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 317);
     }
+    SECTION("7x7-OldFalsePositive7") {
+        // Was previously reported as a sweep hang as it failed to detect that the sweep hang
+        // would not continue forever.
+        //
+        // *       * *
+        // o _ _ * o _ *
+        // _   o _ o o *
+        // _   * _ _ o
+        // _ _ o _ o *
+        // _ * o o _ *
+        // _   *   *
+        RunResult result = hangExecutor.execute("d7+tCSNFjgcEbJSzu8");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+    SECTION("7x7-OldFalsePositive8") {
+        // Was previously reported as a sweep hang as it failed to detect that the sweep hang
+        // would not continue forever.
+        //
+        //         * *
+        // *   * * _ _ *
+        // o o o _ o _ *
+        // _ * o o o _ *
+        // _   *   o *
+        // _ * _ _ o *
+        // _       *
+        RunResult result = hangExecutor.execute("dz+uKCVEiVI4bIGzu8");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+    SECTION("7x7-OldFalsePositive9") {
+        // Enters various sweeps that each terminate, but then transition into another sweeps.
+        // Eventually a state is reached where by sweep termination terminates the program.
+        //
+        //       *   *
+        // *   * o o _ *
+        // o o _ o * _
+        // o   * o o o *
+        // _   _ o o *
+        // _ * _ _ o
+        // _     * *
+        RunResult result = hangExecutor.execute("dz4uJSUYHlYxbIEDK8");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+    SECTION("7x7-OldFalsePositive10") {
+        // Terminates after 9431 steps
+        //
+        //   *   *   *
+        // * o * o o _ *
+        // o o * o * _
+        // o _ * o o o *
+        // _ _ _ o o *
+        // _ * _ _ o
+        // _     * *
+
+        RunResult result = hangExecutor.execute("d+7uZSWY0lYBbIED68");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
 
     SECTION("BB 7x7 #117273") {
         RunResult result = hangExecutor.execute("dwoAlShaIhJBYIGAKA");

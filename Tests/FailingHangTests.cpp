@@ -106,58 +106,5 @@ TEST_CASE("7x7 false positives", "[success][7x7][fail]") {
     hangExecutor.setMaxSteps(100000);
     hangExecutor.addDefaultHangDetectors();
 
-    SECTION("7x7-FalsePositive") {
-        // *       * *
-        // o _ _ * o _ *
-        // _   o _ o o *
-        // _   * _ _ o
-        // _   o _ o *
-        // _ * o o _ *
-        // _   *   *
-        RunResult result = hangExecutor.execute("d7+tCSNFjgc0bJSzu8");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-    }
-    SECTION("7x7-FalsePositive2") {
-        //         * *
-        // *   * * _ _ *
-        // o o o _ o _ *
-        // _ * o o o _ *
-        // _   *   o *
-        // _ * _ _ o *
-        // _       *
-        RunResult result = hangExecutor.execute("d7+tCSNFjgc0bJSzu8");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-    }
-    SECTION("7x7-FalsePositive3") {
-        // Enters various sweeps that each terminate, but then transition into another sweeps.
-        // Eventually a state is reached where by sweep termination terminates the program.
-        //
-        //       *   *
-        // *   * o o _ *
-        // o o _ o * _
-        // o   * o o o *
-        // _   _ o o *
-        // _ * _ _ o
-        // _     * *
-        RunResult result = hangExecutor.execute("d7+tCSNFjgc0bJSzu8");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-    }
-    SECTION("7x7-FalsePositive4") {
-        // Terminates after 9431 steps
-        //
-        //   *   *   *
-        // * o * o o _ *
-        // o o * o * _
-        // o _ * o o o *
-        // _ _ _ o o *
-        // _ * _ _ o
-        // _     * *
-
-        RunResult result = hangExecutor.execute("d+7uZSWY0lYBbIHz68");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-    }
+    // No known failures yet
 }
