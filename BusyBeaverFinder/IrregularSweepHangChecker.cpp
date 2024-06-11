@@ -474,38 +474,6 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 
 bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
                                                           SweepLoop* loop, int seqIndex) {
-//    bool departsFromIrregularEnd {};
-//    if (_irregularEnd == LocationInSweep::LEFT) {
-//        if (loop == &_leftSweepLoop) {
-//            departsFromIrregularEnd = true;
-//        } else {
-//            assert(_midTransition);
-//
-//            // There is a mid-sweep transition, the irregular end is at the left, and this loop
-//            // departs from the right, so this is a regular sweep
-//            return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
-//        }
-//    } else {
-//        assert(_irregularEnd == LocationInSweep::RIGHT);
-//
-//        if (loop == &_leftSweepLoop) {
-//            if (_rightSweepLoop) {
-//                assert(_midTransition);
-//
-//                // There is a mid-sweep transition, the irregular end is at the right, and this
-//                // loop departs from the left, so this is a regular sweep
-//                return SweepHangChecker::sweepLoopContinuesForever(executionState, loop, seqIndex);
-//            } else {
-//                // There is no mid-sweep transition; we are moving towards the irregular end at the
-//                // right
-//                departsFromIrregularEnd = false;
-//            }
-//        } else {
-//            // There is a mid-sweep transition, and we are moving from the irregular end at the
-//            // right towards it.
-//            departsFromIrregularEnd = true;
-//        }
-//    }
     auto &lb = loopBehavior(seqIndex);
     if (lb.iterationDeltaType() == LoopIterationDeltaType::LINEAR_INCREASE) {
         // This is a regular sweep. This happens when it departs from the regular end of the sweep
@@ -514,9 +482,29 @@ bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& 
     }
 
     // This is a sweep-loop that either departs from an irregular end, or reaches it.
-
-    // TODO:
     // Check that sweep over body continues forever
+
+    auto &loc = locationInSweep(seqIndex);
+    bool departsFromIrregularEnd = (_irregularEnd == loc.start);
+
+    if (departsFromIrregularEnd) {
+        if (_midTransition) {
+            // TODO: Implement when needed
+            // In practise the appendix start coincides with the mid-sweep transition. Add this
+            // check once a program is encountered/constructed where this is not the case and
+            // this impacts hang detection
+        } else {
+            // Check until the end of the sweep (value that causes the immediate exit). Verify
+            // that the exit condition will never hold for any of the swept values.
+            //
+            // TODO: Guard against the following?
+            // The sweep loop happens to exit at a mid-sweep point during this check and this
+            // deviation is not detected because this last check completed the proof phase.
+        }
+    } else {
+        // Check until appendix start
+    }
+
 
     // For sweep from irregular end: check that the sweep loop exit conditions are not met until
     // the end of the body.
