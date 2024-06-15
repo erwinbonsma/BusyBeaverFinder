@@ -100,7 +100,7 @@ std::optional<int> SweepHangChecker::SweepLoop::continuesForever(const Execution
     }
 }
 
-void SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepLoopVisitState& vs) {
+bool SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepLoopVisitState& vs) {
     auto &runSummary = vs.executionState.getRunSummary();
     auto &part = vs.loopPart;
     auto runBlock = runSummary.runBlockAt(part.rbIndex());
@@ -109,9 +109,11 @@ void SweepHangChecker::TransitionGroup::addSequenceInstructions(const SweepLoopV
     _analysis.analyzeMultiSequence(&vs.executionState.getRunHistory().at(pbIndex),
                                    runSummary.getRunBlockLength(part.rbIndex()),
                                    part.dpOffset());
+
+    return true;
 }
 
-void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepLoopVisitState& vs,
+bool SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepLoopVisitState& vs,
                                                             bool incoming) {
     auto &runHistory = vs.executionState.getRunHistory();
     auto &runSummary = vs.executionState.getRunSummary();
@@ -120,6 +122,10 @@ void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepLoopVisit
     auto la = loopBehavior.loopAnalysis();
     int numIter = la->numBootstrapCycles();
     int len = numIter * la->loopSize();
+
+    if (len > runSummary.getRunBlockLength(part.rbIndex())) {
+        return false;
+    }
 
     // Range:
     // - DP-range of all sequences (which can be inside the sequence)
@@ -142,6 +148,9 @@ void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepLoopVisit
         int pbIndexNext = runSummary.runBlockAt(part.rbIndex() + 1)->getStartIndex();
         len += remainder;
 
+        if (len > runSummary.getRunBlockLength(part.rbIndex())) {
+            return false;
+        }
         _analysis.analyzeMultiSequence(&runHistory.at(pbIndexNext - len), len, dpStart);
     } else {
         // Outgoing loop. Execute first "numIter" loop iterations
@@ -149,22 +158,26 @@ void SweepHangChecker::TransitionGroup::addLoopInstructions(const SweepLoopVisit
 
         _analysis.analyzeMultiSequence(&runHistory.at(pbIndex), len, part.dpOffset());
     }
+
+    return true;
 }
 
-void SweepHangChecker::TransitionGroup::analyzeLoopPartPhase1(const SweepLoopVisitState& vs) {
-//    std::cout << "seqIndex = " << vs.loopPart.seqIndex()
-//    << ", dp = " << vs.loopPart.dpOffset()
-//    << ", rbIndex = " << vs.loopPart.rbIndex()
-//    << std::endl;
+bool SweepHangChecker::TransitionGroup::analyzeLoopPartPhase1(const SweepLoopVisitState& vs) {
+    //    std::cout << "seqIndex = " << vs.loopPart.seqIndex()
+    //    << ", dp = " << vs.loopPart.dpOffset()
+    //    << ", rbIndex = " << vs.loopPart.rbIndex()
+    //    << std::endl;
 
     auto &loc = vs.checker.locationInSweep(vs.loopPart.seqIndex());
     if (loc.isAt(_location)) {
         if (loc.isSweepLoop()) {
-            addLoopInstructions(vs, loc.end == _location);
+            return addLoopInstructions(vs, loc.end == _location);
         } else {
-            addSequenceInstructions(vs);
+            return addSequenceInstructions(vs);
         }
     }
+
+    return true;
 }
 
 bool SweepHangChecker::TransitionGroup::analyzeLoopPartPhase2(const SweepLoopVisitState& vs) {
@@ -207,17 +220,19 @@ bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
     // First determine DP bounds
     _analysis.analyzeMultiSequenceStart();
 
-    checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
-        this->analyzeLoopPartPhase1(vs);
-        return true;
+    auto dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
+        return this->analyzeLoopPartPhase1(vs);
     }, state, startSeqIndex, options);
+    if (!dpOffset) {
+        return false;
+    }
 
     _minDp = _analysis.minDp();
     _maxDp = _analysis.maxDp();
 
     // Next collect all constributions within this range
     _analysis.analyzeMultiSequenceStart();
-    auto dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
+    dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
         return this->analyzeLoopPartPhase2(vs);
     }, state, startSeqIndex, options);
     if (!dpOffset) {

@@ -162,9 +162,9 @@ class SweepHangChecker : public HangChecker {
         int _minDp, _maxDp;
         DataDeltas _transitionDeltas;
 
-        void addSequenceInstructions(const SweepLoopVisitState& vs);
-        void addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
-        void analyzeLoopPartPhase1(const SweepLoopVisitState& vs);
+        bool addSequenceInstructions(const SweepLoopVisitState& vs);
+        bool addLoopInstructions(const SweepLoopVisitState& vs, bool incoming);
+        bool analyzeLoopPartPhase1(const SweepLoopVisitState& vs);
         bool analyzeLoopPartPhase2(const SweepLoopVisitState& vs);
         bool analyzeCombinedEffect(const SweepHangChecker& checker, const ExecutionState& state,
                                    bool forceStationary);
