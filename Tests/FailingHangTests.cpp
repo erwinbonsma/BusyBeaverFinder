@@ -75,6 +75,19 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
+    SECTION("6x6-BodylessIrregularSweep") {
+        // This used to be detected, but not anymore since commit f0054bfc.
+        //     * *
+        //   * o o _ *
+        //   _ _ o *
+        // * _ _ o *
+        // * o * *
+        // o o *
+        RunResult result = hangExecutor.execute("Zvr+UsG4G5r1vw");
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
 }
 
 TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
