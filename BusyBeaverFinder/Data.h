@@ -40,6 +40,7 @@ public:
 
     void setStackSize(int size);
 
+    DataPointer getMidDataP() const { return _midDataP; }
     DataPointer getMinDataP() const { return _minDataP; }
     DataPointer getMaxDataP() const { return _maxDataP; }
 

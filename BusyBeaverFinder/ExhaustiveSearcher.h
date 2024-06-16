@@ -53,6 +53,7 @@ class ExhaustiveSearcher {
 
     std::vector<Ins>::const_iterator _resumeIns;
     std::vector<Ins>::const_iterator _resumeEnd;
+    bool _resuming;
 
     TurnDirection _td;
     ProgramPointer _pp;

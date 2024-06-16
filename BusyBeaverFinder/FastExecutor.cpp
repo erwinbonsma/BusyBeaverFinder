@@ -82,6 +82,22 @@ RunResult FastExecutor::execute(const InterpretedProgram* program) {
     return run();
 }
 
+void FastExecutor::resumeFrom(const ProgramBlock* block, const Data& data, int numSteps) {
+    // Copy the data
+    memset(_data, 0, _dataBufSize * sizeof(int));
+    DataPointer srcP = data.getMinDataP();
+    int* dstP = _midDataP - (data.getMidDataP() - data.getMinDataP());
+    while (srcP <= data.getMaxDataP()) {
+        *dstP++ = *srcP++;
+    }
+
+    _block = block;
+    _numSteps = numSteps;
+    _dataP = _midDataP - (data.getMidDataP() - data.getDataPointer());
+
+    _canResume = true;
+}
+
 void FastExecutor::dump() const {
     // Find end
     int *max = _maxDataP - 1;

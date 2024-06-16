@@ -166,7 +166,7 @@ void ExhaustiveSearcher::buildBlock(const ProgramBlock* block) {
 }
 
 void ExhaustiveSearcher::branch() {
-    bool resuming = _resumeIns != _resumeEnd;
+    bool resuming = _resuming;
     bool abortSearch = (_searchMode == SearchMode::FIND_ONE
                         || (_searchMode == SearchMode::SUB_TREE && resuming));
     InstructionPointer ip = nextInstructionPointer(_pp);
@@ -210,26 +210,28 @@ void ExhaustiveSearcher::branch() {
 }
 
 void ExhaustiveSearcher::run() {
-    if (_programExecutor == &_fastExecutor && _resumeIns == _resumeEnd) {
+    if (_resuming && _resumeIns == _resumeEnd) {
         // We're done resuming and switching to the hang executor. Pass how many steps of the
         // current program have already been executed by the fast executor. Hang detection can be
         // disabled up till then. We are about to execute a new program block, so up till this
         // point we cannot detect any hangs.
         _programExecutor = &_hangExecutor;
         _hangExecutor.setHangDetectionStart(_fastExecutor.numSteps());
+        _resuming = false;
     }
 
     ProgramExecutor *executor = _programExecutor;
-
     switch (executor->execute(&_programBuilder)) {
         case RunResult::SUCCESS: {
             _tracker->reportDone(executor->numSteps());
             break;
         }
         case RunResult::PROGRAM_ERROR: {
-            const ProgramBlock* block = executor->lastProgramBlock();
-
-            buildBlock(block);
+            if (executor == &_hangExecutor || _resumeIns != _resumeEnd) {
+                buildBlock(executor->lastProgramBlock());
+            } else {
+                _tracker->reportLateEscape(executor->numSteps());
+            }
             break;
         }
         case RunResult::DATA_ERROR: {
@@ -237,7 +239,22 @@ void ExhaustiveSearcher::run() {
             break;
         }
         case RunResult::ASSUMED_HANG: {
-            _tracker->reportAssumedHang();
+            if (executor == &_hangExecutor) {
+                // Hang detection is finished. Switch to fast execution
+
+                _tracker->reportFastExecution();
+                _fastExecutor.resumeFrom(_hangExecutor.lastProgramBlock(),
+                                         _hangExecutor.getData(),
+                                         _hangExecutor.numSteps());
+                _programExecutor = &_fastExecutor;
+
+                run();
+
+                _programExecutor = &_hangExecutor;
+            } else {
+                _tracker->reportAssumedHang();
+            }
+
             break;
         }
         case RunResult::DETECTED_HANG: {
@@ -265,6 +282,7 @@ std::vector<Ins> emptyStack;
 void ExhaustiveSearcher::search() {
     _resumeIns = emptyStack.cbegin();
     _resumeEnd = emptyStack.cend();
+    _resuming = false;
 
     _programExecutor = &_hangExecutor;
 
@@ -278,6 +296,7 @@ void ExhaustiveSearcher::search() {
 void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom) {
     _resumeIns = resumeFrom.cbegin();
     _resumeEnd = resumeFrom.cend();
+    _resuming = true;
     _programExecutor = &_fastExecutor;
 
     std::cout << "Resuming from: ";

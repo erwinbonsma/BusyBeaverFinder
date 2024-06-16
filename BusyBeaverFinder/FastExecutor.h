@@ -9,6 +9,7 @@
 
 #include "ProgramExecutor.h"
 #include "Types.h"
+#include "Data.h"
 
 class FastExecutor : public ProgramExecutor {
     int* _data;
@@ -31,6 +32,8 @@ public:
     void pop() override { _canResume = false; };
 
     RunResult execute(const InterpretedProgram* program) override;
+
+    void resumeFrom(const ProgramBlock* resumeFrom, const Data& data, int numSteps);
 
     HangType detectedHangType() const override { return HangType::NO_DATA_LOOP; }
 

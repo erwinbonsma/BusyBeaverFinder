@@ -135,8 +135,8 @@ RunResult HangExecutor::run() {
     result = executeWithHangDetection(std::min(_numSteps + _maxHangDetectionSteps, _maxSteps));
     if (result != RunResult::UNKNOWN) return result;
 
-    result = executeWithoutHangDetection(_maxSteps);
-    if (result != RunResult::UNKNOWN) return result;
+//    result = executeWithoutHangDetection(_maxSteps);
+//    if (result != RunResult::UNKNOWN) return result;
 
     return RunResult::ASSUMED_HANG;
 }
@@ -164,12 +164,7 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
     RunResult result = run();
 
     // Push result on stack
-    ExecutionStackFrame frame = {
-        .programBlock = _block,
-        .dataStackSize = _data.undoStackSize(),
-        .numSteps = _numSteps
-    };
-    _executionStack.push_back(frame);
+    _executionStack.emplace_back(_block, _data.undoStackSize(), _numSteps);
 
     return result;
 }

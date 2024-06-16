@@ -55,10 +55,8 @@ protected:
     // The sequence that is analyzed. It is only valid while the sequence is analyzed, as it is a
     // pointer into vector-managed memory, which can be re-allocated when more program blocks are
     // added to the run history.
-    //
-    // TODO: Remove once SweepLoopAnalysis is removed
     RawProgramBlocks _programBlocks;
-    int _numProgramBlocks;
+    int _numProgramBlocks {};
 
     // The result of executing one sequence.
     //

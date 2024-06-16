@@ -12,7 +12,7 @@
 #include "ExhaustiveSearcher.h"
 #include "SearchOrchestration.h"
 
-TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
+TEST_CASE("5x5 OrchestratedSearch", "[search][5x5][orchestrated]") {
     SearchSettings settings = defaultSearchSettings;
     settings.maxSteps = 2048;
 
@@ -24,7 +24,6 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
 
     SECTION("Find all") {
         orchestratedSearch(searcher);
-        //    tracker.dumpFinalStats();
 
         REQUIRE(tracker.getMaxStepsFound() == 44);
         REQUIRE(tracker.getTotalSuccess() == 26319);
@@ -34,7 +33,7 @@ TEST_CASE( "5x5 OrchestratedSearch", "[search][5x5][orchestrated]" ) {
     }
 }
 
-TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) {
+TEST_CASE("6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]") {
     SearchSettings settings = defaultSearchSettings;
     settings.dataSize = 6000;
     settings.maxHangDetectionSteps = 100000;
@@ -49,7 +48,7 @@ TEST_CASE( "6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]" ) 
     tracker.setDumpStackPeriod(10000000);
     searcher.setProgressTracker(&tracker);
 
-    SECTION ("Find all") {
+    SECTION("Find all") {
         orchestratedSearch(searcher);
         tracker.dumpFinalStats();
 

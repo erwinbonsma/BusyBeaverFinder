@@ -20,6 +20,9 @@
 class HangDetector;
 
 struct ExecutionStackFrame {
+    ExecutionStackFrame(const ProgramBlock* programBlock, size_t dataStackSize, int numSteps)
+    : programBlock(programBlock), dataStackSize(dataStackSize), numSteps(numSteps) {}
+
     const ProgramBlock* programBlock;
     size_t dataStackSize;
     int numSteps;
