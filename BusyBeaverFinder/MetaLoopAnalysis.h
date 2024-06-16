@@ -229,6 +229,10 @@ class MetaLoopAnalysis {
     int totalDpDelta(const RunSummary &runSummary);
 
 public:
+    MetaLoopAnalysis() = default;
+    MetaLoopAnalysis(const MetaLoopAnalysis&) = delete;
+    MetaLoopAnalysis &operator=(const MetaLoopAnalysis&) = delete;
+
     void reset();
 
     // Should be invoked when a loop in the run summary is about to finish,

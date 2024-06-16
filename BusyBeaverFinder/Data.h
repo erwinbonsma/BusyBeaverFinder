@@ -30,6 +30,8 @@ class Data {
 
 public:
     Data(int size);
+    Data(const Data&) = delete;
+    Data& operator=(const Data&) = delete;
 
     void reset();
 

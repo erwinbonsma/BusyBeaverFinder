@@ -47,6 +47,10 @@ class DataDeltas {
     void updateBounds() const;
 
 public:
+    DataDeltas() = default;
+    DataDeltas(const DataDeltas&) = delete;
+    DataDeltas& operator=(const DataDeltas&) = delete;
+
     void clear() { _dataDeltas.clear(); _dpBoundsValid = false; }
 
     int size() const { return (int)_dataDeltas.size(); }

@@ -20,10 +20,6 @@ bool PreCondition::holdsForValue(int value) const {
     return (_shouldEqual == (value == _value));
 }
 
-SequenceAnalysis::SequenceAnalysis() : _effectiveResult(32) {
-    _dpDelta = 0;
-}
-
 void SequenceAnalysis::addPreCondition(int dpOffset, PreCondition preCondition) {
     auto iter = _preConditions.find(dpOffset);
 

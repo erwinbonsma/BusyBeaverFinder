@@ -135,6 +135,11 @@ protected:
 public:
     RunSummaryBase(int* helperBuf) : _helperBuf(helperBuf) { reset(); }
 
+    // Do not support copy and assignment to avoid accidental expensive copies. Run summaries
+    // should be passed by reference.
+    RunSummaryBase(const RunSummaryBase&) = delete;
+    RunSummaryBase& operator=(const RunSummaryBase&) = delete;
+
     int* getHelperBuffer() const { return _helperBuf; }
 
     void setIdentifyShortLoops(bool flag) { _identifyShortLoops = flag; }
@@ -209,6 +214,11 @@ public:
     RunSummary(const RunHistory &runHistory, int* helperBuf)
     : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
 
+    // Do not support copy and assignment to avoid accidental expensive copies. Run summaries
+    // should be passed by reference.
+    RunSummary(const RunSummary&) = delete;
+    RunSummary& operator=(const RunSummary&) = delete;
+
     // Returns how much DP shifted when executing the sequence of run blocks from firstRunBlock up
     // to lastRunBlock (exclusive).
     int getDpDelta(int firstRunBlock, int lastRunBlock) const;
@@ -232,6 +242,11 @@ protected:
 public:
     MetaRunSummary(const std::vector<RunBlock> &runHistory, int* helperBuf)
     : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
+
+    // Do not support copy and assignment to avoid accidental expensive copies. Run summaries
+    // should be passed by reference.
+    MetaRunSummary(const MetaRunSummary&) = delete;
+    MetaRunSummary& operator=(const MetaRunSummary&) = delete;
 
     void reset() override;
 

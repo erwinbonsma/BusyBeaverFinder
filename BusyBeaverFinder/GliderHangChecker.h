@@ -42,7 +42,7 @@ public:
 
     int gliderLoopIndex() const { return _gliderLoopIndex; }
     int counterDpOffset() const { return _counterDpOffset; }
-    const LoopAnalysis transitionLoopAnalysis() const { return _transitionLoopAnalysis; }
+    const LoopAnalysis& transitionLoopAnalysis() const { return _transitionLoopAnalysis; }
 
     Trilian proofHang(const ExecutionState& executionState) override;
 };

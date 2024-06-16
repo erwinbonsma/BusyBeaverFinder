@@ -107,9 +107,6 @@ std::ostream &operator<<(std::ostream &os, const LoopExit &le) {
     return os;
 }
 
-LoopAnalysis::LoopAnalysis() : SequenceAnalysis() {
-}
-
 bool LoopAnalysis::exitsOnZero(int index) const {
     const ProgramBlock* curBlock = programBlockAt(index);
     const ProgramBlock* nxtBlock = programBlockFollowing(index);

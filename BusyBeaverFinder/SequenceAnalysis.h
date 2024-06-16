@@ -48,7 +48,10 @@ class SequenceAnalysis {
 
     const ProgramBlock* _prevProgramBlock;
 protected:
-    int _dpDelta, _minDp, _maxDp;
+    int _dpDelta {};
+    int _minDp {};
+    int _maxDp {};
+
     // The sequence that is analyzed. It is only valid while the sequence is analyzed, as it is a
     // pointer into vector-managed memory, which can be re-allocated when more program blocks are
     // added to the run history.
@@ -66,7 +69,7 @@ protected:
 
     // The result after executing an instruction in the sequence, relative to when it started.
     // It shows how much DP has shifted, and how much the value that DP now points at has changed.
-    std::vector<DataDelta> _effectiveResult;
+    std::vector<DataDelta> _effectiveResult {32};
 
     // The conditions that must hold with respect to the data for this sequence to be fully
     // executed. Keys are DP offsets
@@ -85,7 +88,9 @@ protected:
     virtual const char* typeString() const { return "SEQ"; }
 
 public:
-    SequenceAnalysis();
+    SequenceAnalysis() = default;
+    SequenceAnalysis(const SequenceAnalysis&) = delete;
+    SequenceAnalysis& operator=(const SequenceAnalysis&) = delete;
 
     virtual bool isLoop() const { return false; }
     int sequenceSize() const { return _numProgramBlocks; }

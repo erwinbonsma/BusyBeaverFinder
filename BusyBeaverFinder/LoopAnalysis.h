@@ -144,7 +144,9 @@ protected:
     const char* typeString() const override { return "LOOP"; }
 
 public:
-    LoopAnalysis();
+    LoopAnalysis() = default;
+    LoopAnalysis(const LoopAnalysis&) = delete;
+    LoopAnalysis& operator=(const LoopAnalysis&) = delete;
 
     bool isLoop() const override { return true; }
     int loopSize() const { return sequenceSize(); }
