@@ -13,7 +13,7 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "7x7 Interpretation Tests", "[interpretation][7x7]" ) {
-    SearchSettings settings = defaultSearchSettings;
+    SearchSettings settings {};
     ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 

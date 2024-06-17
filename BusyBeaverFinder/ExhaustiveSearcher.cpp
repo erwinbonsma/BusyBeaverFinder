@@ -29,7 +29,7 @@ ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings set
     _fastExecutor(settings.dataSize)
 {
     _fastExecutor.setMaxSteps(_settings.maxSteps);
-    _hangExecutor.setMaxSteps(_settings.maxSteps);
+    _hangExecutor.setMaxSteps(_settings.maxSearchSteps);
     _hangExecutor.addDefaultHangDetectors();
 
     // Set default search mode
@@ -218,6 +218,8 @@ void ExhaustiveSearcher::run() {
         _programExecutor = &_hangExecutor;
         _hangExecutor.setHangDetectionStart(_fastExecutor.numSteps());
         _resuming = false;
+
+        // TODO: Copy data from fast executor and only start data-undo stack from this moment
     }
 
     ProgramExecutor *executor = _programExecutor;

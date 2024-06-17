@@ -28,19 +28,20 @@ enum class SearchMode : int8_t {
 };
 
 struct SearchSettings {
-    int dataSize;
-    int maxHangDetectionSteps;
-    int maxSteps;
-    bool testHangDetection;
-    bool disableNoExitHangDetection;
-};
+    int dataSize = 1024;
 
-const SearchSettings defaultSearchSettings = {
-    .dataSize = 1024,
-    .maxSteps = 1024,
-    .maxHangDetectionSteps = 1024,
-    .testHangDetection = false,
-    .disableNoExitHangDetection = false
+    // The maximum number of steps with hang detection enabled
+    int maxHangDetectionSteps = 1024;
+
+    // The maximum number of steps where the program space is searched during execution.
+    // Beyond this limit, if a program encounters an unset instruction, it is a late escape.
+    int maxSearchSteps = 1024;
+
+    // The maximum steps that a program will run for.
+    int maxSteps = 1024;
+
+    bool testHangDetection = false;
+    bool disableNoExitHangDetection = false;
 };
 
 class ExhaustiveSearcher {

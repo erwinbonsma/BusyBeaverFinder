@@ -13,8 +13,7 @@
 #include "SearchOrchestration.h"
 
 TEST_CASE("5x5 OrchestratedSearch", "[search][5x5][orchestrated]") {
-    SearchSettings settings = defaultSearchSettings;
-    settings.maxSteps = 2048;
+    SearchSettings settings {};
 
     ExhaustiveSearcher searcher(5, 5, settings);
     ProgressTracker tracker(searcher);
@@ -34,9 +33,10 @@ TEST_CASE("5x5 OrchestratedSearch", "[search][5x5][orchestrated]") {
 }
 
 TEST_CASE("6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]") {
-    SearchSettings settings = defaultSearchSettings;
+    SearchSettings settings {};
     settings.dataSize = 6000;
-    settings.maxHangDetectionSteps = 100000;
+    settings.maxHangDetectionSteps = 50000;
+    settings.maxSearchSteps =  50000;
     settings.maxSteps = 100000;
 //    settings.testHangDetection = true;
 

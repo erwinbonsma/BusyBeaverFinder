@@ -53,7 +53,7 @@ void init(int argc, char * argv[]) {
         height = result["h"].as<int>();
     }
 
-    SearchSettings settings = defaultSearchSettings;
+    SearchSettings settings {};
 
     if (result.count("d")) {
         settings.dataSize = result["d"].as<int>();
@@ -65,6 +65,9 @@ void init(int argc, char * argv[]) {
     }
     if (result.count("max-hang-detection-steps")) {
         settings.maxHangDetectionSteps = result["max-hang-detection-steps"].as<int>();
+    }
+    if (result.count("max-search-steps")) {
+        settings.maxSearchSteps = result["max-search-steps"].as<int>();
     }
     if (settings.maxSteps < settings.maxHangDetectionSteps) {
         settings.maxSteps = settings.maxHangDetectionSteps;

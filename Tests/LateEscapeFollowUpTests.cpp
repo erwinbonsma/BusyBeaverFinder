@@ -11,7 +11,7 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
-    SearchSettings settings = defaultSearchSettings;
+    SearchSettings settings {};
     settings.dataSize = 16384;
     settings.maxSteps = 10000000;
 

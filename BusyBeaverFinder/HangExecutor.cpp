@@ -135,8 +135,9 @@ RunResult HangExecutor::run() {
     result = executeWithHangDetection(std::min(_numSteps + _maxHangDetectionSteps, _maxSteps));
     if (result != RunResult::UNKNOWN) return result;
 
-//    result = executeWithoutHangDetection(_maxSteps);
-//    if (result != RunResult::UNKNOWN) return result;
+    // Run without hang detection, but still with a data-undo stack (so search can continue)
+    result = executeWithoutHangDetection(_maxSteps);
+    if (result != RunResult::UNKNOWN) return result;
 
     return RunResult::ASSUMED_HANG;
 }
