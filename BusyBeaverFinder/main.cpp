@@ -69,9 +69,8 @@ void init(int argc, char * argv[]) {
     if (result.count("max-search-steps")) {
         settings.maxSearchSteps = result["max-search-steps"].as<int>();
     }
-    if (settings.maxSteps < settings.maxHangDetectionSteps) {
-        settings.maxSteps = settings.maxHangDetectionSteps;
-    }
+    settings.maxSearchSteps = std::max(settings.maxHangDetectionSteps, settings.maxSearchSteps);
+    settings.maxSteps = std::max(settings.maxSearchSteps, settings.maxSteps);
 
     // Enable testing of hang detection?
     if (result.count("t")) {
