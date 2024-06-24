@@ -89,8 +89,7 @@ void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile
         if (iss >> numSteps) {
             loadResumeStackFromStream(iss, resumeStack);
             if (!resumeStack.empty()) {
-                // TODO: Pass num steps and let searcher only start search from there.
-                searcher.searchSubTree(resumeStack);
+                searcher.searchSubTree(resumeStack, numSteps - 1);
             }
         }
     }

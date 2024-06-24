@@ -80,6 +80,9 @@ class ExhaustiveSearcher {
     void branch();
     void extendBlock();
     void buildBlock(const ProgramBlock* block);
+
+    void switchToHangExecutor();
+
 public:
     ExhaustiveSearcher(int width, int height, SearchSettings settings);
 
@@ -100,14 +103,18 @@ public:
     bool atTargetProgram();
 
     void search();
-    void search(const std::vector<Ins> &resumeFrom);
 
-    void searchSubTree(const std::vector<Ins> &resumeFrom);
+    // Starts searching once the resume stack is empty _and_ the number of executed steps exceeds
+    // fromSteps. It is an error when an unset instruction is encountered when the resume stack is
+    // empty but the target step count is not yet reached.
+    void search(const std::vector<Ins> &resumeFrom, int fromSteps = 0);
+
+    void searchSubTree(const std::vector<Ins> &resumeFrom, int fromSteps = 0);
 
     void findOne();
     void findOne(const std::vector<Ins> &resumeFrom);
 
-    void dumpInstructionStack() const;
+    void dumpInstructionStack(const std::string& sep = {}) const;
     bool instructionStackEquals(Ins* reference) const;
 
     void dumpSettings();

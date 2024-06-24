@@ -52,8 +52,8 @@ bool ExhaustiveSearcher::atTargetProgram() {
     return instructionStackEquals(targetStack);
 }
 
-void ExhaustiveSearcher::dumpInstructionStack() const {
-    ::dumpInstructionStack(_instructionStack);
+void ExhaustiveSearcher::dumpInstructionStack(const std::string& sep) const {
+    ::dumpInstructionStack(_instructionStack, sep.size() ? sep : ",");
 }
 
 void ExhaustiveSearcher::dumpSettings() {
@@ -209,19 +209,28 @@ void ExhaustiveSearcher::branch() {
     }
 }
 
+void ExhaustiveSearcher::switchToHangExecutor() {
+    // The program should be resuming
+    assert(_resuming);
+
+    // The program should have finished resumption (otherwise the search is likely
+    // wrongly configured)
+    assert(_resumeIns == _resumeEnd);
+
+    // We're done resuming and switching to the hang executor. Pass how many steps of
+    // the current program have already been executed by the fast executor. Hang
+    // detection can be disabled up till then. We are about to execute a new program
+    // block, so up till this point we cannot detect any hangs.
+    _hangExecutor.setHangDetectionStart(_fastExecutor.numSteps());
+    _hangExecutor.setMaxSteps(_fastExecutor.numSteps() + _settings.maxSearchSteps);
+    _programExecutor = &_hangExecutor;
+    _resuming = false;
+
+    // TODO: Let hang executor continue from current point
+    // Copy data from fast executor and only start data-undo stack from this moment
+}
+
 void ExhaustiveSearcher::run() {
-    if (_resuming && _resumeIns == _resumeEnd) {
-        // We're done resuming and switching to the hang executor. Pass how many steps of the
-        // current program have already been executed by the fast executor. Hang detection can be
-        // disabled up till then. We are about to execute a new program block, so up till this
-        // point we cannot detect any hangs.
-        _programExecutor = &_hangExecutor;
-        _hangExecutor.setHangDetectionStart(_fastExecutor.numSteps());
-        _resuming = false;
-
-        // TODO: Copy data from fast executor and only start data-undo stack from this moment
-    }
-
     ProgramExecutor *executor = _programExecutor;
     switch (executor->execute(&_programBuilder)) {
         case RunResult::SUCCESS: {
@@ -229,7 +238,11 @@ void ExhaustiveSearcher::run() {
             break;
         }
         case RunResult::PROGRAM_ERROR: {
-            if (executor == &_hangExecutor || _resumeIns != _resumeEnd) {
+            if (executor == &_hangExecutor || _resuming) {
+                if (_resuming && _resumeIns == _resumeEnd) {
+                    switchToHangExecutor();
+                }
+
                 buildBlock(executor->lastProgramBlock());
             } else {
                 _tracker->reportLateEscape(executor->numSteps());
@@ -241,10 +254,18 @@ void ExhaustiveSearcher::run() {
             break;
         }
         case RunResult::ASSUMED_HANG: {
-            if (executor == &_hangExecutor) {
+            if (_resuming) {
+                // The fast executor finished its configured number of steps (after, presumably, it
+                // finished resuming). Switch to hang detection.
+
+                switchToHangExecutor();
+
+                run();
+            } else if (executor == &_hangExecutor) {
                 // Hang detection is finished. Switch to fast execution
 
                 _tracker->reportFastExecution();
+                _fastExecutor.setMaxSteps(_settings.maxSteps);
                 _fastExecutor.resumeFrom(_hangExecutor.lastProgramBlock(),
                                          _hangExecutor.getData(),
                                          _hangExecutor.numSteps());
@@ -295,10 +316,11 @@ void ExhaustiveSearcher::search() {
     run();
 }
 
-void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom) {
+void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom, int fromSteps) {
     _resumeIns = resumeFrom.cbegin();
     _resumeEnd = resumeFrom.cend();
     _resuming = true;
+    _fastExecutor.setMaxSteps(fromSteps ? fromSteps : _settings.maxSteps);
     _programExecutor = &_fastExecutor;
 
     std::cout << "Resuming from: ";
@@ -307,9 +329,9 @@ void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom) {
     run();
 }
 
-void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom) {
+void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom, int fromSteps) {
     _searchMode = SearchMode::SUB_TREE;
-    search(resumeFrom);
+    search(resumeFrom, fromSteps);
     _searchMode = SearchMode::FULL_TREE;
 }
 

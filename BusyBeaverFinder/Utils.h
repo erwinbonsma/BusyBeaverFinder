@@ -60,7 +60,7 @@ bool deltasCanSumTo(std::set<int> deltas, int target);
 void loadResumeStackFromStream(std::istream &input, std::vector<Ins> &resumeStack);
 bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStack);
 
-void dumpInstructionStack(const std::vector<Ins> &stack);
+void dumpInstructionStack(const std::vector<Ins> &stack, const std::string& sep = ",");
 
 template <class T>
 class ProxyIterator {

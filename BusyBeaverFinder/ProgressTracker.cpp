@@ -135,6 +135,9 @@ void ProgressTracker::reportLateEscape(int numSteps) {
     std::cout << "Late escape (" << numSteps << "): "
     << _searcher.getProgram().toString() << std::endl;
 
+    std::cout << "ESC " << numSteps << " ";
+    _searcher.dumpInstructionStack(" ");
+
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
@@ -151,8 +154,6 @@ void ProgressTracker::reportLateEscape(int numSteps) {
 void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
     _maxStepsUntilHangDetection = std::max(_maxStepsUntilHangDetection,
                                            _searcher.getProgramExecutor()->numSteps());
-//    std::cout << "Steps = " << _searcher.getProgramExecutor()->numSteps() << std::endl;
-
     if (executionWillContinue) {
         // Only signal it. Execution will continue to verify that the program indeed hangs.
         _detectedHang = hangType;

@@ -14,6 +14,7 @@
 
 TEST_CASE( "7x7 Interpretation Tests", "[interpretation][7x7]" ) {
     SearchSettings settings {};
+    settings.maxSteps = 10000;
     ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
