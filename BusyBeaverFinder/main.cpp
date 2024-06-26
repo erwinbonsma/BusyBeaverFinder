@@ -28,6 +28,7 @@ void init(int argc, char * argv[]) {
         ("h,height", "Program height", cxxopts::value<int>())
         ("d,datasize", "Data size", cxxopts::value<int>())
         ("max-steps", "Maximum program execution steps", cxxopts::value<int>())
+        ("max-search-steps", "Maximum steps to enable back-tracking search", cxxopts::value<int>())
         ("max-hang-detection-steps", "Max steps to execute with hang detection", cxxopts::value<int>())
         ("undo-capacity", "Maximum data operations to undo", cxxopts::value<int>())
         ("resume-from", "File with resume stack", cxxopts::value<std::string>())
