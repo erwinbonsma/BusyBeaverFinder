@@ -62,7 +62,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
 
 TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
     HangExecutor hangExecutor(16384, 1000000);
-    hangExecutor.setMaxSteps(40000000);
+    hangExecutor.setMaxSteps(60000000);
     hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-OldFalsePositive3") {
@@ -410,6 +410,19 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 10268897);
     }
+    SECTION("BB 7x7 #19904958") {
+        // ? * ? ? * * ?
+        // ? _ _ * o _ *
+        // * o o o o _ *
+        // * * * ? _ * ?
+        // o o o o o * ?
+        // o * _ _ o o *
+        // _ ? * ? * * ?
+        RunResult result = hangExecutor.execute("d++vCSlUqstVbYFjus");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 19904958);
+    }
     SECTION("BB 7x7 #22606881") {
         //   *   * *
         // * o _ o _ *
@@ -423,6 +436,28 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 22606881);
     }
+    SECTION("BB 7x7 #23822389") {
+        // Notable because it uses relatively few (19) data cells. It exhibits a behavior that is
+        // partially a glider and partially a sweep. The number of non-zero data values varies
+        // from three to five (at most?). With three values it executes a glider loop, where the
+        // left value is the loop counter that is decreased by one each iteration. The other two
+        // counters are respectively increased by three and decreased by one. The middle counter
+        // starts negative and becomes positive. Whether the glider deviates from its three-counter
+        // mode depends on how this middle value crosses the zero (which depends on the modulus
+        // of its initial value). Ocassionally this results in an extra non-zero value.
+        //
+        //   * *   *
+        // * o _ _ _ _ *
+        //   _ o * _ *
+        //   * _ o o o *
+        // * o o o _ o *
+        // * * * o _ o
+        // o _ _ _ o *
+        RunResult result = hangExecutor.execute("d+u+QCxi+FaVGqR0Bs");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 23822389);
+    }
     SECTION("BB 7x7 #33207907") {
         //   * *   *
         // * o o _ _ *
@@ -435,6 +470,19 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 33207907);
+    }
+    SECTION("BB 7x7 #59924237") {
+        //     * *   o
+        //   * o o o _ *
+        // * _ o o * *
+        // o _ * o o o *
+        // _ o _ o o *
+        // _ * _ _ o *
+        // _     * *
+        RunResult result = hangExecutor.execute("d/rflSha0lYRbIGz68");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 59924237);
     }
     SECTION("7x7-OldFalsePositive1") {
         // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
