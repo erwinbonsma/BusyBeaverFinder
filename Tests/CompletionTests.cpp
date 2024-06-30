@@ -62,7 +62,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
 
 TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
     HangExecutor hangExecutor(16384, 1000000);
-    hangExecutor.setMaxSteps(60000000);
+    hangExecutor.setMaxSteps(100000000);
     hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-OldFalsePositive3") {
@@ -483,6 +483,32 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 59924237);
+    }
+    SECTION("BB 7x7 #72505597") {
+        //   *       *
+        //   _ _ * * _
+        // * o o o o _ *
+        //   o * * o _ o
+        // * _ _ o o *
+        // * * _ _ o *
+        // o _ o o *
+        RunResult result = hangExecutor.execute("d+/vCjlUtpGBboG0W8");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 72505597);
+    }
+    SECTION("BB 7x7 #97601163") {
+        //   *     *
+        // * _ _ * o _ *
+        //   _ o * o *
+        // * o o o o *
+        // * o o o o *
+        // * * * _ _ o *
+        // o _ _ o * *
+        RunResult result = hangExecutor.execute("d+++CSxm5VuVbqBkGs");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 97601163);
     }
     SECTION("7x7-OldFalsePositive1") {
         // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
