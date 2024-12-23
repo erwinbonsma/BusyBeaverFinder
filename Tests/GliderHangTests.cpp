@@ -12,7 +12,7 @@
 #include "ProgramBlock.h"
 
 const int dummySteps = 1;
-const int maxSequenceLen = 16;
+const int maxSequenceLen = 24;
 
 const bool INC = true;
 const bool MOV = false;
@@ -274,32 +274,48 @@ TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
     exitBlock->finalizeExit(dummySteps);
 
-    SECTION("Glider-TransitionClearsZeroesAhead") {
+    SECTION("Glider-TransitionClearsZeroesFarAhead") {
         // This glider program has a transition which writes ones several steps ahead of its
         // glider loop. This complicates checks that there are only zeroes ahead.
+        //
+        // This is a variant of Glider-ExitsOnTransitionPolutions, which terminates on polutions
+        // created by the transition. Here instead the polutions are required for the progrma to
+        // hang.
 
-        // Bootstrap
+        // Bootstrap Bootstrap
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
-        block[1].finalize(MOV, -1, dummySteps, block + 2, exitBlock);
-        block[2].finalize(INC,  2, dummySteps, exitBlock, block + 3);
+        block[1].finalize(MOV,  2, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
+        block[4].finalize(INC, 10, dummySteps, exitBlock, block + 5);
 
-        // Glider loop
-        block[3].finalize(INC, -1, dummySteps, block + 7, block + 4);
-        block[4].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
-        block[5].finalize(INC,  2, dummySteps, exitBlock, block + 6);
-        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+        // Bootstrap Glider
+        block[5].finalize(INC, -1, dummySteps, block + 9, block + 6);
+        block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 7);
+        block[7].finalize(INC,  1, dummySteps, exitBlock, block + 8);
+        block[8].finalize(MOV,  1, dummySteps, exitBlock, block + 5);
 
-        // Transition
-        block[ 7].finalize(MOV,  8, dummySteps, block + 8, exitBlock);
-        block[ 8].finalize(INC,  1, dummySteps, exitBlock, block + 9); // far-ahead data set
-        block[ 9].finalize(MOV, -6, dummySteps, block + 10, exitBlock);
-        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // init next counter
-        block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
+        // Bootstrap Transition
+        block[ 9].finalize(INC,  1, dummySteps, exitBlock, block + 10);
+        block[10].finalize(MOV, -1, dummySteps, exitBlock, block + 11);
+        block[11].finalize(INC, -2, dummySteps, block + 18, block + 12);
+        block[12].finalize(MOV, -1, dummySteps, block + 7, exitBlock);
+
+        // Main Glider
+        block[14].finalize(INC, -1, dummySteps, block + 18, block + 15);
+        block[15].finalize(MOV,  1, dummySteps, exitBlock, block + 16);
+        block[16].finalize(INC,  1, dummySteps, exitBlock, block + 17);
+        block[17].finalize(MOV, -1, dummySteps, exitBlock, block + 14);
+
+        // Main Transition
+        block[18].finalize(MOV,  7, dummySteps, block + 19, exitBlock);
+        block[19].finalize(INC,  2, dummySteps, exitBlock, block + 20); // far-ahead data set
+        block[20].finalize(MOV, -5, dummySteps, exitBlock, block + 16);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
         RunResult result = hangExecutor.execute(&program);
 
-        // TODO: Replace by an actual hang
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
 }
 
