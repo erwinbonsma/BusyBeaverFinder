@@ -98,12 +98,12 @@ public:
     bool firstForValue;
 
     // Indicates when the exit may occur
-    ExitWindow exitWindow;
+    ExitWindow exitWindow {};
 
     // When the exitWindow is BOOTSTRAP, the condition is wrt to the value at the start of a loop
     // iteration. When the exit window is ANYTIME, the condition is wrt to the value when it is
     // first consumed by the loop (once the loop has finished executing its bootstrap cycles)
-    ExitCondition exitCondition;
+    ExitCondition exitCondition {};
 };
 
 std::ostream &operator<<(std::ostream &os, const LoopExit &le);

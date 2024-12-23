@@ -231,11 +231,11 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
             // Reset to known state. May still be changed later
             loopExit.exitWindow = ExitWindow::ANYTIME;
 
-            // TODO: Re-enable
-//            if (!exitsOnZero(i)) {
-//                // Otherwise the loop cannot loop.
-//                loopExit.exitCondition.invalidate();
-//            }
+            if (!exitsOnZero(i)) {
+                // Otherwise the loop cannot loop.
+                loopExit.exitCondition.invalidate();
+                loopExit.exitWindow = ExitWindow::NEVER;
+            }
         }
     }
 }
@@ -271,10 +271,12 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
                         int numBootstrapCycles = abs((delta2 - delta) / mc);
                         _numBootstrapCycles = std::max(_numBootstrapCycles, numBootstrapCycles);
 
-                        _loopExits[k].exitWindow = ExitWindow::BOOTSTRAP;
-                        if (numBootstrapCycles == 1) {
-                            // Simplify operator
-                            _loopExits[k].exitCondition.setOperator(Operator::EQUALS);
+                        if (_loopExits[k].exitCondition.isValid()) {
+                            _loopExits[k].exitWindow = ExitWindow::BOOTSTRAP;
+                            if (numBootstrapCycles == 1) {
+                                // Simplify operator
+                                _loopExits[k].exitCondition.setOperator(Operator::EQUALS);
+                            }
                         }
                     } else {
                         // The masked condition can never occur
