@@ -506,11 +506,7 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
 
 std::optional<std::pair<int, int>> LoopAnalysis::stationaryLoopExits(const Data& data,
                                                                      int dpOffset) const {
-    if (dataPointerDelta() != 0) {
-        // TODO: Find out when this check fails.
-        // Is it due to faulty analysis or an incorrect assumption?
-        return {};
-    }
+    assert(dataPointerDelta() == 0);
 
     std::optional<std::pair<int, int>> result;
     for (auto &loopExit : _loopExits) {
