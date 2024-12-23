@@ -69,8 +69,10 @@ TEST_CASE("Block-based Completion Tests", "[success][blocks][.explicit]") {
         block[14].finalize(MOV, 2, dummySteps, block + 2, exitBlock);
 
         InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
-
+        RunResult result = hangExecutor.execute(&program);
         hangExecutor.dump();
+
+        // This program does not actually hang, but detecting completion is out of scope.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
     }
 }
