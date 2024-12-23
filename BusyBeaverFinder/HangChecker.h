@@ -22,6 +22,6 @@ public:
     /* Checks if the program is proven to hang. It can return MAYBE. In this case the hang
      * detector is responsible for invoking the check again at a later point in the program's
      * execution, after verifying that the program still exhibits the same behavior.
-∫     */
+     */
     virtual Trilian proofHang(const ExecutionState& _execution) = 0;
 };
