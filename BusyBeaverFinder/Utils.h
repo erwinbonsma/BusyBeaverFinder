@@ -14,6 +14,12 @@
 
 #include "Types.h"
 
+// Global flag that can be used for debugging. Intended usage: when a strange/anomalous situation
+// is encountered during a search in a low-level component, it can set this flag. A higher-level
+// object (e.g. the searcher) can monitor this and output information about the search state so
+// that hopefully the behavior can be isolated/captured in a small unit test.
+extern bool enableDebugOutput;
+
 #define PROGRAM_POINTERS_MATCH(pp1, pp2) ( \
     pp1.p.col == pp2.p.col && \
     pp1.p.row == pp2.p.row && \
