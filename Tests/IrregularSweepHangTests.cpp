@@ -9,6 +9,7 @@
 #include "catch.hpp"
 
 #include "HangExecutor.h"
+#include "HangDetector.h"
 
 TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
     HangExecutor hangExecutor(1024, 20000);
@@ -31,8 +32,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepWhereIncomingLoopClears2") {
         // Very similar in behavior to the previous two programs. Also an appendix at its right,
@@ -49,8 +50,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepWhereIncomingLoopClears3") {
         // The behavior of this program is very similar to the previous two programs, but reversed.
@@ -67,8 +68,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
     SECTION("6x6-IrregularSweepWhereIncomingLoopOscillates") {
         // Exit value is 1, non-exit is 2. The incoming loop oscillates the non-exit value (2) to
@@ -86,8 +87,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepWhereIncomingLoopOscillates2") {
         // Very similar to the previous two hanging programs. It was incorrectly classified as a
@@ -104,8 +105,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepWhereIncomingLoopOscillates3") {
         // Very similar to previous three irregular sweep hangs. However, it has an interesting
@@ -124,8 +125,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepHangWithPollutedAppendix") {
         // This sweep hang has an a-periodically growing appendix at its left. The exit value is
@@ -143,8 +144,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
     SECTION("6x6-IrregularSweepHangWithPollutedAppendix2") {
         // This is very similar in behavior to the previous program.
@@ -160,8 +161,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
     }
     SECTION("6x6-IrregularSweepHangWithPollutedAppendix3") {
         // The sweep hang has an a-periodically growing appendix at its right side. The exit value
@@ -179,8 +180,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepHangWithPollutedAppendix4") {
         // Sweep hang with a relatively complex shifts by the sweep loops. The incoming loop to the
@@ -199,8 +200,8 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
 
-//        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
-//        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
+        //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
+        //        REQUIRE(rightSweepEndType(hangExecutor) == SweepEndType::FIXED_APERIODIC_APPENDIX);
     }
     SECTION("6x6-IrregularSweepHangWithHeavilyPollutedAppendix") {
         // A non-standard irregular sweep. The leftward sweep loop moves DP two cells and creates
@@ -268,5 +269,48 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+    }
+    SECTION("6x6-IrregularSweepWithAlternatingEndSweepTransition") {
+        // This test triggers the anomalous situation in LoopAnalysis#stationaryLoopExits,
+        // where the loop is marked stationary but there is a non-zero DP delta.
+        //
+        //   *   * *
+        // * o o _ _ *
+        // * o * o o *
+        // o o * o *
+        // o * _ o *
+        // o     *
+        //
+        // The sweep hang has an irregular end at its right, consisting of zeroes and ones. The
+        // rightward sweep ends on the first zero.
+        //
+        // The run-summary is as follows:
+        // ...
+        // #13* 5.0 #15                 #28* 5.1 #29
+        // #13* 7.0 #15 #28*1.0 #35*1.0 #28* 5.1 #29
+        // #13* 7.0 #15                 #28* 7.1 #29
+        // #13*10.0 #15 #28*1.0 #35*2.0 #28* 7.1 #29
+        // #13* 9.0 #15                 #28* 9.1 #29
+        // #13*11.0 #15 #28*1.0 #35*1.0 #28* 9.1 #29
+        // #13*11.0 #15                 #28*11.1 #29
+        // #13*16.0 #15 #28*1.0 #35*4.0 #28*11.1 #29
+        // #13*13.0 #15                 #28*13.1 #29
+        //
+        // There are two possible end-sweep transitions at the irregular end, and the hang
+        // alternates between both. The first is a plain one: #15. The second is one that
+        // contains a loop whose length varies depending on the amount of ones in the irregular
+        // end: #15 #28*1.0 #35*n\
+        //
+        // TODO: Check that the hang detection is sufficiently strict.
+        // Should this be detected as an irregular hang without additional checks (and recognition
+        // of what is happening)?
+        RunResult result = hangExecutor.execute("Zu65Qpllm2G37w");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
+
+        hangExecutor.dumpExecutionState();
+
+        hangExecutor.detectedHang()->dump();
     }
 }
