@@ -46,8 +46,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Leftwards sweep
         block[2].finalize(MOV, -1, dummySteps, block + 0, block + 2);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -96,8 +96,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Leftwards sweep
         block[3].finalize(MOV, -1, dummySteps, block + 0, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -154,8 +154,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Transition sequence
         block[6].finalize(MOV,  1, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -213,8 +213,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Rightwards sweep
         block[5].finalize(MOV,  1, dummySteps, block + 0, block + 5);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -267,8 +267,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Transition sequence that extends sequence at left
         block[2].finalize(INC,  3, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -311,8 +311,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[2].finalize(MOV, -1, dummySteps, block + 3, block + 2);
         block[3].finalize(INC, -1, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -356,8 +356,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Leftwards sweep loop
         block[5].finalize(MOV, -1, dummySteps, block + 0, block + 5);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -417,8 +417,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Leftwards sweep loop
         block[9].finalize(MOV, -1, dummySteps, block + 0, block + 9);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -488,8 +488,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[3].finalize(MOV, 1, dummySteps, exitBlock, block + 4);
         block[4].finalize(INC, 1, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -544,8 +544,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[5].finalize(INC, -1, dummySteps, exitBlock, block + 6);
         block[6].finalize(MOV, -1, dummySteps, exitBlock, block + 2);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -601,8 +601,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Transition at left
         block[5].finalize(MOV,  1, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -648,8 +648,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Leftwards sweep
         block[7].finalize(MOV, -1, dummySteps, block + 1, block + 7);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -698,8 +698,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         // Transition sequence extending sequence at left
         block[6].finalize(INC, -1, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -783,8 +783,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[10].finalize(MOV,  1, dummySteps, exitBlock, block + 11);
         block[11].finalize(INC, -1, dummySteps, exitBlock, block +  3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -849,8 +849,8 @@ TEST_CASE("Meta-loop (sweeps)", "[meta-loop-analysis][sweep]") {
         block[11].finalize(MOV, -1, dummySteps, block + 12, exitBlock);
         block[12].finalize(INC,  1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -918,8 +918,8 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
         // Extension
         block[9].finalize(INC,  1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -965,8 +965,8 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
         // Extension at left
         block[11].finalize(INC,  1, dummySteps, exitBlock, block + 4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -1014,8 +1014,8 @@ TEST_CASE("Meta-loop (sweep loop analysis)", "[meta-loop-analysis][sweep]") {
         block[13].finalize(INC,  1, dummySteps, exitBlock, block + 14);
         block[14].finalize(MOV, -1, dummySteps, block + 4, exitBlock);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -1072,8 +1072,8 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         block[11].finalize(INC,  4, dummySteps, exitBlock, block + 12);
         block[12].finalize(MOV,  4, dummySteps, exitBlock, block +  4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -1120,8 +1120,8 @@ TEST_CASE("Meta-loop (sweep transitions)", "[meta-loop-analysis][sweep]") {
         block[11].finalize(INC,  4, dummySteps, exitBlock, block + 12);
         block[12].finalize(MOV, -4, dummySteps, exitBlock, block +  4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();

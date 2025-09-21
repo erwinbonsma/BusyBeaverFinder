@@ -18,7 +18,7 @@ class RunBlockTransitions;
 class ExecutionState {
 
 public:
-    virtual const InterpretedProgram* getInterpretedProgram() const = 0;
+    virtual std::shared_ptr<const InterpretedProgram> getInterpretedProgram() const = 0;
 
     virtual const Data& getData() const = 0;
 

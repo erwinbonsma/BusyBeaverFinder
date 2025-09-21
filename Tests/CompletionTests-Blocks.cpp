@@ -68,8 +68,8 @@ TEST_CASE("Block-based Completion Tests", "[success][blocks][.explicit]") {
         // Transition into glider
         block[14].finalize(MOV, 2, dummySteps, block + 2, exitBlock);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
         hangExecutor.dump();
 
         // This program does not actually hang, but detecting completion is out of scope.

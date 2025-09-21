@@ -35,7 +35,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
     int _hangDetectionStart;
     int _maxHangDetectionSteps;
 
-    const InterpretedProgram *_program;
+    std::shared_ptr<const InterpretedProgram> _program;
 
     Data _data;
     std::shared_ptr<HangDetector> _detectedHang;
@@ -81,7 +81,7 @@ public:
 
     void pop() override;
 
-    RunResult execute(const InterpretedProgram* program) override;
+    RunResult execute(std::shared_ptr<const InterpretedProgram> program) override;
     RunResult execute(std::string programSpec);
 
     void dump() const override;
@@ -89,7 +89,9 @@ public:
     //----------------------------------------------------------------------------------------------
     // Implement ExecutionState interface
 
-    const InterpretedProgram* getInterpretedProgram() const override { return _program; }
+    std::shared_ptr<const InterpretedProgram> getInterpretedProgram() const override {
+        return _program;
+    }
 
     const Data& getData() const override { return _data; }
 

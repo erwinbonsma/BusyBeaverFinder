@@ -67,7 +67,7 @@ RunResult FastExecutor::run() {
     }
 }
 
-RunResult FastExecutor::execute(const InterpretedProgram* program) {
+RunResult FastExecutor::execute(std::shared_ptr<const InterpretedProgram> program) {
     if (!_canResume) {
         // Start execution form the start
         _numSteps = 0;

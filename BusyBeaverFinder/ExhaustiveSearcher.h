@@ -63,7 +63,7 @@ class ExhaustiveSearcher {
     std::vector<Ins> _instructionStack;
 
     // An interpreted representation of the program
-    InterpretedProgramBuilder _programBuilder;
+    std::shared_ptr<InterpretedProgramBuilder> _programBuilder;
 
     FastExecutor _fastExecutor;
     HangExecutor _hangExecutor;
@@ -94,7 +94,9 @@ public:
     void setProgressTracker(ProgressTracker* tracker);
 
     const Program& getProgram() const { return _program; }
-    const InterpretedProgram& getInterpretedProgram() const { return _programBuilder; }
+    std::shared_ptr<const InterpretedProgram> getInterpretedProgram() const {
+        return _programBuilder;
+    }
 
     const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 

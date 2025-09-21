@@ -13,15 +13,16 @@
 
 bool canExitFromBlock(std::string programSpec, int numSteps) {
     Program program = Program::fromString(programSpec);
-    InterpretedProgramBuilder interpretedProgram = InterpretedProgramBuilder::fromProgram(program);
+    auto interpretedProgram = std::make_shared<InterpretedProgramBuilder>();
+    interpretedProgram->buildFromProgram(program);
 
     FastExecutor fastExecutor(1024);
     fastExecutor.setMaxSteps(numSteps);
-    RunResult result = fastExecutor.execute(&interpretedProgram);
+    RunResult result = fastExecutor.execute(interpretedProgram);
 
     REQUIRE(result == RunResult::ASSUMED_HANG);
 
-    ExitFinder exitFinder(program, interpretedProgram);
+    ExitFinder exitFinder(program, *interpretedProgram);
     return exitFinder.canExitFrom(fastExecutor.lastProgramBlock());
 }
 

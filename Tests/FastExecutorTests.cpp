@@ -26,11 +26,11 @@ TEST_CASE("6x6 Fast Executor tests", "[6x6][fast-exec]") {
         // _ * o _ _ *
         // _   *
         Program program = Program::fromString("ZiiIRkKCACQggA");
-        InterpretedProgramBuilder programBuilder =
-            InterpretedProgramBuilder::fromProgram(program);
+        auto programBuilder = std::make_shared<InterpretedProgramBuilder>();
+        programBuilder->buildFromProgram(program);
 
         // Act
-        RunResult result = fastExecutor.execute(&programBuilder);
+        RunResult result = fastExecutor.execute(programBuilder);
 
         REQUIRE(result == RunResult::DATA_ERROR);
     }

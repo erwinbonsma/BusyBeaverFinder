@@ -31,7 +31,7 @@ public:
 
     void pop() override { _canResume = false; };
 
-    RunResult execute(const InterpretedProgram* program) override;
+    RunResult execute(std::shared_ptr<const InterpretedProgram> program) override;
 
     void resumeFrom(const ProgramBlock* resumeFrom, const Data& data, int numSteps);
 

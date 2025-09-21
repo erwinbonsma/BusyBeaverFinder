@@ -59,8 +59,8 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         block[12].finalize(INC,  1, dummySteps, exitBlock, block + 13);
         block[13].finalize(MOV, -2, dummySteps, exitBlock, block + 4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -107,8 +107,8 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         block[11].finalize(MOV, -1, dummySteps, block + 12, exitBlock);
         block[12].finalize(INC,  1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -133,8 +133,8 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         // Leftwards sweep
         block[6].finalize(MOV, -1, dummySteps, block + 2, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -159,8 +159,8 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         // Leftwards sweep
         block[6].finalize(MOV, -2, dummySteps, block + 2, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -189,8 +189,8 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         // Leftward sweep
         block[6].finalize(MOV, -1, dummySteps, block + 1, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
@@ -237,8 +237,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
         block[8].finalize(MOV, -1, dummySteps, block + 9, exitBlock);
         block[9].finalize(INC, -1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
@@ -265,8 +265,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
         block[6].finalize(INC, -1, dummySteps, exitBlock, block + 7);
         block[7].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
@@ -295,8 +295,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
         // Transition sequence extending sequence at left
         block[7].finalize(INC,  1, dummySteps, exitBlock, block + 1);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
@@ -319,8 +319,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
         // Leftwards sweep
         block[6].finalize(MOV, -1, dummySteps, block + 2, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
@@ -345,8 +345,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
         // Leftwards sweep
         block[6].finalize(MOV, -2, dummySteps, block + 2, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
@@ -370,8 +370,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
         // Leftwards sweep
         block[5].finalize(MOV, -2, dummySteps, block + 2, block + 5);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }

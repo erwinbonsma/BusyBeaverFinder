@@ -51,8 +51,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         block[6].finalize(MOV,  2, dummySteps, block + 7, exitBlock);
         block[7].finalize(INC,  2, dummySteps, exitBlock, block + 2);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -89,8 +89,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         // Transition
         block[9].finalize(MOV,  2, dummySteps, exitBlock, block + 5);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -135,8 +135,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         // Transition
         block[13].finalize(INC,  1, dummySteps, exitBlock, block + 4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -188,8 +188,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         block[13].finalize(MOV,  3, dummySteps, block + 14, exitBlock);
         block[14].finalize(INC,  1, dummySteps, exitBlock, block +  4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -242,8 +242,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         // Transition
         block[15].finalize(INC,  1, dummySteps, exitBlock, block + 4);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -284,8 +284,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         block[8].finalize(INC, -1, dummySteps, block + 2, block + 9);
         block[9].finalize(MOV, -1, dummySteps, exitBlock, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -331,8 +331,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         // Leftwards sweep
         block[8].finalize(MOV, -1, dummySteps, block + 1, block + 8);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -380,8 +380,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         block[6].finalize(MOV,  1, dummySteps, exitBlock, block + 7);
         block[7].finalize(INC, -1, dummySteps, block + 1, exitBlock);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -428,8 +428,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         block[7].finalize(MOV, -1, dummySteps, block + 8, exitBlock);
         block[8].finalize(INC,  1, dummySteps, exitBlock, block + 1);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -461,8 +461,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         block[7].finalize(MOV, -1, dummySteps, block + 8, exitBlock);
         block[8].finalize(INC,  1, dummySteps, exitBlock, block + 1);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -501,8 +501,8 @@ TEST_CASE("Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][c
         block[8].finalize(MOV,  1, dummySteps, block + 9, exitBlock);
         block[9].finalize(INC,  1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
 
@@ -537,8 +537,8 @@ TEST_CASE("Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][c
         // Transition at right
         block[11].finalize(MOV,  2, dummySteps, block + 0, exitBlock);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -600,8 +600,8 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
         // Left: Rightward sweep
         block[16].finalize(MOV,  1, dummySteps, block + 2, block + 16);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
     }
 
     SECTION("SweepWithCounter") {
@@ -631,7 +631,7 @@ TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]"
         block[8].finalize(MOV,  1, dummySteps, exitBlock, block + 9);
         block[9].finalize(INC,  2, dummySteps, exitBlock, block + 1);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
     }
 }

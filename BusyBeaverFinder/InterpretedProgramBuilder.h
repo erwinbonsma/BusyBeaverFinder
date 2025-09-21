@@ -49,9 +49,10 @@ class InterpretedProgramBuilder : public InterpretedProgram {
     bool isDeltaInstruction();
 
 public:
-    static InterpretedProgramBuilder fromProgram(Program& program);
-
     InterpretedProgramBuilder();
+
+    // Helper method to build the interpreted program from the supplied program
+    void buildFromProgram(Program& program);
 
     //---------------------------------------------------------------------------------------------
     // Implementation of InterpretedProgram

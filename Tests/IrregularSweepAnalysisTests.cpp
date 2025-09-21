@@ -58,8 +58,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
         // Transition at left (extends sweep)
         block[7].finalize(INC, -1, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -113,8 +113,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
         // Transition at left (extends sweep)
         block[7].finalize(INC, -3, dummySteps, exitBlock, block + 0);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -163,8 +163,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
         block[5].finalize(MOV, -1, dummySteps, block + 0, block + 6);
         block[6].finalize(INC, -1, dummySteps, exitBlock, block + 5);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -200,8 +200,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
         block[6].finalize(MOV, -1, dummySteps, block + 0, block + 7);
         block[7].finalize(INC, -1, dummySteps, exitBlock, block + 6);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -260,8 +260,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
         // Left: Rightward sweep
         block[9].finalize(MOV,  1, dummySteps, block + 0, block + 9);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);

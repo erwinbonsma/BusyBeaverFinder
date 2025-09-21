@@ -312,8 +312,8 @@ TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
         block[19].finalize(INC,  2, dummySteps, exitBlock, block + 20); // far-ahead data set
         block[20].finalize(MOV, -5, dummySteps, exitBlock, block + 16);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::DETECTED_HANG);
     }
@@ -353,8 +353,8 @@ TEST_CASE("Block-based Glider Completion Tests", "[success][glider][blocks]") {
         block[8].finalize(INC, -8, dummySteps, exitBlock, block + 9);
         block[9].finalize(INC,  9, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }
@@ -381,8 +381,8 @@ TEST_CASE("Block-based Glider Completion Tests", "[success][glider][blocks]") {
         block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // clear zero
         block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        RunResult result = hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
 
         REQUIRE(result == RunResult::SUCCESS);
     }

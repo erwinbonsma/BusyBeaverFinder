@@ -21,12 +21,23 @@ const uint8_t INSTRUCTION_SET_BIT = 0x01;
 // Set when instruction is a Delta (otherwise it is a Shift)
 const uint8_t INSTRUCTION_TYPE_BIT = 0x02;
 
-InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& program) {
-    InterpretedProgramBuilder  builder;
+InterpretedProgramBuilder::InterpretedProgramBuilder() {
+    _stateP = _state;
+
+    for (int i = maxProgramBlocks; --i >=0; ) {
+        _blockIndexLookup[i] = -1;
+    }
+
+    _stateP->numBlocks = 0;
+    _stateP->numFinalizedBlocks = 0;
+    enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
+}
+
+void InterpretedProgramBuilder::buildFromProgram(Program& program) {
     std::vector<const ProgramBlock*> stack;
 
     while (true) {
-        const ProgramBlock* block = builder.buildActiveBlock(program);
+        const ProgramBlock* block = buildActiveBlock(program);
 
         // Add new continuation blocks to stack
         if (block && !block->isExit()) {
@@ -41,28 +52,14 @@ InterpretedProgramBuilder InterpretedProgramBuilder::fromProgram(Program& progra
         // Select a new block to finalize. Popped blocks may meanwhile be finalized as
         // they can be added to the stack more than once.
         do {
-            if (stack.empty()) return builder;
+            if (stack.empty()) return;
 
             block = stack.back();
             stack.pop_back();
         } while (block->isFinalized());
 
-        builder.enterBlock(block);
+        enterBlock(block);
     }
-
-    return builder;
-}
-
-InterpretedProgramBuilder::InterpretedProgramBuilder() {
-    _stateP = _state;
-
-    for (int i = maxProgramBlocks; --i >=0; ) {
-        _blockIndexLookup[i] = -1;
-    }
-
-    _stateP->numBlocks = 0;
-    _stateP->numFinalizedBlocks = 0;
-    enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
 }
 
 void InterpretedProgramBuilder::addDataInstruction(Dir dir) {

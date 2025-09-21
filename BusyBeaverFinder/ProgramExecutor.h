@@ -7,6 +7,8 @@
 //
 #pragma once
 
+#include <memory>
+
 #include "Types.h"
 
 class InterpretedProgram;
@@ -33,6 +35,6 @@ public:
     // previous state.
     virtual void pop() {};
 
-    virtual RunResult execute(const InterpretedProgram* program) = 0;
+    virtual RunResult execute(std::shared_ptr<const InterpretedProgram> program) = 0;
     virtual void dump() const = 0;
 };

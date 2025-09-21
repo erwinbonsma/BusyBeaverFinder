@@ -51,8 +51,8 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         block[6].finalize(MOV,  2, dummySteps, block + 7, exitBlock);
         block[7].finalize(INC,  1, dummySteps, exitBlock, block + 2);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -95,8 +95,8 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         // Transition
         block[8].finalize(MOV,  2, dummySteps, block + 2, exitBlock);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         auto lb = mla.loopBehaviors();
@@ -141,8 +141,8 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         block[9].finalize(INC, -1, dummySteps, exitBlock, block + 10);
         block[10].finalize(MOV, 3, dummySteps, block + 2, exitBlock);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);
@@ -178,8 +178,8 @@ TEST_CASE( "Meta-loop (simple gliders)", "[meta-loop-analysis][glider]" ) {
         block[10].finalize(INC,  1, dummySteps, exitBlock, block + 11); // init next counter
         block[11].finalize(MOV, -1, dummySteps, exitBlock, block + 3);
 
-        InterpretedProgramFromArray program(block, maxSequenceLen);
-        hangExecutor.execute(&program);
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        hangExecutor.execute(program);
 
         bool result = mla.analyzeMetaLoop(hangExecutor);
         REQUIRE(result);

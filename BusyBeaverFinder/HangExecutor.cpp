@@ -146,7 +146,7 @@ void HangExecutor::pop() {
     _executionStack.pop_back();
 }
 
-RunResult HangExecutor::execute(const InterpretedProgram* program) {
+RunResult HangExecutor::execute(std::shared_ptr<const InterpretedProgram> program) {
     if (_executionStack.size() > 0) {
         assert(program == _program);
 
@@ -172,12 +172,13 @@ RunResult HangExecutor::execute(const InterpretedProgram* program) {
 
 RunResult HangExecutor::execute(std::string programSpec) {
     Program program = Program::fromString(programSpec);
-    InterpretedProgramBuilder programBuilder = InterpretedProgramBuilder::fromProgram(program);
+    auto programBuilder = std::make_shared<InterpretedProgramBuilder>();
+    programBuilder->buildFromProgram(program);
 
     std::cout << "Executing: " << programSpec << std::endl;
-//    programBuilder.dump();
+    // programBuilder->dump();
 
-    return execute(&programBuilder);
+    return execute(programBuilder);
 }
 
 void HangExecutor::dump() const {

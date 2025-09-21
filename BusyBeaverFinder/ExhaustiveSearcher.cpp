@@ -24,7 +24,8 @@ Ins targetStack[] = {
 ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
     _settings(settings),
     _program(width, height),
-    _exitFinder(_program, _programBuilder),
+    _programBuilder(std::make_shared<InterpretedProgramBuilder>()),
+    _exitFinder(_program, *_programBuilder),
     _hangExecutor(settings.dataSize, settings.maxHangDetectionSteps),
     _fastExecutor(settings.dataSize)
 {
@@ -76,7 +77,7 @@ void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
 }
 
 void ExhaustiveSearcher::verifyHang() {
-    RunResult result = _fastExecutor.execute(&_programBuilder);
+    RunResult result = _fastExecutor.execute(_programBuilder);
     switch (result) {
         case RunResult::SUCCESS:
             _tracker->reportDone(_fastExecutor.numSteps());
@@ -107,19 +108,19 @@ void ExhaustiveSearcher::extendBlock() {
 
             switch (ins) {
                 case Ins::DONE:
-                    _programBuilder.incSteps();
-                    _programBuilder.finalizeExitBlock();
+                    _programBuilder->incSteps();
+                    _programBuilder->finalizeExitBlock();
                     run();
                     return;
                 case Ins::UNSET:
                     branch(); // Extend block by continuing search
                     return;
                 case Ins::DATA:
-                    _programBuilder.addDataInstruction(_pp.dir);
+                    _programBuilder->addDataInstruction(_pp.dir);
                     break;
                 case Ins::TURN:
-                    if (_programBuilder.isInstructionSet()) {
-                        const ProgramBlock *block = _programBuilder.finalizeBlock(_pp.p);
+                    if (_programBuilder->isInstructionSet()) {
+                        const ProgramBlock *block = _programBuilder->finalizeBlock(_pp.p);
                         if (!_settings.disableNoExitHangDetection &&
                             !_exitFinder.canExitFrom(block)
                         ) {
@@ -144,10 +145,10 @@ void ExhaustiveSearcher::extendBlock() {
         } while (ins == Ins::TURN);
 
         _pp.p = ip;
-        _programBuilder.incSteps();
+        _programBuilder->incSteps();
 
-        if (_programBuilder.getNumSteps() > 64) {
-            _programBuilder.finalizeHangBlock();
+        if (_programBuilder->getNumSteps() > 64) {
+            _programBuilder->finalizeHangBlock();
             run();
             return;
         }
@@ -158,10 +159,10 @@ void ExhaustiveSearcher::buildBlock(const ProgramBlock* block) {
     assert(!block->isFinalized());
     TurnDirection td0 = _td;
 
-    _pp = _programBuilder.getStartProgramPointer(block, _program);
-    _td = _programBuilder.turnDirectionForBlock(block);
+    _pp = _programBuilder->getStartProgramPointer(block, _program);
+    _td = _programBuilder->turnDirectionForBlock(block);
 
-    _programBuilder.enterBlock(block);
+    _programBuilder->enterBlock(block);
     extendBlock();
 
     _td = td0;
@@ -188,7 +189,7 @@ void ExhaustiveSearcher::branch() {
 
         _program.setInstruction(ip, ins);
         _instructionStack.push_back(ins);
-        _programBuilder.push();
+        _programBuilder->push();
         ProgramPointer pp0 = _pp;
 
 //        if (atTargetProgram()) {
@@ -202,7 +203,7 @@ void ExhaustiveSearcher::branch() {
 
         _program.clearInstruction(ip);
         _instructionStack.pop_back();
-        _programBuilder.pop();
+        _programBuilder->pop();
         _pp = pp0;
 
         if (abortSearch) {
@@ -234,7 +235,7 @@ void ExhaustiveSearcher::switchToHangExecutor() {
 
 void ExhaustiveSearcher::run() {
     ProgramExecutor *executor = _programExecutor;
-    switch (executor->execute(&_programBuilder)) {
+    switch (executor->execute(_programBuilder)) {
         case RunResult::SUCCESS: {
             _tracker->reportDone(executor->numSteps());
             break;
