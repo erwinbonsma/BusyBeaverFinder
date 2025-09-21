@@ -32,7 +32,8 @@ void ExecutionState::dumpExecutionState() const {
 
     if (getMetaMetaRunSummary().getNumRunBlocks()) {
         std::cout << "Meta-meta-run summary: ";
-        // getMetaRunSummary().dump();
         getMetaMetaRunSummary().dumpCondensed();
     }
+
+    getInterpretedProgram()->dump();
 }

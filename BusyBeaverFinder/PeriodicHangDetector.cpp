@@ -49,3 +49,14 @@ bool PeriodicHangDetector::analyzeHangBehaviour() {
 Trilian PeriodicHangDetector::proofHang() {
     return _checker.proofHang(_execution);
 }
+
+void PeriodicHangDetector::dump() const {
+    std::cout << *this << std::endl;
+}
+
+std::ostream &operator<<(std::ostream &os, const PeriodicHangDetector &hd) {
+    os << "PeriodicHangDetector, with loop analysis:" << std::endl;
+    os << hd._loop;
+
+    return os;
+}

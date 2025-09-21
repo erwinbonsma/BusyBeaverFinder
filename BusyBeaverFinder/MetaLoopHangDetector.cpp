@@ -143,3 +143,20 @@ Trilian MetaLoopHangDetector::proofHang() {
 
     return _activeHangProofResult;
 }
+
+void MetaLoopHangDetector::dump() const {
+    std::cout << *this << std::endl;
+}
+
+std::ostream &operator<<(std::ostream &os, const MetaLoopHangDetector &hd) {
+    os << "MetaLoopHangDetector, with loop analysis:" << std::endl;
+    os << hd._loopAnalysis;
+    os << "meta-loop analysis:" << std::endl;
+    os << hd._metaLoopAnalysis;
+    if (hd._activeChecker == &hd._irregularSweepHangChecker) {
+        os << "irregular sweep hang checker:" << std::endl;
+        os << hd._irregularSweepHangChecker;
+    }
+
+    return os;
+}

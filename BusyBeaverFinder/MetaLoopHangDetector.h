@@ -44,4 +44,10 @@ class MetaLoopHangDetector : public HangDetector {
     void reset() override;
     HangType hangType() const override { return _activeHang; }
     const MetaLoopAnalysis& metaLoopAnalysis() { return _metaLoopAnalysis; };
+
+    void dump() const override;
+
+    friend std::ostream &operator<<(std::ostream&, const MetaLoopHangDetector&);
 };
+
+std::ostream &operator<<(std::ostream &os, const MetaLoopHangDetector &hd);

@@ -25,6 +25,8 @@ protected:
 public:
     RunUntilMetaLoop(const ExecutionState& execution, int numIterations = 3)
     : HangDetector(execution), _numIterations(numIterations) {}
+
+    void dump() const override {}
 };
 
 class RunUntilMetaMetaLoop : public RunUntilMetaLoop {

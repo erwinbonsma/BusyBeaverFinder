@@ -69,4 +69,6 @@ public:
     // After analysis, to verify that the program really is hanging, it can also be useful to
     // examing the data at the start of a loop, e.g. to see if a sweep continues forever.
     bool detectHang();
+
+    virtual void dump() const = 0;
 };

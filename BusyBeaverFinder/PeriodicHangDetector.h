@@ -32,4 +32,10 @@ public:
     PeriodicHangDetector(const ExecutionState& execution);
 
     HangType hangType() const override { return HangType::PERIODIC; }
+
+    void dump() const override;
+
+    friend std::ostream &operator<<(std::ostream&, const PeriodicHangDetector&);
 };
+
+std::ostream &operator<<(std::ostream &os, const PeriodicHangDetector &hd);
