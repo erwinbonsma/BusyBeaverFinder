@@ -222,21 +222,6 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
     }
-    SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
-        // A truly binary counter. It actually uses ones and zeros, and also properly generates
-        // binary numbers (only with most-significant bit at the right).
-        //
-        //   *   * *
-        // * o _ _ _ *
-        // o o * o o *
-        // o   * o *
-        // _ * _ o *
-        // _     *
-        RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
-    }
     SECTION("6x6-IrregularSweepWithTwoInSweepToggleValues") {
         // Sweep where 1 is the in-sweep exit, and two toggle values, 2 and 3. The in-sweep exit
         // is converted to a 3, and the toggle values are decreased by one each sweep.
@@ -269,48 +254,5 @@ TEST_CASE("6x6 Irregular Sweep Hang tests", "[hang][sweep][irregular][6x6]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
-    }
-    SECTION("6x6-IrregularSweepWithAlternatingEndSweepTransition") {
-        // This test triggers the anomalous situation in LoopAnalysis#stationaryLoopExits,
-        // where the loop is marked stationary but there is a non-zero DP delta.
-        //
-        //   *   * *
-        // * o o _ _ *
-        // * o * o o *
-        // o o * o *
-        // o * _ o *
-        // o     *
-        //
-        // The sweep hang has an irregular end at its right, consisting of zeroes and ones. The
-        // rightward sweep ends on the first zero.
-        //
-        // The run-summary is as follows:
-        // ...
-        // #13* 5.0 #15                 #28* 5.1 #29
-        // #13* 7.0 #15 #28*1.0 #35*1.0 #28* 5.1 #29
-        // #13* 7.0 #15                 #28* 7.1 #29
-        // #13*10.0 #15 #28*1.0 #35*2.0 #28* 7.1 #29
-        // #13* 9.0 #15                 #28* 9.1 #29
-        // #13*11.0 #15 #28*1.0 #35*1.0 #28* 9.1 #29
-        // #13*11.0 #15                 #28*11.1 #29
-        // #13*16.0 #15 #28*1.0 #35*4.0 #28*11.1 #29
-        // #13*13.0 #15                 #28*13.1 #29
-        //
-        // There are two possible end-sweep transitions at the irregular end, and the hang
-        // alternates between both. The first is a plain one: #15. The second is one that
-        // contains a loop whose length varies depending on the amount of ones in the irregular
-        // end: #15 #28*1.0 #35*n\
-        //
-        // TODO: Check that the hang detection is sufficiently strict.
-        // Should this be detected as an irregular hang without additional checks (and recognition
-        // of what is happening)?
-        RunResult result = hangExecutor.execute("Zu65Qpllm2G37w");
-
-        REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP);
-
-        hangExecutor.dumpExecutionState();
-
-        hangExecutor.detectedHang()->dump();
     }
 }

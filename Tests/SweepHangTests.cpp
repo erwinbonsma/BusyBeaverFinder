@@ -1590,6 +1590,8 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // for this program it will never happen, as the in-sweep left neighbour will always be a
         // zero. This, however, is a bit awkward to proof.
         //
+        // TODO: Update outdated comment
+        //
         //       *
         //   * * o _ *
         //   o o o *

@@ -22,7 +22,7 @@ LoopType LoopBehavior::loopType() const {
     if (_minDpDelta == 0 && _maxDpDelta == 0) {
         return LoopType::STATIONARY;
     }
-    if (_minDpDelta == _maxDpDelta) {
+    if (_minDpDelta && _minDpDelta == _maxDpDelta) {
         return LoopType::GLIDER;
     }
     if (_minDpDelta == 0 || _maxDpDelta == 0) {
@@ -37,7 +37,13 @@ std::string optionalIntToString(std::optional<int> value) {
 }
 
 std::ostream &operator<<(std::ostream &os, const LoopBehavior &behavior) {
-    os << "minDpDelta = " << optionalIntToString(behavior.minDpDelta())
+    switch (behavior.loopType()) {
+        case LoopType::STATIONARY: os << "STATIONARY"; break;
+        case LoopType::GLIDER: os << "GLIDER"; break;
+        case LoopType::ANCHORED_SWEEP: os << "ANCHORED SWEEP"; break;
+        case LoopType::DOUBLE_SWEEP: os << "DOUBLE SWEEP"; break;
+    }
+    os << ", minDpDelta = " << optionalIntToString(behavior.minDpDelta())
     << ", maxDpDelta = " << optionalIntToString(behavior.maxDpDelta())
     << ", iterationDelta = " << optionalIntToString(behavior.iterationDelta());
 

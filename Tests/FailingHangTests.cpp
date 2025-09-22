@@ -25,7 +25,7 @@ TEST_CASE("6x6 Failing Irregular Sweep Hang tests", "[hang][sweep][irregular][6x
 }
 
 TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
-    HangExecutor hangExecutor(1024, 20000);
+    HangExecutor hangExecutor(2048, 20000);
     hangExecutor.setMaxSteps(1000000);
     hangExecutor.addDefaultHangDetectors();
 
@@ -84,6 +84,59 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // * o * *
         // o o *
         RunResult result = hangExecutor.execute("Zvr+UsG4G5r1vw");
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
+    SECTION("6x6-IrregularSweepWithAlternatingEndSweepTransition") {
+        // The sweep hang has an irregular end at its right, consisting of zeroes and ones. The
+        // rightward sweep ends on the first zero.
+        //
+        //   *   * *
+        // * o o _ _ *
+        // * o * o o *
+        // o o * o *
+        // o * _ o *
+        // o     *
+        //
+        // The run-summary is as follows:
+        // ...
+        // #13* 5.0 #15                 #28* 5.1 #29
+        // #13* 7.0 #15 #28*1.0 #35*1.0 #28* 5.1 #29
+        // #13* 7.0 #15                 #28* 7.1 #29
+        // #13*10.0 #15 #28*1.0 #35*2.0 #28* 7.1 #29
+        // #13* 9.0 #15                 #28* 9.1 #29
+        // #13*11.0 #15 #28*1.0 #35*1.0 #28* 9.1 #29
+        // #13*11.0 #15                 #28*11.1 #29
+        // #13*16.0 #15 #28*1.0 #35*4.0 #28*11.1 #29
+        // #13*13.0 #15                 #28*13.1 #29
+        //
+        // There are two possible end-sweep transitions at the irregular end, and the hang
+        // alternates between both. The first is a plain one: #15. The second is one that
+        // contains a loop whose length varies depending on the amount of ones in the irregular
+        // end: #15 #28*1.0 #35*n
+        //
+        // There is a mid-sweep transition, but only for half of the leftward sweeps.
+        RunResult result = hangExecutor.execute("Zu65Qpllm2G37w");
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
+    SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
+        // A truly binary counter. It actually uses ones and zeros, and also properly generates
+        // binary numbers (only with most-significant bit at the right).
+        //
+        // It is similar in behavior to 6x6-IrregularSweepWithAlternatingEndSweepTransition
+        //
+        //   *   * *
+        // * o _ _ _ *
+        // o o * o o *
+        // o   * o *
+        // _ * _ o *
+        // _     *
+        RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
+
+        hangExecutor.dumpExecutionState();
 
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);

@@ -91,7 +91,7 @@ struct MetaLoopData {
 
 class MetaLoopAnalysis;
 
-// Describes how a loop tat is part of a meta-loop, behaves in the context of the meta-loop.
+// Describes how a loop that is part of a meta-loop behaves in the context of the meta-loop.
 // More specifically, how does the number of iterations and the data cells it visits change over
 // time?
 class LoopBehavior {
@@ -129,7 +129,7 @@ public:
     std::optional<int> minDpDelta() const { return _minDpDelta; }
     std::optional<int> maxDpDelta() const { return _maxDpDelta; }
 
-    // For sweep loops only: How much the sequence grows at the of the sweep.
+    // For sweep loops only: How much the sequence grows at the end of the sweep.
     // Can return a negative value when sweep shrinks with constant rate.
     std::optional<int> endDpGrowth() const {
         if (!isSweepLoop()) return {};

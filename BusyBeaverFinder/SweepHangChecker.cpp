@@ -230,7 +230,7 @@ bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
     _minDp = _analysis.minDp();
     _maxDp = _analysis.maxDp();
 
-    // Next collect all constributions within this range
+    // Next collect all contributions within this range
     _analysis.analyzeMultiSequenceStart();
     dpOffset = checker.visitSweepLoopParts([this](const SweepLoopVisitState& vs) {
         return this->analyzeLoopPartPhase2(vs);
@@ -393,6 +393,8 @@ bool SweepHangChecker::addContributionOfSweepLoopEnd(const SweepLoopVisitState v
                            ? loopAnalysis->effectiveResultAt(remainder - 1).dpOffset() : 0);
 
     int dpDelta = loopAnalysis->dataPointerDelta();
+    if (dpDelta == 0) return false;
+
     int dpOffset = dpEnd - dpDeltaLastIter;
     int startIter;
     if (dpDelta > 0) {
@@ -633,7 +635,8 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     int cyclesToCheck = 1;
 
     if (!_leftTransition.isStationary()) {
-        cyclesToCheck = _leftTransition.combinedAnalysis().numBootstrapCycles();
+        cyclesToCheck = std::max(cyclesToCheck,
+                                 _leftTransition.combinedAnalysis().numBootstrapCycles());
     }
     if (!_rightTransition.isStationary()) {
         cyclesToCheck = std::max(cyclesToCheck,
