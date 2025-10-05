@@ -270,8 +270,6 @@ int MetaLoopAnalysis::dpDeltaOfRunBlock(const RunSummary& runSummary, int rbInde
     return delta;
 }
 
-// Determine how the DP position at the end of each loop changes wrt to the its DP position at
-// the end of the loop in the previous iteration of the _analyzed_ meta-loop.
 void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     int dp = 0;
 
@@ -280,9 +278,9 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
     int rbIndex = start;
 
     // Loop three times:
-    // First to determine the DP positions at the start of each loop.
+    // First to determine the DP position at the start of each loop.
     // Second to determine how it changed with respect to the previous loop execution (in the
-    //   context of the analyze meta-loop).
+    //   context of the analyzed meta-loop).
     // Third to check if this delta is constant.
     for (int i = 0; i < 3; ++i) {
         auto loopDataIt = _loopData.begin();
@@ -297,10 +295,6 @@ void MetaLoopAnalysis::determineDpDeltas(const RunSummary &runSummary) {
                     if (data.dataPointerDelta != (dp - data.lastDataPointerStartPos)) {
                         // Clear delta as it is not constant
                         data.dataPointerDelta = {};
-
-                        // TODO: Find out why this is needed. I.e. when the delta is not regular
-                        // but the meta-loop type still was.
-                        _metaLoopType = MetaLoopType::IRREGULAR;
                     }
                 }
                 data.lastDataPointerStartPos = dp;
@@ -339,7 +333,7 @@ void MetaLoopAnalysis::initLoopBehaviors() {
         auto dpDeltaEnd = dataNext.dataPointerDelta;
 
         if (sa->dataPointerDelta() == 0 && dpDeltaStart != dpDeltaEnd) {
-            // This should never happen when the loop is reggular, but may happen when the loop is
+            // This should never happen when the loop is regular, but may happen when the loop is
             // irregular
             assert(_metaLoopType == MetaLoopType::IRREGULAR);
             dpDeltaStart = {};
@@ -440,7 +434,7 @@ bool MetaLoopAnalysis::isAnalysisStillValid(const ExecutionState &executionState
             int delta = numIter - data.lastNumIterations;
 
             if (behavior.iterationDelta() >= 0) {
-                // Delta remain the same for constant-sized and linearly growing loops
+                // Delta should remain the same for constant-sized and linearly growing loops
                 if (delta != behavior.iterationDelta()) {
                     reset();
                     return false;

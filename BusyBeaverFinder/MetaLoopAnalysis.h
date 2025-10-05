@@ -220,17 +220,26 @@ class MetaLoopAnalysis {
                                  int loopSize,
                                  MetaLoopType& loopType,
                                  bool checkDeltaChange);
+
     // Returns the observed meta-loop behavior when analyzing the meta-loop with the given loop
     // size. Returns none when the behavior is not supported.
     std::optional<MetaLoopType> checkLoopSize(const RunSummary &runSummary, int loopSize);
+
+    // Determines the size of the meta-loop. It selects the size that results in the most simple
+    // meta-loop type.
     bool determineLoopSize(const ExecutionState &executionState);
 
     // The number of loops in the meta-run block (the meta-loop may contain a multiple of this).
     // It is valid before analysis is complete.
     int numLoops() const { return _loopAnalysisPool.numPopped(); }
 
+    // Determine how the DP position at the end of each loop change wrt to the DP position at the
+    // end of the loop in the previous iteration of the _analyzed_ meta-loop.
     void determineDpDeltas(const RunSummary &runSummary);
+
     void initLoopBehaviors();
+
+    // How much cells DP moved since the meta-loop started
     int totalDpDelta(const RunSummary &runSummary);
 
 public:
