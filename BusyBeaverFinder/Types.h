@@ -81,8 +81,8 @@ enum class LoopRunState : int8_t {
 
 // Describes how the loop behaves in the context of the program that it is part of
 enum class LoopType : int8_t {
-    // Stationary loop that traverses the same part of the data tape each time the loop runs.
-    STATIONARY = 0,
+    // Meta-stationary loop that traverses the same part of the data tape each time the loop runs.
+    META_STATIONARY = 0,
 
     // Stationary loop that starts at a different location each time the loop runs. It "glides"
     // across the data tape. It typically does this by decreasing one counter, while increasing

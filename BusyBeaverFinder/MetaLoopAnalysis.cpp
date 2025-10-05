@@ -20,7 +20,7 @@ constexpr int NUM_ITERATIONS_TO_ANALYZE = 3;
 
 LoopType LoopBehavior::loopType() const {
     if (_minDpDelta == 0 && _maxDpDelta == 0) {
-        return LoopType::STATIONARY;
+        return LoopType::META_STATIONARY;
     }
     if (_minDpDelta && _minDpDelta == _maxDpDelta) {
         return LoopType::GLIDER;
@@ -38,7 +38,7 @@ std::string optionalIntToString(std::optional<int> value) {
 
 std::ostream &operator<<(std::ostream &os, const LoopBehavior &behavior) {
     switch (behavior.loopType()) {
-        case LoopType::STATIONARY: os << "STATIONARY"; break;
+        case LoopType::META_STATIONARY: os << "META-STATIONARY"; break;
         case LoopType::GLIDER: os << "GLIDER"; break;
         case LoopType::ANCHORED_SWEEP: os << "ANCHORED SWEEP"; break;
         case LoopType::DOUBLE_SWEEP: os << "DOUBLE SWEEP"; break;

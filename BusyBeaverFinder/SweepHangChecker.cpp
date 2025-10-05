@@ -485,7 +485,7 @@ bool SweepHangChecker::locateSweepLoops() {
 
     // Extract sweep loops. There should be at least two (one in each direction)
     for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
-        if (behavior.loopType() == LoopType::STATIONARY ||
+        if (behavior.loopType() == LoopType::META_STATIONARY ||
             behavior.loopType() == LoopType::GLIDER) {
             // These loops can occur if they are small and of constant size
             if (behavior.iterationDelta() != 0) {

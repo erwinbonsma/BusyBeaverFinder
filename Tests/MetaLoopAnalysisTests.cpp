@@ -264,7 +264,7 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         REQUIRE(lb[1].maxDpDelta() == 1);
     }
 
-    SECTION("StationaryLoop-PowersOfTwo") {
+    SECTION("MetaStationaryLoop-PowersOfTwo") {
         // Calculates powers of two using two stationary counters that alternate between one being
         // decremented and the other being incremented
 
@@ -295,12 +295,12 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
         REQUIRE(lb.size() == 2);
 
         // Stationary loop 1
-        REQUIRE(lb[0].loopType() == LoopType::STATIONARY);
+        REQUIRE(lb[0].loopType() == LoopType::META_STATIONARY);
         REQUIRE(lb[0].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[0].minDpDelta() == 0);
         REQUIRE(lb[0].maxDpDelta() == 0);
         // Stationary loop 2
-        REQUIRE(lb[1].loopType() == LoopType::STATIONARY);
+        REQUIRE(lb[1].loopType() == LoopType::META_STATIONARY);
         REQUIRE(lb[1].iterationDeltaType() == LoopIterationDeltaType::NONLINEAR_INCREASE);
         REQUIRE(lb[1].minDpDelta() == 0);
         REQUIRE(lb[1].maxDpDelta() == 0);
