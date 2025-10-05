@@ -32,6 +32,7 @@ enum class LoopIterationDeltaType : int8_t {
     IRREGULAR = 3
 };
 
+// The meta-loop behaviors that are supported.
 enum class MetaLoopType : int8_t {
     // The number of iterations for each loop is CONSTANT
     PERIODIC = 1,
@@ -45,10 +46,6 @@ enum class MetaLoopType : int8_t {
     // - non-stationary loops is CONSTANT, LINEAR_INCREASE, or IRREGULAR
     // - stationary loops is CONSTANT, LINEAR_INCREASE or NONLINEAR_INCREASE
     IRREGULAR = 3,
-
-    // Any remaining cases. For example, meta-loops that contain stationary loops with decreasing
-    // number of iterations.
-    UNSUPPORTED = 4
 };
 
 struct MetaLoopData {
@@ -217,7 +214,15 @@ class MetaLoopAnalysis {
     void analyzeRunBlocks(const ExecutionState &executionState);
 
     void initLoopData(const RunSummary &runSummary, int loopSize);
-    MetaLoopType checkLoopSize(const RunSummary &runSummary, int loopSize);
+
+    // Returns true if the behavior matches a supported meta loop type.
+    bool checkLoopIterationDelta(const RunSummary &runSummary,
+                                 int loopSize,
+                                 MetaLoopType& loopType,
+                                 bool checkDeltaChange);
+    // Returns the observed meta-loop behavior when analyzing the meta-loop with the given loop
+    // size. Returns none when the behavior is not supported.
+    std::optional<MetaLoopType> checkLoopSize(const RunSummary &runSummary, int loopSize);
     bool determineLoopSize(const ExecutionState &executionState);
 
     // The number of loops in the meta-run block (the meta-loop may contain a multiple of this).

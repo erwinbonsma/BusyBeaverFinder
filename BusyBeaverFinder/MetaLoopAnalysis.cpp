@@ -75,87 +75,99 @@ void MetaLoopAnalysis::initLoopData(const RunSummary &runSummary, int loopSize) 
     }
 }
 
-MetaLoopType MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary, int loopSize) {
+bool MetaLoopAnalysis::checkLoopIterationDelta(const RunSummary &runSummary,
+                                               int loopStartIndex,
+                                               MetaLoopType& loopType,
+                                               bool checkDeltaChange) {
+    for (auto &data : _loopData) {
+        int rbIndex = loopStartIndex + data.sequenceIndex;
+        const RunBlock* rb = runSummary.runBlockAt(rbIndex);
+
+        assert(rb->isLoop());
+
+        bool isStationary = (_seqAnalysis[data.sequenceIndex
+                                          % _metaLoopPeriod]->dataPointerDelta() == 0);
+
+        int blockLen = runSummary.getRunBlockLength(rbIndex);
+        int numIter = blockLen / rb->getLoopPeriod();
+        int delta = numIter - data.lastNumIterations;
+
+        if (delta < 0) {
+            data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
+
+            if (isStationary) {
+                // The number of iterations for meta-stationary loops cannot decrease.
+                return false;
+            }
+
+            // A (temporary) decrease is possible for irregular sweep loops
+            loopType = MetaLoopType::IRREGULAR;
+        } else if (delta > 0) {
+            // Assume increase is linear
+            data.iterationDeltaType = std::max(data.iterationDeltaType,
+                                               LoopIterationDeltaType::LINEAR_INCREASE);
+
+            // Meta-loop is not periodic. Assume it is regular instead.
+            loopType = std::max(loopType, MetaLoopType::REGULAR);
+        }
+
+        if (checkDeltaChange) {
+            if (data.lastIterationDelta < 0 && delta <= data.lastIterationDelta) {
+                // For irregular sweep loops, only analysis of binary-counting type behaviors
+                // is supported. In this case, there should never be two subsequent decreases
+                // of (sweep) loop iteration count.
+                return false;
+            }
+
+            if (delta == data.lastIterationDelta) {
+                // Nothing needs doing. iterationDeltaType is already correct
+                assert((delta == 0
+                        && data.iterationDeltaType == LoopIterationDeltaType::CONSTANT) ||
+                       (delta > 0
+                        && data.iterationDeltaType == LoopIterationDeltaType::LINEAR_INCREASE));
+            }
+            if (delta < data.lastIterationDelta) {
+                data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
+
+                if (isStationary) {
+                    // The change in number of iterations for meta-stationary loops cannot decrease.
+                    return false;
+                }
+                loopType = MetaLoopType::IRREGULAR;
+            }
+            if (delta > data.lastIterationDelta) {
+                if (isStationary) {
+                    // Meta-loop is not periodic. Assume it is regular instead.
+                    loopType = std::max(loopType, MetaLoopType::REGULAR);
+                    data.iterationDeltaType = LoopIterationDeltaType::NONLINEAR_INCREASE;
+                } else {
+                    loopType = MetaLoopType::IRREGULAR;
+                    data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
+                }
+            }
+        }
+
+        data.lastIterationDelta = delta;
+        data.lastNumIterations = numIter;
+    }
+
+    return true;
+}
+
+std::optional<MetaLoopType> MetaLoopAnalysis::checkLoopSize(const RunSummary &runSummary,
+                                                            int loopSize) {
     initLoopData(runSummary, loopSize);
 
     MetaLoopType loopType = MetaLoopType::PERIODIC;  // Initial assumption
 
-    // Analyze loop iteration deltas. Loop twice. First to determine the delta, and next to check
-    // if/how this delta changes.
-    for (int i = 1; i <= 2; ++i) {
-        int loopStartIndex = _firstRunBlockIndex + loopSize * i;
-        for (auto &data : _loopData) {
-            int rbIndex = loopStartIndex + data.sequenceIndex;
-            const RunBlock* rb = runSummary.runBlockAt(rbIndex);
+    // First determine loop iteration delta
+    if (!checkLoopIterationDelta(runSummary, _firstRunBlockIndex + loopSize, loopType, false)) {
+        return {};
+    }
 
-            assert(rb->isLoop());
-
-            bool isStationary = (_seqAnalysis[data.sequenceIndex
-                                              % _metaLoopPeriod]->dataPointerDelta() == 0);
-
-            int blockLen = runSummary.getRunBlockLength(rbIndex);
-            int numIter = blockLen / rb->getLoopPeriod();
-            int delta = numIter - data.lastNumIterations;
-
-            if (delta < 0) {
-                data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
-
-                if (isStationary) {
-                    // The number of iterations for stationary loops cannot decrease.
-                    return MetaLoopType::UNSUPPORTED;
-                }
-
-                // A (temporary) decrease is possible for irregular sweep loops
-                loopType = MetaLoopType::IRREGULAR;
-            } else if (delta > 0) {
-                // Assume increase is linear
-                data.iterationDeltaType = std::max(data.iterationDeltaType,
-                                                   LoopIterationDeltaType::LINEAR_INCREASE);
-
-                // Meta-loop is not periodic. Assume it is regular instead.
-                loopType = std::max(loopType, MetaLoopType::REGULAR);
-            }
-
-            if (i == 2) {
-                if (data.lastIterationDelta < 0 && delta <= data.lastIterationDelta) {
-                    // For irregular sweep loops, only analysis of binary-counting type behaviors
-                    // is supported. In this case, there should never be two subsequent decreases
-                    // of (sweep) loop iteration count.
-                    return MetaLoopType::UNSUPPORTED;
-                }
-
-                if (delta == data.lastIterationDelta) {
-                    // Nothing needs doing. iterationDeltaType is already correct
-                    assert((delta == 0
-                            && data.iterationDeltaType == LoopIterationDeltaType::CONSTANT) ||
-                           (delta > 0
-                            && data.iterationDeltaType == LoopIterationDeltaType::LINEAR_INCREASE));
-                }
-                if (delta < data.lastIterationDelta) {
-                    data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
-
-                    if (isStationary) {
-                        // The change in number of iterations for stationary loops cannot decrease.
-                        return MetaLoopType::UNSUPPORTED;
-                    }
-                    loopType = MetaLoopType::IRREGULAR;
-                }
-                if (delta > data.lastIterationDelta) {
-
-                    if (isStationary) {
-                        // Meta-loop is not periodic. Assume it is regular instead.
-                        loopType = std::max(loopType, MetaLoopType::REGULAR);
-                        data.iterationDeltaType = LoopIterationDeltaType::NONLINEAR_INCREASE;
-                    } else {
-                        loopType = MetaLoopType::IRREGULAR;
-                        data.iterationDeltaType = LoopIterationDeltaType::IRREGULAR;
-                    }
-                }
-            }
-
-            data.lastIterationDelta = delta;
-            data.lastNumIterations = numIter;
-        }
+    // Next, check how this delta changes
+    if (!checkLoopIterationDelta(runSummary, _firstRunBlockIndex + loopSize * 2, loopType, true)) {
+        return {};
     }
 
     return loopType;
@@ -166,21 +178,21 @@ bool MetaLoopAnalysis::determineLoopSize(const ExecutionState &executionState) {
     const MetaRunSummary &metaRunSummary = executionState.getMetaRunSummary();
     int ln = metaRunSummary.getLoopIteration();
 
-    MetaLoopType bestLoopType = MetaLoopType::UNSUPPORTED;
+    std::optional<MetaLoopType> bestLoopType;
     int bestLoopSize = 0;
 
     int max_i = std::min(MAX_ITERATIONS_TO_UNROLL, ln / NUM_ITERATIONS_TO_ANALYZE);
     int loopSize = _metaLoopPeriod;
     for (int i = 0; i < max_i; ++i, loopSize += _metaLoopPeriod) {
-        auto loopType = checkLoopSize(runSummary, loopSize);
-
-        if (loopType < bestLoopType) {
-            bestLoopType = loopType;
-            bestLoopSize= loopSize;
+        if (auto loopType = checkLoopSize(runSummary, loopSize)) {
+            if (!bestLoopType || loopType < bestLoopType) {
+                bestLoopType = loopType;
+                bestLoopSize = loopSize;
+            }
         }
     }
 
-    if (bestLoopType == MetaLoopType::UNSUPPORTED) {
+    if (!bestLoopType) {
         return false;
     }
 
@@ -190,7 +202,7 @@ bool MetaLoopAnalysis::determineLoopSize(const ExecutionState &executionState) {
         assert(result == bestLoopType);
     }
 
-    _metaLoopType = bestLoopType;
+    _metaLoopType = bestLoopType.value();
     _analysisLoopSize = bestLoopSize;
     return true;
 }

@@ -84,7 +84,7 @@ enum class LoopType : int8_t {
     // Stationary loop that traverses the same part of the data tape each time the loop runs.
     STATIONARY = 0,
 
-    // Stationary loop that is started at a different location each time the loop runs. It "glides"
+    // Stationary loop that starts at a different location each time the loop runs. It "glides"
     // across the data tape. It typically does this by decreasing one counter, while increasing
     // another counter. It consumes a different counter each time the loop runs.
     GLIDER = 1,
