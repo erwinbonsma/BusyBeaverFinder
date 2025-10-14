@@ -142,6 +142,28 @@ public:
 
     int* getHelperBuffer() const { return _helperBuf; }
 
+    // Enables short-loop detection
+    //
+    // It enables detection of loops that run fewer than two full iterations. It does so by
+    // considering the run block that precedes the potential short loop. When the run units that
+    // follow this run block match the run blocks of the last loop (if any) that followed this run
+    // block.
+    //
+    // For example consider ABCDDDDEFGGGABCDEFGGG.
+    // Without short-loop detection it is split into run blocks as follows:
+    //   ABC [D]DDD EF [G]GG ABCDEF [G]GG
+    // With short-loop detection it is instead split as:
+    //   ABC [D]DDD EF [G]GG ABC [D] EF [G]GG
+    // Here D is considered as a single-iteration loop, as previously the transition of ABC was
+    // followed by a longer-running instance of this loop.
+    //
+    // Notable limitations:
+    // - It does not work (reliably) when a given run block can be followed by multiple loops.
+    //   It only recognizes the last loop.
+    // - It does not work when the short-loop becomes part of a bigger loop.
+    //   Example: ABCDDDABCDABCDDD
+    //            becomes    ABC [D]DD [ABCD]ABCD [D]D
+    //            instead of ABC [D]DD ABC [D] ABC [D]DD
     void setIdentifyShortLoops(bool flag) { _identifyShortLoops = flag; }
 
     virtual void reset();

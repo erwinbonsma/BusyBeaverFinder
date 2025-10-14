@@ -72,10 +72,12 @@ bool checkRunSummary(RunSummaryTest& runSummary, std::vector<int>& expected) {
     return true;
 }
 
-bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns) {
+bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns,
+                       bool identifyShortLoops = false) {
     int zArrayHelperBuf[32];
     RunSummaryTest runSummary(blocks, zArrayHelperBuf);
 
+    runSummary.setIdentifyShortLoops(identifyShortLoops);
     runSummary.processNewRunUnits();
 
     return checkRunSummary(runSummary, expectedRuns);
@@ -147,6 +149,67 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
         std::vector<int> expectedRuns = {0,3, 1,2, 2,3, 1,2, 0,3, 1,2, 2,3, 1,2};
 
         REQUIRE(processAndCompare(v, expectedRuns));
+    }
+}
+
+TEST_CASE( "RunSummary-ShortLoops", "[util][runsummary]" ) {
+    SECTION( "NoShortLoops" ) {
+        // Execution contains a switch between loops that consists of more than one program block
+        std::vector<int> v = {1,3, 5,5,5, 4,7,9,3, 5,5,5, 4,7,9,3, 5,5,5};
+        std::vector<int> expectedRuns = {0,2, 1,3, 2,4, 1,3, 2,4, 1,3};
+
+        REQUIRE(processAndCompare(v, expectedRuns));
+        REQUIRE(processAndCompare(v, expectedRuns, true));
+    }
+    SECTION( "SingleBlockShortLoop" ) {
+        // Single-block loop separated by alternating multi-block transitions.
+        // The single iteration one-block loops is correctly detected.
+        std::vector<int> v = {1,2,3, 5,5, 4,7, 5,5,5, 1,2,3, 5, 4,7, 5,5,5};
+        std::vector<int> expectedRuns1 = {0,3, 1,2, 2,2, 1,3, 3,6, 1,3};
+        std::vector<int> expectedRuns2 = {0,3, 1,2, 2,2, 1,3, 0,3, 1,1, 2,2, 1,3};
+
+        REQUIRE(processAndCompare(v, expectedRuns1));
+        REQUIRE(processAndCompare(v, expectedRuns2, true));
+    }
+    SECTION( "SingleBlockShortLoopHiddenInLargerLoop" ) {
+        // Single-block loop separated by multi-block transitions.
+        //
+        // The single-iteration loop instance is not recognized, because it is part of a bigger
+        // loop.
+        std::vector<int> v = {1,2,3, 5,5, 1,2,3, 5,5,5, 1,2,3, 5, 1,2,3, 5,5,5};
+        std::vector<int> expectedRuns = {0,3, 1,2, 0,3, 1,3, 2,8, 1,2};
+
+        REQUIRE(processAndCompare(v, expectedRuns));
+        REQUIRE(processAndCompare(v, expectedRuns, true));
+    }
+    SECTION( "MultiBlockShortLoopWithSingleBlockTransitions" ) {
+        // Multi-block loop seperated by single-block transitions.
+        std::vector<int> v = {1, 4,5,4,5, 2, 4,5,4,5, 1, 4,5, 2, 4, 1, 4,5,4,5};
+        std::vector<int> expectedRuns1 = {0,1, 1,4, 2,1, 1,4, 3,6, 1,4};
+        std::vector<int> expectedRuns2 = {0,1, 1,4, 2,1, 1,4, 0,1, 1,2, 2,1, 1,1, 0,1, 1,4};
+
+        REQUIRE(processAndCompare(v, expectedRuns1));
+        REQUIRE(processAndCompare(v, expectedRuns2, true));
+    }
+    SECTION( "DifferentLoopsFollowGivenTransition" ) {
+        // Two alternating single-block loops follow the same transition.
+        //
+        // The single-iteration loop is not recognized, as it only looks for a match for the
+        // last loop following the transition.
+        std::vector<int> v = {1, 2,2, 1, 3,3,3, 1, 2,2, 1, 3, 1, 2,2};
+        std::vector<int> expectedRuns = {0,1, 1,2, 0,1, 2,3, 0,1, 1,2, 3,3, 1,2};
+
+        REQUIRE(processAndCompare(v, expectedRuns));
+        REQUIRE(processAndCompare(v, expectedRuns, true));
+    }
+    SECTION( "OnlyLoops" ) {
+        // Two alternating single-block loops.
+        std::vector<int> v = {1,1, 2,2, 1,1,1, 2,2, 1, 2,2, 1,1,1, 2, 1,1};
+        std::vector<int> expectedRuns1 = {0,2, 1,2, 0,3, 1,2, 2,1, 1,2, 0,3, 3,1, 0,2};
+        std::vector<int> expectedRuns2 = {0,2, 1,2, 0,3, 1,2, 0,1, 1,2, 0,3, 1,1, 0,2};
+
+        REQUIRE(processAndCompare(v, expectedRuns1));
+        REQUIRE(processAndCompare(v, expectedRuns2, true));
     }
 }
 
