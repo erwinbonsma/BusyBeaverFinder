@@ -258,6 +258,11 @@ class MetaRunSummary : public RunSummaryBase {
         return _runHistory[runUnitIndex].getSequenceId();
     };
 
+    // Checks if it is possible to replace already collapsed run blocks into a larger run block
+    // that represents an overarching loop. If so, it rewrites history and increases the rewrite
+    // count.
+    void attemptLoopCollapse();
+
 protected:
     void exitedLoop() override;
 

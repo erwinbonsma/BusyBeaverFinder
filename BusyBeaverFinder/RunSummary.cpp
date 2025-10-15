@@ -444,57 +444,63 @@ int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
     return dpDelta;
 }
 
-void MetaRunSummary::exitedLoop() {
+void MetaRunSummary::attemptLoopCollapse() {
     if (!_metaLoopDetector) {
         _metaLoopDetector = std::make_unique<MetaRunSummary>(getRunBlocks(), getHelperBuffer());
     }
 
-    if (_metaLoopDetector->processNewRunUnits()) {
-        // New meta-loop detected. Check if run blocks can be grouped into larger ones so that it
-        // is a loop at this level.
-        auto metaRunBlock = _metaLoopDetector->getLastRunBlock();
-        assert(metaRunBlock->isLoop());
+    if (!_metaLoopDetector->processNewRunUnits()) {
+        return;
+    }
 
-//        std::cout << "Before: ";
-//        dumpCondensed();
+    // New meta-loop detected. Check if run blocks can be grouped into larger ones so that it
+    // is a loop at this level.
+    auto metaRunBlock = _metaLoopDetector->getLastRunBlock();
+    assert(metaRunBlock->isLoop());
 
-        // Period in old run-blocks
-        int loopPeriod = metaRunBlock->getLoopPeriod();
-        int loopStart = metaRunBlock->getStartIndex();
+//    std::cout << "Before: ";
+//    dumpCondensed();
 
-        int unitStart = runBlockAt(loopStart)->getStartIndex();
-        int unitLoopPeriod = getRunBlockLength(loopStart, loopStart + loopPeriod);
+    // Period in old run-blocks
+    int loopPeriod = metaRunBlock->getLoopPeriod();
+    int loopStart = metaRunBlock->getStartIndex();
 
-        // The meta-loop detector ignores varying run length of loops. For collapse at this level
-        // the run units need to exactly repeat. Check if this is the case.
-        for (int i = 0; i < loopPeriod; ++i) {
-            if (!runBlockAt(loopStart + i)->isLoop()) {
-                continue;
-            }
+    int unitStart = runBlockAt(loopStart)->getStartIndex();
+    int unitLoopPeriod = getRunBlockLength(loopStart, loopStart + loopPeriod);
 
-            int len1 = getRunBlockLength(loopStart + i);
-            int len2 = getRunBlockLength(loopStart + loopPeriod + i);
-
-            if (len1 != len2) {
-                // Cannot re-group as run unit history does not repeat exactly
-                return;
-            }
+    // The meta-loop detector ignores varying run length of loops. For collapse at this level
+    // the run units need to exactly repeat. Check if this is the case.
+    for (int i = 0; i < loopPeriod; ++i) {
+        if (!runBlockAt(loopStart + i)->isLoop()) {
+            continue;
         }
 
-        // Remove previous blocks
-        _runBlocks.erase(_runBlocks.begin() + loopStart, _runBlocks.end());
+        int len1 = getRunBlockLength(loopStart + i);
+        int len2 = getRunBlockLength(loopStart + loopPeriod + i);
 
-        // Replace by bigger loop-block
-        createRunBlock(unitStart, unitStart + 2 * unitLoopPeriod, unitLoopPeriod);
-
-        resetPending();
-
-//        std::cout << "After: ";
-//        dumpCondensed();
-
-        _rewriteCount += 1;
-        _metaLoopDetector.reset();
+        if (len1 != len2) {
+            // Cannot re-group as run unit history does not repeat exactly
+            return;
+        }
     }
+
+    // Remove previous blocks
+    _runBlocks.erase(_runBlocks.begin() + loopStart, _runBlocks.end());
+
+    // Replace by bigger loop-block
+    createRunBlock(unitStart, unitStart + 2 * unitLoopPeriod, unitLoopPeriod);
+
+    resetPending();
+
+//    std::cout << "After: ";
+//    dumpCondensed();
+
+    _rewriteCount += 1;
+    _metaLoopDetector.reset();
+}
+
+void MetaRunSummary::exitedLoop() {
+    attemptLoopCollapse();
 }
 
 void MetaRunSummary::reset() {
