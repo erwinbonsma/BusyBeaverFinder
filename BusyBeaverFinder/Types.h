@@ -66,7 +66,7 @@ enum class ValueChange : int8_t {
 };
 
 enum class LoopRunState : int8_t {
-    // When execution is not in a loop (of when this is not yet detected).
+    // When execution is not in a loop (or when this is not yet detected).
     NO_LOOP,
 
     // When it has just been detected that the program entered a loop.

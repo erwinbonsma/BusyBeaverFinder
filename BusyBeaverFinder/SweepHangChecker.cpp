@@ -712,9 +712,9 @@ bool SweepHangChecker::verifyLoop(const ExecutionState& executionState) {
 // Check if a transition is about to start. If so, it should be checked that it runs
 // forever.
 //
-// Note: It is possible that a new loop will starts but there is also a non-empty
-// transition that needs to be checked. This happens when there is no sequence run block
-// separating the outgoing loop from the incoming loop, but there's still an effective
+// Note: It is possible that a new loop will start but there is also a non-empty
+// transition that needs to be checked. This happens when there is no sequence run block that
+// separates the outgoing loop from the incoming loop, but there's still an effective
 // transition sequence due to incoming loop shutdown and outgoing loop bootstrap effects.
 bool SweepHangChecker::verifyTransition(const ExecutionState& executionState) {
     int numRunBlocks = executionState.getRunSummary().getNumRunBlocks();

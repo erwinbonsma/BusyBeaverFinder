@@ -16,7 +16,7 @@ bool MetaLoopHangDetector::shouldCheckNow() const {
             && _execution.getMetaRunSummary().isInsideLoop()
             && (// The proof phase should also consider loop starts
                 _activeChecker != nullptr
-                // Perform analysis only when the inner-loop to finish
+                // Perform analysis only when the inner-loop is about to finish
                 || loopRunState == LoopRunState::ENDED));
 }
 
