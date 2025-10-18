@@ -106,6 +106,17 @@ public:
     ExitCondition exitCondition {};
 };
 
+// Specifies when a loop exit occurs
+class LoopExitOccurence {
+public:
+    int iteration;
+    int instructionIndex;
+    int dpOffset;
+
+    LoopExitOccurence(int iteration, int instructionIndex, int dpOffset)
+    : iteration(iteration), instructionIndex(instructionIndex), dpOffset(dpOffset) {}
+};
+
 std::ostream &operator<<(std::ostream &os, const LoopExit &le);
 
 /* Analyses instructions of loop to determine the loop's properties, including squashed data deltas
@@ -151,6 +162,8 @@ public:
     bool isLoop() const override { return true; }
     int loopSize() const { return sequenceSize(); }
 
+    int subSequenceLen(int index) const { return _subSequenceLengths[index]; }
+
     // The number of iterations before the loop is fully spun up. A loop is spun up once it is
     // always the same loop instruction (or set of instructions) that first sees a data value.
     int numBootstrapCycles() const { return _numBootstrapCycles; }
@@ -186,9 +199,9 @@ public:
     // (again).
     bool allValuesToBeConsumedAreZero(const Data &data) const;
 
-    // Checks for a stationary loop if it exits when it runs on the given data. If so, returns a
-    // pair (iteration when it exits, DP offset of value causing exit)
-    std::optional<std::pair<int, int>> stationaryLoopExits(const Data& data, int dpOffset) const;
+    // Checks for a stationary loop if it exits when it runs on the given data. If so, returns
+    // when it exits
+    std::optional<LoopExitOccurence> stationaryLoopExits(const Data& data, int dpOffset) const;
 
     void dump() const;
 

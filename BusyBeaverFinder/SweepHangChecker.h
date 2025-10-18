@@ -103,10 +103,10 @@ class SweepHangChecker : public HangChecker {
         // when executed repeatedly. I.e. the loop should during its sweep not modify values such
         // that these will cause an exit.
         //
-        // Continues the check until the sweep immediately terminates. If so, it returns the
-        // DP delta of the sweep. The caller should check if this is where it expects the sweep
-        // to finish.
-        std::optional<int> continuesForever(const ExecutionState& executionState) const;
+        // Continues the check until the sweep immediately terminates. In this case, the returned
+        // iteration will be zero. When the sweep eventually terminates, it returns the (non zero)
+        // iteration where it does so. This means the sweep does not continue forever.
+        LoopExitOccurence continuesForever(const ExecutionState& executionState) const;
 
       private:
         // Location should either be LEFT or RIGHT to uniquely identify the loop (as there are

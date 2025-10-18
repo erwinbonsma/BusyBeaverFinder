@@ -504,26 +504,27 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
     return true;
 }
 
-std::optional<std::pair<int, int>> LoopAnalysis::stationaryLoopExits(const Data& data,
-                                                                     int dpOffset) const {
+std::optional<LoopExitOccurence> LoopAnalysis::stationaryLoopExits(const Data& data,
+                                                                   int dpOffset) const {
     assert(dataPointerDelta() == 0);
 
-    std::optional<std::pair<int, int>> result;
+    std::optional<LoopExitOccurence> result;
+    int instructionIndex = 0;
     for (auto &loopExit : _loopExits) {
         if (loopExit.exitWindow != ExitWindow::NEVER) {
             int value = data.valueAt(dpOffset + loopExit.exitCondition.dpOffset());
             auto exits = loopExit.exitCondition.exitIteration(value);
-            if (exits && (!result || exits.value() < result.value().first)) {
-                // Record when the loop exits and which value caused it to exit.
+            if (exits && (!result || exits.value() < result.value().iteration)) {
+                // This exit is triggered before any exit already found.
                 //
-                // Note: the DP offset is not necessarily correct when there is more than one
-                // exit condition that is met in the same iteration.
-                // TODO: Fix once this matters.
-                result = std::make_pair(exits.value(),
-                                        dpOffset + loopExit.exitCondition.dpOffset());
+                // Record when the loop exits and which value caused it to exit.
+                result = LoopExitOccurence(exits.value(),
+                                           instructionIndex,
+                                           dpOffset + loopExit.exitCondition.dpOffset());
             }
 
         }
+        ++instructionIndex;
     }
 
     return result;
