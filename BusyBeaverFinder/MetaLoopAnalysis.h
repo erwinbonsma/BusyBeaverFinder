@@ -284,6 +284,10 @@ public:
     const std::shared_ptr<SequenceAnalysis> sequenceAnalysis(int sequenceIndex) const {
         return _seqAnalysis[sequenceIndex % _metaLoopPeriod];
     }
+    // Assumes isLoop(sequenceIndex) == true
+    const std::shared_ptr<LoopAnalysis> loopAnalysis(int sequenceIndex) const {
+        return std::dynamic_pointer_cast<LoopAnalysis>(sequenceAnalysis(sequenceIndex));
+    }
 
     // Returns an analysis of a fixed-size loop as if it was a plain sequence.
     std::shared_ptr<SequenceAnalysis> unrolledLoopSequenceAnalysis(const ExecutionState &execState,

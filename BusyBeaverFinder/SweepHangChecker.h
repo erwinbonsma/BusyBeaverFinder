@@ -126,6 +126,9 @@ class SweepHangChecker : public HangChecker {
         // point for the analysis.
         int _outgoingLoopSeqIndex;
 
+        // The number of bootstrap cycles for this loop.
+        int _outgoingLoopNumBootstrapCycles;
+
         // The analysis of incoming and outgoing loops. Only one entry for each unique loop
         std::set<std::shared_ptr<LoopAnalysis>> _incomingLoops;
         std::set<std::shared_ptr<LoopAnalysis>> _outgoingLoops;

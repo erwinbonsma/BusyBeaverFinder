@@ -201,6 +201,33 @@ TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
         REQUIRE(mla.metaLoopPeriod() == 3);
         REQUIRE(mla.loopSize() == mla.metaLoopPeriod() * 3);
     }
+
+    SECTION("LookAheadSweep") {
+        // Bootstrap
+        block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1);
+        block[1].finalize(MOV,  1, dummySteps, block + 2, exitBlock);
+        block[2].finalize(INC,  1, dummySteps, exitBlock, block + 3);
+        block[3].finalize(MOV,  1, dummySteps, block + 4, exitBlock);
+        block[4].finalize(INC,  1, dummySteps, exitBlock, block + 5);
+        block[5].finalize(MOV,  1, dummySteps, block + 6, exitBlock);
+        block[6].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+
+        // Left sweep
+        block[7].finalize(MOV, -1, dummySteps, block + 8, block + 7);
+
+        // Right sweep
+        block[8].finalize(MOV,  4, dummySteps, block + 10, block + 9); // Look ahead, sweep exit
+        block[9].finalize(MOV, -3, dummySteps, exitBlock, block + 8);
+
+        // Extend at right, preserving invariant
+        block[10].finalize(INC,  1, dummySteps, exitBlock, block + 7);
+
+        auto program = std::make_shared<InterpretedProgramFromArray>(block, maxSequenceLen);
+        RunResult result = hangExecutor.execute(program);
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
+    }
 }
 
 TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {

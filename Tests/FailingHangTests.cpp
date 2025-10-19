@@ -136,8 +136,6 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // _     *
         RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
 
-        hangExecutor.dumpExecutionState();
-
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }

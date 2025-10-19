@@ -34,7 +34,10 @@ enum class ExitWindow : int8_t {
     BOOTSTRAP = 1,
 
     // This exit can never be taken (as long as the loop starts running from its first instruction)
-    NEVER = 2
+    NEVER = 2,
+
+    // This exit should not be considered
+    DISABLED = 3
 };
 
 class ExitCondition {
@@ -184,7 +187,7 @@ public:
     template <class Pred> void disableExits(Pred p) {
         for (auto &loopExit : _loopExits) {
             if (p(loopExit)) {
-                loopExit.exitWindow = ExitWindow::NEVER;
+                loopExit.exitWindow = ExitWindow::DISABLED;
                 loopExit.firstForValue = false;
             }
         }

@@ -97,6 +97,7 @@ std::ostream &operator<<(std::ostream &os, const LoopExit &le) {
     switch (le.exitWindow) {
         case ExitWindow::BOOTSTRAP: os << ", Bootstrap only"; break;
         case ExitWindow::NEVER: os << ", Unreachable"; break;
+        case ExitWindow::DISABLED: os << ", Disabled"; break;
         default: ; // void
     }
 
@@ -511,7 +512,10 @@ std::optional<LoopExitOccurence> LoopAnalysis::stationaryLoopExits(const Data& d
     std::optional<LoopExitOccurence> result;
     int instructionIndex = 0;
     for (auto &loopExit : _loopExits) {
-        if (loopExit.exitWindow != ExitWindow::NEVER) {
+        if (
+            loopExit.exitWindow != ExitWindow::NEVER &&
+            loopExit.exitWindow != ExitWindow::DISABLED
+        ) {
             int value = data.valueAt(dpOffset + loopExit.exitCondition.dpOffset());
             auto exits = loopExit.exitCondition.exitIteration(value);
             if (exits && (!result || exits.value() < result.value().iteration)) {
@@ -536,6 +540,7 @@ void LoopAnalysis::dump() const {
 
 std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
     os << (const SequenceAnalysis&)la << std::endl;
+    os << "# bootstrap cycles = " << la._numBootstrapCycles << std::endl;
 
     if (la.exitsAnalyzed()) {
         for (int i = 0; i < la.sequenceSize(); i++) {
