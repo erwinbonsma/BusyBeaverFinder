@@ -268,6 +268,10 @@ bool SweepHangChecker::TransitionGroup::analyzeCombinedEffect(const SweepHangChe
         return dpOffset < this->_minDp || dpOffset > this->_maxDp;
     });
 
+    if (_isStationary && _analysis.dataPointerDelta() != 0) {
+        return false;
+    }
+
     return true;
 }
 
@@ -500,13 +504,14 @@ bool SweepHangChecker::locateSweepLoops() {
 
     // Extract sweep loops. There should be at least two (one in each direction)
     for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
-        if (behavior.loopType() == LoopType::META_STATIONARY ||
-            behavior.loopType() == LoopType::GLIDER) {
-            // These loops can occur if they are small and of constant size
-            if (behavior.iterationDelta() != 0) {
-                return false;
-            }
+        if (behavior.iterationDelta() == 0) {
+            // Ignore small constant-size loops.
             continue;
+        }
+
+        if (behavior.loopType() != LoopType::ANCHORED_SWEEP &&
+            behavior.loopType() != LoopType::DOUBLE_SWEEP) {
+            return false;
         }
 
         // This is a sweep loop
@@ -634,7 +639,9 @@ bool SweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
     }
 
     if (_midTransition) {
-        _midTransition.value().analyze(*this, executionState);
+        if (!_midTransition.value().analyze(*this, executionState)) {
+            return false;
+        }
     }
 
     if (!_leftSweepLoop.analyze(*this, executionState)) {

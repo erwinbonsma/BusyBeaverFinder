@@ -193,69 +193,6 @@ TEST_CASE("6x6 Failing Irregular Other Hangs", "[hang][irregular][6x6][fail]") {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION("6x6-IrregularSweepWithAlternatingEndSweepTransition") {
-        // The sweep hang has an irregular end at its right, consisting of zeroes and ones. The
-        // rightward sweep ends on the first zero.
-        //
-        //   *   * *
-        // * o o _ _ *
-        // * o * o o *
-        // o o * o *
-        // o * _ o *
-        // o     *
-        //
-        // It gets stuck in the following meta-run loop: 28 29 13 15 28 29 13 15 28 35
-        //
-        // The run-summary is as follows:
-        // ...
-        // #28*3.1  #29 #13*5.0  #15 #28*5.1  #29 #13*7.0  #15 #28*1.0 #35*1.0
-        // #28*5.1  #29 #13*7.0  #15 #28*7.1  #29 #13*10.0 #15 #28*1.0 #35*2.0
-        // #28*7.1  #29 #13*9.0  #15 #28*9.1  #29 #13*11.0 #15 #28*1.0 #35*1.0
-        // #28*9.1  #29 #13*11.0 #15 #28*11.1 #29 #13*16.0 #15 #28*1.0 #35*4.0
-        // ...
-        //
-        // There are two possible end-sweep transitions at the irregular end, and the hang
-        // alternates between both. The first is a plain one: #15. The second is one that
-        // contains a loop whose length varies depending on the amount of ones in the irregular
-        // end: #15 #28*1.0 #35*n
-        //
-        // There is a mid-sweep transition, but only for half of the leftward sweeps.
-        RunResult result = hangExecutor.execute("Zu65Qpllm2G37w");
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::ASSUMED_HANG);
-    }
-    SECTION("6x6-IrregularSweepWithZeroesInAppendix") {
-        // A truly binary counter. It actually uses ones and zeros, and also properly generates
-        // binary numbers (only with most-significant bit at the right).
-        //
-        // It is similar in behavior to 6x6-IrregularSweepWithAlternatingEndSweepTransition
-        //
-        // The meta-run summary ends up in this loop:
-        //   22 23 10 12 22 23 10 12 22 27
-        //
-        // Where the run summary looks as follows:
-        //   #22*44.1 #23 #10*46.0 #12 #22*46.1 #23 #10*51.0 #12 #22*1.0 #27*4.0
-        //   #22*46.1 #23 #10*48.0 #12 #22*48.1 #23 #10*50.0 #12 #22*1.0 #27*1.0
-        //   #22*48.1 #23 #10*50.0 #12 #22*50.1 #23 #10*53.0 #12 #22*1.0 #27*2.0
-        //   #22*50.1 #23 #10*52.0 #12 #22*52.1 #23 #10*54.0 #12 #22*1.0 #27*1.0
-        //
-        // Here the 27 loop is traversing the binary counter, flipping ones to zeros. After
-        // having done so, it switches to the 22 loop for the leftward traversal of the sweep
-        // body. The one-iteration 22 loop preceding the 27-loop murks the waters. To facilitate
-        // analysis, it should be considered part of transition sequence 12.
-        //
-        //   *   * *
-        // * o _ _ _ *
-        // o o * o o *
-        // o   * o *
-        // _ * _ o *
-        // _     *
-        RunResult result = hangExecutor.execute("ZiKJAllkmCGAIA");
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
-        REQUIRE(result == RunResult::ASSUMED_HANG);
-    }
 }
 
 TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
