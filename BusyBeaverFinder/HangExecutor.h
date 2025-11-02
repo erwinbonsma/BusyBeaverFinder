@@ -95,6 +95,7 @@ public:
 
     const Data& getData() const override { return _data; }
 
+    int numSteps() const override { return ProgramExecutor::numSteps(); };
     LoopRunState getLoopRunState() const override { return _loopRunState; }
     const RunHistory& getRunHistory() const override { return _runHistory; }
     const RunSummary& getRunSummary() const override { return _runSummary; }

@@ -17,7 +17,8 @@
 void ExecutionState::dumpExecutionState() const {
     getData().dump();
 
-    std::cout << "Num steps = " << getRunHistory().size() << std::endl;
+    std::cout << "Num steps = " << numSteps() << std::endl;
+    std::cout << "Run history size = " << getRunHistory().size() << std::endl;
 
     std::cout << "Run summary: ";
 //    getRunSummary().dump();
