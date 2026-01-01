@@ -202,12 +202,23 @@ long ProgressTracker::getTotalHangs() const {
 
 
 void ProgressTracker::dumpStats() {
-    std::cout
-    << "Best=" << _maxStepsSofar
-    << ", Total=" << _total
+    double time = (clock() - _startTime) / (double)CLOCKS_PER_SEC;
+
+    std::cout << time
+    << ": Max steps=" << _maxStepsSofar
+    << ", Max hang detection steps=" << _maxStepsUntilHangDetection
+    << std::endl;
+
+    std::cout << time
+    << ": Program=" << _searcher.getProgram().toString()
+    << ", Stack=";
+    _searcher.dumpInstructionStack(",");
+
+    std::cout << time
+    << ": Total=" << _total
     << ", Success=";
     if (_searcher.getHangDetectionTestMode()) {
-         std::cout << _totalFaultyHangs << "/";
+        std::cout << _totalFaultyHangs << "/";
     }
     std::cout << _totalSuccess
     << ", Errors=";
@@ -217,8 +228,17 @@ void ProgressTracker::dumpStats() {
     std::cout << getTotalErrors()
     << ", Hangs=" << (getTotalHangs() - getTotalDetectedHangs()) << "/" << getTotalDetectedHangs()
     << ", Fast execs=" << getTotalLateEscapes() << "/" << getTotalFastExecutions()
-    << ", Time taken=" << (clock() - _startTime) / (double)CLOCKS_PER_SEC
-    << ", Max steps until hang detected=" << _maxStepsUntilHangDetection << " steps"
+    << std::endl;
+
+    std::cout << time
+    << ": NODATA=" << _totalHangsByType[(int)HangType::NO_DATA_LOOP]
+    << ", NOEXIT=" << _totalHangsByType[(int)HangType::NO_EXIT]
+    << ", PERIOD=" << _totalHangsByType[(int)HangType::PERIODIC]
+    << ", METAPE=" << _totalHangsByType[(int)HangType::META_PERIODIC]
+    << ", RSWEEP=" << _totalHangsByType[(int)HangType::REGULAR_SWEEP]
+    << "  ISWEEP=" << _totalHangsByType[(int)HangType::IRREGULAR_SWEEP]
+    << "  GLIDER=" << _totalHangsByType[(int)HangType::APERIODIC_GLIDER]
+    << "  ASUMED=" << _totalHangsByType[(int)HangType::UNDETECTED]
     << std::endl;
 }
 
