@@ -117,6 +117,7 @@ public:
     void findOne(const std::vector<Ins> &resumeFrom);
 
     void dumpInstructionStack(const std::string& sep = {}) const;
+    std::string instructionStackAsString() const;
     bool instructionStackEquals(Ins* reference) const;
 
     void dumpSettings();

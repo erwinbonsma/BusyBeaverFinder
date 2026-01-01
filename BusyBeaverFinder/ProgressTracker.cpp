@@ -37,7 +37,6 @@ void ProgressTracker::report() {
 
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
-        _searcher.dumpInstructionStack();
     }
 
 //    _searcher.getProgram().dump();
@@ -80,10 +79,9 @@ void ProgressTracker::reportDone(int totalSteps) {
         _maxStepsSofar = totalSteps;
         _searcher.getProgram().clone(_bestProgram);
         if (_maxStepsSofar > _dumpBestSofarLimit) {
-            std::cout << "Best sofar = " << _maxStepsSofar
+            std::cout << "New best = " << _maxStepsSofar
             << ": " << _bestProgram.toString() << std::endl;
 //            _searcher.getData().dump();
-            dumpStats();
         }
     }
 
@@ -202,19 +200,9 @@ long ProgressTracker::getTotalHangs() const {
 
 
 void ProgressTracker::dumpStats() {
-    double time = (clock() - _startTime) / (double)CLOCKS_PER_SEC;
+    _timeStamp = (clock() - _startTime) / (double)CLOCKS_PER_SEC;
 
-    std::cout << time
-    << ": Max steps=" << _maxStepsSofar
-    << ", Max hang detection steps=" << _maxStepsUntilHangDetection
-    << std::endl;
-
-    std::cout << time
-    << ": Program=" << _searcher.getProgram().toString()
-    << ", Stack=";
-    _searcher.dumpInstructionStack(",");
-
-    std::cout << time
+    std::cout << _timeStamp
     << ": Total=" << _total
     << ", Success=";
     if (_searcher.getHangDetectionTestMode()) {
@@ -230,33 +218,40 @@ void ProgressTracker::dumpStats() {
     << ", Fast execs=" << getTotalLateEscapes() << "/" << getTotalFastExecutions()
     << std::endl;
 
-    std::cout << time
+    std::string stack = _searcher.instructionStackAsString();
+    if (stack.length()) {
+        std::cout << _timeStamp
+        << ": Stack=" << stack
+        << ", Program=" << _searcher.getProgram().toString()
+        << std::endl;
+    }
+
+    std::cout << _timeStamp
+    << ": Max steps=" << _maxStepsSofar
+    << ", Program=" << _bestProgram.toString()
+    << std::endl;
+
+    dumpHangStats();
+}
+
+void ProgressTracker::dumpHangStats() {
+    std::cout << _timeStamp
+    << ": Max hang detection steps=" << _maxStepsUntilHangDetection
+    << std::endl;
+
+    std::cout << _timeStamp
     << ": NODATA=" << _totalHangsByType[(int)HangType::NO_DATA_LOOP]
     << ", NOEXIT=" << _totalHangsByType[(int)HangType::NO_EXIT]
     << ", PERIOD=" << _totalHangsByType[(int)HangType::PERIODIC]
     << ", METAPE=" << _totalHangsByType[(int)HangType::META_PERIODIC]
     << ", RSWEEP=" << _totalHangsByType[(int)HangType::REGULAR_SWEEP]
-    << "  ISWEEP=" << _totalHangsByType[(int)HangType::IRREGULAR_SWEEP]
-    << "  GLIDER=" << _totalHangsByType[(int)HangType::APERIODIC_GLIDER]
-    << "  ASUMED=" << _totalHangsByType[(int)HangType::UNDETECTED]
+    << ", ISWEEP=" << _totalHangsByType[(int)HangType::IRREGULAR_SWEEP]
+    << ", GLIDER=" << _totalHangsByType[(int)HangType::APERIODIC_GLIDER]
+    << ", ASUMED=" << _totalHangsByType[(int)HangType::UNDETECTED]
     << std::endl;
-}
-
-void ProgressTracker::dumpHangStats() {
-    std::cout
-    << "Hang details:" << std::endl
-    << "  #No Data Loop = " << _totalHangsByType[(int)HangType::NO_DATA_LOOP] << std::endl
-    << "  #No Exit = " << _totalHangsByType[(int)HangType::NO_EXIT] << std::endl
-    << "  #Periodic = " << _totalHangsByType[(int)HangType::PERIODIC] << std::endl
-    << "  #Meta-periodic = " << _totalHangsByType[(int)HangType::META_PERIODIC] << std::endl
-    << "  #Regular Sweep = " << _totalHangsByType[(int)HangType::REGULAR_SWEEP] << std::endl
-    << "  #Irregular Sweep = " << _totalHangsByType[(int)HangType::IRREGULAR_SWEEP] << std::endl
-    << "  #Glider = " << _totalHangsByType[(int)HangType::APERIODIC_GLIDER] << std::endl
-    << "  #Undetected = " << _totalHangsByType[(int)HangType::UNDETECTED] << std::endl;
 }
 
 void ProgressTracker::dumpFinalStats() {
     dumpStats();
-    dumpHangStats();
     _bestProgram.dump();
 }

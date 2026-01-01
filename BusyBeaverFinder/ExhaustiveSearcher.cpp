@@ -9,6 +9,7 @@
 #include "ExhaustiveSearcher.h"
 
 #include <iostream>
+#include <sstream>
 #include <assert.h>
 
 #include "Utils.h"
@@ -55,6 +56,14 @@ bool ExhaustiveSearcher::atTargetProgram() {
 
 void ExhaustiveSearcher::dumpInstructionStack(const std::string& sep) const {
     ::dumpInstructionStack(_instructionStack, sep.size() ? sep : ",");
+}
+
+std::string ExhaustiveSearcher::instructionStackAsString() const {
+    std::stringstream sstream;
+    std::string s;
+    ::dumpInstructionStack(_instructionStack, sstream, ",");
+    sstream >> s;
+    return s;
 }
 
 void ExhaustiveSearcher::dumpSettings() {

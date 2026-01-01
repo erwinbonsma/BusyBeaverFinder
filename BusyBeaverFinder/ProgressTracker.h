@@ -33,6 +33,7 @@ class ProgressTracker {
     long _totalErrorsByType[numHangTypes];
     long _totalFaultyHangs = 0;
     clock_t _startTime;
+    double _timeStamp = 0;
 
     HangType _detectedHang = HangType::UNDETECTED;
 

@@ -67,6 +67,8 @@ void loadResumeStackFromStream(std::istream &input, std::vector<Ins> &resumeStac
 bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStack);
 
 void dumpInstructionStack(const std::vector<Ins> &stack, const std::string& sep = ",");
+void dumpInstructionStack(const std::vector<Ins> &stack, std::ostream &os,
+                          const std::string& sep = ",");
 
 template <class T>
 class ProxyIterator {

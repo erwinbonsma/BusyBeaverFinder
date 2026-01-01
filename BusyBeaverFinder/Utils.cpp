@@ -238,9 +238,18 @@ bool loadResumeStackFromFile(std::string inputFile, std::vector<Ins> &resumeStac
     return !resumeStack.empty();
 }
 
-void dumpInstructionStack(const std::vector<Ins> &stack, const std::string& sep) {
+void dumpInstructionStack(const std::vector<Ins> &stack, std::ostream &os, const std::string& sep) {
+    int count = 0;
     for (const Ins& ins : stack) {
-        std::cout << (int)ins << sep;
+        if (count++) {
+            os << sep;
+        }
+        os << (int)ins;
+
     }
+}
+
+void dumpInstructionStack(const std::vector<Ins> &stack, const std::string& sep) {
+    dumpInstructionStack(stack, std::cout, sep);
     std::cout << std::endl;
 }
