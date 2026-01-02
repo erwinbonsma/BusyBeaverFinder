@@ -235,6 +235,26 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
+    SECTION("7x7-UndetectedIrregularSweep") {
+        // At the right there is an irregular sweep head. When the rightward-moving sweep loop
+        // terminates, it enters another rightward-moving sweep loop, which always executes two
+        // iterations before, after which a transition sequence follows and the leftward-moving
+        // sweep loop starts.
+        //
+        //     *   * *
+        //   * o _ _ _ *
+        //   * o * o o *
+        //   _ o * o *
+        // * _ o o o _ *
+        // *   * _ _ _
+        // o _ o o * *
+        RunResult result = hangExecutor.execute("d/uvkC5lsZuFSuA0Ws");
+
+        hangExecutor.dumpExecutionState();
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
 }
 
 TEST_CASE("7x7 false positives", "[success][7x7][fail]") {

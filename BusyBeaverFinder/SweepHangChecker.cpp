@@ -281,6 +281,9 @@ bool SweepHangChecker::TransitionGroup::analyze(const SweepHangChecker& checker,
     _incomingLoopSeqIndex = checker.findSweepLoop([this](const Location& loc) {
         return loc.end == this->_location;
     });
+    if (_incomingLoopSeqIndex < 0) {
+        return false;
+    }
     auto &loopBehavior = checker.loopBehavior(_incomingLoopSeqIndex);
     _isStationary = (forceStationary
                      || _location == LocationInSweep::MID

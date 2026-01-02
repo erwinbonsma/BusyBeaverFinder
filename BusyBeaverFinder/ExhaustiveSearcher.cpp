@@ -207,6 +207,7 @@ void ExhaustiveSearcher::branch() {
 //        } else {
 //            _hangExecutor.setVerbose(false);
 //        }
+//        std::cout << _program.toString() << std::endl;
 
         extendBlock();
 
