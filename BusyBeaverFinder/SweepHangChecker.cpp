@@ -573,7 +573,9 @@ bool SweepHangChecker::locateSweepLoops() {
     bool oneSideFixed = !extendsLeft || !extendsRight;
     bool hasMidTransition = false;
     for (auto &behavior : _metaLoopAnalysis->loopBehaviors()) {
-        if (behavior.loopType() == LoopType::ANCHORED_SWEEP) {
+        if (behavior.loopType() == LoopType::ANCHORED_SWEEP &&
+            behavior.iterationDelta() != 0
+        ) {
             auto &loc = _locationsInSweep[behavior.sequenceIndex()];
             if (loc.start == LocationInSweep::UNSET) {
                 loc.start = oneSideFixed ? opposite(loc.end) : LocationInSweep::MID;

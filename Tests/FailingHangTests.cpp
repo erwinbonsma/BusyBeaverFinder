@@ -217,6 +217,24 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
+    SECTION("7x7-UndetectedSweepHang") {
+        // Enters a fairly normal sweep after some initial, relatively complex bootstrapping.
+        //
+        //       * * *
+        // * _ _ _ o _ *
+        // o _ _ _ o o *
+        // _ _ o o o o *
+        // _ * * o o o
+        // _ * _ o o *
+        // _   * * *
+
+        RunResult result = hangExecutor.execute("d/6uASQFgVYpXIWzq8");
+
+        hangExecutor.dumpExecutionState();
+
+        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        REQUIRE(result == RunResult::ASSUMED_HANG);
+    }
 }
 
 TEST_CASE("7x7 false positives", "[success][7x7][fail]") {

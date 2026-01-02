@@ -266,6 +266,12 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 690346);
     }
+    SECTION("BB 7x7 #727440") {
+        RunResult result = hangExecutor.execute("d++vCSlUqstVbYFnus");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 727440);
+    }
     SECTION("BB 7x7 #706369") {
         RunResult result = hangExecutor.execute("dyiiUCJFgZiFYmAFiA");
 
