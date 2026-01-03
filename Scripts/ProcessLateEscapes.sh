@@ -9,7 +9,7 @@
 # It will also overwrite any existing files.
 #
 # Example invocation:
-# echo search-log.txt | ${SCRIPT_PATH}ProcessLateEscapes.sh ${BIN_PATH}/BusyBeaverFinder [ARGS]
+# cat search-log.txt | ${SCRIPT_PATH}ProcessLateEscapes.sh ${BIN_PATH}/BusyBeaverFinder [ARGS]
 
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
@@ -17,7 +17,7 @@ SEARCH_CMD=$*
 echo Search command=${SEARCH_CMD}
 
 RUN=1
-grep "Late escape" | sed -f ${SCRIPTPATH}/ProcessLateEscapes.sed > late-escapes-${RUN}.txt
+grep "ESC" | sed -f ${SCRIPTPATH}/ProcessLateEscapes.sed > late-escapes-${RUN}.txt
 
 while true; do
   NUM_LATE_ESCAPES=`wc -l late-escapes-${RUN}.txt | sed 's_ __g' | sed 's_[^0-9].*__'`
@@ -35,7 +35,7 @@ while true; do
 
   NXTRUN=$((RUN+1))
 
-  cat late-escapes-${RUN}-log.txt | grep "Late escape" | sed -f ${SCRIPTPATH}/ProcessLateEscapes.sed > late-escapes-${NXTRUN}.txt
+  cat late-escapes-${RUN}-log.txt | grep "ESC" | sed -f ${SCRIPTPATH}/ProcessLateEscapes.sed > late-escapes-${NXTRUN}.txt
 
   RUN=${NXTRUN}
 done
