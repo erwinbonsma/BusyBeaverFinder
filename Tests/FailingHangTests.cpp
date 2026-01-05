@@ -217,8 +217,21 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
-    SECTION("7x7-UndetectedSweepHang") {
-        // Enters a fairly normal sweep after some initial, relatively complex bootstrapping.
+    SECTION("7x7-UndetectedIrregularlyShrinkingSweep") {
+        // After some bootstrapping, after around 6000 steps, the program appears to enter a sweep
+        // hang. The sweep extends at the right by one unit each sweep. The leftwards sweep
+        // decreases all values in the sweep body by two, so that these become increasingly more
+        // negative. However, the leftmost value is not updated by the sweep. Instead, it is
+        // _incremented_ by one by the transition sequence at the left. Eventually it hits zero,
+        // which effectively shortens the sweep at the left. This happens at irregular intervals,
+        // as the (absolute value) of the starting value of this counter gets increasingly larger.
+        // When this happens, for iteration count for both sweep loops does not increase but
+        // remains the same. After one million steps, this happens for the following sweep lengths:
+        // 4, 8, 21, 64, 194.
+        //
+        // The good news is that the current Sweep Checker is smart enough to recognize that this
+        // is not a regular sweep. The bad news is that this requires a sweep checker that supports
+        // irregularly shrinking sweeps.
         //
         //       * * *
         // * _ _ _ o _ *
@@ -227,12 +240,9 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // _ * * o o o
         // _ * _ o o *
         // _   * * *
-
         RunResult result = hangExecutor.execute("d/6uASQFgVYpXIWzq8");
 
-        hangExecutor.dumpExecutionState();
-
-        // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
+        // TEMP: Should not yet be detected with current logic. Ideally it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
     SECTION("7x7-UndetectedIrregularSweep") {
