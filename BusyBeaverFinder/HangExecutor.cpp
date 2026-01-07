@@ -144,22 +144,25 @@ RunResult HangExecutor::run() {
 
 void HangExecutor::pop() {
     _executionStack.pop_back();
-}
 
-RunResult HangExecutor::execute(std::shared_ptr<const InterpretedProgram> program) {
     if (_executionStack.size() > 0) {
-        assert(program == _program);
-
         ExecutionStackFrame& frame = _executionStack.back();
+
         _numSteps = frame.numSteps;
         _block = frame.programBlock;
         _data.undo(frame.dataStackSize);
-    } else {
+    }
+}
+
+RunResult HangExecutor::execute(std::shared_ptr<const InterpretedProgram> program) {
+    if (_executionStack.size() == 0) {
         _program = program;
 
         _numSteps = 0;
         _data.reset();
         _block = _program->getEntryBlock();
+    } else {
+        assert(program == _program);
     }
 
     RunResult result = run();

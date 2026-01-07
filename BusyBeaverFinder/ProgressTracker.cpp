@@ -17,7 +17,8 @@
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     _searcher(searcher),
     _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight()),
-    _runLengthHistogram()
+    _runLengthHistogram(),
+    _hangDetectionHistogram(3, 2)
 {
     _startTime = clock();
 
@@ -152,8 +153,10 @@ void ProgressTracker::reportLateEscape(int numSteps) {
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
-    _maxStepsUntilHangDetection = std::max(_maxStepsUntilHangDetection,
-                                           _searcher.getProgramExecutor()->numSteps());
+    int numSteps = _searcher.getProgramExecutor()->numSteps();
+    _maxStepsUntilHangDetection = std::max(_maxStepsUntilHangDetection, numSteps);
+    _hangDetectionHistogram.add(numSteps);
+
     if (executionWillContinue) {
         // Only signal it. Execution will continue to verify that the program indeed hangs.
         _detectedHang = hangType;
@@ -243,7 +246,8 @@ void ProgressTracker::dumpRunLengths() {
 
 void ProgressTracker::dumpHangStats() {
     std::cout << _timeStamp
-    << ": Max hang detection steps=" << _maxStepsUntilHangDetection
+    << ": Hang detected at = " << _hangDetectionHistogram
+    << ", max steps = " << _maxStepsUntilHangDetection
     << std::endl;
 
     std::cout << _timeStamp

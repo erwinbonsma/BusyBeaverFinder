@@ -37,7 +37,11 @@ class ProgressTracker {
     clock_t _startTime;
     double _timeStamp = 0;
 
+    // Tracks after how many steps each (non-hanging) program terminates.
     LogHistogram _runLengthHistogram;
+
+    // Tracks how quickly each hang is detected.
+    LogHistogram _hangDetectionHistogram;
 
     HangType _detectedHang = HangType::UNDETECTED;
 
