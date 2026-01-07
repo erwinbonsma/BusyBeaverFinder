@@ -16,7 +16,8 @@
 
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     _searcher(searcher),
-    _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight())
+    _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight()),
+    _runLengthHistogram()
 {
     _startTime = clock();
 
@@ -26,7 +27,6 @@ ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     }
 
     _lastDetectedHang = nullptr;
-    _runLengthHistogram.emplace_back(10, 0);
 }
 
 void ProgressTracker::report() {
@@ -58,29 +58,9 @@ void ProgressTracker::report() {
 //    }
 }
 
-void ProgressTracker::addToRunLengthHistogram(int totalSteps) {
-    for (auto& entry : _runLengthHistogram) {
-        if (totalSteps <= entry.first) {
-            // Found the right bin; bump its count
-            entry.second++;
-            return;
-        }
-    }
-
-    // Create one or more new bins
-    int lastBin = _runLengthHistogram.back().first;
-    do {
-        lastBin *= 10;
-        _runLengthHistogram.emplace_back(lastBin, 0);
-    } while (lastBin < totalSteps);
-
-    // Add entry to last bin
-    _runLengthHistogram.back().second++;
-}
-
 void ProgressTracker::reportDone(int totalSteps) {
     _totalSuccess++;
-    addToRunLengthHistogram(totalSteps);
+    _runLengthHistogram.add(totalSteps);
 
     if (_dumpDone) {
         std::cout << "Done(" << totalSteps << "): "
@@ -258,17 +238,7 @@ void ProgressTracker::dumpStats() {
 }
 
 void ProgressTracker::dumpRunLengths() {
-    std::cout << _timeStamp
-    << ": Run lengths = ";
-    int lower = 1;
-    for (auto& entry : _runLengthHistogram) {
-        if (lower > 1) {
-            std::cout << ", ";
-        }
-        std::cout << lower << "-" << entry.first << ":" << entry.second;
-        lower = entry.first + 1;
-    }
-    std::cout << std::endl;
+    std::cout << _timeStamp << ": Run lengths = " << _runLengthHistogram << std::endl;
 }
 
 void ProgressTracker::dumpHangStats() {

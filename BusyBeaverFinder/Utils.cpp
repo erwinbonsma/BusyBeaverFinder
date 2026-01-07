@@ -10,6 +10,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -252,4 +253,49 @@ void dumpInstructionStack(const std::vector<Ins> &stack, std::ostream &os, const
 void dumpInstructionStack(const std::vector<Ins> &stack, const std::string& sep) {
     dumpInstructionStack(stack, std::cout, sep);
     std::cout << std::endl;
+}
+
+LogHistogram::LogHistogram(int ini_log_scale, int bins_per_log_scale)
+: _bins_per_log_scale(bins_per_log_scale), _ini_log_scale(ini_log_scale) {
+    _histogram.emplace_back(getBinUpperBound(0), 0);
+}
+
+int LogHistogram::getBinUpperBound(int bin_index) {
+    return static_cast<int>(
+        round(std::pow(10.0f,
+                       static_cast<float>(bin_index + _ini_log_scale) / _bins_per_log_scale))
+    );
+}
+
+void LogHistogram::add(int value) {
+    for (auto& entry : _histogram) {
+        if (value <= entry.first) {
+            // Found the right bin; bump its count
+            entry.second++;
+            return;
+        }
+    }
+
+    // Create one or more new bins
+    int upperBound;
+    do {
+        upperBound = getBinUpperBound(static_cast<int>(_histogram.size()));
+        _histogram.emplace_back(upperBound, 0);
+    } while (upperBound < value);
+
+    // Add entry to last bin
+    _histogram.back().second++;
+}
+
+std::ostream &operator<<(std::ostream &os, const LogHistogram &h) {
+    int lower = 1;
+    for (auto& entry : h._histogram) {
+        if (lower > 1) {
+            os << ", ";
+        }
+        os << lower << "-" << entry.first << ":" << entry.second;
+        lower = entry.first + 1;
+    }
+
+    return os;
 }

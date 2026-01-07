@@ -11,6 +11,7 @@
 #include <memory>
 #include <vector>
 
+#include "Utils.h"
 #include "Program.h"
 
 class ExhaustiveSearcher;
@@ -36,7 +37,7 @@ class ProgressTracker {
     clock_t _startTime;
     double _timeStamp = 0;
 
-    std::vector<std::pair<int,long>> _runLengthHistogram;
+    LogHistogram _runLengthHistogram;
 
     HangType _detectedHang = HangType::UNDETECTED;
 
@@ -51,8 +52,6 @@ class ProgressTracker {
     int _maxStepsUntilHangDetection = 0;
 
     void report();
-
-    void addToRunLengthHistogram(int totalSteps);
 
 public:
     ProgressTracker(ExhaustiveSearcher& searcher);

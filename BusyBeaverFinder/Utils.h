@@ -70,6 +70,29 @@ void dumpInstructionStack(const std::vector<Ins> &stack, const std::string& sep 
 void dumpInstructionStack(const std::vector<Ins> &stack, std::ostream &os,
                           const std::string& sep = ",");
 
+// A histogram with logarithmic scaling of the bin sizes.
+//
+// The number of bins grow as needed.
+class LogHistogram {
+    friend std::ostream &operator<<(std::ostream &os, const LogHistogram &h);
+
+    std::vector<std::pair<int,long>> _histogram;
+    int _bins_per_log_scale;
+    int _ini_log_scale;
+
+    int getBinUpperBound(int bin_index);
+
+public:
+    // The parameter ini_log_scale (n) determines the first log scale. Its upper bound is 10^n.
+    // Each log scale can be sub-divided in more than one bin using "bins_per_log_scale".
+    LogHistogram(int ini_log_scale = 1, int bins_per_log_scale = 1);
+
+    // Adds the value to the corresponding bin.
+    void add(int value);
+};
+
+std::ostream &operator<<(std::ostream &os, const LogHistogram &h);
+
 template <class T>
 class ProxyIterator {
 private:
