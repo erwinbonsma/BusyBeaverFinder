@@ -20,10 +20,9 @@ class HangDetector;
 class ProgressTracker {
     int _dumpStatsPeriod = 100000;
     int _dumpStackPeriod = 1000000;
-    int _dumpBestSofarLimit = 256;
+    // This default works for 7x7 search
+    int _dumpSuccessStepsLimit = 1000000;
     bool _dumpUndetectedHangs = false;
-    // Can be useful when searching a subtree, e.g. when following up on a late escape
-    bool _dumpDone = false;
 
     ExhaustiveSearcher& _searcher;
 
@@ -63,8 +62,7 @@ public:
     void setDumpStatsPeriod(int val) { _dumpStatsPeriod = val; }
     void setDumpStackPeriod(int val) { _dumpStackPeriod = val; }
     void setDumpUndetectedHangs(bool flag) { _dumpUndetectedHangs = flag; }
-    void setDumpDone(bool flag) { _dumpDone = flag; }
-    void setDumpBestSofarLimit(int minSteps) { _dumpBestSofarLimit = minSteps; }
+    void setDumpSuccessStepsLimit(int minSteps) { _dumpSuccessStepsLimit  = minSteps; }
 
     long getTotalSuccess() const { return _totalSuccess; }
     long getTotalErrors() const;

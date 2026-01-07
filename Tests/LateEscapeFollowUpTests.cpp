@@ -18,7 +18,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
     ExhaustiveSearcher searcher(7, 7, settings);
     ProgressTracker tracker(searcher);
 
-    tracker.setDumpBestSofarLimit(INT_MAX);
+    tracker.setDumpSuccessStepsLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
 
     SECTION( "EscapeIntoSuccess" ) {

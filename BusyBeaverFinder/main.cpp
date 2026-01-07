@@ -35,6 +35,9 @@ void init(int argc, char * argv[]) {
         ("late-escapes", "File with late escapes", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
         ("dump-period", "The period of dumping basic stats", cxxopts::value<int>())
+        ("dump-success-steps-limit",
+         "The minimum number of steps for dumping successful programs",
+         cxxopts::value<int>())
         ("dump-undetected-hangs", "Report undetected hangs")
         ("help", "Show help");
     auto result = options.parse(argc, argv);
@@ -93,7 +96,7 @@ void init(int argc, char * argv[]) {
 
     if (result.count("late-escapes")) {
         lateEscapeFile = result["late-escapes"].as<std::string>();
-        tracker->setDumpDone(true);
+        tracker->setDumpSuccessStepsLimit(0); // Dump every successful program
     }
 
     if (result.count("dump-period")) {
@@ -101,6 +104,9 @@ void init(int argc, char * argv[]) {
     }
     if (result.count("dump-undetected-hangs")) {
         tracker->setDumpUndetectedHangs(true);
+    }
+    if (result.count("dump-success-steps-limit")) {
+        tracker->setDumpSuccessStepsLimit(result["dump-success-steps-limit"].as<int>());
     }
 
     searcher->setProgressTracker(tracker);

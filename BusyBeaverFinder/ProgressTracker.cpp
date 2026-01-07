@@ -63,9 +63,9 @@ void ProgressTracker::reportDone(int totalSteps) {
     _totalSuccess++;
     _runLengthHistogram.add(totalSteps);
 
-    if (_dumpDone) {
-        std::cout << "Done(" << totalSteps << "): "
-        << _searcher.getProgram().toString() << std::endl;
+    if (totalSteps > _dumpSuccessStepsLimit) {
+        std::cout << "SUC " << totalSteps
+        << " " << _searcher.getProgram().toString() << std::endl;
     }
 
     if (_detectedHang != HangType::UNDETECTED) {
@@ -81,11 +81,6 @@ void ProgressTracker::reportDone(int totalSteps) {
     if (totalSteps > _maxStepsSofar) {
         _maxStepsSofar = totalSteps;
         _searcher.getProgram().clone(_bestProgram);
-        if (_maxStepsSofar > _dumpBestSofarLimit) {
-            std::cout << "New best = " << _maxStepsSofar
-            << ": " << _bestProgram.toString() << std::endl;
-//            _searcher.getData().dump();
-        }
     }
 
     report();

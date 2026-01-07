@@ -16,7 +16,7 @@ TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
     ExhaustiveSearcher searcher(3, 3, settings);
     ProgressTracker tracker(searcher);
 
-    tracker.setDumpBestSofarLimit(INT_MAX);
+    tracker.setDumpSuccessStepsLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
 
     SECTION( "Find all" ) {
@@ -38,7 +38,7 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
     ExhaustiveSearcher searcher(4, 4, settings);
     ProgressTracker tracker(searcher);
 
-    tracker.setDumpBestSofarLimit(INT_MAX);
+    tracker.setDumpSuccessStepsLimit(INT_MAX);
     searcher.setProgressTracker(&tracker);
 
     SECTION("Find all") {
@@ -56,7 +56,7 @@ TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     ExhaustiveSearcher searcher(5, 5, settings);
     ProgressTracker tracker(searcher);
 
-    tracker.setDumpBestSofarLimit(INT_MAX);
+    tracker.setDumpSuccessStepsLimit(INT_MAX);
     tracker.setDumpUndetectedHangs(true);
     searcher.setProgressTracker(&tracker);
 
