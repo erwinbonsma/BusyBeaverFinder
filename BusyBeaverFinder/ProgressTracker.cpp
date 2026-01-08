@@ -144,7 +144,8 @@ void ProgressTracker::reportLateEscape(int numSteps) {
         _detectedHang = HangType::UNDETECTED;
     }
 
-    report();
+    // Do not count late escapes as programs.
+    // They will expand into multiple programs when resuming the search from these late escapes.
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
