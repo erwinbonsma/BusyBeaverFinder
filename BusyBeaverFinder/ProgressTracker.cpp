@@ -250,7 +250,7 @@ void ProgressTracker::dumpHangStats() {
     << ": NODATA=" << _totalHangsByType[(int)HangType::NO_DATA_LOOP]
     << ", NOEXIT=" << _totalHangsByType[(int)HangType::NO_EXIT]
     << ", PERIOD=" << _totalHangsByType[(int)HangType::PERIODIC]
-    << ", METAPE=" << _totalHangsByType[(int)HangType::META_PERIODIC]
+    << ", NESTED=" << _totalHangsByType[(int)HangType::NESTED_PERIODIC]
     << ", RSWEEP=" << _totalHangsByType[(int)HangType::REGULAR_SWEEP]
     << ", ISWEEP=" << _totalHangsByType[(int)HangType::IRREGULAR_SWEEP]
     << ", GLIDER=" << _totalHangsByType[(int)HangType::APERIODIC_GLIDER]

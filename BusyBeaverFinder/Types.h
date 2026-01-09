@@ -106,7 +106,7 @@ enum class HangType : int8_t {
     NO_DATA_LOOP = 1,
     NO_EXIT = 2,
     PERIODIC = 3,
-    META_PERIODIC = 4,
+    NESTED_PERIODIC = 4,
     REGULAR_SWEEP = 5,
     IRREGULAR_SWEEP = 6,
     APERIODIC_GLIDER = 7,

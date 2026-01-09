@@ -190,7 +190,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZiKIVkSGSEoEAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-PeriodicHangWithInnerLoop2") {
         // Another periodic hang with an inner loop.
@@ -204,7 +204,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZioIWEYEAmFACA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-PeriodicHangWithInnerLoop3") {
         // Another periodic hang with an inner loop.
@@ -218,7 +218,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZiKIVkFmhECAAA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-NonUniformCountingLoop1") {
         // Classification: Periodic, Changing, Non-Uniform, Sentry Go
@@ -235,7 +235,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZgKChhFgkoWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-NonUniformCountingLoop2") {
         // Periodic hang which changes two values. One value is decreased by one each iteration,
@@ -253,7 +253,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZgKChhFglIWFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-DelayedHang2") {
         // A complex periodic hang. The hang period is 82 steps, the periodic execution only starts
@@ -280,7 +280,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZgICEikAWIEEYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-DelayedHang3") {
         // Variant of the previous hang. However, it is sufficiently different that it revealed a
@@ -295,7 +295,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZggIQiUBaIQlgA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-DelayedHang4") {
         // Another variant of the previous hang. It is added as this program set the record in the
@@ -311,7 +311,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZgIAkikAWIEFYA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-PeriodicHangWithThreeInnerLoops") {
         // Periodic hang with a period of 136 steps. Each iteration it extends the sequence to the
@@ -335,7 +335,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("ZgqCUhWJEIAloA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("6x6-PeriodicHangBreakingOutOfAssumedMetaLevelLoop") {
         // A periodic hang at the low-level run summary which initially looks like a hang at the
@@ -403,7 +403,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
         RunResult result = hangExecutor.execute("Zvq+UtW9S4Ulrw");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
 }
 
@@ -427,7 +427,7 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         RunResult result = hangExecutor.execute("dwCAKSAGCVIRggYFoA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
     SECTION("7x7-LargePeriodicMetaLoop") {
         // Meta-periodic hang with a meta-loop that contains three loops with a fixed number of
@@ -444,6 +444,6 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         RunResult result = hangExecutor.execute("d4ihACAgCVYJWIWAqA");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
-        REQUIRE(hangExecutor.detectedHangType() == HangType::META_PERIODIC);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
 }

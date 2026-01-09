@@ -51,7 +51,7 @@ bool MetaLoopHangDetector::preparePeriodicHangCheck() {
 
     _periodicHangChecker.init(&_loopAnalysis, loopStart);
     _activeChecker = &_periodicHangChecker;
-    _activeHang = HangType::META_PERIODIC;
+    _activeHang = HangType::NESTED_PERIODIC;
     _activeHangProofResult = Trilian::MAYBE;
 
     return true;
