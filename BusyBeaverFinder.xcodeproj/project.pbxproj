@@ -75,6 +75,7 @@
 		AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */; };
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
 		AADF971F255EBCA3002BF498 /* SequenceAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */; };
+		AADFCABA2F12DC9D00FAEC89 /* PerformanceTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */; };
 		AAEB55B02B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAEB55B42B15315600695567 /* HangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B22B15315600695567 /* HangChecker.cpp */; };
@@ -188,6 +189,7 @@
 		AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchOrchestration.h; sourceTree = "<group>"; };
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
 		AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysisTests.cpp; sourceTree = "<group>"; };
+		AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerformanceTests.cpp; sourceTree = "<group>"; };
 		AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopHangDetector.cpp; sourceTree = "<group>"; };
 		AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetaLoopHangDetector.h; sourceTree = "<group>"; };
 		AAEB55B22B15315600695567 /* HangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HangChecker.cpp; sourceTree = "<group>"; };
@@ -309,6 +311,7 @@
 				AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */,
 				AA37E6CD229ADD1B00117A85 /* LateEscapeFollowUpTests.cpp */,
 				AAADA6D52A8C06CC00F1C442 /* FastExecutorTests.cpp */,
+				AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */,
 				AAEB55C22B2DE92900695567 /* RunUntilMetaLoop.h */,
 			);
 			path = Tests;
@@ -494,6 +497,7 @@
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,
 				AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */,
 				AA7FD29D2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp in Sources */,
+				AADFCABA2F12DC9D00FAEC89 /* PerformanceTests.cpp in Sources */,
 				AA4F45142259E88B0069FF36 /* RunSummary.cpp in Sources */,
 				AA28C09F22073A0C00F7EC25 /* ExhaustiveSearcher.cpp in Sources */,
 				AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */,
