@@ -16,10 +16,8 @@
 
 const int sentinelSize = 8;
 
-FastExecutor::FastExecutor(int dataSize) {
-    _dataBufSize = dataSize + 2 * sentinelSize;
-    _data = new int[_dataBufSize];
-
+FastExecutor::FastExecutor(int dataSize)
+: _dataBufSize(dataSize + 2 * sentinelSize), _data(_dataBufSize) {
     _minDataP = &_data[sentinelSize]; // Inclusive
     _maxDataP = _minDataP + dataSize; // Exclusive
     _midDataP = &_data[_dataBufSize / 2];
@@ -27,8 +25,9 @@ FastExecutor::FastExecutor(int dataSize) {
     _canResume = false;
 }
 
-FastExecutor::~FastExecutor() {
-    delete[] _data;
+void FastExecutor::resetData() {
+    _data.clear();
+    _data.resize(_dataBufSize);
 }
 
 RunResult FastExecutor::run() {
@@ -69,11 +68,10 @@ RunResult FastExecutor::run() {
 
 RunResult FastExecutor::execute(std::shared_ptr<const InterpretedProgram> program) {
     if (!_canResume) {
-        // Start execution form the start
+        // Start execution from the start
         _numSteps = 0;
 
-        // Clear data
-        memset(_data, 0, _dataBufSize * sizeof(int));
+        resetData();
 
         _dataP = _midDataP;
         _block = program->getEntryBlock();
@@ -84,7 +82,7 @@ RunResult FastExecutor::execute(std::shared_ptr<const InterpretedProgram> progra
 
 void FastExecutor::resumeFrom(const ProgramBlock* block, const Data& data, int numSteps) {
     // Copy the data
-    memset(_data, 0, _dataBufSize * sizeof(int));
+    resetData();
     DataPointer srcP = data.getMinDataP();
     int* dstP = _midDataP - (data.getMidDataP() - data.getMinDataP());
     while (srcP <= data.getMaxDataP()) {

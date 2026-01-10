@@ -65,6 +65,7 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
 
 public:
     HangExecutor(int dataSize, int maxHangDetectionSteps);
+    ~HangExecutor() override {};
 
     void addDefaultHangDetectors();
     void addHangDetector(std::shared_ptr<HangDetector> hangDetector) {

@@ -7,13 +7,15 @@
 //
 #pragma once
 
+#include <vector>
+
 #include "ProgramExecutor.h"
 #include "Types.h"
 #include "Data.h"
 
 class FastExecutor : public ProgramExecutor {
-    int* _data;
     int _dataBufSize;
+    std::vector<int> _data;
 
     int* _minDataP;
     int* _midDataP;
@@ -25,9 +27,11 @@ class FastExecutor : public ProgramExecutor {
 
     RunResult run();
 
+    void resetData();
+
 public:
     FastExecutor(int dataSize);
-    ~FastExecutor();
+    ~FastExecutor() override {}
 
     void pop() override { _canResume = false; };
 

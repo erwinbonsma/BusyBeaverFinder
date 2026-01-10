@@ -23,6 +23,8 @@ protected:
     const ProgramBlock* _block;
 
 public:
+    virtual ~ProgramExecutor() {}
+
     void setMaxSteps(int steps) { _maxSteps = steps; }
     int numSteps() const { return _numSteps; }
 
