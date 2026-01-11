@@ -120,36 +120,6 @@ void Program::clone(Program& dest) const {
     dest._instructions = _instructions;
 }
 
-ulonglong Program::getEquivalenceNumber() {
-    ulonglong num = 1;
-    Ins ins;
-    for (int x = _width - 1; --x >= 0; ) {
-        for (int y = _height - 1; --y >= 0; ) {
-            if (getInstruction(x, y) == Ins::UNSET) {
-                num *= 3;
-            }
-        }
-
-        ins = getInstruction(x, _height - 1);
-        if (ins == Ins::UNSET) {
-            num *= 2;
-        }
-        else if (ins == Ins::DATA) {
-            return 0;
-        }
-    }
-    for (int y = _height - 1; --y >= 0; ) {
-        ins = getInstruction(_width - 1, y);
-        if (ins == Ins::UNSET) {
-            num *= 2;
-        }
-        else if (ins == Ins::DATA) {
-            return 0;
-        }
-    }
-    return num;
-}
-
 std::string Program::toSimpleString(const char* charEncoding, bool addLineBreaks) const {
     std::string s;
     s.reserve(_height * (_width + (addLineBreaks ? 1 : 0)));
