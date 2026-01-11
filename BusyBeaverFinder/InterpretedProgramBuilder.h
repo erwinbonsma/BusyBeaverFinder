@@ -7,6 +7,8 @@
 //
 #pragma once
 
+#include <array>
+
 #include "Consts.h"
 #include "InterpretedProgram.h"
 #include "Types.h"
@@ -35,7 +37,7 @@ struct ProgramStack {
  */
 class InterpretedProgramBuilder : public InterpretedProgram {
     ProgramBlock _blocks[maxProgramBlocks];
-    int _blockIndexLookup[maxProgramBlocks];
+    std::array<int, maxProgramBlocks> _blockIndexLookup;
     int _finalizedStack[maxProgramBlocks];
 
     ProgramStack _state[maxProgramStackFrames];
@@ -43,6 +45,8 @@ class InterpretedProgramBuilder : public InterpretedProgram {
 
     ProgramBlock* getBlock(InstructionPointer insP, TurnDirection turn);
     InstructionPointer startInstructionForBlock(const ProgramBlock* block);
+
+    void reset();
 
     void checkState();
 

@@ -22,18 +22,24 @@ const uint8_t INSTRUCTION_SET_BIT = 0x01;
 const uint8_t INSTRUCTION_TYPE_BIT = 0x02;
 
 InterpretedProgramBuilder::InterpretedProgramBuilder() {
+    reset();
+}
+
+void InterpretedProgramBuilder::reset() {
     _stateP = _state;
-
-    for (int i = maxProgramBlocks; --i >=0; ) {
-        _blockIndexLookup[i] = -1;
-    }
-
     _stateP->numBlocks = 0;
     _stateP->numFinalizedBlocks = 0;
+
+    std::fill(_blockIndexLookup.begin(), _blockIndexLookup.end(), -1);
+
     enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
 }
 
 void InterpretedProgramBuilder::buildFromProgram(Program& program) {
+    if (_stateP->numBlocks != 0) {
+        reset();
+    }
+
     std::vector<const ProgramBlock*> stack;
 
     while (true) {

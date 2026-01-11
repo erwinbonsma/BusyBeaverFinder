@@ -14,6 +14,8 @@
 
 #include "Utils.h"
 
+const std::vector<Ins> emptyStack;
+
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
@@ -308,19 +310,26 @@ void ExhaustiveSearcher::run() {
     executor->pop();
 }
 
-std::vector<Ins> emptyStack;
-void ExhaustiveSearcher::search() {
+void ExhaustiveSearcher::search(bool resuming) {
     _resumeIns = emptyStack.cbegin();
     _resumeEnd = emptyStack.cend();
-    _resuming = false;
+    _resuming = resuming;
 
-    _programExecutor = &_hangExecutor;
+    if (resuming) {
+        _programExecutor = &_fastExecutor;
+    } else {
+        _programExecutor = &_hangExecutor;
+    }
 
     // Note: Even though the searcher can carry out multiple searches, there is no need to reset
     // the program executors or program builder before the search. Their state is restored when the
     // search backtracks.
 
     run();
+}
+
+void ExhaustiveSearcher::search() {
+    search(false);
 }
 
 void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom, int fromSteps) {
@@ -341,6 +350,23 @@ void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom, int f
     search(resumeFrom, fromSteps);
     _searchMode = SearchMode::FULL_TREE;
 }
+
+void ExhaustiveSearcher::searchSubTree(std::string& programSpec) {
+    std::cout << "Resuming from: " << programSpec << std::endl;
+
+    Program zeroProgram = std::move(_program);
+    _searchMode = SearchMode::SUB_TREE;
+    _program = Program::fromString(programSpec);
+
+    _programBuilder->buildFromProgram(_program);
+
+    _fastExecutor.setMaxSteps(_settings.maxSteps);
+    search(true);
+
+    _program = std::move(zeroProgram); // Restore empty program
+    _searchMode = SearchMode::FULL_TREE;
+}
+
 
 void ExhaustiveSearcher::findOne() {
     _searchMode = SearchMode::FIND_ONE;

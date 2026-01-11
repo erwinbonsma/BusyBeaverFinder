@@ -9,7 +9,8 @@
 #include "Program.h"
 
 TEST_CASE("Executor performance tests", "[perf][.explicit]") {
-    Program program = Program::fromString("Zv6+kpUoAqW0bw");
+    std::string programSpec{"Zv6+kpUoAqW0bw"};
+    Program program = Program::fromString(programSpec);
     auto programBuilder = std::make_shared<InterpretedProgramBuilder>();
     programBuilder->buildFromProgram(program);
 

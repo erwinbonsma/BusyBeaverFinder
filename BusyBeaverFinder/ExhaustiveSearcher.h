@@ -79,6 +79,7 @@ class ExhaustiveSearcher : public Searcher {
     void buildBlock(const ProgramBlock* block);
 
     void switchToHangExecutor();
+    void search(bool resuming);
 
 public:
     ExhaustiveSearcher(ProgramSize size, SearchSettings settings);
@@ -106,6 +107,11 @@ public:
     void search(const std::vector<Ins> &resumeFrom, int fromSteps = 0);
 
     void searchSubTree(const std::vector<Ins> &resumeFrom, int fromSteps = 0);
+
+    // Executes the program specified by the given spec until the first UNSET instruction is
+    // encountered. Searches the sub-tree from that point onwards. This is mainly used to follow up
+    // on late escapes.
+    void searchSubTree(std::string& programSpec);
 
     void findOne();
     void findOne(const std::vector<Ins> &resumeFrom);

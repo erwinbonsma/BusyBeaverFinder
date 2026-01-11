@@ -179,7 +179,6 @@ RunResult HangExecutor::execute(std::string programSpec) {
     programBuilder->buildFromProgram(program);
 
     std::cout << "Executing: " << programSpec << std::endl;
-    // programBuilder->dump();
 
     return execute(programBuilder);
 }

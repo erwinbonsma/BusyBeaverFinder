@@ -37,11 +37,12 @@ class Program {
 
     std::string toSimpleString(const char* charEncoding, bool addLineBreaks = false) const;
 public:
-    static Program fromString(std::string s);
+    static Program fromString(const std::string& s);
 
     Program() {}
     explicit Program(ProgramSize size);
 
+    void clear();
     void clone(Program& dest) const;
 
     ProgramSize getSize() const { return _size; }

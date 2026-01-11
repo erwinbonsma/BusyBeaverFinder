@@ -26,7 +26,8 @@ TEST_CASE("6x6 Fast Executor tests", "[6x6][fast-exec]") {
         // _ * _ _ _
         // _ * o _ _ *
         // _   *
-        Program program = Program::fromString("ZiiIRkKCACQggA");
+        std::string programSpec = {"ZiiIRkKCACQggA"};
+        Program program = Program::fromString(programSpec);
         auto programBuilder = std::make_shared<InterpretedProgramBuilder>();
         programBuilder->buildFromProgram(program);
 

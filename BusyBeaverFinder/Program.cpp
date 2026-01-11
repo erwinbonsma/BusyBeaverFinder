@@ -31,7 +31,7 @@ char charForVal(int v) {
     return (v == 0) ? '_' : 'a' + (v - 1);
 }
 
-std::vector<uint8_t> b64_decode(std::string in) {
+std::vector<uint8_t> b64_decode(const std::string& in) {
     std::vector<uint8_t> out;
     out.reserve((in.size() * 6 + 7) / 8);
 
@@ -55,7 +55,7 @@ std::vector<uint8_t> b64_decode(std::string in) {
     return out;
 }
 
-Program Program::fromString(std::string s) {
+Program Program::fromString(const std::string& s) {
     auto bytes = b64_decode(s);
     uint8_t w = bytes[0] / 16;
     uint8_t h = bytes[0] % 16;
@@ -86,6 +86,10 @@ Program Program::fromString(std::string s) {
 }
 
 Program::Program(ProgramSize size) : _size(size) {
+    clear();
+}
+
+void Program::clear() {
     // Initialize program
     //
     // All valid instructions are set to UNSET. All other positions are set to DONE. These can be
@@ -94,13 +98,13 @@ Program::Program(ProgramSize size) : _size(size) {
     //
     // Note, there's no extra rightmost column. This is not needed, the pointer will wrap and end
     // up in the leftmost "DONE" column.
-    int paddedRowSize = size.width + 1;
+    int paddedRowSize = _size.width + 1;
     _instructions.clear();
-    _instructions.resize((size.height + 2) * paddedRowSize, Ins::DONE);
+    _instructions.resize((_size.height + 2) * paddedRowSize, Ins::DONE);
 
     auto it = _instructions.begin() + 1 + paddedRowSize;
-    for (int row = 0; row < size.height; row++) {
-        std::fill(it, it + size.width, Ins::UNSET);
+    for (int row = 0; row < _size.height; row++) {
+        std::fill(it, it + _size.width, Ins::UNSET);
         it += paddedRowSize;
     }
 }

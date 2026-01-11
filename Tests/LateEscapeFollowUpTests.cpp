@@ -10,7 +10,7 @@
 
 #include "ExhaustiveSearcher.h"
 
-TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
+TEST_CASE("7x7 Late Escape Follow-Up tests", "[7x7][late-escape]") {
     SearchSettings settings {};
     settings.dataSize = 16384;
     settings.maxSteps = 10000000;
@@ -20,7 +20,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
     tracker->setDumpSuccessStepsLimit(INT_MAX);
     searcher.attachProgressTracker(std::move(tracker));
 
-    SECTION( "EscapeIntoSuccess" ) {
+    SECTION("EscapeIntoSuccess") {
         // After "escape" terminates without encountering unset instructions. This is therefore
         // not an actual late escape.
         //
@@ -45,7 +45,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
         REQUIRE(tracker->getTotalSuccess() == 1);
         REQUIRE(tracker->getMaxStepsFound() == 3152126);
     }
-    SECTION( "EscapeIntoSearch" ) {
+    SECTION("EscapeIntoSearch") {
         // After 6326 steps, does not encounter any new instructions until program escapes after
         // 1648530 steps.
         //
@@ -66,7 +66,17 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
         REQUIRE(tracker->getTotalSuccess() == 2);
         REQUIRE(tracker->getMaxStepsFound() == 1648533);
     }
-    SECTION( "EscapeIntoSearch2" ) {
+    SECTION("EscapeIntoSearch-ProgramSpec") {
+        // Same as "EscapeIntoSearch", but now starting from the program spec.
+        std::string programSpec{"d/q/lL6UsWOBWtg0bs"};
+        searcher.searchSubTree(programSpec);
+
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(tracker->getTotalSuccess() == 2);
+        REQUIRE(tracker->getMaxStepsFound() == 1648533);
+    }
+    SECTION("EscapeIntoSearch2") {
         // After 394 steps, does not encounter any new instructions until program escapes after
         // 3007566 steps.
         //
@@ -89,6 +99,17 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
 
         searcher.searchSubTree(resumeFrom);
 
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getTotalHangs(HangType::NO_DATA_LOOP) == 1);
+        REQUIRE(tracker->getTotalHangs(HangType::NO_EXIT) == 2);
+        REQUIRE(tracker->getTotalSuccess() == 8);
+        REQUIRE(tracker->getMaxStepsFound() == 3007571);
+    }
+    SECTION("EscapeIntoSearch2-ProgramSpec") {
+        // Same as "EscapeIntoSearch2", but now starting from the program spec.
+        std::string programSpec{"d+//AvhUqpNBbIGz+8"};
+        searcher.searchSubTree(programSpec);
+        
         tracker = searcher.detachProgressTracker();
         REQUIRE(tracker->getTotalHangs(HangType::NO_DATA_LOOP) == 1);
         REQUIRE(tracker->getTotalHangs(HangType::NO_EXIT) == 2);
