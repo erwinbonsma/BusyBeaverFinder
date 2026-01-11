@@ -13,12 +13,17 @@
 #include "Consts.h"
 #include "Types.h"
 
-typedef unsigned long long ulonglong;
+struct ProgramSize {
+    int8_t width = 0;
+    int8_t height = 0;
 
+    ProgramSize() {}
+    explicit ProgramSize(int8_t size) : width(size), height(size) {}
+    ProgramSize(int8_t w, int8_t h) : width(w), height(h) {}
+};
 
 class Program {
-    int _width;
-    int _height;
+    ProgramSize _size;
 
     // Instruction array
     std::vector<Ins> _instructions;
@@ -26,18 +31,20 @@ class Program {
     InstructionPointer getInstructionP(int col, int row) const {
         return InstructionPointer { .col = (int8_t)col, .row = (int8_t)row };
     }
-    Ins getInstruction(int col, int row) const;
+    Ins getInstruction(int col, int row) const {
+        return _instructions[(col + 1) + (row + 1) * (_size.width + 1)];
+    }
 
     std::string toSimpleString(const char* charEncoding, bool addLineBreaks = false) const;
 public:
     static Program fromString(std::string s);
 
-    Program(int width, int height);
+    Program() {}
+    explicit Program(ProgramSize size);
 
     void clone(Program& dest) const;
 
-    int getWidth() const { return _width; }
-    int getHeight() const { return _height; }
+    ProgramSize getSize() const { return _size; }
 
     const Ins* getInstructionBuffer() const { return &_instructions[0]; }
 
@@ -45,7 +52,9 @@ public:
         return ProgramPointer { .p = { .col = 0, .row = -1 }, .dir = Dir::UP };
     }
 
-    int indexFor(InstructionPointer insP) const;
+    int indexFor(InstructionPointer insP) const {
+        return (insP.col + 1) + (insP.row + 1) * (_size.width + 1);
+    }
 
     void setInstruction(InstructionPointer insP, Ins ins) { _instructions[indexFor(insP)] = ins; }
     void clearInstruction(InstructionPointer insP) { _instructions[indexFor(insP)] = Ins::UNSET; }
@@ -59,3 +68,5 @@ public:
     void dumpWeb() const;
     void dump(InstructionPointer insP) const;
 };
+
+std::ostream &operator<<(std::ostream &os, const ProgramSize &size);

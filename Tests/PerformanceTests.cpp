@@ -41,3 +41,42 @@ TEST_CASE("Executor performance tests", "[perf][.explicit]") {
     std::cout << "Executor " << name << ": "
     << (clock() - startTime) / (double)CLOCKS_PER_SEC << std::endl;
 }
+
+TEST_CASE("Program construction performance", "[perf][.explicit][program]") {
+    std::string spec = "Zv6+kpUoAqW0bw";
+
+    clock_t startTime = clock();
+    std::string label;
+
+    SECTION("perf-program-construction") {
+        label = "construction";
+        for (int i = 0; i < 1000000; i++) {
+            Program program = Program::fromString(spec);
+
+            REQUIRE(spec == program.toString());
+        }
+    }
+    SECTION("pref-program-copy assignment") {
+        label = "copy-assign";
+        Program program2;
+        for (int i = 0; i < 1000000; i++) {
+            Program program = Program::fromString(spec);
+            program2 = program;
+
+            REQUIRE(spec == program2.toString());
+        }
+    }
+    SECTION("pref-program-move assignment") {
+        label = "move-assign";
+        Program program2;
+        for (int i = 0; i < 1000000; i++) {
+            Program program = Program::fromString(spec);
+            program2 = std::move(program);
+
+            REQUIRE(spec == program2.toString());
+        }
+    }
+
+    std::cout << "Program " << label << ": "
+    << (clock() - startTime) / (double)CLOCKS_PER_SEC << std::endl;
+}

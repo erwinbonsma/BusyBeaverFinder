@@ -15,7 +15,7 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
     settings.dataSize = 16384;
     settings.maxSteps = 10000000;
 
-    ExhaustiveSearcher searcher(7, 7, settings);
+    ExhaustiveSearcher searcher(ProgramSize(7), settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpSuccessStepsLimit(INT_MAX);

@@ -28,7 +28,7 @@ ExitFinder::ExitFinder(Program& program, InterpretedProgramBuilder& interpretedP
     // instruction before concluding that the block loops into itself. This is not an exact bound
     // but should be high enough. (If not, it will be discovered as this program itself will end up
     // in an endless loop).
-    _maxSteps = (program.getWidth() - 1) * (program.getHeight() - 1);
+    _maxSteps = (program.getSize().width - 1) * (program.getSize().height - 1);
 }
 
 bool ExitFinder::isPossibleExitValue(const ProgramBlock* block, bool zeroValue, int delta,

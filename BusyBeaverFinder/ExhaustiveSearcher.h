@@ -84,7 +84,7 @@ class ExhaustiveSearcher {
     void switchToHangExecutor();
 
 public:
-    ExhaustiveSearcher(int width, int height, SearchSettings settings);
+    ExhaustiveSearcher(ProgramSize size, SearchSettings settings);
 
     SearchSettings getSettings() const { return _settings; }
 

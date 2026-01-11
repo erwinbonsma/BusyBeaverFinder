@@ -22,9 +22,9 @@ Ins targetStack[] = {
     Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
 };
 
-ExhaustiveSearcher::ExhaustiveSearcher(int width, int height, SearchSettings settings) :
+ExhaustiveSearcher::ExhaustiveSearcher(ProgramSize size, SearchSettings settings) :
     _settings(settings),
-    _program(width, height),
+    _program(size),
     _programBuilder(std::make_shared<InterpretedProgramBuilder>()),
     _exitFinder(_program, *_programBuilder),
     _hangExecutor(settings.dataSize, settings.maxHangDetectionSteps),
@@ -68,7 +68,7 @@ std::string ExhaustiveSearcher::instructionStackAsString() const {
 
 void ExhaustiveSearcher::dumpSettings() {
     std::cout
-    << "Size = " << _program.getWidth() << "x" << _program.getHeight()
+    << "Size = " << _program.getSize()
     << ", DataSize = " << _settings.dataSize
     << ", MaxSteps = " << _settings.maxHangDetectionSteps
       << "/" << _settings.maxSearchSteps

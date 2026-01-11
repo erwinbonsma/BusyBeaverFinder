@@ -16,7 +16,7 @@
 
 ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
     _searcher(searcher),
-    _bestProgram(searcher.getProgram().getWidth(), searcher.getProgram().getHeight()),
+    _bestProgram(searcher.getProgram().getSize()),
     _runLengthHistogram(),
     _hangDetectionHistogram(3, 2)
 {

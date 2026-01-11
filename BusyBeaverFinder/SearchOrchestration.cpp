@@ -26,8 +26,7 @@ void addInstructionsUntilTurn(std::vector<Ins> &stack, int numNoop, int numData)
 }
 
 void orchestratedSearch(ExhaustiveSearcher& searcher) {
-    int h = searcher.getProgram().getHeight();
-    int w = searcher.getProgram().getWidth();
+    auto size = searcher.getProgram().getSize();
     std::vector<Ins> resumeStack;
 
     // Only the number of DATA instructions before the first TURN matters, not their position, as
@@ -40,8 +39,8 @@ void orchestratedSearch(ExhaustiveSearcher& searcher) {
     //
     // For the program to not terminate immediately, at least one DATA instruction should precede
     // the first TURN. Therefore: numData > 0
-    for (int numNoop = h - 1; --numNoop >= 0; ) {
-        for (int numData = h - numNoop; --numData >= 1; ) {
+    for (int numNoop = size.height - 1; --numNoop >= 0; ) {
+        for (int numData = size.height - numNoop; --numData >= 1; ) {
             resumeStack.clear();
             addInstructionsUntilTurn(resumeStack, numNoop, numData);
 
@@ -53,8 +52,8 @@ void orchestratedSearch(ExhaustiveSearcher& searcher) {
                 // numNoop2 = The number of NOOP instructions before the second TURN
                 // numData2 = The number of DATA instructions before the second TURN. It excludes
                 //            the single data instruction before the first TURN
-                for (int numNoop2 = w - 1; --numNoop2 >= 0; ) {
-                    for (int numData2 = w - numNoop2 - 1; --numData2 >= 1; ) {
+                for (int numNoop2 = size.width - 1; --numNoop2 >= 0; ) {
+                    for (int numData2 = size.width - numNoop2 - 1; --numData2 >= 1; ) {
                         auto sizeBefore = resumeStack.size();
 
                         addInstructionsUntilTurn(resumeStack, numNoop2, numData2);

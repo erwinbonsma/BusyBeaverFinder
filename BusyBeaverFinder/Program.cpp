@@ -61,7 +61,7 @@ Program Program::fromString(std::string s) {
     uint8_t h = bytes[0] % 16;
 
     InstructionPointer insP = { .col = 0, .row = static_cast<int8_t>(h - 1) };
-    Program prog = Program(w, h);
+    Program prog{ProgramSize(w, h)};
 
     int p = 1, shift = 6;
     uint8_t byte = bytes[p];
@@ -85,10 +85,7 @@ Program Program::fromString(std::string s) {
     return prog;
 }
 
-Program::Program(int width, int height) {
-    _width = width;
-    _height = height;
-
+Program::Program(ProgramSize size) : _size(size) {
     // Initialize program
     //
     // All valid instructions are set to UNSET. All other positions are set to DONE. These can be
@@ -97,36 +94,29 @@ Program::Program(int width, int height) {
     //
     // Note, there's no extra rightmost column. This is not needed, the pointer will wrap and end
     // up in the leftmost "DONE" column.
+    int paddedRowSize = size.width + 1;
     _instructions.clear();
-    for (int row = -1; row <= maxHeight; row++) {
-        for (int col = -1; col < maxWidth; col++) {
-            _instructions.push_back((row >=0 && row < height && col >= 0 && col < width)
-                                    ? Ins::UNSET : Ins::DONE);
-        }
+    _instructions.resize((size.height + 2) * paddedRowSize, Ins::DONE);
+
+    auto it = _instructions.begin() + 1 + paddedRowSize;
+    for (int row = 0; row < size.height; row++) {
+        std::fill(it, it + size.width, Ins::UNSET);
+        it += paddedRowSize;
     }
 }
 
-int Program::indexFor(InstructionPointer insP) const {
-    return (insP.col + 1) + (insP.row + 1) * (maxWidth + 1);
-}
-
-Ins Program::getInstruction(int col, int row) const {
-    return _instructions[(col + 1) + (row + 1) * (maxWidth + 1)];
-}
-
 void Program::clone(Program& dest) const {
-    dest._height = _height;
-    dest._width = _width;
+    dest._size = _size;
     dest._instructions = _instructions;
 }
 
 std::string Program::toSimpleString(const char* charEncoding, bool addLineBreaks) const {
     std::string s;
-    s.reserve(_height * (_width + (addLineBreaks ? 1 : 0)));
+    s.reserve(_size.height * (_size.width + (addLineBreaks ? 1 : 0)));
 
-    for (int y = _height; --y >= 0; ) {
-        for (int x = 0; x < _width; x++) {
-            s += charEncoding[(int)getInstruction(x, y)];
+    for (int y = _size.height; --y >= 0; ) {
+        for (int x = 0; x < _size.width; x++) {
+            s += charEncoding[static_cast<int>(getInstruction(x, y))];
         }
         if (addLineBreaks) s += '\n';
     }
@@ -144,15 +134,15 @@ std::string Program::toWebString() const {
 
 std::string Program::toString() const {
     std::string s;
-    s.reserve((_height * _width * 2 + 5) / 6 + 1);
+    s.reserve((_size.height * _size.width * 2 + 5) / 6 + 1);
 
-    int val = _width * 16 + _height;
+    int val = _size.width * 16 + _size.height;
     int bits = 8;
     bits -= 6;
     s += to_b64[(val >> bits) & 0x3f];
 
-    for (int row = _height; --row >= 0; ) {
-        for (int col = 0; col < _width; col++) {
+    for (int row = _size.height; --row >= 0; ) {
+        for (int col = 0; col < _size.width; col++) {
             val = (val << 2) | from_ins[static_cast<int>(getInstruction(col, row))];
             bits += 2;
 
@@ -180,15 +170,20 @@ void Program::dumpWeb() const {
 
 void Program::dump(InstructionPointer insP) const {
     char sepChar = ' ';
-    for (int row = _height; --row >= 0; ) {
-        for (int col = 0; col < _width; col++) {
+    for (int row = _size.height; --row >= 0; ) {
+        for (int col = 0; col < _size.width; col++) {
             bool isActiveInstruction = (insP.col == col) && (insP.row == row);
             if (isActiveInstruction) {
                 sepChar = '[';
             }
-            std::cout << sepChar << ins_chars[(int)getInstruction(col, row)];
+            std::cout << sepChar << ins_chars[static_cast<int>(getInstruction(col, row))];
             sepChar = (isActiveInstruction) ? ']' : ' ';
         }
         std::cout << sepChar << std::endl;
     }
+}
+
+std::ostream &operator<<(std::ostream &os, const ProgramSize &size) {
+    os << size.width << "x" << size.height;
+    return os;
 }

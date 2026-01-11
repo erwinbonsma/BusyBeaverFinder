@@ -15,7 +15,7 @@
 TEST_CASE("5x5 OrchestratedSearch", "[search][5x5][orchestrated]") {
     SearchSettings settings {};
 
-    ExhaustiveSearcher searcher(5, 5, settings);
+    ExhaustiveSearcher searcher(ProgramSize(5), settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpSuccessStepsLimit(INT_MAX);
@@ -40,7 +40,7 @@ TEST_CASE("6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]") {
     settings.maxSteps = 100000;
 //    settings.testHangDetection = true;
 
-    ExhaustiveSearcher searcher(6, 6, settings);
+    ExhaustiveSearcher searcher(ProgramSize(6), settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpUndetectedHangs(true);

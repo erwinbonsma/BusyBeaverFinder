@@ -13,7 +13,7 @@
 
 TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
     SearchSettings settings {};
-    ExhaustiveSearcher searcher(3, 3, settings);
+    ExhaustiveSearcher searcher(ProgramSize(3), settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpSuccessStepsLimit(INT_MAX);
@@ -35,7 +35,7 @@ TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
 
 TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
     SearchSettings settings {};
-    ExhaustiveSearcher searcher(4, 4, settings);
+    ExhaustiveSearcher searcher(ProgramSize(4), settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpSuccessStepsLimit(INT_MAX);
@@ -53,7 +53,7 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     SearchSettings settings {};
-    ExhaustiveSearcher searcher(5, 5, settings);
+    ExhaustiveSearcher searcher(ProgramSize(5), settings);
     ProgressTracker tracker(searcher);
 
     tracker.setDumpSuccessStepsLimit(INT_MAX);
