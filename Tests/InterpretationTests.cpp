@@ -16,9 +16,9 @@ TEST_CASE( "7x7 Interpretation Tests", "[interpretation][7x7]" ) {
     SearchSettings settings {};
     settings.maxSteps = 10000;
     ExhaustiveSearcher searcher(ProgramSize(7), settings);
-    ProgressTracker tracker(searcher);
 
-    searcher.setProgressTracker(&tracker);
+    auto tracker = std::make_unique<ProgressTracker>();
+    searcher.attachProgressTracker(std::move(tracker));
 
     SECTION( "ProgramBlockWithManyEntries" ) {
         // An interpreted program with a program block that has eight entries. This is the non-zero

@@ -184,6 +184,8 @@ void Program::dump(InstructionPointer insP) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const ProgramSize &size) {
-    os << size.width << "x" << size.height;
+    os
+    << static_cast<int>(size.width) << "x"
+    << static_cast<int>(size.height);
     return os;
 }

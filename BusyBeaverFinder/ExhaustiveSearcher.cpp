@@ -23,8 +23,8 @@ Ins targetStack[] = {
 };
 
 ExhaustiveSearcher::ExhaustiveSearcher(ProgramSize size, SearchSettings settings) :
+    Searcher(size),
     _settings(settings),
-    _program(size),
     _programBuilder(std::make_shared<InterpretedProgramBuilder>()),
     _exitFinder(_program, *_programBuilder),
     _hangExecutor(settings.dataSize, settings.maxHangDetectionSteps),
@@ -58,12 +58,10 @@ void ExhaustiveSearcher::dumpInstructionStack(const std::string& sep) const {
     ::dumpInstructionStack(_instructionStack, sep.size() ? sep : ",");
 }
 
-std::string ExhaustiveSearcher::instructionStackAsString() const {
-    std::stringstream sstream;
-    std::string s;
-    ::dumpInstructionStack(_instructionStack, sstream, ",");
-    sstream >> s;
-    return s;
+void ExhaustiveSearcher::dumpSearchProgress(std::ostream &os) const {
+    os << "Stack=";
+    ::dumpInstructionStack(_instructionStack, os, ",");
+    os << ", Program=" << getProgram().toString();
 }
 
 void ExhaustiveSearcher::dumpSettings() {
@@ -79,10 +77,6 @@ void ExhaustiveSearcher::dumpSettings() {
 
 void ExhaustiveSearcher::dump() {
     _program.dump(_pp.p);
-}
-
-void ExhaustiveSearcher::setProgressTracker(ProgressTracker* tracker) {
-    _tracker = tracker;
 }
 
 void ExhaustiveSearcher::verifyHang() {

@@ -14,7 +14,7 @@
 #include "Utils.h"
 #include "Program.h"
 
-class ExhaustiveSearcher;
+class Searcher;
 class HangDetector;
 
 class ProgressTracker {
@@ -24,7 +24,9 @@ class ProgressTracker {
     int _dumpSuccessStepsLimit = 1000000;
     bool _dumpUndetectedHangs = false;
 
-    ExhaustiveSearcher& _searcher;
+    // This can be a plain pointer, as unique_ptr ensures that a ProgressTracker is attached to
+    // a single searcher at most.
+    Searcher* _searcher;
 
     long _total = 0;
     long _totalSuccess = 0;
@@ -57,7 +59,9 @@ class ProgressTracker {
     void report();
 
 public:
-    ProgressTracker(ExhaustiveSearcher& searcher);
+    ProgressTracker();
+
+    void setSearcher(Searcher* searcher) { _searcher = searcher; }
 
     void setDumpStatsPeriod(int val) { _dumpStatsPeriod = val; }
     void setDumpStackPeriod(int val) { _dumpStackPeriod = val; }

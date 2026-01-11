@@ -14,12 +14,11 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
     SearchSettings settings {};
     settings.dataSize = 16384;
     settings.maxSteps = 10000000;
-
     ExhaustiveSearcher searcher(ProgramSize(7), settings);
-    ProgressTracker tracker(searcher);
 
-    tracker.setDumpSuccessStepsLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
+    auto tracker = std::make_unique<ProgressTracker>();
+    tracker->setDumpSuccessStepsLimit(INT_MAX);
+    searcher.attachProgressTracker(std::move(tracker));
 
     SECTION( "EscapeIntoSuccess" ) {
         // After "escape" terminates without encountering unset instructions. This is therefore
@@ -42,8 +41,9 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
 
         searcher.searchSubTree(resumeFrom);
 
-        REQUIRE(tracker.getTotalSuccess() == 1);
-        REQUIRE(tracker.getMaxStepsFound() == 3152126);
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getTotalSuccess() == 1);
+        REQUIRE(tracker->getMaxStepsFound() == 3152126);
     }
     SECTION( "EscapeIntoSearch" ) {
         // After 6326 steps, does not encounter any new instructions until program escapes after
@@ -61,9 +61,10 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
 
         searcher.searchSubTree(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 1);
-        REQUIRE(tracker.getTotalSuccess() == 2);
-        REQUIRE(tracker.getMaxStepsFound() == 1648533);
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getTotalHangs(HangType::NO_EXIT) == 1);
+        REQUIRE(tracker->getTotalSuccess() == 2);
+        REQUIRE(tracker->getMaxStepsFound() == 1648533);
     }
     SECTION( "EscapeIntoSearch2" ) {
         // After 394 steps, does not encounter any new instructions until program escapes after
@@ -88,9 +89,10 @@ TEST_CASE( "7x7 Late Escape Follow-Up tests", "[7x7][late-escape]" ) {
 
         searcher.searchSubTree(resumeFrom);
 
-        REQUIRE(tracker.getTotalHangs(HangType::NO_DATA_LOOP) == 1);
-        REQUIRE(tracker.getTotalHangs(HangType::NO_EXIT) == 2);
-        REQUIRE(tracker.getTotalSuccess() == 8);
-        REQUIRE(tracker.getMaxStepsFound() == 3007571);
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getTotalHangs(HangType::NO_DATA_LOOP) == 1);
+        REQUIRE(tracker->getTotalHangs(HangType::NO_EXIT) == 2);
+        REQUIRE(tracker->getTotalSuccess() == 8);
+        REQUIRE(tracker->getMaxStepsFound() == 3007571);
     }
 }

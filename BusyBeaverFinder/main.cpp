@@ -16,7 +16,6 @@
 #include "SearchOrchestration.h"
 
 ExhaustiveSearcher* searcher;
-ProgressTracker* tracker;
 
 std::vector<Ins> resumeStack;
 std::string lateEscapeFile;
@@ -47,14 +46,13 @@ void init(int argc, char * argv[]) {
         exit(0);
     }
 
-    int width = 4;
-    int height = 4;
+    ProgramSize size{4};
 
     if (result.count("w")) {
-        width = result["w"].as<int>();
+        size.width = result["w"].as<int>();
     }
     if (result.count("h")) {
-        height = result["h"].as<int>();
+        size.height = result["h"].as<int>();
     }
 
     SearchSettings settings {};
@@ -81,7 +79,7 @@ void init(int argc, char * argv[]) {
         settings.testHangDetection = true;
     }
 
-    searcher = new ExhaustiveSearcher(width, height, settings);
+    searcher = new ExhaustiveSearcher(size, settings);
 
     // Load resume stack
     if (result.count("resume-from")) {
@@ -92,7 +90,7 @@ void init(int argc, char * argv[]) {
         }
     }
 
-    tracker = new ProgressTracker(*searcher);
+    auto tracker = std::make_unique<ProgressTracker>();
 
     if (result.count("late-escapes")) {
         lateEscapeFile = result["late-escapes"].as<std::string>();
@@ -109,7 +107,7 @@ void init(int argc, char * argv[]) {
         tracker->setDumpSuccessStepsLimit(result["dump-success-steps-limit"].as<int>());
     }
 
-    searcher->setProgressTracker(tracker);
+    searcher->attachProgressTracker(std::move(tracker));
 }
 
 int main(int argc, char * argv[]) {
@@ -125,6 +123,8 @@ int main(int argc, char * argv[]) {
     else {
         orchestratedSearch(*searcher);
     }
+
+    auto tracker = searcher->detachProgressTracker();
     tracker->dumpFinalStats();
 
     return 0;

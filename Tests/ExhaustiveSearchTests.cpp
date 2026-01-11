@@ -14,58 +14,62 @@
 TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
     SearchSettings settings {};
     ExhaustiveSearcher searcher(ProgramSize(3), settings);
-    ProgressTracker tracker(searcher);
 
-    tracker.setDumpSuccessStepsLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
+    auto tracker = std::make_unique<ProgressTracker>();
+    tracker->setDumpSuccessStepsLimit(INT_MAX);
+    searcher.attachProgressTracker(std::move(tracker));
 
     SECTION( "Find all" ) {
         searcher.search();
 
-        REQUIRE(tracker.getMaxStepsFound() == 5);
-        REQUIRE(tracker.getTotalSuccess() == 59);
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getMaxStepsFound() == 5);
+        REQUIRE(tracker->getTotalSuccess() == 59);
     }
     SECTION( "Find one" ) {
         searcher.findOne();
 
-        REQUIRE(tracker.getMaxStepsFound() == 4);
-        REQUIRE(tracker.getTotalSuccess() == 1);
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getMaxStepsFound() == 4);
+        REQUIRE(tracker->getTotalSuccess() == 1);
     }
 }
 
 TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
     SearchSettings settings {};
     ExhaustiveSearcher searcher(ProgramSize(4), settings);
-    ProgressTracker tracker(searcher);
 
-    tracker.setDumpSuccessStepsLimit(INT_MAX);
-    searcher.setProgressTracker(&tracker);
+    auto tracker = std::make_unique<ProgressTracker>();
+    tracker->setDumpSuccessStepsLimit(INT_MAX);
+    searcher.attachProgressTracker(std::move(tracker));
 
     SECTION("Find all") {
         searcher.search();
 
-        REQUIRE(tracker.getMaxStepsFound() == 15);
-        REQUIRE(tracker.getTotalSuccess() == 854);
-        REQUIRE(tracker.getTotalErrors() == 0);
-        REQUIRE(tracker.getTotalDetectedHangs() == tracker.getTotalHangs());
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getMaxStepsFound() == 15);
+        REQUIRE(tracker->getTotalSuccess() == 854);
+        REQUIRE(tracker->getTotalErrors() == 0);
+        REQUIRE(tracker->getTotalDetectedHangs() == tracker->getTotalHangs());
     }
 }
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
     SearchSettings settings {};
     ExhaustiveSearcher searcher(ProgramSize(5), settings);
-    ProgressTracker tracker(searcher);
 
-    tracker.setDumpSuccessStepsLimit(INT_MAX);
-    tracker.setDumpUndetectedHangs(true);
-    searcher.setProgressTracker(&tracker);
+    auto tracker = std::make_unique<ProgressTracker>();
+    tracker->setDumpSuccessStepsLimit(INT_MAX);
+    tracker->setDumpUndetectedHangs(true);
+    searcher.attachProgressTracker(std::move(tracker));
 
     SECTION("Find all") {
         searcher.search();
 
-        REQUIRE(tracker.getMaxStepsFound() == 44);
-        REQUIRE(tracker.getTotalSuccess() == 51410);
-        REQUIRE(tracker.getTotalErrors() == 0);
-        REQUIRE(tracker.getTotalHangs() == tracker.getTotalDetectedHangs());
+        tracker = searcher.detachProgressTracker();
+        REQUIRE(tracker->getMaxStepsFound() == 44);
+        REQUIRE(tracker->getTotalSuccess() == 51410);
+        REQUIRE(tracker->getTotalErrors() == 0);
+        REQUIRE(tracker->getTotalHangs() == tracker->getTotalDetectedHangs());
     }
 }

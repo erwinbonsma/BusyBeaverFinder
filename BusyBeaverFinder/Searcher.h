@@ -5,9 +5,24 @@
 //  Created by Erwin on 11/01/2026.
 //  Copyright © 2026 Erwin. All rights reserved.
 //
+#pragma once
 
-#ifndef Searcher_h
-#define Searcher_h
+#include "Program.h"
+#include "ProgressTracker.h"
 
+class Searcher {
+protected:
+    Program _program;
+    std::unique_ptr<ProgressTracker> _tracker;
 
-#endif /* Searcher_h */
+public:
+    Searcher(ProgramSize size);
+
+    void attachProgressTracker(std::unique_ptr<ProgressTracker> tracker);
+    std::unique_ptr<ProgressTracker> detachProgressTracker();
+
+    virtual int getNumSteps() const = 0;
+    const Program& getProgram() const { return _program; }
+
+    virtual void dumpSearchProgress(std::ostream &os) const = 0;
+};

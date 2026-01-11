@@ -246,7 +246,6 @@ void dumpInstructionStack(const std::vector<Ins> &stack, std::ostream &os, const
             os << sep;
         }
         os << (int)ins;
-
     }
 }
 

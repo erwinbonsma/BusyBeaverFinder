@@ -10,13 +10,11 @@
 
 #include <iostream>
 
-#include "ExhaustiveSearcher.h"
+#include "Searcher.h"
 #include "HangDetector.h"
 #include "Program.h"
 
-ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
-    _searcher(searcher),
-    _bestProgram(searcher.getProgram().getSize()),
+ProgressTracker::ProgressTracker() :
     _runLengthHistogram(),
     _hangDetectionHistogram(3, 2)
 {
@@ -31,32 +29,9 @@ ProgressTracker::ProgressTracker(ExhaustiveSearcher& searcher) :
 }
 
 void ProgressTracker::report() {
-//    if (_searcher.getProgram().toString().rfind("Zv7+ktS9FoAlaw", 0) == 0) {
-//        std::cout << "At target program" << std::endl;
-//        _searcher.getProgram().dump();
-//        _searcher.dumpInstructionStack();
-//    }
-
     if (++_total % _dumpStatsPeriod == 0) {
         dumpStats();
     }
-
-//    _searcher.getProgram().dump();
-//    _searcher.getInterpretedProgram().dump();
-//    _searcher.dumpExecutionState();
-//    if (_lastDetectedHang && (
-//            _lastDetectedHang->hangType()==HangType::REGULAR_SWEEP ||
-//            _lastDetectedHang->hangType()==HangType::IRREGULAR_SWEEP
-//    )) {
-//        ((const SweepHangDetector *)_lastDetectedHang)->dump();
-//    }
-//    _searcher.getProgram().dumpWeb();
-
-//    if (_searcher.atTargetProgram()) {
-//        std::cout << "Target program generated" << std::endl;
-//        _searcher.getProgram().dump();
-//        _searcher.dumpInstructionStack();
-//    }
 }
 
 void ProgressTracker::reportDone(int totalSteps) {
@@ -65,7 +40,7 @@ void ProgressTracker::reportDone(int totalSteps) {
 
     if (totalSteps > _dumpSuccessStepsLimit) {
         std::cout << "SUC " << totalSteps
-        << " " << _searcher.getProgram().toString() << std::endl;
+        << " " << _searcher->getProgram().toString() << std::endl;
     }
 
     if (_detectedHang != HangType::UNDETECTED) {
@@ -73,14 +48,14 @@ void ProgressTracker::reportDone(int totalSteps) {
         _totalFaultyHangs++;
 
         std::cout << "False positive, type = " << (int)_detectedHang << ", steps = " << totalSteps
-        << ": " << _searcher.getProgram().toString() << std::endl;
+        << ": " << _searcher->getProgram().toString() << std::endl;
 
         _detectedHang = HangType::UNDETECTED;
     }
 
     if (totalSteps > _maxStepsSofar) {
         _maxStepsSofar = totalSteps;
-        _searcher.getProgram().clone(_bestProgram);
+        _searcher->getProgram().clone(_bestProgram);
     }
 
     report();
@@ -96,7 +71,7 @@ void ProgressTracker::reportError() {
         _totalErrorsByType[(int)HangType::UNDETECTED]++;
 
         if (_dumpUndetectedHangs) {
-            std::cout << "Error: " << _searcher.getProgram().toString() << std::endl;
+            std::cout << "Error: " << _searcher->getProgram().toString() << std::endl;
         }
     }
 
@@ -112,13 +87,8 @@ void ProgressTracker::reportAssumedHang() {
     } else {
         _totalHangsByType[(int)HangType::UNDETECTED]++;
 
-//        _searcher.getProgram().dump();
-//        _searcher.getInterpretedProgram().dump();
-//        _searcher.getProgram().dumpWeb();
-
         if (_dumpUndetectedHangs) {
-            std::cout << "Undetected hang: " << _searcher.getProgram().toString() << std::endl;
-//            _searcher.getProgram().dump();
+            std::cout << "Undetected hang: " << _searcher->getProgram().toString() << std::endl;
         }
     }
 
@@ -129,17 +99,20 @@ void ProgressTracker::reportLateEscape(int numSteps) {
     _totalLateEscapes++;
 
     std::cout << "Late escape (" << numSteps << "): "
-    << _searcher.getProgram().toString() << std::endl;
+    << _searcher->getProgram().toString() << std::endl;
 
     std::cout << "ESC " << numSteps << " ";
-    _searcher.dumpInstructionStack(" ");
+    if (auto p = dynamic_cast<ExhaustiveSearcher *>(_searcher)) {
+        // TODO: Dump program instead once late-escape follow-up supports this
+        p->dumpInstructionStack(" ");
+    }
 
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
 
         std::cout << "False positive, type = " << (int)_detectedHang
-        << ": " << _searcher.getProgram().toString() << std::endl;
+        << ": " << _searcher->getProgram().toString() << std::endl;
 
         _detectedHang = HangType::UNDETECTED;
     }
@@ -149,7 +122,7 @@ void ProgressTracker::reportLateEscape(int numSteps) {
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
-    int numSteps = _searcher.getProgramExecutor()->numSteps();
+    int numSteps = _searcher->getNumSteps();
     _maxStepsUntilHangDetection = std::max(_maxStepsUntilHangDetection, numSteps);
     _hangDetectionHistogram.add(numSteps);
 
@@ -158,10 +131,6 @@ void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillCo
         _detectedHang = hangType;
         return;
     }
-
-//    std::cout << "Detected hang: " << _searcher.getProgram().toString() << std::endl;
-//    _searcher.getProgram().dump();
-//    _searcher.getData().dump();
 
     _totalHangsByType[(int)hangType]++;
 
@@ -206,25 +175,23 @@ void ProgressTracker::dumpStats() {
     std::cout << _timeStamp
     << ": Total=" << _total
     << ", Success=";
-    if (_searcher.getHangDetectionTestMode()) {
-        std::cout << _totalFaultyHangs << "/";
-    }
+//    if (_searcher.getHangDetectionTestMode()) {
+//        std::cout << _totalFaultyHangs << "/";
+//    }
     std::cout << _totalSuccess
     << ", Errors=";
-    if (_searcher.getHangDetectionTestMode()) {
-        std::cout << getTotalDetectedErrors() << "/";
-    }
+//    if (_searcher.getHangDetectionTestMode()) {
+//        std::cout << getTotalDetectedErrors() << "/";
+//    }
     std::cout << getTotalErrors()
     << ", Hangs=" << (getTotalHangs() - getTotalDetectedHangs()) << "/" << getTotalDetectedHangs()
     << ", Fast execs=" << getTotalLateEscapes() << "/" << getTotalFastExecutions()
     << std::endl;
 
-    std::string stack = _searcher.instructionStackAsString();
-    if (stack.length()) {
-        std::cout << _timeStamp
-        << ": Stack=" << stack
-        << ", Program=" << _searcher.getProgram().toString()
-        << std::endl;
+    if (_searcher) {
+        std::cout << _timeStamp << ": ";
+        _searcher->dumpSearchProgress(std::cout);
+        std::cout << std::endl;
     }
 
     std::cout << _timeStamp

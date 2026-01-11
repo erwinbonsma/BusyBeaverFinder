@@ -76,6 +76,8 @@
 		AAD5C511221200810057EDBC /* OrchestratedSearchTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */; };
 		AADF971F255EBCA3002BF498 /* SequenceAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */; };
 		AADFCABA2F12DC9D00FAEC89 /* PerformanceTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */; };
+		AADFCABD2F13F61A00FAEC89 /* Searcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */; };
+		AADFCABE2F13F61A00FAEC89 /* Searcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */; };
 		AAEB55B02B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAEB55B42B15315600695567 /* HangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B22B15315600695567 /* HangChecker.cpp */; };
@@ -190,6 +192,8 @@
 		AAD5C510221200810057EDBC /* OrchestratedSearchTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OrchestratedSearchTests.cpp; sourceTree = "<group>"; };
 		AADF971E255EBCA3002BF498 /* SequenceAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SequenceAnalysisTests.cpp; sourceTree = "<group>"; };
 		AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerformanceTests.cpp; sourceTree = "<group>"; };
+		AADFCABB2F13B0B300FAEC89 /* Searcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Searcher.h; sourceTree = "<group>"; };
+		AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Searcher.cpp; sourceTree = "<group>"; };
 		AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopHangDetector.cpp; sourceTree = "<group>"; };
 		AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetaLoopHangDetector.h; sourceTree = "<group>"; };
 		AAEB55B22B15315600695567 /* HangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HangChecker.cpp; sourceTree = "<group>"; };
@@ -260,6 +264,8 @@
 				AA90A5862200EB9D00242D3D /* ProgressTracker.h */,
 				AACC273A254589CF007E83C3 /* ExecutionState.cpp */,
 				AACC272B25457335007E83C3 /* ExecutionState.h */,
+				AADFCABB2F13B0B300FAEC89 /* Searcher.h */,
+				AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */,
 				AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */,
 				AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */,
 				AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */,
@@ -460,6 +466,7 @@
 				AA37E6CB2295D62200117A85 /* FastExecutor.cpp in Sources */,
 				AAEB55B02B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */,
 				AACC274525458F5D007E83C3 /* InterpretedProgram.cpp in Sources */,
+				AADFCABD2F13F61A00FAEC89 /* Searcher.cpp in Sources */,
 				AA90A5872200EB9D00242D3D /* ProgressTracker.cpp in Sources */,
 				AA2865AD23CDEC6A00F738ED /* HangDetector.cpp in Sources */,
 			);
@@ -479,6 +486,7 @@
 				AA75332A2BE02EF4003A0D77 /* IrregularSweepAnalysisTests.cpp in Sources */,
 				AACC27252541FFB2007E83C3 /* DataDeltas.cpp in Sources */,
 				AA639B32254C232200DD5129 /* IrregularSweepHangTests.cpp in Sources */,
+				AADFCABE2F13F61A00FAEC89 /* Searcher.cpp in Sources */,
 				AA28C09D2207398C00F7EC25 /* ExhaustiveSearchTests.cpp in Sources */,
 				AA2865B823CE044B00F738ED /* LoopAnalysisTests.cpp in Sources */,
 				AAEB55B92B15325B00695567 /* PeriodicHangChecker.cpp in Sources */,

@@ -11,6 +11,7 @@
 #include <iterator>
 #include <vector>
 
+#include "Searcher.h"
 #include "Program.h"
 
 #include "InterpretedProgramBuilder.h"
@@ -44,10 +45,8 @@ struct SearchSettings {
     bool disableNoExitHangDetection = false;
 };
 
-class ExhaustiveSearcher {
+class ExhaustiveSearcher : public Searcher {
     SearchSettings _settings;
-
-    Program _program;
 
     // Determines when to abort the search
     SearchMode _searchMode;
@@ -72,8 +71,6 @@ class ExhaustiveSearcher {
 
     ExitFinder _exitFinder;
 
-    ProgressTracker* _tracker;
-
     void verifyHang();
 
     void run();
@@ -90,14 +87,11 @@ public:
 
     bool getHangDetectionTestMode() const { return _settings.testHangDetection; }
 
-    ProgressTracker* getProgressTracker() const { return _tracker; }
-    void setProgressTracker(ProgressTracker* tracker);
-
-    const Program& getProgram() const { return _program; }
     std::shared_ptr<const InterpretedProgram> getInterpretedProgram() const {
         return _programBuilder;
     }
 
+    int getNumSteps() const override { return _programExecutor->numSteps(); }
     const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 
     //----------------------------------------------------------------------------------------------
@@ -117,8 +111,9 @@ public:
     void findOne(const std::vector<Ins> &resumeFrom);
 
     void dumpInstructionStack(const std::string& sep = {}) const;
-    std::string instructionStackAsString() const;
     bool instructionStackEquals(Ins* reference) const;
+
+    void dumpSearchProgress(std::ostream &os) const override;
 
     void dumpSettings();
     void dump();
