@@ -71,7 +71,7 @@ void ProgressTracker::reportError() {
         _totalErrorsByType[(int)HangType::UNDETECTED]++;
 
         if (_dumpUndetectedHangs) {
-            std::cout << "Error: " << _searcher->getProgram().toString() << std::endl;
+            std::cout << "ERR " << _searcher->getProgram().toString() << std::endl;
         }
     }
 
@@ -88,7 +88,8 @@ void ProgressTracker::reportAssumedHang() {
         _totalHangsByType[(int)HangType::UNDETECTED]++;
 
         if (_dumpUndetectedHangs) {
-            std::cout << "Undetected hang: " << _searcher->getProgram().toString() << std::endl;
+            // Dump the assumed hang
+            std::cout << "ASS " << _searcher->getProgram().toString() << std::endl;
         }
     }
 
@@ -98,14 +99,8 @@ void ProgressTracker::reportAssumedHang() {
 void ProgressTracker::reportLateEscape(int numSteps) {
     _totalLateEscapes++;
 
-    std::cout << "Late escape (" << numSteps << "): "
+    std::cout << "ESC " << numSteps << " "
     << _searcher->getProgram().toString() << std::endl;
-
-    std::cout << "ESC " << numSteps << " ";
-    if (auto p = dynamic_cast<ExhaustiveSearcher *>(_searcher)) {
-        // TODO: Dump program instead once late-escape follow-up supports this
-        p->dumpInstructionStack(" ");
-    }
 
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
