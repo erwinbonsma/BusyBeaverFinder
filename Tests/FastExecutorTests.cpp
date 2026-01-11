@@ -14,6 +14,7 @@
 
 TEST_CASE("6x6 Fast Executor tests", "[6x6][fast-exec]") {
     FastExecutor fastExecutor(1024);
+    fastExecutor.setMaxSteps(100000);
 
     SECTION("6x6-FastExecution-DataError") {
         // Program that results in a DATA_ERROR. It erroneously resulted in a PROGRAM_ERROR in an
