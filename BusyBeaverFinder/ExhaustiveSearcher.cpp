@@ -24,8 +24,8 @@ Ins targetStack[] = {
     Ins::DATA, Ins::NOOP, Ins::NOOP, Ins::TURN, Ins::TURN, Ins::NOOP, Ins::TURN, Ins::UNSET
 };
 
-ExhaustiveSearcher::ExhaustiveSearcher(ProgramSize size, SearchSettings settings) :
-    Searcher(size),
+ExhaustiveSearcher::ExhaustiveSearcher(SearchSettings settings) :
+    Searcher(settings.size),
     _settings(settings),
     _programBuilder(std::make_shared<InterpretedProgramBuilder>()),
     _exitFinder(_program, *_programBuilder),
@@ -66,8 +66,8 @@ void ExhaustiveSearcher::dumpSearchProgress(std::ostream &os) const {
     os << ", Program=" << getProgram().toString();
 }
 
-void ExhaustiveSearcher::dumpSettings() {
-    std::cout
+void ExhaustiveSearcher::dumpSettings(std::ostream &os) const {
+    os
     << "Size = " << _program.getSize()
     << ", DataSize = " << _settings.dataSize
     << ", MaxSteps = " << _settings.maxHangDetectionSteps

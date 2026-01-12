@@ -28,9 +28,7 @@ enum class SearchMode : int8_t {
     FIND_ONE = 2,
 };
 
-struct SearchSettings {
-    int dataSize = 1024;
-
+struct SearchSettings : public BaseSearchSettings {
     // The maximum number of steps with hang detection enabled
     int maxHangDetectionSteps = 1024;
 
@@ -38,8 +36,6 @@ struct SearchSettings {
     // Beyond this limit, if a program encounters an unset instruction, it is a late escape.
     int maxSearchSteps = 1024;
 
-    // The maximum steps that a program will run for.
-    int maxSteps = 1024;
 
     bool testHangDetection = false;
     bool disableNoExitHangDetection = false;
@@ -82,9 +78,7 @@ class ExhaustiveSearcher : public Searcher {
     void search(bool resuming);
 
 public:
-    ExhaustiveSearcher(ProgramSize size, SearchSettings settings);
-
-    SearchSettings getSettings() const { return _settings; }
+    ExhaustiveSearcher(SearchSettings settings);
 
     bool getHangDetectionTestMode() const { return _settings.testHangDetection; }
 
@@ -121,6 +115,6 @@ public:
 
     void dumpSearchProgress(std::ostream &os) const override;
 
-    void dumpSettings();
+    void dumpSettings(std::ostream &os) const override;
     void dump();
 };

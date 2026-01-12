@@ -13,17 +13,17 @@
 #include "SearchOrchestration.h"
 
 TEST_CASE("5x5 OrchestratedSearch", "[search][5x5][orchestrated]") {
-    SearchSettings settings {};
-    ExhaustiveSearcher searcher(ProgramSize(5), settings);
+    SearchSettings settings {5};
+    OrchestratedSearchRunner runner {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     tracker->setDumpSuccessStepsLimit(INT_MAX);
-    searcher.attachProgressTracker(std::move(tracker));
+    runner.getSearcher().attachProgressTracker(std::move(tracker));
 
     SECTION("Find all") {
-        orchestratedSearch(searcher);
+        runner.run();
 
-        tracker = searcher.detachProgressTracker();
+        tracker = runner.getSearcher().detachProgressTracker();
         REQUIRE(tracker->getMaxStepsFound() == 44);
         REQUIRE(tracker->getTotalSuccess() == 26319);
         REQUIRE(tracker->getTotalDetectedHangs() == 4228);
@@ -33,25 +33,23 @@ TEST_CASE("5x5 OrchestratedSearch", "[search][5x5][orchestrated]") {
 }
 
 TEST_CASE("6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]") {
-    SearchSettings settings {};
+    SearchSettings settings {6};
     settings.dataSize = 6000;
     settings.maxHangDetectionSteps = 50000;
     settings.maxSearchSteps =  50000;
     settings.maxSteps = 100000;
-//    settings.testHangDetection = true;
-
-    ExhaustiveSearcher searcher(ProgramSize(6), settings);
+    OrchestratedSearchRunner runner {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     tracker->setDumpUndetectedHangs(true);
     tracker->setDumpStatsPeriod(10000000);
     tracker->setDumpStackPeriod(10000000);
-    searcher.attachProgressTracker(std::move(tracker));
+    runner.getSearcher().attachProgressTracker(std::move(tracker));
 
     SECTION("Find all") {
-        orchestratedSearch(searcher);
+        runner.run();
 
-        tracker = searcher.detachProgressTracker();
+        tracker = runner.getSearcher().detachProgressTracker();
         tracker->dumpFinalStats();
 
         REQUIRE(tracker->getMaxStepsFound() == 573);

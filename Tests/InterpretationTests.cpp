@@ -13,9 +13,9 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "7x7 Interpretation Tests", "[interpretation][7x7]" ) {
-    SearchSettings settings {};
+    SearchSettings settings {7};
     settings.maxSteps = 10000;
-    ExhaustiveSearcher searcher(ProgramSize(7), settings);
+    ExhaustiveSearcher searcher {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     searcher.attachProgressTracker(std::move(tracker));

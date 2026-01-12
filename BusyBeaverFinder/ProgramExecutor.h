@@ -26,6 +26,7 @@ public:
     virtual ~ProgramExecutor() {}
 
     void setMaxSteps(int steps) { _maxSteps = steps; }
+    int getMaxSteps() const { return _maxSteps; }
     int numSteps() const { return _numSteps; }
 
     const ProgramBlock* lastProgramBlock() { return _block; }

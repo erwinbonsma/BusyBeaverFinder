@@ -15,7 +15,9 @@
 #include "ExhaustiveSearcher.h"
 #include "Utils.h"
 
-void addInstructionsUntilTurn(std::vector<Ins> &stack, int numNoop, int numData) {
+void OrchestratedSearchRunner::addInstructionsUntilTurn(std::vector<Ins> &stack,
+                                                        int numNoop,
+                                                        int numData) {
     while (numNoop-- > 0) {
         stack.push_back(Ins::NOOP);
     }
@@ -25,8 +27,8 @@ void addInstructionsUntilTurn(std::vector<Ins> &stack, int numNoop, int numData)
     stack.push_back(Ins::TURN);
 }
 
-void orchestratedSearch(ExhaustiveSearcher& searcher) {
-    auto size = searcher.getProgram().getSize();
+void OrchestratedSearchRunner::run() {
+    auto size = _searcher.getProgram().getSize();
     std::vector<Ins> resumeStack;
 
     // Only the number of DATA instructions before the first TURN matters, not their position, as
@@ -58,7 +60,7 @@ void orchestratedSearch(ExhaustiveSearcher& searcher) {
 
                         addInstructionsUntilTurn(resumeStack, numNoop2, numData2);
 
-                        searcher.searchSubTree(resumeStack);
+                        _searcher.searchSubTree(resumeStack);
 
                         while (resumeStack.size() > sizeBefore) {
                             resumeStack.pop_back();
@@ -66,14 +68,18 @@ void orchestratedSearch(ExhaustiveSearcher& searcher) {
                     }
                 }
             } else {
-                searcher.searchSubTree(resumeStack);
+                _searcher.searchSubTree(resumeStack);
             }
         }
     }
 }
 
-void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile) {
-    std::ifstream input(lateEscapesFile);
+void ResumeSearchRunner::run() {
+    _searcher.search(_resumeStack);
+}
+
+void LateEscapeSearchRunner::run() {
+    std::ifstream input(_programFile);
     if (!input) {
         std::cout << "Could not read file" << std::endl;
         return;
@@ -88,8 +94,12 @@ void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile
         if (iss >> numSteps) {
             loadResumeStackFromStream(iss, resumeStack);
             if (!resumeStack.empty()) {
-                searcher.searchSubTree(resumeStack, numSteps - 1);
+                _searcher.searchSubTree(resumeStack, numSteps - 1);
             }
         }
     }
+}
+
+void FastExecSearchRunner::run() {
+    // TODO
 }

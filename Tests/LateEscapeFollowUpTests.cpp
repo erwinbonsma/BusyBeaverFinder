@@ -11,10 +11,10 @@
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE("7x7 Late Escape Follow-Up tests", "[7x7][late-escape]") {
-    SearchSettings settings {};
+    SearchSettings settings {7};
     settings.dataSize = 16384;
     settings.maxSteps = 10000000;
-    ExhaustiveSearcher searcher(ProgramSize(7), settings);
+    ExhaustiveSearcher searcher {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     tracker->setDumpSuccessStepsLimit(INT_MAX);

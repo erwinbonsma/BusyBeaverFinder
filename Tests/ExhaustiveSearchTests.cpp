@@ -6,14 +6,14 @@
 //  Copyright © 2019 Erwin Bonsma.
 //
 
-#include <stdio.h>
+#include <memory>
 #include "catch.hpp"
 
 #include "ExhaustiveSearcher.h"
 
 TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
-    SearchSettings settings {};
-    ExhaustiveSearcher searcher(ProgramSize(3), settings);
+    SearchSettings settings {3};
+    ExhaustiveSearcher searcher {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     tracker->setDumpSuccessStepsLimit(INT_MAX);
@@ -36,8 +36,8 @@ TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
 }
 
 TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
-    SearchSettings settings {};
-    ExhaustiveSearcher searcher(ProgramSize(4), settings);
+    SearchSettings settings {4};
+    ExhaustiveSearcher searcher {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     tracker->setDumpSuccessStepsLimit(INT_MAX);
@@ -55,8 +55,8 @@ TEST_CASE( "4x4 Search", "[search][4x4][exhaustive]" ) {
 }
 
 TEST_CASE( "5x5 Search", "[search][5x5][exhaustive]" ) {
-    SearchSettings settings {};
-    ExhaustiveSearcher searcher(ProgramSize(5), settings);
+    SearchSettings settings {5};
+    ExhaustiveSearcher searcher {settings};
 
     auto tracker = std::make_unique<ProgressTracker>();
     tracker->setDumpSuccessStepsLimit(INT_MAX);

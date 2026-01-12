@@ -78,6 +78,8 @@
 		AADFCABA2F12DC9D00FAEC89 /* PerformanceTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */; };
 		AADFCABD2F13F61A00FAEC89 /* Searcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */; };
 		AADFCABE2F13F61A00FAEC89 /* Searcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */; };
+		AADFCAC12F158B4C00FAEC89 /* FastExecSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCABF2F158B4C00FAEC89 /* FastExecSearcher.cpp */; };
+		AADFCAC22F158B4C00FAEC89 /* FastExecSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AADFCABF2F158B4C00FAEC89 /* FastExecSearcher.cpp */; };
 		AAEB55B02B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */; };
 		AAEB55B42B15315600695567 /* HangChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AAEB55B22B15315600695567 /* HangChecker.cpp */; };
@@ -194,6 +196,8 @@
 		AADFCAB92F12DC9D00FAEC89 /* PerformanceTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PerformanceTests.cpp; sourceTree = "<group>"; };
 		AADFCABB2F13B0B300FAEC89 /* Searcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Searcher.h; sourceTree = "<group>"; };
 		AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Searcher.cpp; sourceTree = "<group>"; };
+		AADFCABF2F158B4C00FAEC89 /* FastExecSearcher.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FastExecSearcher.cpp; sourceTree = "<group>"; };
+		AADFCAC02F158B4C00FAEC89 /* FastExecSearcher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FastExecSearcher.h; sourceTree = "<group>"; };
 		AAEB55AE2B0C076B00695567 /* MetaLoopHangDetector.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopHangDetector.cpp; sourceTree = "<group>"; };
 		AAEB55AF2B0C076B00695567 /* MetaLoopHangDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MetaLoopHangDetector.h; sourceTree = "<group>"; };
 		AAEB55B22B15315600695567 /* HangChecker.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HangChecker.cpp; sourceTree = "<group>"; };
@@ -268,6 +272,8 @@
 				AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */,
 				AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */,
 				AA90A5832200E73400242D3D /* ExhaustiveSearcher.h */,
+				AADFCAC02F158B4C00FAEC89 /* FastExecSearcher.h */,
+				AADFCABF2F158B4C00FAEC89 /* FastExecSearcher.cpp */,
 				AAD5C50C2211F7140057EDBC /* SearchOrchestration.cpp */,
 				AAD5C50D2211F7140057EDBC /* SearchOrchestration.h */,
 				AA1101FE21F32120005C67CF /* main.cpp */,
@@ -447,6 +453,7 @@
 				AAD5C50E2211F7140057EDBC /* SearchOrchestration.cpp in Sources */,
 				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
 				AA90A58A2201052900242D3D /* Utils.cpp in Sources */,
+				AADFCAC12F158B4C00FAEC89 /* FastExecSearcher.cpp in Sources */,
 				AAEB55B42B15315600695567 /* HangChecker.cpp in Sources */,
 				AAEB55BC2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */,
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
@@ -516,6 +523,7 @@
 				AA2865AE23CDEC6A00F738ED /* HangDetector.cpp in Sources */,
 				AAEB55B52B15315600695567 /* HangChecker.cpp in Sources */,
 				AAADA6D62A8C06CC00F1C442 /* FastExecutorTests.cpp in Sources */,
+				AADFCAC22F158B4C00FAEC89 /* FastExecSearcher.cpp in Sources */,
 				AA0D5AE52263C488001909AF /* GliderHangTests.cpp in Sources */,
 				AA28C0A62207428A00F7EC25 /* CompletionTests.cpp in Sources */,
 				AAEB55B12B0C076B00695567 /* MetaLoopHangDetector.cpp in Sources */,

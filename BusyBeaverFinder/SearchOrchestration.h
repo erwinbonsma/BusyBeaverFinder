@@ -8,11 +8,65 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "Types.h"
+#include "Searcher.h"
+#include "ExhaustiveSearcher.h"
+#include "FastExecSearcher.h"
 
 class ExhaustiveSearcher;
 
-void orchestratedSearch(ExhaustiveSearcher& searcher);
+class SearchRunner {
+public:
+    virtual void run() = 0;
 
-void searchLateEscapes(ExhaustiveSearcher& searcher, std::string lateEscapesFile);
+    virtual Searcher& getSearcher() = 0;
+    std::unique_ptr<ProgressTracker> detachProgressTracker() {
+        return getSearcher().detachProgressTracker();
+    }
+};
+
+class OrchestratedSearchRunner : public SearchRunner {
+    ExhaustiveSearcher _searcher;
+
+    void addInstructionsUntilTurn(std::vector<Ins> &stack, int numNoop, int numData);
+public:
+    OrchestratedSearchRunner(SearchSettings settings) : _searcher(settings) {}
+
+    ExhaustiveSearcher& getSearcher() override { return _searcher; };
+    void run() override;
+};
+
+class ResumeSearchRunner : public SearchRunner {
+    ExhaustiveSearcher _searcher;
+    std::vector<Ins> _resumeStack;
+public:
+    ResumeSearchRunner(SearchSettings settings, std::vector<Ins> resumeStack)
+    : _searcher(settings), _resumeStack(resumeStack) {}
+
+    ExhaustiveSearcher& getSearcher() override { return _searcher; };
+    void run() override;
+};
+
+class LateEscapeSearchRunner : public SearchRunner {
+    ExhaustiveSearcher _searcher;
+    std::string _programFile;
+public:
+    LateEscapeSearchRunner(SearchSettings settings, std::string programFile)
+    : _searcher(settings), _programFile(programFile) {}
+
+    ExhaustiveSearcher& getSearcher() override { return _searcher; };
+    void run() override;
+};
+
+class FastExecSearchRunner : public SearchRunner {
+    FastExecSearcher _searcher;
+    std::string _programFile;
+public:
+    FastExecSearchRunner(BaseSearchSettings settings, std::string programFile)
+    : _searcher(settings), _programFile(programFile) {}
+
+    FastExecSearcher& getSearcher() override { return _searcher; };
+    void run() override;
+};
