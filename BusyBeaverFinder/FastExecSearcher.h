@@ -7,12 +7,17 @@
 //
 #pragma once
 
+#include <memory>
+
 #include "Searcher.h"
 #include "FastExecutor.h"
+#include "InterpretedProgramBuilder.h"
 
 class FastExecSearcher : public Searcher {
     int _dataSize;
     FastExecutor _executor;
+    std::shared_ptr<InterpretedProgramBuilder> _interpretedProgram;
+
     int _totalRuns {};
 public:
     FastExecSearcher(BaseSearchSettings settings);

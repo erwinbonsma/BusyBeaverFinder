@@ -81,7 +81,7 @@ void ResumeSearchRunner::run() {
 void LateEscapeSearchRunner::run() {
     std::ifstream input(_programFile);
     if (!input) {
-        std::cout << "Could not read file" << std::endl;
+        std::cerr << "Could not read file" << std::endl;
         return;
     }
 
@@ -101,5 +101,15 @@ void LateEscapeSearchRunner::run() {
 }
 
 void FastExecSearchRunner::run() {
-    // TODO
+    std::ifstream input(_programFile);
+    if (!input) {
+        std::cerr << "Could not read file" << std::endl;
+        return;
+    }
+
+    std::vector<Ins> resumeStack;
+    std::string programSpec;
+    while (getline(input, programSpec)) {
+        _searcher.run(programSpec);
+    }
 }
