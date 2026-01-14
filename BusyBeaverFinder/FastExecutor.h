@@ -25,6 +25,7 @@ class FastExecutor : public ProgramExecutor {
 
     bool _canResume;
 
+    bool fastRun();
     RunResult run();
 
     void resetData();
