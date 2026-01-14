@@ -14,6 +14,7 @@ ProgramBlock::ProgramBlock() {
 void ProgramBlock::init(int startIndex) {
     _startIndex = startIndex;
     _isFinalized = false;
+    _interruptRun = true;
     _entries.clear();
     _zeroBlock = nullptr;
     _nonZeroBlock = nullptr;
@@ -21,6 +22,7 @@ void ProgramBlock::init(int startIndex) {
 
 void ProgramBlock::reset() {
     _isFinalized = false;
+    _interruptRun = true;
 
     // Unregister the block as entry for its continuation blocks
     ProgramBlock* check;
@@ -52,6 +54,7 @@ void ProgramBlock::finalizeExit(int numSteps) {
 void ProgramBlock::finalize(bool isDelta, int amount, int numSteps,
                             ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock) {
     _isFinalized = true;
+    _interruptRun = false;
 
     _isDelta = isDelta;
     _instructionAmount = amount;

@@ -24,6 +24,10 @@ class ProgramBlock {
 
     bool _isFinalized;
     bool _isDelta;
+
+    // Set to true when fast execution should halt.
+    bool _interruptRun;
+
     int _instructionAmount;
     int _numSteps;
 
@@ -42,6 +46,10 @@ public:
     int getStartIndex() const { return _startIndex; }
 
     bool isFinalized() const { return _isFinalized; }
+
+    // Short-cut check to see if fast execution should terminate. This is the case when the block
+    // is not finalized, it is an exit, or it is a hang.
+    bool interruptsRun() const { return _interruptRun; }
 
     bool isExit() const { return _instructionAmount == 0 && _numSteps >= 0; }
     bool isHang() const { return _numSteps < 0; }

@@ -33,18 +33,10 @@ void FastExecutor::resetData() {
 RunResult FastExecutor::run() {
     _canResume = false;
 
-    while (true) {
-        if (!_block->isFinalized()) {
-            _canResume = true;
-            return RunResult::PROGRAM_ERROR;
-        }
-        if (_block->isHang()) {
-            return RunResult::DETECTED_HANG;
-        }
-
+    while (!_block->interruptsRun()) {
         _numSteps += _block->getNumSteps();
-        if (_block->isExit()) {
-            return RunResult::SUCCESS;
+        if (_numSteps > _maxSteps) {
+            return RunResult::ASSUMED_HANG;
         }
 
         int amount = _block->getInstructionAmount();
@@ -58,12 +50,22 @@ RunResult FastExecutor::run() {
             }
         }
 
-        if (_numSteps > _maxSteps) {
-            return RunResult::ASSUMED_HANG;
-        }
-
         _block = (*_dataP == 0) ? _block->zeroBlock() : _block->nonZeroBlock();
     }
+
+    if (!_block->isFinalized()) {
+        _canResume = true;
+        return RunResult::PROGRAM_ERROR;
+    }
+    if (_block->isHang()) {
+        return RunResult::DETECTED_HANG;
+    }
+    if (_block->isExit()) {
+        _numSteps += _block->getNumSteps();
+        return RunResult::SUCCESS;
+    }
+
+    assert(false);
 }
 
 RunResult FastExecutor::execute(std::shared_ptr<const InterpretedProgram> program) {
