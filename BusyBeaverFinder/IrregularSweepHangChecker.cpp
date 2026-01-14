@@ -414,10 +414,8 @@ bool IrregularSweepHangChecker::determineCounterDelta(ShrinkingEndProps& props) 
 
 bool IrregularSweepHangChecker::checkForShrinkage(LocationInSweep location) {
     ShrinkingEndProps props { location };
-
-    if (!determineCounterDelta(props)) {
-        return false;
-    }
+    // TODO: Fix. Either initialize props.loopExit, or refactor determineCounterDelta to not
+    // depend on it.
 
     if (!determineCounterDelta(props)) {
         return false;

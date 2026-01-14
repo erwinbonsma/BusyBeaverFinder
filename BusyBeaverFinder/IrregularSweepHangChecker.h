@@ -55,7 +55,7 @@ class IrregularSweepHangChecker : public SweepHangChecker {
         int loopExit;
 
         // The sign of the counter value
-        bool counterIsPositive;
+        bool counterIsPositive {};
     };
 
   public:
