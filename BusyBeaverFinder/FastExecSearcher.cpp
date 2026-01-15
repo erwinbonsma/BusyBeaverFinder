@@ -26,6 +26,8 @@ void FastExecSearcher::run(std::string& programSpec) {
     _interpretedProgram->buildFromProgram(_program);
 
     RunResult result = _executor.execute(_interpretedProgram);
+    _executor.pop();
+
     switch (result) {
         case RunResult::DATA_ERROR:
             _tracker->reportError();
