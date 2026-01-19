@@ -535,6 +535,22 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 202750833);
     }
+    SECTION("BB 7x7 #305718554") {
+        // Notable because it uses only a few data cells (nine) and outputs a large number:
+        // 22,369,623.
+        //
+        //   *   *   *
+        // * o o o o _ *
+        //   _ o o * _
+        //   * * o _ o *
+        // * _ o o * *
+        // * * _ o o _ *
+        // o o o *   *
+        RunResult result = hangExecutor.execute("d+7uVSxY+kaFroUlbs");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 305718554);
+    }
     SECTION("BB 7x7 #349950177") {
         //     *   *
         //     _ _ _ _ *

@@ -260,8 +260,6 @@ TEST_CASE("7x7 undetected hangs", "[hang][7x7][fail]") {
         // o _ o o * *
         RunResult result = hangExecutor.execute("d/uvkC5lsZuFSuA0Ws");
 
-        hangExecutor.dumpExecutionState();
-
         // TEMP: Should not yet be detected with current logic. Eventually it should be detected.
         REQUIRE(result == RunResult::ASSUMED_HANG);
     }
