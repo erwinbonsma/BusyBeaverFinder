@@ -61,10 +61,45 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
 }
 
 TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
-    HangExecutor hangExecutor(16384, 1000000);
+    HangExecutor hangExecutor(65536, 1000000);
     hangExecutor.setMaxSteps(500000000);
     hangExecutor.addDefaultHangDetectors();
 
+    SECTION("7x7-OldFalsePositive1") {
+        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
+        // appendix at its right. However, the leftwards sweep moves DP by two cells each
+        // iteration. All leftward sweeps, however, seem to end on the first zero at the left. This
+        // is caused by how the "bits" in the binary appendix at the right toggle. However, after
+        // 2000 steps the left sweep lands on the second zero, which causes the program to exit.
+        //
+        // *     * *
+        // o _ * _ _ _ *
+        // _ _ * o o _
+        // _ _ o o o *
+        // _ o _ o _ *
+        // _ * _ o o *
+        // _   * * *
+        RunResult result = hangExecutor.execute("d4KBICCUAVgRIIWAqA");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
+    SECTION("7x7-OldFalsePositive2") {
+        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
+        // appendix at its right. However, the sequence that changes a -1 bit in the binary
+        // appendix to a -2 requires that the cell located two cells to its left has a non-zero
+        // value. This is not the case for a -1 value near the end of the appendix.
+        //
+        //     *     *
+        //   * _ _ * o *
+        // * _ o o o _ *
+        // *   _ * o _
+        // o o o * o *
+        // _   * _ o *
+        // _       *
+        RunResult result = hangExecutor.execute("dwgggmhUoJBWYCGACA");
+
+        REQUIRE(result == RunResult::SUCCESS);
+    }
     SECTION("7x7-OldFalsePositive3") {
         // Program exhibits a behavior that resembles a simple hang. Steady growth at its right,
         // and a fixed point at its left. However, this fixed point used to be classified
@@ -190,7 +225,6 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
 
         REQUIRE(result == RunResult::SUCCESS);
     }
-
     SECTION("BB 7x7 #117273") {
         RunResult result = hangExecutor.execute("dwoAlShaIhJBYIGAKA");
 
@@ -308,7 +342,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 951921);
     }
-    SECTION("BB 7x7 #1237792") {
+    SECTION("BB 7x7 #1,237,792") {
         // Notable because it ends with DP on a high value: 31985.
         //
         //   *       *
@@ -323,7 +357,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 1237792);
     }
-    SECTION("BB 7x7 #1659389") {
+    SECTION("BB 7x7 #1,659,389") {
         //   *   * *
         // * o _ o _ *
         //   * * o o _ *
@@ -336,13 +370,13 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 1659389);
     }
-    SECTION("BB 7x7 #1842683") {
+    SECTION("BB 7x7 #1,842,683") {
         RunResult result = hangExecutor.execute("dwgAkIJQgaSFWmgFgg");
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 1842683);
     }
-    SECTION("BB 7x7 #3007569") {
+    SECTION("BB 7x7 #3,007,569") {
         //   *       _
         //   _ _ _ * _
         // * _ o o o _ *
@@ -355,7 +389,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 3007569);
     }
-    SECTION("BB 7x7 #8447143") {
+    SECTION("BB 7x7 #8,447,143") {
         //   *       *
         //   _ _ * * _
         // * o o o o _ *
@@ -368,7 +402,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 8447143);
     }
-    SECTION("BB 7x7 #9408043") {
+    SECTION("BB 7x7 #9,408,043") {
         //   *   * *
         // * o _ o _ *
         //   * * o o _ *
@@ -381,7 +415,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 9408043);
     }
-    SECTION("BB 7x7 #9607923") {
+    SECTION("BB 7x7 #9,607,923") {
         //       * * *
         //     * o o _ *
         //   * o o o *
@@ -394,7 +428,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 9607923);
     }
-    SECTION("BB 7x7 #10981971") {
+    SECTION("BB 7x7 #10,981,971") {
         // Very similar to BB 22.6M. The main logic is identical. Only the bootstrap differs.
         //
         //   *   * *
@@ -409,7 +443,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 10981971);
     }
-    SECTION("BB 7x7 #10268897") {
+    SECTION("BB 7x7 #10,268,897") {
         //   * *   * *
         // * o _ _ o _ *
         //   * o o o o *
@@ -422,7 +456,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 10268897);
     }
-    SECTION("BB 7x7 #19904958") {
+    SECTION("BB 7x7 #19,904,958") {
         //   *     * *
         //   _ _ * o _ *
         // * o o o o _ *
@@ -435,7 +469,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 19904958);
     }
-    SECTION("BB 7x7 #22606881") {
+    SECTION("BB 7x7 #22,606,881") {
         //   *   * *
         // * o _ o _ *
         //   * * o o _ *
@@ -448,7 +482,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 22606881);
     }
-    SECTION("BB 7x7 #23822389") {
+    SECTION("BB 7x7 #23,822,389") {
         // Notable because it uses relatively few (19) data cells. It exhibits a behavior that is
         // partially a glider and partially a sweep. The number of non-zero data values varies
         // from three to five (at most?). With three values it executes a glider loop, where the
@@ -470,7 +504,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 23822389);
     }
-    SECTION("BB 7x7 #33207907") {
+    SECTION("BB 7x7 #33,207,907") {
         //   * *   *
         // * o o _ _ *
         //   * o o _ _ *
@@ -483,7 +517,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 33207907);
     }
-    SECTION("BB 7x7 #59924237") {
+    SECTION("BB 7x7 #59,924,237") {
         //     * *   o
         //   * o o o _ *
         // * _ o o * *
@@ -496,7 +530,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 59924237);
     }
-    SECTION("BB 7x7 #72505597") {
+    SECTION("BB 7x7 #72,505,597") {
         //   *       *
         //   _ _ * * _
         // * o o o o _ *
@@ -509,7 +543,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 72505597);
     }
-    SECTION("BB 7x7 #97601163") {
+    SECTION("BB 7x7 #97,601,163") {
         //   *     *
         // * _ _ * o _ *
         //   _ o * o *
@@ -522,7 +556,14 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 97601163);
     }
-    SECTION("BB 7x7 #202750833") {
+}
+
+TEST_CASE("7x7 One-Shot Completion tests (> 100M)", "[.explicit][success][7x7]") {
+    HangExecutor hangExecutor(65536, 1000000);
+    hangExecutor.setMaxSteps(500000000);
+    hangExecutor.addDefaultHangDetectors();
+
+    SECTION("BB 7x7 #202,750,833") {
         //     * *
         //   * o _ _ _ *
         //   * o o _ _
@@ -535,9 +576,21 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 202750833);
     }
-    SECTION("BB 7x7 #305718554") {
-        // Notable because it uses only a few data cells (nine) and outputs a large number:
-        // 22,369,623.
+    SECTION("BB 7x7 #291,239,915") {
+        //     *   *
+        //   * o _ _ _ *
+        //   * o o _ _
+        //   _ o * _ *
+        // * _ o o o _ *
+        // * - * _ _ _
+        // o o o o o *
+        RunResult result = hangExecutor.execute("d/u/kC5Q8YuFSiA1Vs");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 291239915);
+    }
+    SECTION("BB 7x7 #305,718,554") {
+        // Notable because it uses only nine data cells and outputs a large number: 22,369,623.
         //
         //   *   *   *
         // * o o o o _ *
@@ -551,7 +604,22 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 305718554);
     }
-    SECTION("BB 7x7 #349950177") {
+    SECTION("BB 7x7 #345,037,719") {
+        // Notable because it accesses 26924 cells on the data tape.
+        //
+        //   *     *
+        // _ _ _ * o _ *
+        // * o o _ _ *
+        //   o * * o _
+        // * _ o o o o *
+        // * * * _ _ _
+        // o o o o * *
+        RunResult result = hangExecutor.execute("d++8CSlC9pOFWqA1Ws");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 345037719);
+    }
+    SECTION("BB 7x7 #349,950,177") {
         //     *   *
         //     _ _ _ _ *
         //   * o _ o _
@@ -563,40 +631,5 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 349950177);
-    }
-    SECTION("7x7-OldFalsePositive1") {
-        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
-        // appendix at its right. However, the leftwards sweep moves DP by two cells each
-        // iteration. All leftward sweeps, however, seem to end on the first zero at the left. This
-        // is caused by how the "bits" in the binary appendix at the right toggle. However, after
-        // 2000 steps the left sweep lands on the second zero, which causes the program to exit.
-        //
-        // *     * *
-        // o _ * _ _ _ *
-        // _ _ * o o _
-        // _ _ o o o *
-        // _ o _ o _ *
-        // _ * _ o o *
-        // _   * * *
-        RunResult result = hangExecutor.execute("d4KBICCUAVgRIIWAqA");
-
-        REQUIRE(result == RunResult::SUCCESS);
-    }
-    SECTION("7x7-OldFalsePositive2") {
-        // Program exhibits a behavior that resembles an irregular sweep hang, with an aperiodic
-        // appendix at its right. However, the sequence that changes a -1 bit in the binary
-        // appendix to a -2 requires that the cell located two cells to its left has a non-zero
-        // value. This is not the case for a -1 value near the end of the appendix.
-        //
-        //     *     *
-        //   * _ _ * o *
-        // * _ o o o _ *
-        // *   _ * o _
-        // o o o * o *
-        // _   * _ o *
-        // _       *
-        RunResult result = hangExecutor.execute("dwgggmhUoJBWYCGACA");
-
-        REQUIRE(result == RunResult::SUCCESS);
     }
 }
