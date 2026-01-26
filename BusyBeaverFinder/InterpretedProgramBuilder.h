@@ -9,46 +9,60 @@
 
 #include <array>
 
-#include "Consts.h"
 #include "InterpretedProgram.h"
 #include "Types.h"
+#include "Program.h"
 #include "ProgramBlock.h"
 
-const int maxProgramBlocks = maxWidth * maxHeight * 2;
-const int maxProgramStackFrames = maxWidth * maxHeight;
+// A power of two for efficient indexing
+constexpr int maxProgramSize = 8;
+constexpr int maxProgramBlocks = maxProgramSize * maxProgramSize * 2;
 
-class Program;
-
-struct MutableProgramBlock {
+struct MutableProgramBlockProps {
     uint8_t flags;
     int8_t amount;
     int8_t numSteps;
 };
 
 struct ProgramStack {
-    MutableProgramBlock activeBlock;
-    int activeBlockIndex;
-    int numBlocks;
-    int numFinalizedBlocks;
+    ProgramStack(int numActivatedAtStart, int numFinalizedAtStart)
+    : numActivatedAtStart(numActivatedAtStart), numFinalizedAtStart(numFinalizedAtStart) {}
+
+    int numActivatedAtStart = 0;
+    int numFinalizedAtStart = 0;
+
+    MutableProgramBlockProps activeProps;
+    ProgramBlock *activeBlock = nullptr;
 };
 
 /* Maintains an InterpretedProgram for the program state as it is during the search. It updates it
  * as the search expands and backtracks.
  */
 class InterpretedProgramBuilder : public InterpretedProgram {
-    ProgramBlock _blocks[maxProgramBlocks];
-    std::array<int, maxProgramBlocks> _blockIndexLookup;
-    int _finalizedStack[maxProgramBlocks];
+    ProgramSize _size;
 
-    ProgramStack _state[maxProgramStackFrames];
-    ProgramStack* _stateP;
+    // All program blocks. They are indexed by startIndex. Initially none are finalized. They are
+    // finalized as needed.
+    std::array<ProgramBlock, maxProgramBlocks> _blocks;
+
+    // Look-up from start index to block index. Returns -1 if block is not yet activated.
+    std::array<int, maxProgramBlocks> _blockIndexLookup;
+
+    // Stack with program blocks that have been activated (by visiting them via getBlock)
+    std::vector<ProgramBlock*> _activatedStack;
+
+    // Stack with finalized rogram blocks. This is used to undo finalization on back-tracking
+    std::vector<ProgramBlock*> _finalizedStack;
+
+    // Maintains stack of states to enable back-tracking.
+    std::vector<ProgramStack> _state;
 
     ProgramBlock* getBlock(InstructionPointer insP, TurnDirection turn);
     InstructionPointer startInstructionForBlock(const ProgramBlock* block);
 
     void reset();
 
-    void checkState();
+//    void checkState();
 
     bool isDeltaInstruction();
 
@@ -61,10 +75,13 @@ public:
     //---------------------------------------------------------------------------------------------
     // Implementation of InterpretedProgram
 
-    int numProgramBlocks() const override { return _stateP->numBlocks; };
-    const ProgramBlock* programBlockAt(int index) const override { return _blocks + index; };
+    int indexOf(const ProgramBlock *block) const override {
+        return _blockIndexLookup[block->getStartIndex()];
+    }
+    int numProgramBlocks() const override { return static_cast<int>(_activatedStack.size()); };
+    const ProgramBlock* programBlockAt(int index) const override { return _activatedStack[index]; };
 
-    const ProgramBlock* getEntryBlock() const override { return _blocks; }
+    const ProgramBlock* getEntryBlock() const override { return &_blocks[0]; }
 
     //---------------------------------------------------------------------------------------------
     // Methods to update the program as the search progresses
@@ -74,7 +91,7 @@ public:
 
     // Update current block
     void addDataInstruction(Dir dir);
-    int incSteps() { return _stateP->activeBlock.numSteps++; }
+    int incSteps() { return _state.back().activeProps.numSteps++; }
 
     bool isInstructionSet();
     int getAmount();
@@ -88,7 +105,7 @@ public:
 
     const ProgramBlock* enterBlock(const ProgramBlock* block);
     const ProgramBlock* enterBlock(InstructionPointer startP, TurnDirection turnDir);
-    ProgramBlock* getBlock(int startIndex) { return _blocks + _blockIndexLookup[startIndex]; }
+    ProgramBlock* getBlock(int startIndex) { return &_blocks[startIndex]; }
 
     TurnDirection turnDirectionForBlock(const ProgramBlock* block);
     ProgramPointer getStartProgramPointer(const ProgramBlock* block, Program& program);

@@ -125,7 +125,6 @@
 		AA11020521F32538005C67CF /* Types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Types.h; sourceTree = "<group>"; };
 		AA11020621F3258D005C67CF /* Program.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Program.h; sourceTree = "<group>"; };
 		AA11020721F3261F005C67CF /* Program.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Program.cpp; sourceTree = "<group>"; };
-		AA11020921F32671005C67CF /* Consts.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Consts.h; sourceTree = "<group>"; };
 		AA11020A21F327F4005C67CF /* Data.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Data.cpp; sourceTree = "<group>"; };
 		AA11020B21F327F4005C67CF /* Data.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Data.h; sourceTree = "<group>"; };
 		AA11020D21F4D35C005C67CF /* cxxopts.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = cxxopts.hpp; sourceTree = "<group>"; };
@@ -257,7 +256,6 @@
 				AA4F4504224964210069FF36 /* HangDetection */,
 				AA11020D21F4D35C005C67CF /* cxxopts.hpp */,
 				AA11020521F32538005C67CF /* Types.h */,
-				AA11020921F32671005C67CF /* Consts.h */,
 				AA90A5882201052900242D3D /* Utils.cpp */,
 				AA90A5892201052900242D3D /* Utils.h */,
 				AA11020A21F327F4005C67CF /* Data.cpp */,

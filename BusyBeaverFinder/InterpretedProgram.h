@@ -7,6 +7,7 @@
 //
 #pragma once
 
+#include <span>
 #include <iostream>
 
 #include "ProgramBlock.h"
@@ -17,13 +18,16 @@ class InterpretedProgram {
 public:
     virtual int numProgramBlocks() const = 0;
     virtual const ProgramBlock* programBlockAt(int index) const = 0;
-    int indexOf(const ProgramBlock *block) const { return (int)(block - getEntryBlock()); };
+    virtual int indexOf(const ProgramBlock *block) const {
+        return (int)(block - getEntryBlock());
+    };
 
     virtual const ProgramBlock* getEntryBlock() const = 0;
 
     virtual void dump() const;
 };
 
+// TODO: Switch to std::span once my XCode supports this
 class InterpretedProgramFromArray : public InterpretedProgram {
     const ProgramBlock* _blocks;
     int _numBlocks;

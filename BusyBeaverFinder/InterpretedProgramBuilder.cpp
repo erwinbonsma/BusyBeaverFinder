@@ -16,29 +16,32 @@
 #include "Program.h"
 
 // Set when instruction has been set
-const uint8_t INSTRUCTION_SET_BIT = 0x01;
+constexpr uint8_t INSTRUCTION_SET_BIT = 0x01;
 
 // Set when instruction is a Delta (otherwise it is a Shift)
-const uint8_t INSTRUCTION_TYPE_BIT = 0x02;
+constexpr uint8_t INSTRUCTION_TYPE_BIT = 0x02;
 
-InterpretedProgramBuilder::InterpretedProgramBuilder() {
+InterpretedProgramBuilder::InterpretedProgramBuilder() :
+    _blocks(create_indexed_array<ProgramBlock, maxProgramBlocks>())
+{
+    _finalizedStack.reserve(_blocks.size());
+    std::fill(_blockIndexLookup.begin(), _blockIndexLookup.end(), -1);
+
     reset();
 }
 
 void InterpretedProgramBuilder::reset() {
-    _stateP = _state;
-    _stateP->numBlocks = 0;
-    _stateP->numFinalizedBlocks = 0;
+    while (!_state.empty()) {
+        pop();
+    }
 
-    std::fill(_blockIndexLookup.begin(), _blockIndexLookup.end(), -1);
+    _state.emplace_back();
 
     enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
 }
 
 void InterpretedProgramBuilder::buildFromProgram(Program& program) {
-    if (_stateP->numBlocks != 0) {
-        reset();
-    }
+    reset();
 
     std::vector<const ProgramBlock*> stack;
 
@@ -69,26 +72,27 @@ void InterpretedProgramBuilder::buildFromProgram(Program& program) {
 }
 
 void InterpretedProgramBuilder::addDataInstruction(Dir dir) {
-    MutableProgramBlock &activeBlock = _stateP->activeBlock;
+    MutableProgramBlockProps &props = _state.back().activeProps;
 
-    activeBlock.flags |= INSTRUCTION_SET_BIT;
+    props.flags |= INSTRUCTION_SET_BIT;
     switch (dir) {
         case Dir::UP:
         case Dir::DOWN:
-            activeBlock.flags |= INSTRUCTION_TYPE_BIT;
-            activeBlock.amount += 1 - (int)dir;
+            props.flags |= INSTRUCTION_TYPE_BIT;
+            props.amount += 1 - static_cast<int>(dir);
             break;
         case Dir::RIGHT:
         case Dir::LEFT:
-            activeBlock.flags &= ~INSTRUCTION_TYPE_BIT;
-            activeBlock.amount += 2 - (int)dir;
+            props.flags &= ~INSTRUCTION_TYPE_BIT;
+            props.amount += 2 - static_cast<int>(dir);
             break;
     }
 }
 
 const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program) {
-    ProgramBlock *block = _blocks + _stateP->activeBlockIndex;
-    MutableProgramBlock &activeBlock = _stateP->activeBlock;
+    ProgramStack &stateP = _state.back();
+    ProgramBlock *block = stateP.activeBlock;
+    MutableProgramBlockProps &props = stateP.activeProps;
 
     ProgramPointer pp = getStartProgramPointer(block, program);
     TurnDirection td = turnDirectionForBlock(block);
@@ -102,7 +106,7 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
 
             switch (ins) {
                 case Ins::DONE:
-                    activeBlock.numSteps++;
+                    props.numSteps++;
                     return finalizeExitBlock();
                 case Ins::UNSET:
                     return nullptr;
@@ -112,7 +116,7 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
                     addDataInstruction(pp.dir);
                     break;
                 case Ins::TURN:
-                    if (activeBlock.flags & INSTRUCTION_SET_BIT) {
+                    if (props.flags & INSTRUCTION_SET_BIT) {
                         return finalizeBlock(pp.p);
                     } else {
                         if (td == TurnDirection::COUNTERCLOCKWISE) {
@@ -125,67 +129,65 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
         } while (ins == Ins::TURN);
 
         pp.p = ip;
-    } while (activeBlock.numSteps++ < 127);
+    } while (props.numSteps++ < 127);
 
     return finalizeHangBlock();
 }
 
-void InterpretedProgramBuilder::checkState() {
-    for (int i = 0; i < _stateP->numBlocks; i++) {
-        ProgramBlock* block = _blocks + i;
-
-        if (block->isFinalized()) {
-            if (
-                (block->nonZeroBlock() - _blocks) >= _stateP->numBlocks ||
-                (block->zeroBlock() - _blocks) >= _stateP->numBlocks
-            ) {
-                dump();
-                assert(false);
-            }
-        }
-    }
-}
+//void InterpretedProgramBuilder::checkState() {
+//    ProgramStack &stateP = _state.back();
+//    for (int i = 0; i < stateP.numBlocks; i++) {
+//        ProgramBlock* block = &_blocks[i];
+//
+//        if (block->isFinalized()) {
+//            if (
+//                (block->nonZeroBlock() - _blocks.data()) >= stateP.numBlocks ||
+//                (block->zeroBlock() - _blocks.data()) >= stateP.numBlocks
+//            ) {
+//                dump();
+//                assert(false);
+//            }
+//        }
+//    }
+//}
 
 void InterpretedProgramBuilder::push() {
-    ProgramStack* oldStateP = _stateP++;
-
-    assert(_stateP < (_state + maxProgramStackFrames));
-
-    // Copy state
-    *_stateP = *oldStateP;
+    _state.emplace_back(_activatedStack.size(), _finalizedStack.size());
 
 //    checkState();
 }
 
 void InterpretedProgramBuilder::pop() {
-    assert(_stateP > _state);
-
     // Pop state from stack
-    ProgramStack* oldStateP = _stateP--;
+    ProgramStack &stateP = _state.back();
 
-    // Remove entries to blocks that do not exist anymore from look-up
-    for (int i = oldStateP->numBlocks; --i >= _stateP->numBlocks; ) {
-        _blockIndexLookup[ _blocks[i].getStartIndex() ] = -1;
+    // Remove activated blocks
+    while (_activatedStack.size() > stateP.numActivatedAtStart) {
+        _blockIndexLookup[_activatedStack.back()->getStartIndex()] = -1;
+        _activatedStack.pop_back();
     }
 
     // Reset blocks that are not finalized anymore
-    for (int i = oldStateP->numFinalizedBlocks; --i >= _stateP->numFinalizedBlocks; ) {
-        _blocks[ _finalizedStack[i] ].reset();
+    while (_finalizedStack.size() > stateP.numFinalizedAtStart) {
+        _finalizedStack.back()->reset();
+        _finalizedStack.pop_back();
     }
+
+    _state.pop_back();
 
 //    checkState();
 }
 
 InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(const ProgramBlock* block) {
     int val = block->getStartIndex() >> 1;
-    int8_t col = val % maxWidth;
-    int8_t row = (val - col) / maxWidth;
+    int8_t col = val % maxProgramSize;
+    int8_t row = (val - col) / maxProgramSize;
 
     return InstructionPointer { .col = col, .row = row };
 }
 
 TurnDirection InterpretedProgramBuilder::turnDirectionForBlock(const ProgramBlock* block) {
-    return (TurnDirection)(block->getStartIndex() & 0x01);
+    return static_cast<TurnDirection>(block->getStartIndex() & 0x01);
 }
 
 ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(const ProgramBlock* block,
@@ -197,11 +199,11 @@ ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(const ProgramBl
         pp.dir = Dir::UP;
     } else {
         pp.p = startInstructionForBlock(block);
-        pp.dir = (Dir)0;
+        pp.dir = static_cast<Dir>(0);
 
         // Find a TURN
         while (program.getInstruction(nextInstructionPointer(pp)) != Ins::TURN) {
-            pp.dir = (Dir)((int)pp.dir + 1);
+            pp.dir = static_cast<Dir>(static_cast<int>(pp.dir) + 1);
         }
     }
 
@@ -209,65 +211,49 @@ ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(const ProgramBl
 }
 
 ProgramBlock* InterpretedProgramBuilder::getBlock(InstructionPointer insP, TurnDirection turn) {
-    int lookupIndex = ((insP.col + insP.row * maxWidth) << 1) + (int)turn;
-    int blockIndex = _blockIndexLookup[lookupIndex];
-
-    // Block already exists for this starting point
-    if (blockIndex >= 0) {
-        return _blocks + blockIndex;
-    }
-
-    // Allocate block
-    ProgramBlock* block = _blocks + _stateP->numBlocks++;
-    _blockIndexLookup[lookupIndex] = (int)(block - _blocks);
-
-    // Initialize it
-    block->init(lookupIndex);
-
-//    checkState();
-
-    return block;
+    int lookupIndex = ((insP.col + insP.row * maxProgramSize) << 1) + static_cast<int>(turn);
+    return &_blocks[lookupIndex];
 }
 
 bool InterpretedProgramBuilder::isInstructionSet() {
-    return (_stateP->activeBlock.flags & INSTRUCTION_SET_BIT) != 0;
+    return (_state.back().activeProps.flags & INSTRUCTION_SET_BIT) != 0;
 }
 
 bool InterpretedProgramBuilder::isDeltaInstruction() {
     assert(isInstructionSet());
-    return (_stateP->activeBlock.flags & INSTRUCTION_TYPE_BIT) != 0;
+    return (_state.back().activeProps.flags & INSTRUCTION_TYPE_BIT) != 0;
 }
 
 int InterpretedProgramBuilder::getAmount() {
-    return _stateP->activeBlock.amount;
+    return _state.back().activeProps.amount;
 }
 
 int InterpretedProgramBuilder::getNumSteps() {
-    return _stateP->activeBlock.numSteps;
+    return _state.back().activeProps.numSteps;
 }
 
 const ProgramBlock* InterpretedProgramBuilder::finalizeExitBlock() {
-    ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
+    ProgramBlock* block = _state.back().activeBlock;
     assert( !block->isFinalized() );
 
     block->finalizeExit(getNumSteps());
-    _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
+    _finalizedStack.push_back(block);
 
     return block;
 }
 
 const ProgramBlock* InterpretedProgramBuilder::finalizeHangBlock() {
-    ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
+    ProgramBlock* block = _state.back().activeBlock;
     assert( !block->isFinalized() );
 
     block->finalizeHang();
-    _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
+    _finalizedStack.push_back(block);
 
     return block;
 }
 
 const ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer endP) {
-    ProgramBlock* block = &_blocks[_stateP->activeBlockIndex];
+    ProgramBlock* block = _state.back().activeBlock;
     assert( !block->isFinalized() );
 
     ProgramBlock* zeroBlock = nullptr;
@@ -284,7 +270,7 @@ const ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer 
     ProgramBlock* nonZeroBlock = getBlock(endP, TurnDirection::CLOCKWISE);
 
     block->finalize(isDeltaInstruction(), getAmount(), getNumSteps(), zeroBlock, nonZeroBlock);
-    _finalizedStack[ _stateP->numFinalizedBlocks++ ] = (int)(block - _blocks);
+    _finalizedStack.push_back(block);
 
 //    checkState();
 
@@ -292,13 +278,14 @@ const ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer 
 }
 
 const ProgramBlock* InterpretedProgramBuilder::enterBlock(const ProgramBlock* block) {
-    _stateP->activeBlockIndex = (int)(block - _blocks);
+    ProgramStack &stateP = _state.back();
+    stateP.activeBlock = &_blocks[block->getStartIndex()]; // Look-up non-const instance
 
     if (!block->isFinalized()) {
         // Reset state to enable construction (or stepping through) this block
-        _stateP->activeBlock.flags = 0;
-        _stateP->activeBlock.amount = 0;
-        _stateP->activeBlock.numSteps = 0;
+        stateP.activeProps.flags = 0;
+        stateP.activeProps.amount = 0;
+        stateP.activeProps.numSteps = 0;
 
         // Return null to indicate that block cannot yet be used
         return nullptr;

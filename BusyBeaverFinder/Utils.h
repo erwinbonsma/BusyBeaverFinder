@@ -93,6 +93,17 @@ public:
 
 std::ostream &operator<<(std::ostream &os, const LogHistogram &h);
 
+template<typename T, std::size_t N, std::size_t... I>
+constexpr auto create_indexed_array_impl(std::index_sequence<I...>) {
+    return std::array<T, N>{ {I...} };
+}
+
+// Function that creates an array where the element at index I of type T is constructed using T(I)
+template<typename T, std::size_t N>
+constexpr auto create_indexed_array() {
+    return create_indexed_array_impl<T, N>(std::make_index_sequence<N>{});
+}
+
 template <class T>
 class ProxyIterator {
 private:

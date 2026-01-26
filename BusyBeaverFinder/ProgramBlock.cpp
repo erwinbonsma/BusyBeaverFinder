@@ -8,14 +8,10 @@
 
 #include "ProgramBlock.h"
 
-ProgramBlock::ProgramBlock() {
-}
-
-void ProgramBlock::init(int startIndex) {
+ProgramBlock::ProgramBlock(int startIndex) {
     _startIndex = startIndex;
     _isFinalized = false;
     _interruptRun = true;
-    _entries.clear();
     _zeroBlock = nullptr;
     _nonZeroBlock = nullptr;
 }
@@ -25,15 +21,14 @@ void ProgramBlock::reset() {
     _interruptRun = true;
 
     // Unregister the block as entry for its continuation blocks
-    ProgramBlock* check;
     if (_nonZeroBlock != nullptr) {
-        check = _nonZeroBlock->popEntry();
+        ProgramBlock* check = _nonZeroBlock->popEntry();
         assert(check == this);
         _nonZeroBlock = nullptr;
     }
 
     if (_zeroBlock != nullptr) {
-        check = _zeroBlock->popEntry();
+        ProgramBlock* check = _zeroBlock->popEntry();
         assert(check == this);
         _zeroBlock = nullptr;
     }

@@ -32,9 +32,7 @@ class ProgramBlock {
     int _numSteps;
 
 public:
-    ProgramBlock();
-
-    void init(int startIndex);
+    ProgramBlock(int startIndex);
     void reset();
 
     void finalizeHang();

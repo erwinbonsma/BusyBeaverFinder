@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 
-#include "Consts.h"
 #include "Types.h"
 
 struct ProgramSize {
