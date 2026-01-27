@@ -8,17 +8,18 @@
 
 #include "catch.hpp"
 
+#include "Utils.h"
 #include "HangDetector.h"
 #include "ProgramBlock.h"
 #include "MetaLoopAnalysis.h"
 
 #include "RunUntilMetaLoop.h"
 
-const int dummySteps = 1;
-const int maxSequenceLen = 20;
+constexpr int dummySteps = 1;
+constexpr int maxSequenceLen = 20;
 
-const bool INC = true;
-const bool MOV = false;
+constexpr bool INC = true;
+constexpr bool MOV = false;
 
 
 // Programs that end up in a permanent meta-loop
@@ -26,10 +27,8 @@ TEST_CASE("Meta-loop (positive)", "[meta-loop-analysis][hang]") {
     HangExecutor hangExecutor(1000, 20000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor, 6));
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
 
     MetaLoopAnalysis mla;
@@ -474,10 +473,8 @@ TEST_CASE("Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][c
     hangExecutor.setMaxSteps(10000000);
     hangExecutor.addHangDetector(std::make_shared<RunUntilMetaLoop>(hangExecutor));
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
 
     MetaLoopAnalysis mla;
@@ -550,10 +547,8 @@ TEST_CASE("Meta-loop (temporary, completion)", "[meta-loop-analysis][negative][c
 TEST_CASE( "Meta-loop (temporary, hang)", "[meta-loop-analysis][negative][hang]") {
     HangExecutor hangExecutor(10000, 1'000'000);
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
 
     MetaLoopAnalysis mla;

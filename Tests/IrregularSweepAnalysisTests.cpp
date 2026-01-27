@@ -8,16 +8,17 @@
 
 #include "catch.hpp"
 
+#include "Utils.h"
 #include "MetaLoopAnalysis.h"
 #include "ProgramBlock.h"
 #include "RunUntilMetaLoop.h"
 #include "IrregularSweepHangChecker.h"
 
-const int dummySteps = 1;
-const int maxSequenceLen = 16;
+constexpr int dummySteps = 1;
+constexpr int maxSequenceLen = 16;
 
-const bool INC = true;
-const bool MOV = false;
+constexpr bool INC = true;
+constexpr bool MOV = false;
 
 // Sweep programs that may or may not hang.
 TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][irregular]") {
@@ -27,10 +28,8 @@ TEST_CASE("Hang analysis (irregular sweeps)", "[hang-analysis][sweep][blocks][ir
 
     IrregularSweepHangChecker hangChecker;
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
 
     MetaLoopAnalysis mla;

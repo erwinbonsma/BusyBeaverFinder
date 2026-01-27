@@ -35,7 +35,7 @@ void InterpretedProgramBuilder::reset() {
         pop();
     }
 
-    _state.emplace_back();
+    _state.emplace_back(0, 0);
 
     enterBlock(InstructionPointer { .col = 0, .row = 0 }, TurnDirection::COUNTERCLOCKWISE);
 }
@@ -90,9 +90,9 @@ void InterpretedProgramBuilder::addDataInstruction(Dir dir) {
 }
 
 const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program) {
-    ProgramStack &stateP = _state.back();
-    ProgramBlock *block = stateP.activeBlock;
-    MutableProgramBlockProps &props = stateP.activeProps;
+    ProgramStack &state = _state.back();
+    ProgramBlock *block = state.activeBlock;
+    MutableProgramBlockProps &props = state.activeProps;
 
     ProgramPointer pp = getStartProgramPointer(block, program);
     TurnDirection td = turnDirectionForBlock(block);
@@ -135,14 +135,14 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
 }
 
 //void InterpretedProgramBuilder::checkState() {
-//    ProgramStack &stateP = _state.back();
-//    for (int i = 0; i < stateP.numBlocks; i++) {
+//    ProgramStack &state = _state.back();
+//    for (int i = 0; i < state.numBlocks; i++) {
 //        ProgramBlock* block = &_blocks[i];
 //
 //        if (block->isFinalized()) {
 //            if (
-//                (block->nonZeroBlock() - _blocks.data()) >= stateP.numBlocks ||
-//                (block->zeroBlock() - _blocks.data()) >= stateP.numBlocks
+//                (block->nonZeroBlock() - _blocks.data()) >= state.numBlocks ||
+//                (block->zeroBlock() - _blocks.data()) >= state.numBlocks
 //            ) {
 //                dump();
 //                assert(false);
@@ -152,23 +152,25 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
 //}
 
 void InterpretedProgramBuilder::push() {
-    _state.emplace_back(_activatedStack.size(), _finalizedStack.size());
+    ProgramStack &state = _state.back();
+    _state.emplace_back(_activatedStack.size(), _finalizedStack.size(),
+                        state.activeBlock, state.activeProps);
 
 //    checkState();
 }
 
 void InterpretedProgramBuilder::pop() {
     // Pop state from stack
-    ProgramStack &stateP = _state.back();
+    ProgramStack &state = _state.back();
 
     // Remove activated blocks
-    while (_activatedStack.size() > stateP.numActivatedAtStart) {
+    while (_activatedStack.size() > state.numActivatedAtStart) {
         _blockIndexLookup[_activatedStack.back()->getStartIndex()] = -1;
         _activatedStack.pop_back();
     }
 
     // Reset blocks that are not finalized anymore
-    while (_finalizedStack.size() > stateP.numFinalizedAtStart) {
+    while (_finalizedStack.size() > state.numFinalizedAtStart) {
         _finalizedStack.back()->reset();
         _finalizedStack.pop_back();
     }
@@ -278,14 +280,14 @@ const ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer 
 }
 
 const ProgramBlock* InterpretedProgramBuilder::enterBlock(const ProgramBlock* block) {
-    ProgramStack &stateP = _state.back();
-    stateP.activeBlock = &_blocks[block->getStartIndex()]; // Look-up non-const instance
+    ProgramStack &state = _state.back();
+    state.activeBlock = &_blocks[block->getStartIndex()]; // Look-up non-const instance
 
     if (!block->isFinalized()) {
         // Reset state to enable construction (or stepping through) this block
-        stateP.activeProps.flags = 0;
-        stateP.activeProps.amount = 0;
-        stateP.activeProps.numSteps = 0;
+        state.activeProps.flags = 0;
+        state.activeProps.amount = 0;
+        state.activeProps.numSteps = 0;
 
         // Return null to indicate that block cannot yet be used
         return nullptr;

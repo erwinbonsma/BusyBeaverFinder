@@ -28,6 +28,13 @@ struct ProgramStack {
     ProgramStack(int numActivatedAtStart, int numFinalizedAtStart)
     : numActivatedAtStart(numActivatedAtStart), numFinalizedAtStart(numFinalizedAtStart) {}
 
+    ProgramStack(int numActivatedAtStart, int numFinalizedAtStart,
+                 ProgramBlock* activeBlock, MutableProgramBlockProps activeProps) :
+        numActivatedAtStart(numActivatedAtStart),
+        numFinalizedAtStart(numFinalizedAtStart),
+        activeBlock(activeBlock),
+        activeProps(activeProps) {}
+
     int numActivatedAtStart = 0;
     int numFinalizedAtStart = 0;
 

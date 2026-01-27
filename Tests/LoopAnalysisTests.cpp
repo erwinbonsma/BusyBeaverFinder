@@ -6,17 +6,16 @@
 //  Copyright © 2020 Erwin. All rights reserved.
 //
 
-#include <stdio.h>
-
 #include "catch.hpp"
 
+#include "Utils.h"
 #include "LoopAnalysis.h"
 #include "ProgramBlock.h"
 
-const int dummySteps = 1;
+constexpr int dummySteps = 1;
 
-const bool INC = true;
-const bool MOV = false;
+constexpr bool INC = true;
+constexpr bool MOV = false;
 
 TEST_CASE("Exit condition tests", "[loop-analysis]") {
     ExitCondition exitCondition;
@@ -71,13 +70,10 @@ void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, int numBlocks) {
 }
 
 TEST_CASE("Stationary loop classification tests", "[loop-analysis][stationary]") {
-    ProgramBlock exitBlock;
-    exitBlock.init(-1);
+    ProgramBlock exitBlock{-1};
 
-    ProgramBlock loopBlock[maxLoopSize];
-    for (int i = 0; i < maxLoopSize; i++) {
-        loopBlock[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxLoopSize>();
+    ProgramBlock *loopBlock = program.data();
 
     LoopAnalysis la;
 
@@ -306,13 +302,10 @@ TEST_CASE("Stationary loop classification tests", "[loop-analysis][stationary]")
 }
 
 TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]") {
-    ProgramBlock exitBlock;
-    exitBlock.init(-1);
+    ProgramBlock exitBlock{-1};
 
-    ProgramBlock loopBlock[maxLoopSize];
-    for (int i = 0; i < maxLoopSize; i++) {
-        loopBlock[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxLoopSize>();
+    ProgramBlock *loopBlock = program.data();
 
     LoopAnalysis la;
 

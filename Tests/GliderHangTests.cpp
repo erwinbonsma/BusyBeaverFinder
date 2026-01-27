@@ -8,14 +8,15 @@
 
 #include "catch.hpp"
 
+#include "Utils.h"
 #include "HangExecutor.h"
 #include "ProgramBlock.h"
 
-const int dummySteps = 1;
-const int maxSequenceLen = 24;
+constexpr int dummySteps = 1;
+constexpr int maxSequenceLen = 24;
 
-const bool INC = true;
-const bool MOV = false;
+constexpr bool INC = true;
+constexpr bool MOV = false;
 
 TEST_CASE("6x6 Glider Hang tests", "[hang][glider][6x6]") {
     HangExecutor hangExecutor(1024, 1000000);
@@ -267,10 +268,8 @@ TEST_CASE("Block-based Glider Hang Tests", "[hang][glider][blocks]") {
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addDefaultHangDetectors();
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
     exitBlock->finalizeExit(dummySteps);
 
@@ -325,10 +324,8 @@ TEST_CASE("Block-based Glider Completion Tests", "[success][glider][blocks]") {
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addDefaultHangDetectors();
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
     exitBlock->finalizeExit(dummySteps);
 

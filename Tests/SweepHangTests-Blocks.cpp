@@ -8,24 +8,23 @@
 
 #include "catch.hpp"
 
+#include "Utils.h"
 #include "HangExecutor.h"
 #include "MetaLoopHangDetector.h"
 
-const int dummySteps = 1;
-const int maxSequenceLen = 16;
+constexpr int dummySteps = 1;
+constexpr int maxSequenceLen = 16;
 
-const bool INC = true;
-const bool MOV = false;
+constexpr bool INC = true;
+constexpr bool MOV = false;
 
 TEST_CASE("Block-based Sweep Hang Tests", "[hang][sweep][blocks]") {
     HangExecutor hangExecutor(1000, 20000);
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addDefaultHangDetectors();
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
     exitBlock->finalizeExit(dummySteps);
 
@@ -235,10 +234,8 @@ TEST_CASE("Block-based Sweep Completion Tests", "[success][sweep][blocks]") {
     hangExecutor.setMaxSteps(20000);
     hangExecutor.addDefaultHangDetectors();
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
     exitBlock->finalizeExit(dummySteps);
 

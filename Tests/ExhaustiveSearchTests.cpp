@@ -19,14 +19,14 @@ TEST_CASE( "3x3 Search", "[search][3x3][exhaustive]" ) {
     tracker->setDumpSuccessStepsLimit(INT_MAX);
     searcher.attachProgressTracker(std::move(tracker));
 
-    SECTION( "Find all" ) {
+    SECTION("3x3-FindAll") {
         searcher.search();
 
         tracker = searcher.detachProgressTracker();
         REQUIRE(tracker->getMaxStepsFound() == 5);
         REQUIRE(tracker->getTotalSuccess() == 59);
     }
-    SECTION( "Find one" ) {
+    SECTION("3x3-FindOne") {
         searcher.findOne();
 
         tracker = searcher.detachProgressTracker();

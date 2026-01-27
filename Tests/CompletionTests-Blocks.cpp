@@ -8,25 +8,23 @@
 
 #include "catch.hpp"
 
+#include "Utils.h"
 #include "FastExecutor.h"
 #include "InterpretedProgram.h"
 #include "ProgramBlock.h"
-//#include "HangExecutor.h"
 
-const int dummySteps = 1;
-const int maxSequenceLen = 16;
+constexpr int dummySteps = 1;
+constexpr int maxSequenceLen = 16;
 
-const bool INC = true;
-const bool MOV = false;
+constexpr bool INC = true;
+constexpr bool MOV = false;
 
 TEST_CASE("Block-based Completion Tests", "[success][blocks][.explicit]") {
     FastExecutor hangExecutor(1024);
     hangExecutor.setMaxSteps(1000000000);
 
-    ProgramBlock block[maxSequenceLen];
-    for (int i = 0; i < maxSequenceLen; i++) {
-        block[i].init(i);
-    }
+    auto program = create_indexed_array<ProgramBlock, maxSequenceLen>();
+    ProgramBlock *block = program.data();
     ProgramBlock *exitBlock = &block[maxSequenceLen - 1];
     exitBlock->finalizeExit(dummySteps);
 
