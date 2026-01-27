@@ -69,8 +69,6 @@ class InterpretedProgramBuilder : public InterpretedProgram {
 
     void reset();
 
-//    void checkState();
-
     bool isDeltaInstruction();
 
 public:

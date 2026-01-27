@@ -134,29 +134,10 @@ const ProgramBlock* InterpretedProgramBuilder::buildActiveBlock(Program& program
     return finalizeHangBlock();
 }
 
-//void InterpretedProgramBuilder::checkState() {
-//    ProgramStack &state = _state.back();
-//    for (int i = 0; i < state.numBlocks; i++) {
-//        ProgramBlock* block = &_blocks[i];
-//
-//        if (block->isFinalized()) {
-//            if (
-//                (block->nonZeroBlock() - _blocks.data()) >= state.numBlocks ||
-//                (block->zeroBlock() - _blocks.data()) >= state.numBlocks
-//            ) {
-//                dump();
-//                assert(false);
-//            }
-//        }
-//    }
-//}
-
 void InterpretedProgramBuilder::push() {
     ProgramStack &state = _state.back();
     _state.emplace_back(_activatedStack.size(), _finalizedStack.size(),
                         state.activeBlock, state.activeProps);
-
-//    checkState();
 }
 
 void InterpretedProgramBuilder::pop() {
@@ -176,8 +157,6 @@ void InterpretedProgramBuilder::pop() {
     }
 
     _state.pop_back();
-
-//    checkState();
 }
 
 InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(const ProgramBlock* block) {
@@ -274,8 +253,6 @@ const ProgramBlock* InterpretedProgramBuilder::finalizeBlock(InstructionPointer 
     block->finalize(isDeltaInstruction(), getAmount(), getNumSteps(), zeroBlock, nonZeroBlock);
     _finalizedStack.push_back(block);
 
-//    checkState();
-
     return block;
 }
 
@@ -292,8 +269,6 @@ const ProgramBlock* InterpretedProgramBuilder::enterBlock(const ProgramBlock* bl
         // Return null to indicate that block cannot yet be used
         return nullptr;
     }
-
-//    checkState();
 
     return block;
 }
