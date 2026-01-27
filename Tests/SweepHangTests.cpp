@@ -605,7 +605,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         //
         // Furthermore, the program enters the hang meta-loop quite late. First it ends up executing
         // another sweep meta-loop, which however is not yet a hang (as this loop exits after three
-        // iterations.
+        // iterations).
         //
         //     * * *
         //   * o o _ *
@@ -617,10 +617,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
 
         REQUIRE(result == RunResult::DETECTED_HANG);
 
-        // The regular sweep detector detects it, but the irregular sweep detector (incorrectly)
-        // detects it as well. TODO: Fix
-        REQUIRE((hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP /* correct */ ||
-                 hangExecutor.detectedHangType() == HangType::IRREGULAR_SWEEP) /* incorrect */);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::REGULAR_SWEEP);
 
 //        REQUIRE(leftSweepEndType(hangExecutor) == SweepEndType::STEADY_GROWTH);
 //        REQUIRE((rightSweepEndType(hangExecutor) == SweepEndType::IRREGULAR_GROWTH);
@@ -1583,14 +1580,7 @@ TEST_CASE("6x6 Sweep Hang tests", "[hang][sweep][regular][6x6]") {
         // Finally, the transition at the right side is complex. It extends the sequence with three
         // values each visit.
         //
-        // It currently fails due to improved indirect exit detection. What happens is:
-        // a) The right sweep exits on zero, and leaves a 1 behind
-        // b) The (in-sweep) neighbour to its left is changed from a zero to a -1, a delta of -1
-        // From this it concludes that 1 is an indirect exit. This in isolation is true, however,
-        // for this program it will never happen, as the in-sweep left neighbour will always be a
-        // zero. This, however, is a bit awkward to proof.
-        //
-        // TODO: Update outdated comment
+        // This used to trip-up earlier exit detection, but not anymore.
         //
         //       *
         //   * * o _ *
