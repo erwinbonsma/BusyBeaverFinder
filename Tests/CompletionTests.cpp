@@ -62,7 +62,7 @@ TEST_CASE("6x6 Completion tests", "[success][6x6]") {
 
 TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
     HangExecutor hangExecutor(65536, 1000000);
-    hangExecutor.setMaxSteps(500000000);
+    hangExecutor.setMaxSteps(100000000);
     hangExecutor.addDefaultHangDetectors();
 
     SECTION("7x7-OldFalsePositive1") {
@@ -560,7 +560,7 @@ TEST_CASE("7x7 One-Shot Completion tests", "[success][7x7]") {
 
 TEST_CASE("7x7 One-Shot Completion tests (> 100M)", "[.explicit][success][7x7]") {
     HangExecutor hangExecutor(65536, 1000000);
-    hangExecutor.setMaxSteps(500000000);
+    hangExecutor.setMaxSteps(1000000000);
     hangExecutor.addDefaultHangDetectors();
 
     SECTION("BB 7x7 #202,750,833") {
@@ -631,5 +631,18 @@ TEST_CASE("7x7 One-Shot Completion tests (> 100M)", "[.explicit][success][7x7]")
 
         REQUIRE(result == RunResult::SUCCESS);
         REQUIRE(hangExecutor.numSteps() == 349950177);
+    }
+    SECTION("BB 7x7 #786,788,517") {
+        //     *   *
+        //     _ _ _ _ *
+        //   * o _ o _
+        //   _ o * o *
+        // * _ o o o *
+        // * _ * _ _
+        // o _ o o *
+        RunResult result = hangExecutor.execute("d/u/wC5E8ZuFbiD0W8");
+
+        REQUIRE(result == RunResult::SUCCESS);
+        REQUIRE(hangExecutor.numSteps() == 786788517);
     }
 }
