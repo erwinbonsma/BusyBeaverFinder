@@ -33,14 +33,16 @@ TEST_CASE("Executor performance tests", "[perf][.explicit]") {
         executor = std::make_unique<HangExecutor>(dataSize, maxSteps);
     }
 
-    executor->setMaxSteps(maxSteps);
+    if (executor) {
+        executor->setMaxSteps(maxSteps);
 
-    clock_t startTime = clock();
-    RunResult result = executor->execute(programBuilder);
-    REQUIRE(result == RunResult::ASSUMED_HANG);
+        clock_t startTime = clock();
+        RunResult result = executor->execute(programBuilder);
+        REQUIRE(result == RunResult::ASSUMED_HANG);
 
-    std::cout << "Executor " << name << ": "
-    << (clock() - startTime) / (double)CLOCKS_PER_SEC << std::endl;
+        std::cout << "Executor " << name << ": "
+        << (clock() - startTime) / (double)CLOCKS_PER_SEC << std::endl;
+    }
 }
 
 TEST_CASE("Program construction performance", "[perf][.explicit][program]") {
