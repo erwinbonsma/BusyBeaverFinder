@@ -107,7 +107,6 @@ void FastExecSearchRunner::run() {
         return;
     }
 
-    std::vector<Ins> resumeStack;
     std::string programSpec;
     while (getline(input, programSpec)) {
         _searcher.run(programSpec);

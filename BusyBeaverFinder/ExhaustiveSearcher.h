@@ -13,6 +13,7 @@
 
 #include "Searcher.h"
 #include "Program.h"
+#include "Resumer.h"
 
 #include "InterpretedProgramBuilder.h"
 #include "FastExecutor.h"
@@ -47,9 +48,7 @@ class ExhaustiveSearcher : public Searcher {
     // Determines when to abort the search
     SearchMode _searchMode;
 
-    std::vector<Ins>::const_iterator _resumeIns;
-    std::vector<Ins>::const_iterator _resumeEnd;
-    bool _resuming;
+    std::unique_ptr<Resumer> _resumer;
 
     TurnDirection _td;
     ProgramPointer _pp;
@@ -75,7 +74,6 @@ class ExhaustiveSearcher : public Searcher {
     void buildBlock(const ProgramBlock* block);
 
     void switchToHangExecutor();
-    void search(bool resuming);
 
 public:
     ExhaustiveSearcher(SearchSettings settings);
@@ -105,7 +103,7 @@ public:
     // Executes the program specified by the given spec until the first UNSET instruction is
     // encountered. Searches the sub-tree from that point onwards. This is mainly used to follow up
     // on late escapes.
-    void searchSubTree(std::string& programSpec);
+    void searchSubTree(const std::string& programSpec);
 
     void findOne();
     void findOne(const std::vector<Ins> &resumeFrom);

@@ -56,6 +56,8 @@
 		AA7A2DE72ADFE29900C35C07 /* MetaLoopAnalysisTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7A2DE62ADFE29900C35C07 /* MetaLoopAnalysisTests.cpp */; };
 		AA7FD29B2B8D1F2C00C1F09F /* SweepHangTests-Blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7FD29A2B8D1F2C00C1F09F /* SweepHangTests-Blocks.cpp */; };
 		AA7FD29D2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7FD29C2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp */; };
+		AA8772F32F52F07E00876379 /* Resumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F12F52F07E00876379 /* Resumer.cpp */; };
+		AA8772F42F52F07E00876379 /* Resumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F12F52F07E00876379 /* Resumer.cpp */; };
 		AA8BB52F2BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */; };
 		AA8BB5302BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
@@ -169,6 +171,8 @@
 		AA7A2DE62ADFE29900C35C07 /* MetaLoopAnalysisTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = MetaLoopAnalysisTests.cpp; sourceTree = "<group>"; };
 		AA7FD29A2B8D1F2C00C1F09F /* SweepHangTests-Blocks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "SweepHangTests-Blocks.cpp"; sourceTree = "<group>"; };
 		AA7FD29C2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "CompletionTests-Blocks.cpp"; sourceTree = "<group>"; };
+		AA8772F12F52F07E00876379 /* Resumer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Resumer.cpp; sourceTree = "<group>"; };
+		AA8772F22F52F07E00876379 /* Resumer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Resumer.h; sourceTree = "<group>"; };
 		AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RunBlockTransitions.cpp; sourceTree = "<group>"; };
 		AA8BB52E2BBAB077000F9087 /* RunBlockTransitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunBlockTransitions.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
@@ -266,6 +270,8 @@
 				AA90A5862200EB9D00242D3D /* ProgressTracker.h */,
 				AACC273A254589CF007E83C3 /* ExecutionState.cpp */,
 				AACC272B25457335007E83C3 /* ExecutionState.h */,
+				AA8772F12F52F07E00876379 /* Resumer.cpp */,
+				AA8772F22F52F07E00876379 /* Resumer.h */,
 				AADFCABB2F13B0B300FAEC89 /* Searcher.h */,
 				AADFCABC2F13F61A00FAEC89 /* Searcher.cpp */,
 				AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */,
@@ -452,6 +458,7 @@
 				AA11020C21F327F4005C67CF /* Data.cpp in Sources */,
 				AA90A58A2201052900242D3D /* Utils.cpp in Sources */,
 				AADFCAC12F158B4C00FAEC89 /* FastExecSearcher.cpp in Sources */,
+				AA8772F32F52F07E00876379 /* Resumer.cpp in Sources */,
 				AAEB55B42B15315600695567 /* HangChecker.cpp in Sources */,
 				AAEB55BC2B1D1D1F00695567 /* GliderHangChecker.cpp in Sources */,
 				AA11020821F3261F005C67CF /* Program.cpp in Sources */,
@@ -508,6 +515,7 @@
 				AA4F450C224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
 				AA7A2DE52ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
 				AA4F4503223E77350069FF36 /* PeriodicHangTests.cpp in Sources */,
+				AA8772F42F52F07E00876379 /* Resumer.cpp in Sources */,
 				AA4F44FF223E57A10069FF36 /* NoExitHangTests.cpp in Sources */,
 				AA7FD29D2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp in Sources */,
 				AADFCABA2F12DC9D00FAEC89 /* PerformanceTests.cpp in Sources */,

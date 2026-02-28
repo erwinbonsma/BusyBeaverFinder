@@ -14,8 +14,6 @@
 
 #include "Utils.h"
 
-const std::vector<Ins> emptyStack;
-
 Ins validInstructions[] = { Ins::NOOP, Ins::DATA, Ins::TURN };
 
 Ins targetStack[] = {
@@ -174,19 +172,17 @@ void ExhaustiveSearcher::buildBlock(const ProgramBlock* block) {
 }
 
 void ExhaustiveSearcher::branch() {
-    bool resuming = _resuming;
     bool abortSearch = (_searchMode == SearchMode::FIND_ONE
-                        || (_searchMode == SearchMode::SUB_TREE && resuming));
+                        || (_searchMode == SearchMode::SUB_TREE && _resumer));
     InstructionPointer ip = nextInstructionPointer(_pp);
+    Ins resumeIns = _resumer ? _resumer->popNextInstruction(ip) : Ins::UNSET;
 
     for (int i = 0; i < 3; i++) {
         Ins ins = validInstructions[i];
 
-        if (resuming) {
-            if (ins == *_resumeIns) {
-                _resumeIns++;
-
-                resuming = false; // Let search continue in FULL_TREE search mode
+        if (resumeIns != Ins::UNSET) {
+            if (ins == resumeIns) {
+                resumeIns = Ins::UNSET; // Let search continue in FULL_TREE search mode
             } else {
                 continue;
             }
@@ -220,11 +216,11 @@ void ExhaustiveSearcher::branch() {
 
 void ExhaustiveSearcher::switchToHangExecutor() {
     // The program should be resuming
-    assert(_resuming);
+    assert(_resumer);
 
     // The program should have finished resumption (otherwise the search is likely
     // wrongly configured)
-    assert(_resumeIns == _resumeEnd);
+    assert(_resumer->isDone());
 
     // We're done resuming and switching to the hang executor. Pass how many steps of
     // the current program have already been executed by the fast executor. Hang
@@ -233,7 +229,7 @@ void ExhaustiveSearcher::switchToHangExecutor() {
     _hangExecutor.setHangDetectionStart(_fastExecutor.numSteps());
     _hangExecutor.setMaxSteps(_fastExecutor.numSteps() + _settings.maxSearchSteps);
     _programExecutor = &_hangExecutor;
-    _resuming = false;
+    _resumer.reset();
 
     // TODO: Let hang executor continue from current point
     // Copy data from fast executor and only start data-undo stack from this moment
@@ -247,8 +243,8 @@ void ExhaustiveSearcher::run() {
             break;
         }
         case RunResult::PROGRAM_ERROR: {
-            if (executor == &_hangExecutor || _resuming) {
-                if (_resuming && _resumeIns == _resumeEnd) {
+            if (executor == &_hangExecutor || _resumer) {
+                if (_resumer && _resumer->isDone()) {
                     switchToHangExecutor();
                 }
 
@@ -263,7 +259,7 @@ void ExhaustiveSearcher::run() {
             break;
         }
         case RunResult::ASSUMED_HANG: {
-            if (_resuming) {
+            if (_resumer) {
                 // The fast executor finished its configured number of steps (after, presumably, it
                 // finished resuming). Switch to hang detection.
 
@@ -310,32 +306,14 @@ void ExhaustiveSearcher::run() {
     executor->pop();
 }
 
-void ExhaustiveSearcher::search(bool resuming) {
-    _resumeIns = emptyStack.cbegin();
-    _resumeEnd = emptyStack.cend();
-    _resuming = resuming;
-
-    if (resuming) {
-        _programExecutor = &_fastExecutor;
-    } else {
-        _programExecutor = &_hangExecutor;
-    }
-
-    // Note: Even though the searcher can carry out multiple searches, there is no need to reset
-    // the program executors or program builder before the search. Their state is restored when the
-    // search backtracks.
+void ExhaustiveSearcher::search() {
+    _programExecutor = &_hangExecutor;
 
     run();
 }
 
-void ExhaustiveSearcher::search() {
-    search(false);
-}
-
 void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom, int fromSteps) {
-    _resumeIns = resumeFrom.cbegin();
-    _resumeEnd = resumeFrom.cend();
-    _resuming = true;
+    _resumer = std::make_unique<ResumeFromStack>(resumeFrom);
     _fastExecutor.setMaxSteps(fromSteps ? fromSteps : _settings.maxSteps);
     _programExecutor = &_fastExecutor;
 
@@ -343,6 +321,8 @@ void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom, int fromStep
     ::dumpInstructionStack(resumeFrom);
 
     run();
+
+    assert(!_resumer);
 }
 
 void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom, int fromSteps) {
@@ -351,19 +331,16 @@ void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom, int f
     _searchMode = SearchMode::FULL_TREE;
 }
 
-void ExhaustiveSearcher::searchSubTree(std::string& programSpec) {
+void ExhaustiveSearcher::searchSubTree(const std::string& programSpec) {
     std::cout << "Resuming from: " << programSpec << std::endl;
-
-    Program zeroProgram = std::move(_program);
-    _searchMode = SearchMode::SUB_TREE;
-    _program = Program::fromString(programSpec);
-
-    _programBuilder->buildFromProgram(_program);
-
     _fastExecutor.setMaxSteps(_settings.maxSteps);
-    search(true);
+    _programExecutor = &_fastExecutor;
+    _resumer = std::make_unique<ResumeFromProgram>(programSpec);
 
-    _program = std::move(zeroProgram); // Restore empty program
+    _searchMode = SearchMode::SUB_TREE;
+
+    run();
+
     _searchMode = SearchMode::FULL_TREE;
 }
 
