@@ -34,30 +34,6 @@ enum class RunMode : int8_t {
 
 std::shared_ptr<SearchRunner> searchRunner;
 
-std::shared_ptr<SearchRunner> initSearchRunner(SearchSettings settings,
-                                               RunMode runMode,
-                                               std::string inputFile) {
-    switch (runMode) {
-        case RunMode::FULL_SEARCH:
-            return std::make_shared<OrchestratedSearchRunner>(settings);
-        case RunMode::RESUME_FROM: {
-            std::vector<Ins> resumeStack;
-
-            // Load resume stack
-            if (!loadResumeStackFromFile(inputFile, resumeStack)) {
-                std::cerr << "Failed to read resume stack from " << inputFile << std::endl;
-                exit(-1);
-            }
-            return std::make_shared<ResumeSearchRunner>(settings, resumeStack);
-        }
-        case RunMode::LATE_ESCAPE:
-            return std::make_shared<LateEscapeSearchRunner>(settings, inputFile);
-        default:
-            return nullptr;
-    }
-
-}
-
 void init(int argc, char * argv[]) {
     cxxopts::Options options("BusyBeaverFinder", "Searcher for Busy Beaver Programs");
     options.add_options()
@@ -71,8 +47,8 @@ void init(int argc, char * argv[]) {
          cxxopts::value<int>())
         ("undo-capacity", "Maximum data operations to undo", cxxopts::value<int>())
         ("run-mode", "One of: FULL, RESUME, ESCAPE, ONLYRUN", cxxopts::value<std::string>())
-        ("input-file", "File with resume stack (RESUME) or list of programs (ESCAPE, ONLYRUN)",
-         cxxopts::value<std::string>())
+        ("input-file", "File with programs (ESCAPE, ONLYRUN)", cxxopts::value<std::string>())
+        ("resume-from", "Program from which to resume the search", cxxopts::value<std::string>())
         ("t,test-hangs", "Test hang detection")
         ("dump-period", "The period of dumping basic stats", cxxopts::value<int>())
         ("dump-success-steps-limit", "The minimum number of steps for dumping successful programs",
@@ -95,7 +71,7 @@ void init(int argc, char * argv[]) {
         settings.size.height = result["h"].as<int>();
     }
 
-    RunMode runMode = RunMode::FULL_SEARCH;
+    RunMode runMode = result.count("resume-from") ? RunMode::RESUME_FROM : RunMode::FULL_SEARCH;
     if (result.count("run-mode")) {
         auto s = result["run-mode"].as<std::string>();
         if (s == "FULL") {
@@ -138,21 +114,33 @@ void init(int argc, char * argv[]) {
     if (result.count("input-file")) {
         inputFile = result["input-file"].as<std::string>();
     }
+    bool expectsInputFile = runMode == RunMode::ONLY_RUN || runMode == RunMode::LATE_ESCAPE;
     if (inputFile.empty()) {
-        if (runMode != RunMode::FULL_SEARCH) {
+        if (expectsInputFile) {
             std::cerr << "Missing input file" << std::endl;
             exit(-1);
         }
     } else {
-        if (runMode == RunMode::FULL_SEARCH) {
+        if (!expectsInputFile) {
             std::cout << "Ignoring input file" << std::endl;
         }
     }
 
-    if (runMode == RunMode::ONLY_RUN) {
-        searchRunner = std::make_shared<FastExecSearchRunner>(settings, inputFile);
-    } else {
-        searchRunner = initSearchRunner(settings, runMode, inputFile);
+    switch (runMode) {
+        case RunMode::ONLY_RUN:
+            searchRunner = std::make_shared<FastExecSearchRunner>(settings, inputFile);
+            break;
+        case RunMode::FULL_SEARCH:
+            searchRunner = std::make_shared<OrchestratedSearchRunner>(settings);
+            break;
+        case RunMode::RESUME_FROM: {
+            std::string resumeFrom = result["resume-from"].as<std::string>();
+            searchRunner = std::make_shared<ResumeSearchRunner>(settings, resumeFrom);
+            break;
+        }
+        case RunMode::LATE_ESCAPE:
+            searchRunner = std::make_shared<LateEscapeSearchRunner>(settings, inputFile);
+            break;
     }
     searchRunner->getSearcher().dumpSettings(std::cout);
 

@@ -3,7 +3,7 @@
 # Script for following up on search by chasing late escapes.
 #
 # It expects log of the search run via stdin
-# As argument it expect invocation of search, without --late-escape argument
+# As argument it expect invocation of search, without --run-mode and --inputfile arguments.
 #
 # It will generate output logs and late escape files in the current directory.
 # It will also overwrite any existing files.
@@ -30,7 +30,7 @@ while true; do
 
   echo Run ${RUN}: late escapes=${NUM_LATE_ESCAPES}
 
-  ${SEARCH_CMD} --late-escapes late-escapes-${RUN}.txt > late-escapes-${RUN}-log.txt
+  ${SEARCH_CMD} --run-mode ESCAPE --input-file late-escapes-${RUN}.txt > late-escapes-${RUN}-log.txt
   cat late-escapes-${RUN}-log.txt | grep "Best=" | tail -n1
 
   NXTRUN=$((RUN+1))

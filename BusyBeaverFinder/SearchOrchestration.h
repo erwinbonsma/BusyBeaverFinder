@@ -40,10 +40,10 @@ public:
 
 class ResumeSearchRunner : public SearchRunner {
     ExhaustiveSearcher _searcher;
-    std::vector<Ins> _resumeStack;
+    std::string _programSpec;
 public:
-    ResumeSearchRunner(SearchSettings settings, std::vector<Ins> resumeStack)
-    : _searcher(settings), _resumeStack(resumeStack) {}
+    ResumeSearchRunner(SearchSettings settings, std::string programSpec)
+    : _searcher(settings), _programSpec(programSpec) {}
 
     ExhaustiveSearcher& getSearcher() override { return _searcher; };
     void run() override;

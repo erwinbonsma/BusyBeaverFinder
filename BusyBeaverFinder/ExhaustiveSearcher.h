@@ -96,14 +96,14 @@ public:
     // Starts searching once the resume stack is empty _and_ the number of executed steps exceeds
     // fromSteps. It is an error when an unset instruction is encountered when the resume stack is
     // empty but the target step count is not yet reached.
-    void search(const std::vector<Ins> &resumeFrom, int fromSteps = 0);
+    void search(std::unique_ptr<Resumer> resumer, int fromSteps = 0);
 
     void searchSubTree(const std::vector<Ins> &resumeFrom, int fromSteps = 0);
 
     // Executes the program specified by the given spec until the first UNSET instruction is
     // encountered. Searches the sub-tree from that point onwards. This is mainly used to follow up
     // on late escapes.
-    void searchSubTree(const std::string& programSpec);
+    void searchSubTree(const std::string& programSpec, int fromSteps = 0);
 
     void findOne();
     void findOne(const std::vector<Ins> &resumeFrom);

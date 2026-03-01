@@ -312,35 +312,33 @@ void ExhaustiveSearcher::search() {
     run();
 }
 
-void ExhaustiveSearcher::search(const std::vector<Ins> &resumeFrom, int fromSteps) {
-    _resumer = std::make_unique<ResumeFromStack>(resumeFrom);
+void ExhaustiveSearcher::search(std::unique_ptr<Resumer> resumer, int fromSteps) {
+    _resumer = std::move(resumer);
     _fastExecutor.setMaxSteps(fromSteps ? fromSteps : _settings.maxSteps);
     _programExecutor = &_fastExecutor;
 
-    std::cout << "Resuming from: ";
-    ::dumpInstructionStack(resumeFrom);
-
     run();
 
-    assert(!_resumer);
+    if (_resumer) {
+        assert(_resumer->isDone());
+        _resumer.reset();
+    }
 }
 
 void ExhaustiveSearcher::searchSubTree(const std::vector<Ins> &resumeFrom, int fromSteps) {
+    std::cout << "Resuming from: ";
+    ::dumpInstructionStack(resumeFrom);
+
     _searchMode = SearchMode::SUB_TREE;
-    search(resumeFrom, fromSteps);
+    search(std::make_unique<ResumeFromStack>(resumeFrom), fromSteps);
     _searchMode = SearchMode::FULL_TREE;
 }
 
-void ExhaustiveSearcher::searchSubTree(const std::string& programSpec) {
+void ExhaustiveSearcher::searchSubTree(const std::string& programSpec, int fromSteps) {
     std::cout << "Resuming from: " << programSpec << std::endl;
-    _fastExecutor.setMaxSteps(_settings.maxSteps);
-    _programExecutor = &_fastExecutor;
-    _resumer = std::make_unique<ResumeFromProgram>(programSpec);
 
     _searchMode = SearchMode::SUB_TREE;
-
-    run();
-
+    search(std::make_unique<ResumeFromProgram>(programSpec), fromSteps);
     _searchMode = SearchMode::FULL_TREE;
 }
 
@@ -353,6 +351,6 @@ void ExhaustiveSearcher::findOne() {
 
 void ExhaustiveSearcher::findOne(const std::vector<Ins> &resumeFrom) {
     _searchMode = SearchMode::FIND_ONE;
-    search(resumeFrom);
+    search(std::make_unique<ResumeFromStack>(resumeFrom));
     _searchMode = SearchMode::FULL_TREE;
 }

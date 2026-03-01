@@ -75,7 +75,7 @@ void OrchestratedSearchRunner::run() {
 }
 
 void ResumeSearchRunner::run() {
-    _searcher.search(_resumeStack);
+    _searcher.search(std::make_unique<ResumeFromProgram>(_programSpec));
 }
 
 void LateEscapeSearchRunner::run() {
@@ -85,17 +85,15 @@ void LateEscapeSearchRunner::run() {
         return;
     }
 
-    std::vector<Ins> resumeStack;
     std::string line;
     while (getline(input, line)) {
         std::istringstream iss(line);
         int numSteps;
 
         if (iss >> numSteps) {
-            loadResumeStackFromStream(iss, resumeStack);
-            if (!resumeStack.empty()) {
-                _searcher.searchSubTree(resumeStack, numSteps - 1);
-            }
+            std::string programSpec;
+            iss >> programSpec;
+            _searcher.searchSubTree(programSpec, numSteps - 1);
         }
     }
 }
