@@ -58,6 +58,9 @@
 		AA7FD29D2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA7FD29C2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp */; };
 		AA8772F32F52F07E00876379 /* Resumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F12F52F07E00876379 /* Resumer.cpp */; };
 		AA8772F42F52F07E00876379 /* Resumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F12F52F07E00876379 /* Resumer.cpp */; };
+		AA8772F72F5620CB00876379 /* InterpretedProgramCanonizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */; };
+		AA8772F82F5620CB00876379 /* InterpretedProgramCanonizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */; };
+		AA8772FA2F5636B700876379 /* CanonizeProgramsTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F92F5636B700876379 /* CanonizeProgramsTests.cpp */; };
 		AA8BB52F2BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */; };
 		AA8BB5302BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
@@ -173,6 +176,9 @@
 		AA7FD29C2B8E6DAF00C1F09F /* CompletionTests-Blocks.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "CompletionTests-Blocks.cpp"; sourceTree = "<group>"; };
 		AA8772F12F52F07E00876379 /* Resumer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Resumer.cpp; sourceTree = "<group>"; };
 		AA8772F22F52F07E00876379 /* Resumer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Resumer.h; sourceTree = "<group>"; };
+		AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InterpretedProgramCanonizer.cpp; sourceTree = "<group>"; };
+		AA8772F62F5620CB00876379 /* InterpretedProgramCanonizer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InterpretedProgramCanonizer.h; sourceTree = "<group>"; };
+		AA8772F92F5636B700876379 /* CanonizeProgramsTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CanonizeProgramsTests.cpp; sourceTree = "<group>"; };
 		AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RunBlockTransitions.cpp; sourceTree = "<group>"; };
 		AA8BB52E2BBAB077000F9087 /* RunBlockTransitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunBlockTransitions.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
@@ -287,6 +293,8 @@
 				AACC274425458F5D007E83C3 /* InterpretedProgram.h */,
 				AA4F4509224ABF320069FF36 /* InterpretedProgramBuilder.cpp */,
 				AA4F450A224ABF320069FF36 /* InterpretedProgramBuilder.h */,
+				AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */,
+				AA8772F62F5620CB00876379 /* InterpretedProgramCanonizer.h */,
 				AAADA6D42A89111D00F1C442 /* ProgramExecutor.h */,
 				AA37E6C92295D62200117A85 /* FastExecutor.cpp */,
 				AA37E6CA2295D62200117A85 /* FastExecutor.h */,
@@ -302,6 +310,7 @@
 				AA28C09B2207393400F7EC25 /* catch.hpp */,
 				AA28C096220738F900F7EC25 /* main.cpp */,
 				AA7A2DE02ABF634200C35C07 /* ProgramTests.cpp */,
+				AA8772F92F5636B700876379 /* CanonizeProgramsTests.cpp */,
 				AA153A8F228371BA00F7B1DF /* InterpretationTests.cpp */,
 				AA28C0A7220B84BD00F7EC25 /* PeriodDetectionTests.cpp */,
 				AA0D5ADE225D1901001909AF /* RepeatDetectionTests.cpp */,
@@ -473,6 +482,7 @@
 				AA4F450F224EB8EE0069FF36 /* ExitFinder.cpp in Sources */,
 				AA1101FF21F32120005C67CF /* main.cpp in Sources */,
 				AA7A2DE42ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
+				AA8772F72F5620CB00876379 /* InterpretedProgramCanonizer.cpp in Sources */,
 				AAEB55C02B2DB32D00695567 /* SweepHangChecker.cpp in Sources */,
 				AACE84A02A87C568006341E7 /* HangExecutor.cpp in Sources */,
 				AA37E6CB2295D62200117A85 /* FastExecutor.cpp in Sources */,
@@ -511,6 +521,7 @@
 				AAEB55C12B2DB32D00695567 /* SweepHangChecker.cpp in Sources */,
 				AA2E8BA325A222CA003AD189 /* DeltaSummationTests.cpp in Sources */,
 				AA28C0A8220B84BD00F7EC25 /* PeriodDetectionTests.cpp in Sources */,
+				AA8772FA2F5636B700876379 /* CanonizeProgramsTests.cpp in Sources */,
 				AAEB55C42B2DE99600695567 /* GliderAnalysisTests.cpp in Sources */,
 				AA4F450C224ABF320069FF36 /* InterpretedProgramBuilder.cpp in Sources */,
 				AA7A2DE52ADBE96600C35C07 /* MetaLoopAnalysis.cpp in Sources */,
@@ -522,6 +533,7 @@
 				AA4F45142259E88B0069FF36 /* RunSummary.cpp in Sources */,
 				AA28C09F22073A0C00F7EC25 /* ExhaustiveSearcher.cpp in Sources */,
 				AAD5C50F2211F7140057EDBC /* SearchOrchestration.cpp in Sources */,
+				AA8772F82F5620CB00876379 /* InterpretedProgramCanonizer.cpp in Sources */,
 				AACE84A12A87C568006341E7 /* HangExecutor.cpp in Sources */,
 				AAC19FF5258F6C8400F18A7C /* SweepHangTests-7x7.cpp in Sources */,
 				AA4F4501223E76BB0069FF36 /* FailingHangTests.cpp in Sources */,
