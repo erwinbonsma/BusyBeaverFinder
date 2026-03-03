@@ -61,6 +61,13 @@
 		AA8772F72F5620CB00876379 /* InterpretedProgramCanonizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */; };
 		AA8772F82F5620CB00876379 /* InterpretedProgramCanonizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */; };
 		AA8772FA2F5636B700876379 /* CanonizeProgramsTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F92F5636B700876379 /* CanonizeProgramsTests.cpp */; };
+		AA8773062F5763B200876379 /* InterpretedProgramCanonizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */; };
+		AA8773092F5766E800876379 /* Program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA11020721F3261F005C67CF /* Program.cpp */; };
+		AA87730A2F57670200876379 /* InterpretedProgramBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4509224ABF320069FF36 /* InterpretedProgramBuilder.cpp */; };
+		AA87730B2F5767E800876379 /* ProgramBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA4F4505224967A00069FF36 /* ProgramBlock.cpp */; };
+		AA87730C2F5767FF00876379 /* InterpretedProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AACC274325458F5D007E83C3 /* InterpretedProgram.cpp */; };
+		AA87730D2F57681C00876379 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5882201052900242D3D /* Utils.cpp */; };
+		AA87730E2F5769C800876379 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8773012F5762F200876379 /* main.cpp */; };
 		AA8BB52F2BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */; };
 		AA8BB5302BBAB077000F9087 /* RunBlockTransitions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */; };
 		AA90A5842200E73400242D3D /* ExhaustiveSearcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */; };
@@ -112,6 +119,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		AA28C092220738F800F7EC25 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		AA8772FD2F5762F200876379 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -179,6 +195,8 @@
 		AA8772F52F5620CB00876379 /* InterpretedProgramCanonizer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = InterpretedProgramCanonizer.cpp; sourceTree = "<group>"; };
 		AA8772F62F5620CB00876379 /* InterpretedProgramCanonizer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InterpretedProgramCanonizer.h; sourceTree = "<group>"; };
 		AA8772F92F5636B700876379 /* CanonizeProgramsTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CanonizeProgramsTests.cpp; sourceTree = "<group>"; };
+		AA8772FF2F5762F200876379 /* Canonizer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Canonizer; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA8773012F5762F200876379 /* main.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		AA8BB52D2BBAB077000F9087 /* RunBlockTransitions.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = RunBlockTransitions.cpp; sourceTree = "<group>"; };
 		AA8BB52E2BBAB077000F9087 /* RunBlockTransitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RunBlockTransitions.h; sourceTree = "<group>"; };
 		AA90A5822200E73400242D3D /* ExhaustiveSearcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExhaustiveSearcher.cpp; sourceTree = "<group>"; };
@@ -239,6 +257,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA8772FC2F5762F200876379 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -247,6 +272,7 @@
 			children = (
 				AA1101FD21F32120005C67CF /* BusyBeaverFinder */,
 				AA28C095220738F900F7EC25 /* Tests */,
+				AA8773002F5762F200876379 /* Canonizer */,
 				AA1101FC21F32120005C67CF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -256,6 +282,7 @@
 			children = (
 				AA1101FB21F32120005C67CF /* BusyBeaverFinder */,
 				AA28C094220738F800F7EC25 /* Tests */,
+				AA8772FF2F5762F200876379 /* Canonizer */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -379,6 +406,14 @@
 			name = HangDetection;
 			sourceTree = "<group>";
 		};
+		AA8773002F5762F200876379 /* Canonizer */ = {
+			isa = PBXGroup;
+			children = (
+				AA8773012F5762F200876379 /* main.cpp */,
+			);
+			path = Canonizer;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -416,6 +451,23 @@
 			productReference = AA28C094220738F800F7EC25 /* Tests */;
 			productType = "com.apple.product-type.tool";
 		};
+		AA8772FE2F5762F200876379 /* Canonizer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA8773032F5762F200876379 /* Build configuration list for PBXNativeTarget "Canonizer" */;
+			buildPhases = (
+				AA8772FB2F5762F200876379 /* Sources */,
+				AA8772FC2F5762F200876379 /* Frameworks */,
+				AA8772FD2F5762F200876379 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Canonizer;
+			productName = Canonizer;
+			productReference = AA8772FF2F5762F200876379 /* Canonizer */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -431,6 +483,11 @@
 					};
 					AA28C093220738F800F7EC25 = {
 						CreatedOnToolsVersion = 8.0;
+						ProvisioningStyle = Automatic;
+					};
+					AA8772FE2F5762F200876379 = {
+						CreatedOnToolsVersion = 14.2;
+						DevelopmentTeam = 3Z75QZGN66;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -450,6 +507,7 @@
 			targets = (
 				AA1101FA21F32120005C67CF /* BusyBeaverFinder */,
 				AA28C093220738F800F7EC25 /* Tests */,
+				AA8772FE2F5762F200876379 /* Canonizer */,
 			);
 		};
 /* End PBXProject section */
@@ -558,6 +616,20 @@
 				AA2865B223CDF44F00F738ED /* PeriodicHangDetector.cpp in Sources */,
 				AA153A90228371BA00F7B1DF /* InterpretationTests.cpp in Sources */,
 				AAEB55C62B2DEA6500695567 /* SweepAnalysisTests.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA8772FB2F5762F200876379 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA87730B2F5767E800876379 /* ProgramBlock.cpp in Sources */,
+				AA87730C2F5767FF00876379 /* InterpretedProgram.cpp in Sources */,
+				AA8773092F5766E800876379 /* Program.cpp in Sources */,
+				AA87730D2F57681C00876379 /* Utils.cpp in Sources */,
+				AA8773062F5763B200876379 /* InterpretedProgramCanonizer.cpp in Sources */,
+				AA87730E2F5769C800876379 /* main.cpp in Sources */,
+				AA87730A2F57670200876379 /* InterpretedProgramBuilder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -722,6 +794,41 @@
 			};
 			name = Release;
 		};
+		AA8773042F5762F200876379 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3Z75QZGN66;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				MACOSX_DEPLOYMENT_TARGET = 12.7;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		AA8773052F5762F200876379 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3Z75QZGN66;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				MACOSX_DEPLOYMENT_TARGET = 12.7;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -748,6 +855,15 @@
 			buildConfigurations = (
 				AA28C098220738F900F7EC25 /* Debug */,
 				AA28C099220738F900F7EC25 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA8773032F5762F200876379 /* Build configuration list for PBXNativeTarget "Canonizer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA8773042F5762F200876379 /* Debug */,
+				AA8773052F5762F200876379 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

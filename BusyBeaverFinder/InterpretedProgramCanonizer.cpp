@@ -77,8 +77,6 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
             theirMap.insert({block->getStartIndex(), result->second});
         }
 
-
-
         if (
             block->zeroBlock() &&
             theirMap.find(block->zeroBlock()->getStartIndex()) == theirMap.end()
@@ -159,16 +157,16 @@ void InterpretedProgramCanonizer::dumpCanonicalProgram(std::ostream &os) const {
         }
         os << charForIndex(indexOf(&block));
 
+        if (!block.isFinalized()) {
+            os << "?";
+            continue;
+        }
         if (block.isExit()) {
-            os << "EXIT";
+            os << "X";
             continue;
         }
         if (block.isHang()) {
-            os << "HANG";
-            continue;
-        }
-        if (!block.isFinalized()) {
-            os << "???";
+            os << "H";
             continue;
         }
 
@@ -176,7 +174,6 @@ void InterpretedProgramCanonizer::dumpCanonicalProgram(std::ostream &os) const {
                ? (block.getInstructionAmount() > 0 ? "+" : "-")
                : (block.getInstructionAmount() > 0 ? ">" : "<"));
         os << abs(block.getInstructionAmount());
-        os << "_";
 
         auto charForBlockFn = [this](const ProgramBlock* block) {
             return block ? charForIndex(indexOf(block)) : '-';
