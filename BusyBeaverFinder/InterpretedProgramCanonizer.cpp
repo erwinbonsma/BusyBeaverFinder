@@ -27,11 +27,25 @@ int InterpretedProgramCanonizer::canonicalStartIndexForBlock(const ProgramBlock*
         return -3;
     }
 
-    return (((prog.indexOf(block->zeroBlock()) & 0xff) << 16) |
-            ((prog.indexOf(block->nonZeroBlock()) & 0xff) << 8) |
-            ((abs(block->getInstructionAmount()) & 0x3f) << 2) |
-            (block->getInstructionAmount() > 0 ? 0x2 : 0x0) |
-            (block->isDelta() ? 0x1 : 0x0));
+    int value = 0;
+    if (block->zeroBlock()) {
+        value |= prog.indexOf(block->zeroBlock()) & 0xff;
+    }
+    value <<= 8;
+
+    if (block->nonZeroBlock()) {
+        value |= prog.indexOf(block->nonZeroBlock()) & 0xff;
+    }
+    value <<= 6;
+
+    value |= abs(block->getInstructionAmount()) & 0x3f;
+    value <<= 1;
+
+    value |= ((block->getInstructionAmount() > 0) & 0x1);
+    value <<= 1;
+
+    value |= (block->isDelta() & 0x1);
+    return value;
 }
 
 InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgram& source) {
@@ -109,14 +123,17 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
             continue;
         }
 
-        int startIndex1 = srcBlock->zeroBlock()->getStartIndex();
-        int startIndex2 = srcBlock->nonZeroBlock()->getStartIndex();
+        auto getMyBlockFn = [&](const ProgramBlock* theirBlock) {
+            return (theirBlock
+                    ? &_blocks[theirMap.find(theirBlock->getStartIndex())->second]
+                    : nullptr);
+        };
 
         dstBlock->finalize(srcBlock->isDelta(),
                            srcBlock->getInstructionAmount(),
                            0,
-                           &_blocks[theirMap.find(startIndex1)->second],
-                           &_blocks[theirMap.find(startIndex2)->second]);
+                           getMyBlockFn(srcBlock->zeroBlock()),
+                           getMyBlockFn(srcBlock->nonZeroBlock()));
     }
 }
 
@@ -160,8 +177,13 @@ void InterpretedProgramCanonizer::dumpCanonicalProgram(std::ostream &os) const {
                : (block.getInstructionAmount() > 0 ? ">" : "<"));
         os << abs(block.getInstructionAmount());
         os << "_";
-        os << charForIndex(indexOf(block.zeroBlock()));
-        os << charForIndex(indexOf(block.nonZeroBlock()));
+
+        auto charForBlockFn = [this](const ProgramBlock* block) {
+            return block ? charForIndex(indexOf(block)) : '-';
+        };
+
+        os << charForBlockFn(block.zeroBlock());
+        os << charForBlockFn(block.nonZeroBlock());
     }
 }
 
