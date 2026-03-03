@@ -193,7 +193,15 @@ ProgramPointer InterpretedProgramBuilder::getStartProgramPointer(const ProgramBl
 
 ProgramBlock* InterpretedProgramBuilder::getBlock(InstructionPointer insP, TurnDirection turn) {
     int lookupIndex = ((insP.col + insP.row * maxProgramSize) << 1) + static_cast<int>(turn);
-    return &_blocks[lookupIndex];
+    ProgramBlock* block = &_blocks[lookupIndex];
+
+    if (_blockIndexLookup[block->getStartIndex()] == -1) {
+        // Block is not yet activated, so activate it
+        _blockIndexLookup[block->getStartIndex()] = static_cast<int>(_activatedStack.size());
+        _activatedStack.push_back(block);
+    }
+
+    return block;
 }
 
 bool InterpretedProgramBuilder::isInstructionSet() {

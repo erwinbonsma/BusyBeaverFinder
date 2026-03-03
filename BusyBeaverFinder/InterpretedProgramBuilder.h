@@ -58,7 +58,7 @@ class InterpretedProgramBuilder : public InterpretedProgram {
     // Stack with program blocks that have been activated (by visiting them via getBlock)
     std::vector<ProgramBlock*> _activatedStack;
 
-    // Stack with finalized rogram blocks. This is used to undo finalization on back-tracking
+    // Stack with finalized program blocks. This is used to undo finalization on back-tracking
     std::vector<ProgramBlock*> _finalizedStack;
 
     // Maintains stack of states to enable back-tracking.
