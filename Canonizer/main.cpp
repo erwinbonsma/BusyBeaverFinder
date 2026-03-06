@@ -23,6 +23,7 @@ void canonizeProgram(std::string& programSpec) {
     InterpretedProgramCanonizer canonizer {builder};
 
     std::cout << canonizer.canonicalProgramString();
+    std::cout << "\t" << canonizer.blockSizeString();
     std::cout << "\t" << programSpec << std::endl;
 }
 

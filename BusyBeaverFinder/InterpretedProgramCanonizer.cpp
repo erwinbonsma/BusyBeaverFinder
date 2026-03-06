@@ -101,9 +101,11 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
             continue;
         }
 
-        ProgramBlock* dstBlock = &_blocks[result->second];
+        AdjustableProgramBlock* dstBlock = &_blocks[result->second];
 
         if (dstBlock->isFinalized()) {
+            dstBlock->updateNumSteps(std::min(dstBlock->getNumSteps(),
+                                              srcBlock->getNumSteps()));
             continue;
         }
 
@@ -112,7 +114,7 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
         }
 
         if (srcBlock->isExit()) {
-            dstBlock->finalizeExit(0);
+            dstBlock->finalizeExit(srcBlock->getNumSteps());
             continue;
         }
 
@@ -129,7 +131,7 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
 
         dstBlock->finalize(srcBlock->isDelta(),
                            srcBlock->getInstructionAmount(),
-                           0,
+                           srcBlock->getNumSteps(),
                            getMyBlockFn(srcBlock->zeroBlock()),
                            getMyBlockFn(srcBlock->nonZeroBlock()));
     }
@@ -184,8 +186,26 @@ void InterpretedProgramCanonizer::dumpCanonicalProgram(std::ostream &os) const {
     }
 }
 
+void InterpretedProgramCanonizer::dumpBlockSizes(std::ostream &os) const {
+    bool isFirst = true;
+    for (auto& block : _blocks) {
+        if (isFirst) {
+            isFirst = false;
+        } else {
+            os << " ";
+        }
+        os << block.getNumSteps();
+    }
+}
+
 std::string InterpretedProgramCanonizer::canonicalProgramString() const {
     std::ostringstream os;
     dumpCanonicalProgram(os);
+    return os.str();
+}
+
+std::string InterpretedProgramCanonizer::blockSizeString() const {
+    std::ostringstream os;
+    dumpBlockSizes(os);
     return os.str();
 }

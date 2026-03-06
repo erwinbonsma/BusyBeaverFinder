@@ -16,7 +16,7 @@
 #include "ProgramBlock.h"
 
 class InterpretedProgramCanonizer : public InterpretedProgram {
-    std::vector<ProgramBlock> _blocks;
+    std::vector<AdjustableProgramBlock> _blocks;
 
     // Calculates a canonical start index for a block so that two blocks that behave the same (but
     // may have a different original start index and number of steps), have the same canonical
@@ -34,5 +34,7 @@ public:
     const ProgramBlock* getEntryBlock() const override { return &_blocks[0]; };
 
     void dumpCanonicalProgram(std::ostream &os) const;
+    void dumpBlockSizes(std::ostream &os) const;
     std::string canonicalProgramString() const;
+    std::string blockSizeString() const;
 };

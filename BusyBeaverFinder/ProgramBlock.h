@@ -29,6 +29,8 @@ class ProgramBlock {
     bool _interruptRun;
 
     int _instructionAmount;
+
+protected:
     int _numSteps;
 
 public:
@@ -69,6 +71,13 @@ public:
     ProgramBlock* nonZeroBlock() { return _nonZeroBlock; }
 
     void dump() const;
+};
+
+class AdjustableProgramBlock : public ProgramBlock {
+public:
+    AdjustableProgramBlock(int startIndex) : ProgramBlock(startIndex) {}
+
+    void updateNumSteps(int numSteps) { _numSteps = numSteps; }
 };
 
 std::ostream &operator<<(std::ostream &os, const ProgramBlock &pb);
