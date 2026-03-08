@@ -9,11 +9,13 @@
 
 #include <span>
 #include <iostream>
+#include <sstream>
 
 #include "ProgramBlock.h"
 
 class InterpretedProgram {
     void dumpBlock(const ProgramBlock* block, std::ostream &os) const;
+    char charForIndex(int index) const;
 
 public:
     virtual int numProgramBlocks() const = 0;
@@ -24,7 +26,12 @@ public:
 
     virtual const ProgramBlock* getEntryBlock() const = 0;
 
-    virtual void dump() const;
+    void dump() const;
+
+    void dumpShortProgram(std::ostream &os) const;
+    void dumpBlockSizes(std::ostream &os) const;
+    std::string shortProgramString() const;
+    std::string blockSizeString() const;
 };
 
 // TODO: Switch to std::span once my XCode supports this

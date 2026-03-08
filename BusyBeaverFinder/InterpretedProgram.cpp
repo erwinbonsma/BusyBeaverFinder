@@ -51,3 +51,73 @@ void InterpretedProgram::dump() const {
         std::cout << std::endl;
     }
 }
+
+
+char InterpretedProgram::charForIndex(int index) const {
+    assert(index >= 0);
+    if (index < 26) {
+        return 'a' + index;
+    }
+    index -= 26;
+    if (index < 26) {
+        return 'A' + index;
+    }
+    return '?';
+}
+
+void InterpretedProgram::dumpShortProgram(std::ostream &os) const {
+    for (int i = 0; i < numProgramBlocks(); ++i) {
+        const ProgramBlock* block = programBlockAt(i);
+        if (i != 0) {
+            os << " ";
+        }
+        os << charForIndex(indexOf(block));
+
+        if (!block->isFinalized()) {
+            os << "?";
+            continue;
+        }
+        if (block->isExit()) {
+            os << "X";
+            continue;
+        }
+        if (block->isHang()) {
+            os << "H";
+            continue;
+        }
+
+        os << (block->isDelta()
+               ? (block->getInstructionAmount() > 0 ? "+" : "-")
+               : (block->getInstructionAmount() > 0 ? ">" : "<"));
+        os << abs(block->getInstructionAmount());
+
+        auto charForBlockFn = [this](const ProgramBlock* block) {
+            return block ? charForIndex(indexOf(block)) : '-';
+        };
+
+        os << charForBlockFn(block->zeroBlock());
+        os << charForBlockFn(block->nonZeroBlock());
+    }
+}
+
+void InterpretedProgram::dumpBlockSizes(std::ostream &os) const {
+    for (int i = 0; i < numProgramBlocks(); ++i) {
+        const ProgramBlock* block = programBlockAt(i);
+        if (i != 0) {
+            os << " ";
+        }
+        os << block->getNumSteps();
+    }
+}
+
+std::string InterpretedProgram::shortProgramString() const {
+    std::ostringstream os;
+    dumpShortProgram(os);
+    return os.str();
+}
+
+std::string InterpretedProgram::blockSizeString() const {
+    std::ostringstream os;
+    dumpBlockSizes(os);
+    return os.str();
+}

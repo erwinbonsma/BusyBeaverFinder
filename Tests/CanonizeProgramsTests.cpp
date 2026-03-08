@@ -36,7 +36,7 @@ TEST_CASE("Canonize programs test", "[program][canonize]") {
         InterpretedProgramCanonizer  canonical {sourceProgram};
 
         std::string expected {"a+1bc bX c>4de d+3-e e-2bf f<3ce"};
-        REQUIRE(canonical.canonicalProgramString() == expected);
+        REQUIRE(canonical.shortProgramString() == expected);
     }
     SECTION("CanonizingCombinesExits") {
         block[0].finalize(INC,  1, dummySteps, exitBlock, block + 1); // a
@@ -49,7 +49,7 @@ TEST_CASE("Canonize programs test", "[program][canonize]") {
         InterpretedProgramCanonizer  canonical {sourceProgram};
 
         std::string expected {"a+1bc bX c<3db d-2ef e>1bd f>2cd"};
-        REQUIRE(canonical.canonicalProgramString() == expected);
+        REQUIRE(canonical.shortProgramString() == expected);
     }
     SECTION("CanonizingCombinesInstructions") {
         block[0].finalize(MOV,  1, dummySteps, block + 1, block + 2); // a
@@ -62,6 +62,6 @@ TEST_CASE("Canonize programs test", "[program][canonize]") {
         InterpretedProgramCanonizer  canonical {sourceProgram};
 
         std::string expected {"a>1ba b>1ac c>2ba"};
-        REQUIRE(canonical.canonicalProgramString() == expected);
+        REQUIRE(canonical.shortProgramString() == expected);
     }
 }

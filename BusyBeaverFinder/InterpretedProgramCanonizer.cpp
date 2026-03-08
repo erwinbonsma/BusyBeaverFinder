@@ -10,9 +10,6 @@
 
 #include <map>
 #include <deque>
-#include <sstream>
-
-const char* INDEX_CHARS = "0123456789abcdefghijklmnopqrstuvwxyz";
 
 int InterpretedProgramCanonizer::canonicalStartIndexForBlock(const ProgramBlock* block,
                                                              const InterpretedProgram& prog) const
@@ -135,77 +132,4 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
                            getMyBlockFn(srcBlock->zeroBlock()),
                            getMyBlockFn(srcBlock->nonZeroBlock()));
     }
-}
-
-char InterpretedProgramCanonizer::charForIndex(int index) const {
-    assert(index >= 0);
-    if (index < 26) {
-        return 'a' + index;
-    }
-    index -= 26;
-    if (index < 26) {
-        return 'A' + index;
-    }
-    return '?';
-}
-
-void InterpretedProgramCanonizer::dumpCanonicalProgram(std::ostream &os) const {
-    bool isFirst = true;
-    for (auto& block : _blocks) {
-        if (isFirst) {
-            isFirst = false;
-        } else {
-            os << " ";
-        }
-        os << charForIndex(indexOf(&block));
-
-        if (!block.isFinalized()) {
-            os << "?";
-            continue;
-        }
-        if (block.isExit()) {
-            os << "X";
-            continue;
-        }
-        if (block.isHang()) {
-            os << "H";
-            continue;
-        }
-
-        os << (block.isDelta()
-               ? (block.getInstructionAmount() > 0 ? "+" : "-")
-               : (block.getInstructionAmount() > 0 ? ">" : "<"));
-        os << abs(block.getInstructionAmount());
-
-        auto charForBlockFn = [this](const ProgramBlock* block) {
-            return block ? charForIndex(indexOf(block)) : '-';
-        };
-
-        os << charForBlockFn(block.zeroBlock());
-        os << charForBlockFn(block.nonZeroBlock());
-    }
-}
-
-void InterpretedProgramCanonizer::dumpBlockSizes(std::ostream &os) const {
-    bool isFirst = true;
-    for (auto& block : _blocks) {
-        if (isFirst) {
-            isFirst = false;
-        } else {
-            os << " ";
-        }
-        os << block.getNumSteps();
-    }
-}
-
-std::string InterpretedProgramCanonizer::canonicalProgramString() const {
-    std::ostringstream os;
-    dumpCanonicalProgram(os);
-    return os.str();
-}
-
-std::string InterpretedProgramCanonizer::blockSizeString() const {
-    std::ostringstream os;
-    dumpBlockSizes(os);
-    return os.str();
 }

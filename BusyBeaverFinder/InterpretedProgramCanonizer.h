@@ -24,17 +24,10 @@ class InterpretedProgramCanonizer : public InterpretedProgram {
     int canonicalStartIndexForBlock(const ProgramBlock* block,
                                     const InterpretedProgram& source) const;
 
-    char charForIndex(int index) const;
-
 public:
     InterpretedProgramCanonizer(const InterpretedProgram& source);
 
     int numProgramBlocks() const override { return static_cast<int>(_blocks.size()); };
     const ProgramBlock* programBlockAt(int index) const override { return &_blocks[index]; };
     const ProgramBlock* getEntryBlock() const override { return &_blocks[0]; };
-
-    void dumpCanonicalProgram(std::ostream &os) const;
-    void dumpBlockSizes(std::ostream &os) const;
-    std::string canonicalProgramString() const;
-    std::string blockSizeString() const;
 };
