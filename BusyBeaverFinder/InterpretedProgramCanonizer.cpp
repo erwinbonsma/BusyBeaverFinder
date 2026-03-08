@@ -139,12 +139,12 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
 
 char InterpretedProgramCanonizer::charForIndex(int index) const {
     assert(index >= 0);
-    if (index < 10) {
-        return '0' + index;
-    }
-    index -= 10;
     if (index < 26) {
         return 'a' + index;
+    }
+    index -= 26;
+    if (index < 26) {
+        return 'A' + index;
     }
     return '?';
 }
