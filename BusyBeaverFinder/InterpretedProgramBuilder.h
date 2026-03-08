@@ -86,8 +86,6 @@ public:
     int numProgramBlocks() const override { return static_cast<int>(_activatedStack.size()); };
     const ProgramBlock* programBlockAt(int index) const override { return _activatedStack[index]; };
 
-    const ProgramBlock* getEntryBlock() const override { return &_blocks[0]; }
-
     //---------------------------------------------------------------------------------------------
     // Methods to update the program as the search progresses
 

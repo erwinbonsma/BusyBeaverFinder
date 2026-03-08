@@ -7,15 +7,19 @@
 //
 #pragma once
 
-#include <span>
 #include <iostream>
 #include <sstream>
+#include <deque>
+#include <vector>
 
 #include "ProgramBlock.h"
 
 class InterpretedProgram {
     void dumpBlock(const ProgramBlock* block, std::ostream &os) const;
+
+protected:
     char charForIndex(int index) const;
+    int indexForChar(char ch) const;
 
 public:
     virtual int numProgramBlocks() const = 0;
@@ -24,7 +28,7 @@ public:
         return (int)(block - getEntryBlock());
     };
 
-    virtual const ProgramBlock* getEntryBlock() const = 0;
+    const ProgramBlock* getEntryBlock() const { return programBlockAt(0); };
 
     void dump() const;
 
@@ -45,5 +49,17 @@ public:
 
     int numProgramBlocks() const override { return _numBlocks; }
     const ProgramBlock* programBlockAt(int index) const override { return _blocks + index; }
-    const ProgramBlock* getEntryBlock() const override { return _blocks; }
+};
+
+class InterpretedProgramFromString : public InterpretedProgram {
+    std::vector<ProgramBlock> _blocks;
+
+    std::deque<int> sizesFromString(std::string& sizes);
+    ProgramBlock* blockForChar(char ch);
+    void finalizeBlock(std::string& blockSpec, int numSteps);
+public:
+    InterpretedProgramFromString(std::string& program, std::string& sizes);
+
+    int numProgramBlocks() const override { return static_cast<int>(_blocks.size()); }
+    const ProgramBlock* programBlockAt(int index) const override { return &_blocks[index]; }
 };

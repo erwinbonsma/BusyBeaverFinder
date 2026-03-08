@@ -29,5 +29,4 @@ public:
 
     int numProgramBlocks() const override { return static_cast<int>(_blocks.size()); };
     const ProgramBlock* programBlockAt(int index) const override { return &_blocks[index]; };
-    const ProgramBlock* getEntryBlock() const override { return &_blocks[0]; };
 };
