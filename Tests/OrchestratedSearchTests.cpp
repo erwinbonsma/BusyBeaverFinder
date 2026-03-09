@@ -50,7 +50,7 @@ TEST_CASE("6x6 OrchestratedSearch", "[search][6x6][orchestrated][.explicit]") {
         runner.run();
 
         tracker = runner.getSearcher().detachProgressTracker();
-        tracker->dumpFinalStats();
+        tracker->dumpStats();
 
         REQUIRE(tracker->getMaxStepsFound() == 573);
         REQUIRE(tracker->getTotalSuccess() == 6475715);

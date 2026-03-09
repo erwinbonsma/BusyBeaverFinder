@@ -14,17 +14,19 @@
 #include "InterpretedProgramBuilder.h"
 
 class FastExecSearcher : public Searcher {
-    int _dataSize;
+    BaseSearchSettings _settings;
     FastExecutor _executor;
-    std::shared_ptr<InterpretedProgramBuilder> _interpretedProgram;
+    std::string _programSpec;
+    std::shared_ptr<InterpretedProgram> _interpretedProgram;
 
     int _totalRuns {};
 public:
     FastExecSearcher(BaseSearchSettings settings);
 
+    const std::string getProgramSpec() const override { return _programSpec; };
     int getNumSteps() const override { return _executor.numSteps(); };
 
-    void run(std::string& programSpec);
+    void run(const std::string& programSpec, std::shared_ptr<InterpretedProgram> program);
 
     void dumpSettings(std::ostream &os) const override;
     void dumpSearchProgress(std::ostream &os) const override;

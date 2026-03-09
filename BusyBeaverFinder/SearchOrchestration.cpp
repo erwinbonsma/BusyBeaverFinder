@@ -28,7 +28,7 @@ void OrchestratedSearchRunner::addInstructionsUntilTurn(std::vector<Ins> &stack,
 }
 
 void OrchestratedSearchRunner::run() {
-    auto size = _searcher.getProgram().getSize();
+    auto size = _searcher.getProgramSize();
     std::vector<Ins> resumeStack;
 
     // Only the number of DATA instructions before the first TURN matters, not their position, as
@@ -105,8 +105,28 @@ void FastExecSearchRunner::run() {
         return;
     }
 
-    std::string programSpec;
-    while (getline(input, programSpec)) {
-        _searcher.run(programSpec);
+    std::string line;
+    while (getline(input, line)) {
+        runProgram(line);
     }
+}
+
+void FastExecSearchRunner_PlainProgram::runProgram(const std::string& programSpec) {
+    _program = Program::fromString(programSpec);
+
+    _builder->buildFromProgram(_program);
+
+    _searcher.run(programSpec, _builder);
+}
+
+void FastExecSearchRunner_InterpretedProgram::runProgram(const std::string& line) {
+    // TODO: Split tab-separated line into:
+    std::string programId;
+    std::string interpretedProgramSpec;
+    std::string blockSizes;
+
+    auto program = std::make_shared<InterpretedProgramFromString>(interpretedProgramSpec,
+                                                                  blockSizes);
+
+    _searcher.run(programId, program);
 }

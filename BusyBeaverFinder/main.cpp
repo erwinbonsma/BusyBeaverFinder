@@ -128,7 +128,8 @@ void init(int argc, char * argv[]) {
 
     switch (runMode) {
         case RunMode::ONLY_RUN:
-            searchRunner = std::make_shared<FastExecSearchRunner>(settings, inputFile);
+            // TODO: Scan first line of input file and create correct FastExecSearchRunner subclass
+            searchRunner = std::make_shared<FastExecSearchRunner_PlainProgram>(settings, inputFile);
             break;
         case RunMode::FULL_SEARCH:
             searchRunner = std::make_shared<OrchestratedSearchRunner>(settings);
@@ -169,7 +170,7 @@ int main(int argc, char * argv[]) {
     searchRunner->run();
 
     auto tracker = searchRunner->detachProgressTracker();
-    tracker->dumpFinalStats();
+    tracker->dumpStats();
 
     return 0;
 }

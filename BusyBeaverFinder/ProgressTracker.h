@@ -8,11 +8,11 @@
 #pragma once
 
 #include <time.h>
+#include <string>
 #include <memory>
 #include <vector>
 
 #include "Utils.h"
-#include "Program.h"
 
 class Searcher;
 class HangDetector;
@@ -47,7 +47,7 @@ class ProgressTracker {
     HangType _detectedHang = HangType::UNDETECTED;
 
     int _maxStepsSofar = 0;
-    Program _bestProgram;
+    std::string _bestProgramSpec;
 
     // Hang detector with details of the last detected specialized hang (i.e. hang that was
     // detected by a HangDetector).
@@ -97,5 +97,4 @@ public:
     void dumpStats();
     void dumpHangStats();
     void dumpRunLengths();
-    void dumpFinalStats();
 };

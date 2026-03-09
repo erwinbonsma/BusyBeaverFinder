@@ -9,21 +9,18 @@
 #include "FastExecSearcher.h"
 
 FastExecSearcher::FastExecSearcher(BaseSearchSettings settings) :
-    Searcher(settings.size),
-    _dataSize(settings.dataSize),
-    _executor(settings.dataSize),
-    _interpretedProgram(std::make_shared<InterpretedProgramBuilder>())
+    _settings(settings),
+    _executor(settings.dataSize)
 {
     _executor.setMaxSteps(settings.maxSteps);
 }
 
-void FastExecSearcher::run(std::string& programSpec) {
+void FastExecSearcher::run(const std::string& programSpec,
+                           std::shared_ptr<InterpretedProgram> program) {
     _totalRuns++;
 
-    // TODO: Avoid re-allocating program
-    _program = Program::fromString(programSpec);
-
-    _interpretedProgram->buildFromProgram(_program);
+    _programSpec = programSpec;
+    _interpretedProgram = program;
 
     RunResult result = _executor.execute(_interpretedProgram);
     _executor.pop();
@@ -49,9 +46,9 @@ void FastExecSearcher::run(std::string& programSpec) {
 
 void FastExecSearcher::dumpSettings(std::ostream &os) const {
     os
-    << "Size = " << _program.getSize()
-    << ", DataSize = " << _dataSize
-    << ", MaxSteps = " << _executor.getMaxSteps()
+    << "Size = " << _settings.size
+    << ", DataSize = " << _settings.dataSize
+    << ", MaxSteps = " << _settings.maxSteps
     << std::endl;
 }
 

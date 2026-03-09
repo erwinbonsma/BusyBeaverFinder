@@ -44,6 +44,7 @@ struct SearchSettings : public BaseSearchSettings {
 
 class ExhaustiveSearcher : public Searcher {
     SearchSettings _settings;
+    Program _program;
 
     // Determines when to abort the search
     SearchMode _searchMode;
@@ -80,10 +81,12 @@ public:
 
     bool getHangDetectionTestMode() const { return _settings.testHangDetection; }
 
+    const std::string getProgramSpec() const override { return _program.toString(); };
     std::shared_ptr<const InterpretedProgram> getInterpretedProgram() const {
         return _programBuilder;
     }
 
+    ProgramSize getProgramSize() const { return _settings.size; }
     int getNumSteps() const override { return _programExecutor->numSteps(); }
     const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 

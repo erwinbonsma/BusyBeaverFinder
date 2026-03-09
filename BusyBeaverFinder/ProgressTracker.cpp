@@ -40,7 +40,7 @@ void ProgressTracker::reportDone(int totalSteps) {
 
     if (totalSteps > _dumpSuccessStepsLimit) {
         std::cout << "SUC " << totalSteps
-        << " " << _searcher->getProgram().toString() << std::endl;
+        << " " << _searcher->getProgramSpec() << std::endl;
     }
 
     if (_detectedHang != HangType::UNDETECTED) {
@@ -48,14 +48,14 @@ void ProgressTracker::reportDone(int totalSteps) {
         _totalFaultyHangs++;
 
         std::cout << "False positive, type = " << (int)_detectedHang << ", steps = " << totalSteps
-        << ": " << _searcher->getProgram().toString() << std::endl;
+        << ": " << _searcher->getProgramSpec() << std::endl;
 
         _detectedHang = HangType::UNDETECTED;
     }
 
     if (totalSteps > _maxStepsSofar) {
         _maxStepsSofar = totalSteps;
-        _searcher->getProgram().clone(_bestProgram);
+        _bestProgramSpec = _searcher->getProgramSpec();
     }
 
     report();
@@ -71,7 +71,7 @@ void ProgressTracker::reportError() {
         _totalErrorsByType[(int)HangType::UNDETECTED]++;
 
         if (_dumpUndetectedHangs) {
-            std::cout << "ERR " << _searcher->getProgram().toString() << std::endl;
+            std::cout << "ERR " << _searcher->getProgramSpec() << std::endl;
         }
     }
 
@@ -89,7 +89,7 @@ void ProgressTracker::reportAssumedHang() {
 
         if (_dumpUndetectedHangs) {
             // Dump the assumed hang
-            std::cout << "ASS " << _searcher->getProgram().toString() << std::endl;
+            std::cout << "ASS " << _searcher->getProgramSpec() << std::endl;
         }
     }
 
@@ -100,14 +100,14 @@ void ProgressTracker::reportLateEscape(int numSteps) {
     _totalLateEscapes++;
 
     std::cout << "ESC " << numSteps << " "
-    << _searcher->getProgram().toString() << std::endl;
+    << _searcher->getProgramSpec() << std::endl;
 
     if (_detectedHang != HangType::UNDETECTED) {
         // Hang incorrectly signalled
         _totalFaultyHangs++;
 
         std::cout << "False positive, type = " << (int)_detectedHang
-        << ": " << _searcher->getProgram().toString() << std::endl;
+        << ": " << _searcher->getProgramSpec() << std::endl;
 
         _detectedHang = HangType::UNDETECTED;
     }
@@ -191,7 +191,7 @@ void ProgressTracker::dumpStats() {
 
     std::cout << _timeStamp
     << ": Max steps=" << _maxStepsSofar
-    << ", Program=" << _bestProgram.toString()
+    << ", Program=" << _bestProgramSpec
     << std::endl;
 
     dumpRunLengths();
@@ -218,9 +218,4 @@ void ProgressTracker::dumpHangStats() {
     << ", GLIDER=" << _totalHangsByType[(int)HangType::APERIODIC_GLIDER]
     << ", ASUMED=" << _totalHangsByType[(int)HangType::UNDETECTED]
     << std::endl;
-}
-
-void ProgressTracker::dumpFinalStats() {
-    dumpStats();
-    _bestProgram.dump();
 }

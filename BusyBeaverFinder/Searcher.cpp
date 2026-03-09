@@ -8,8 +8,6 @@
 
 #include "Searcher.h"
 
-Searcher::Searcher(ProgramSize size) : _program(size) {}
-
 void Searcher::attachProgressTracker(std::unique_ptr<ProgressTracker> tracker) {
     _tracker = std::move(tracker);
 

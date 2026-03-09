@@ -23,17 +23,17 @@ struct BaseSearchSettings {
 
 class Searcher {
 protected:
-    Program _program;
     std::unique_ptr<ProgressTracker> _tracker;
 
 public:
-    Searcher(ProgramSize size);
-
     void attachProgressTracker(std::unique_ptr<ProgressTracker> tracker);
     std::unique_ptr<ProgressTracker> detachProgressTracker();
 
     virtual int getNumSteps() const = 0;
-    const Program& getProgram() const { return _program; }
+
+    // Returns a spec that describes the 2LBB program that is currently visited by the search. It
+    // is typically created from Program.getString() but not necessarily.
+    virtual const std::string getProgramSpec() const = 0;
 
     virtual void dumpSettings(std::ostream &os) const = 0;
     virtual void dumpSearchProgress(std::ostream &os) const = 0;

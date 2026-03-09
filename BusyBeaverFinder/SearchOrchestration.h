@@ -7,6 +7,7 @@
 //
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,8 @@
 #include "Searcher.h"
 #include "ExhaustiveSearcher.h"
 #include "FastExecSearcher.h"
+#include "InterpretedProgramBuilder.h"
+#include "Program.h"
 
 class ExhaustiveSearcher;
 
@@ -61,12 +64,35 @@ public:
 };
 
 class FastExecSearchRunner : public SearchRunner {
-    FastExecSearcher _searcher;
     std::string _programFile;
+
+protected:
+    FastExecSearcher _searcher;
+    virtual void runProgram(const std::string& line) = 0;
+
 public:
     FastExecSearchRunner(BaseSearchSettings settings, std::string programFile)
     : _searcher(settings), _programFile(programFile) {}
 
     FastExecSearcher& getSearcher() override { return _searcher; };
     void run() override;
+};
+
+// Fast execution that takes plain 2LBB programs as input
+class FastExecSearchRunner_PlainProgram : public FastExecSearchRunner {
+    Program _program;
+    std::shared_ptr<InterpretedProgramBuilder> _builder;
+
+    void runProgram(const std::string& programSpec) override;
+public:
+    FastExecSearchRunner_PlainProgram(BaseSearchSettings settings, std::string programFile)
+    : FastExecSearchRunner(settings, programFile) {}
+};
+
+// Fast execution that takes interpreted 2LBB programs as input
+class FastExecSearchRunner_InterpretedProgram : public FastExecSearchRunner {
+    void runProgram(const std::string& line) override;
+public:
+    FastExecSearchRunner_InterpretedProgram(BaseSearchSettings settings, std::string programFile)
+    : FastExecSearchRunner(settings, programFile) {}
 };
