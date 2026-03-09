@@ -19,19 +19,19 @@ class ProgramBlock {
     std::vector<ProgramBlock*> _entries;
 
     // Exits
-    ProgramBlock* _zeroBlock;
-    ProgramBlock* _nonZeroBlock;
+    ProgramBlock* _zeroBlock {};
+    ProgramBlock* _nonZeroBlock {};
 
-    bool _isFinalized;
-    bool _isDelta;
+    bool _isFinalized {};
+    bool _isDelta {};
 
     // Set to true when fast execution should halt.
-    bool _interruptRun;
+    bool _interruptRun {true};
 
-    int _instructionAmount;
+    int _instructionAmount {};
 
 protected:
-    int _numSteps;
+    int _numSteps {};
 
 public:
     ProgramBlock(int startIndex);

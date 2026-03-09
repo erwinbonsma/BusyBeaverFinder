@@ -10,10 +10,6 @@
 
 ProgramBlock::ProgramBlock(int startIndex) {
     _startIndex = startIndex;
-    _isFinalized = false;
-    _interruptRun = true;
-    _zeroBlock = nullptr;
-    _nonZeroBlock = nullptr;
 }
 
 void ProgramBlock::reset() {

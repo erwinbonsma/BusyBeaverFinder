@@ -7,6 +7,7 @@
 //
 #pragma once
 
+#include <array>
 #include <set>
 #include <string>
 #include <vector>
