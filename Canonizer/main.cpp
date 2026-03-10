@@ -14,21 +14,32 @@
 #include "InterpretedProgramCanonizer.h"
 
 
+// Can be disabled for debugging/sanity checks
+constexpr bool SKIP_CANONIZE = false;
+
+
+void outputInterpretedProgram(InterpretedProgram& program) {
+    std::cout << "\t" << program.shortProgramString();
+    std::cout << "\t" << program.blockSizeString() << std::endl;
+}
+
 void canonizeProgram(std::string& programSpec) {
     Program program = Program::fromString(programSpec);
 
     InterpretedProgramBuilder builder;
     builder.buildFromProgram(program);
 
-    InterpretedProgramCanonizer canonizer {builder};
-
-    std::cout << canonizer.shortProgramString();
-    std::cout << "\t" << canonizer.blockSizeString();
-    std::cout << "\t" << programSpec << std::endl;
+    std::cout << programSpec;
+    if (SKIP_CANONIZE) {
+        outputInterpretedProgram(builder);
+    } else {
+        InterpretedProgramCanonizer canonizer {builder};
+        outputInterpretedProgram(canonizer);
+    }
 }
 
 int main(int argc, char * argv[]) {
-    std::string programSpec{"d++vWSlUsmvlvlv1v8"};
+    std::string programSpec;
 
     while (std::getline(std::cin, programSpec)) {
         canonizeProgram(programSpec);

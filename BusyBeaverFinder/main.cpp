@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <fstream>
 
 #include "cxxopts.hpp"
 
@@ -33,6 +34,22 @@ enum class RunMode : int8_t {
 };
 
 std::shared_ptr<SearchRunner> searchRunner;
+
+bool fileContainsTabs(std::string& filepath) {
+    std::ifstream input(filepath);
+    if (!input) {
+        std::cerr << "Could not open file" << std::endl;
+        return false;
+    }
+
+    std::string line;
+    if (!getline(input, line)) {
+        std::cerr << "Could not read from file" << std::endl;
+        return false;
+    }
+
+    return line.find("\t") != std::string::npos;
+}
 
 void init(int argc, char * argv[]) {
     cxxopts::Options options("BusyBeaverFinder", "Searcher for Busy Beaver Programs");
@@ -128,8 +145,13 @@ void init(int argc, char * argv[]) {
 
     switch (runMode) {
         case RunMode::ONLY_RUN:
-            // TODO: Scan first line of input file and create correct FastExecSearchRunner subclass
-            searchRunner = std::make_shared<FastExecSearchRunner_PlainProgram>(settings, inputFile);
+            if (fileContainsTabs(inputFile)) {
+                searchRunner = std::make_shared<FastExecSearchRunner_InterpretedProgram>(settings,
+                                                                                         inputFile);
+            } else {
+                searchRunner = std::make_shared<FastExecSearchRunner_PlainProgram>(settings,
+                                                                                   inputFile);
+            }
             break;
         case RunMode::FULL_SEARCH:
             searchRunner = std::make_shared<OrchestratedSearchRunner>(settings);

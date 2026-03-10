@@ -120,10 +120,16 @@ void FastExecSearchRunner_PlainProgram::runProgram(const std::string& programSpe
 }
 
 void FastExecSearchRunner_InterpretedProgram::runProgram(const std::string& line) {
-    // TODO: Split tab-separated line into:
-    std::string programId;
-    std::string interpretedProgramSpec;
-    std::string blockSizes;
+    auto pos1 = line.find("\t");
+    assert(pos1 != std::string::npos);
+    std::string programId{line, 0, pos1};
+    auto pos2 = line.find("\t", pos1 + 1);
+    assert(pos2 != std::string::npos);
+    std::string interpretedProgramSpec{line, pos1 + 1, pos2 - pos1 - 1};
+    std::string blockSizes{line, pos2 + 1};
+
+    std::cout << "[" << programId << "][" << interpretedProgramSpec << "][" << blockSizes << "]"
+    << std::endl;
 
     auto program = std::make_shared<InterpretedProgramFromString>(interpretedProgramSpec,
                                                                   blockSizes);
