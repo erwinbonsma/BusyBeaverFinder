@@ -107,7 +107,9 @@ void FastExecSearchRunner::run() {
 
     std::string line;
     while (getline(input, line)) {
-        runProgram(line);
+        if (line.size() >= 8 && line[0] != '#') {
+            runProgram(line);
+        }
     }
 }
 
@@ -127,9 +129,6 @@ void FastExecSearchRunner_InterpretedProgram::runProgram(const std::string& line
     assert(pos2 != std::string::npos);
     std::string interpretedProgramSpec{line, pos1 + 1, pos2 - pos1 - 1};
     std::string blockSizes{line, pos2 + 1};
-
-    std::cout << "[" << programId << "][" << interpretedProgramSpec << "][" << blockSizes << "]"
-    << std::endl;
 
     auto program = std::make_shared<InterpretedProgramFromString>(interpretedProgramSpec,
                                                                   blockSizes);

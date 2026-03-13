@@ -86,7 +86,8 @@ class FastExecSearchRunner_PlainProgram : public FastExecSearchRunner {
     void runProgram(const std::string& programSpec) override;
 public:
     FastExecSearchRunner_PlainProgram(BaseSearchSettings settings, std::string programFile)
-    : FastExecSearchRunner(settings, programFile) {}
+    : FastExecSearchRunner(settings, programFile)
+    , _builder(std::make_shared<InterpretedProgramBuilder>()) {}
 };
 
 // Fast execution that takes interpreted 2LBB programs as input
