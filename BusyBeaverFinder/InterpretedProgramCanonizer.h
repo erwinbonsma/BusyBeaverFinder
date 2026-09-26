@@ -24,22 +24,28 @@ class InterpretedProgramCanonizer : public InterpretedProgram {
     int canonicalStartIndexForBlock(const ProgramBlock* block,
                                     const InterpretedProgram& source) const;
 
+    // Makes the supplied program more canonical. Occassionally, a program requires more than one
+    // canonization step before it is fully canonized. This can happen when program blocks are
+    // merged. This in turn can result in the merge of program blocks that jumped to blocks that
+    // were merged.
+    //
+    // To hide these implementation details, this constructor is not directly exposed. Instead it
+    // it exposed via "canonizeProgram" which will recursively canonize a program until the input
+    // and output are unchanged.
+    InterpretedProgramCanonizer(const InterpretedProgram& source);
+
 public:
     // Do not allow copy construction/assignment.
     // The raw pointers used in ProgramBlock do not support this.
     InterpretedProgramCanonizer(const InterpretedProgramCanonizer&) = delete;
     InterpretedProgramCanonizer& operator=(const InterpretedProgramCanonizer&) = delete;
 
-    // Move construction/assignment is allowed
+    // Move construction/assignment is allowed.
     InterpretedProgramCanonizer(InterpretedProgramCanonizer&&) noexcept = default;
     InterpretedProgramCanonizer& operator=(InterpretedProgramCanonizer&&) = default;
 
-    InterpretedProgramCanonizer(const InterpretedProgram& source);
+    static InterpretedProgramCanonizer canonizeProgram(const InterpretedProgram& source);
 
     int numProgramBlocks() const override { return static_cast<int>(_blocks.size()); };
     const ProgramBlock* programBlockAt(int index) const override { return &_blocks[index]; };
-
-    void dumpRaw() const {
-        std::cout << &_blocks[0] << std::endl;
-    }
 };

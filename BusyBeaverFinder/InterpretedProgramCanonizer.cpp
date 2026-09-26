@@ -133,3 +133,20 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
                            getMyBlockFn(srcBlock->nonZeroBlock()));
     }
 }
+
+
+InterpretedProgramCanonizer
+InterpretedProgramCanonizer::canonizeProgram(const InterpretedProgram& program) {
+    std::string specBefore = program.shortProgramString();
+
+    InterpretedProgramCanonizer canonizer {program};
+    std::string specAfter = canonizer.shortProgramString();
+
+    // Recurse if needed. Merging of duplicate blocks can make other blocks (that jumped to the
+    // merged blocks) identical and therefore can be merged as well.
+    if (specAfter != specBefore) {
+        canonizer = canonizeProgram(canonizer);
+    }
+
+    return canonizer;
+}
