@@ -25,8 +25,21 @@ class InterpretedProgramCanonizer : public InterpretedProgram {
                                     const InterpretedProgram& source) const;
 
 public:
+    // Do not allow copy construction/assignment.
+    // The raw pointers used in ProgramBlock do not support this.
+    InterpretedProgramCanonizer(const InterpretedProgramCanonizer&) = delete;
+    InterpretedProgramCanonizer& operator=(const InterpretedProgramCanonizer&) = delete;
+
+    // Move construction/assignment is allowed
+    InterpretedProgramCanonizer(InterpretedProgramCanonizer&&) noexcept = default;
+    InterpretedProgramCanonizer& operator=(InterpretedProgramCanonizer&&) = default;
+
     InterpretedProgramCanonizer(const InterpretedProgram& source);
 
     int numProgramBlocks() const override { return static_cast<int>(_blocks.size()); };
     const ProgramBlock* programBlockAt(int index) const override { return &_blocks[index]; };
+
+    void dumpRaw() const {
+        std::cout << &_blocks[0] << std::endl;
+    }
 };

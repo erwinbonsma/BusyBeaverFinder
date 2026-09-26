@@ -63,8 +63,8 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
         int startIndex = canonicalStartIndexForBlock(block, source);
         auto result = myMap.find(startIndex);
         if (result == myMap.end()) {
-            int index = static_cast<int>(_blocks.size());
             // Block does not yet exist. Add it
+            int index = static_cast<int>(_blocks.size());
             _blocks.emplace_back(startIndex);
 
             myMap.insert({startIndex, index});

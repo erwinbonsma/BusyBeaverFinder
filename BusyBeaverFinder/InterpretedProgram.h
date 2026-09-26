@@ -22,6 +22,8 @@ protected:
     int indexForChar(char ch) const;
 
 public:
+    ~InterpretedProgram() {}
+
     virtual int numProgramBlocks() const = 0;
     virtual const ProgramBlock* programBlockAt(int index) const = 0;
     virtual int indexOf(const ProgramBlock *block) const {
