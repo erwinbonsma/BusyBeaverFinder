@@ -72,7 +72,7 @@ def process(line):
     run_cmd = [bin_file]
     result = subprocess.run(run_cmd, text=True, capture_output=True)
     if result.returncode >= 0:
-        steps = result.stdout.strip().split("\t")[1].split("=")[1]
+        steps = int(result.stdout.strip().split("\t")[1].split("=")[1])
         returncode = result.returncode
     else:
         print(result)
@@ -90,7 +90,7 @@ start_time = time.time()
 with open(args.result_file, "a") as f:
     for i, line in enumerate(sys.stdin):
         program, returncode, steps = process(line)
-        print("\t".join([program, str(returncode), steps]), file=f)
+        print("\t".join([program, str(returncode), str(steps)]), file=f)
         counts[returncode] += 1
 
         if returncode == 0:
