@@ -111,6 +111,14 @@ void Transpiler::transpile(std::ostream &os) {
     os << "#import <string.h>" << std::endl;
     os << std::endl;
 
+    os << "// Error codes:" << std::endl;
+    os << "// 0 = Program terminated" << std::endl;
+    os << "// 1 = Unset instruction (late escape)" << std::endl;
+    os << "// 2 = No-instruction hang" << std::endl;
+    os << "// 3 = Assumed hang" << std::endl;
+    os << "// 4 = Exceeded data bounds" << std::endl;
+    os << std::endl;
+
     int minShift = 0;
     int maxShift = 0;
     for (int i = 0; i < _program->numProgramBlocks(); ++i) {
