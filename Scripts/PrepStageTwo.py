@@ -7,46 +7,47 @@
 # - Spec of Canonized Interpreted Program
 # - Size (in steps) of each program block
 #
-# It separates the programs in two batches. The first batch contains all
-# programs that are functionally unique (for which there is no equivalent
-# program). These are listed by their Program Spec.
+# It identifies programs that are equivalent and represents them by a program
+# with minimal step counts per instruction.
 #
-# The second batch contains a representative program for each set of equivalent
-# programs. Each line contains the following fields:
-# - Program Spec for the first program in the set. This can be used as ID to
-#   identifying the equivalence set from the logs produced by the Stage 2
-#   search. Furthermore, it enables quick inspection using the 2LBB Runner.
+# It outputs the following for sets of equivalent programs:
+# - The number of programs in the set
 # - Spec of Canonized Interpreted Program
 # - Size (in steps) of each program block. It is the minimum of the step
 #   sizes over all programs.
+#
+# When a program is unique, it outputs the following (to reduce space)
+# - The number one (as the set size)
+# - Program Spec
 
-import sys
+import fileinput
 
-combined_steps = {}
 representative = {}
-duplicates = set()
+combined_steps = {}
+counts = {}
 
-for line in sys.stdin:
+for line in fileinput.input():
     fields = line.split("\t")
     assert (len(fields) == 3)
 
     key = fields[1]
     steps = [int(step) for step in fields[2].split()]
     if key in representative:
-        duplicates.add(key)
+        counts[key] += 1
         combined_steps[key] = [
             min(a, b) for a, b in zip(combined_steps[key], steps)
         ]
     else:
-        combined_steps[key] = steps
         representative[key] = fields[0]
+        counts[key] = 1
+        combined_steps[key] = steps
 
-for key, spec in representative.items():
-    if not key in duplicates:
-        print(spec)
-for key in duplicates:
-    print("\t".join([
-        representative[key],
-        key,
-        " ".join(str(step) for step in combined_steps[key])
-    ]))
+for key, steps in combined_steps.items():
+    if counts[key] == 1:
+        print(f"1\t{representative[key]}")
+    else:
+        print("\t".join([
+            str(counts[key]),
+            key,
+            " ".join(str(step) for step in combined_steps[key]),
+        ]))
