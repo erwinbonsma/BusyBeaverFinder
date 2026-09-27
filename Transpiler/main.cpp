@@ -139,19 +139,24 @@ void Transpiler::transpile(std::ostream &os) {
     os << "\tunsigned long maxSteps = " << _maxSteps << ";" << std::endl;
     os << "\tunsigned int deltaSteps = 0;" << std::endl;
     os << "\tint errorCode = -1;" << std::endl;
-    os << "\tint data[" << dataSize << "];" << std::endl;
+    os << std::endl;
+
+    os << "\tint* data = malloc(" << dataSize << " * sizeof(int));" << std::endl;
+    os << "\tif (!data) exit(-2);" << std::endl;
+    os << std::endl;
+
     os << "\tint* dataP = &data[" << minShift * _numUnrolls + _dataSize / 2 << "];" << std::endl;
     os << "\tint* dataMinP = &data[" << minShift * _numUnrolls << "];" << std::endl;
     os << "\tint* dataMaxP = &data[" << minShift * _numUnrolls + _dataSize << "];" << std::endl;
+    os << std::endl;
+
+    os << "\tmemset(data, 0, " << dataSize << " * sizeof(int));" << std::endl;
     os << std::endl;
 
     os << "\tif (argc == 2) {" << std::endl;
     os << "\t\tchar* endp;" << std::endl;
     os << "\t\tmaxSteps = strtoul(argv[1], &endp, 10);" << std::endl;
     os << "\t}" << std::endl;
-    os << std::endl;
-
-    os << "\tmemset(data, 0, " << dataSize << " * sizeof(int));" << std::endl;
     os << std::endl;
 
     for (int i = 0; i < _numUnrolls; ++i) {
@@ -161,6 +166,7 @@ void Transpiler::transpile(std::ostream &os) {
     }
 
     os << "done:" << std::endl;
+    os << "\tfree(data);" << std::endl;
     os << "\tprintf(\"errorCode=%d\\tsteps=%lu\\n\", errorCode, numSteps);" << std::endl;
     os << "\texit(errorCode);" << std::endl;
     os << "}" << std::endl;
