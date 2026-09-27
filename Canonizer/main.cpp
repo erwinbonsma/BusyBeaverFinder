@@ -9,40 +9,54 @@
 #include <string>
 #include <iostream>
 
+#include "cxxopts.hpp"
+
 #include "Program.h"
 #include "InterpretedProgramBuilder.h"
 #include "InterpretedProgramCanonizer.h"
 
 
-// Can be disabled for debugging/sanity checks
-constexpr bool SKIP_CANONIZE = false;
-
-
 void outputInterpretedProgram(InterpretedProgram& program) {
-    std::cout << "\t" << program.shortProgramString();
-    std::cout << "\t" << program.blockSizeString() << std::endl;
 }
 
-void canonizeProgram(std::string& programSpec) {
+void canonizeProgram(std::string& programSpec, bool verbose = false) {
     Program program = Program::fromString(programSpec);
 
     InterpretedProgramBuilder builder;
     builder.buildFromProgram(program);
 
+    auto canonizer = InterpretedProgramCanonizer::canonizeProgram(builder);
+
     std::cout << programSpec;
-    if (SKIP_CANONIZE) {
-        outputInterpretedProgram(builder);
-    } else {
-        auto canonizer = InterpretedProgramCanonizer::canonizeProgram(builder);
-        outputInterpretedProgram(canonizer);
+    std::cout << "\t" << canonizer.shortProgramString();
+    std::cout << "\t" << canonizer.blockSizeString() << std::endl;
+
+    if (verbose) {
+        builder.dump();
+        canonizer.dump();
     }
 }
 
 int main(int argc, char * argv[]) {
-    std::string programSpec;
+    cxxopts::Options options("BB-Canonizer", "Canonizer for 2L-BB Programs");
+    options.add_options()
+        ("program", "Program specification", cxxopts::value<std::string>())
+        ("help", "Show help");
+    auto args = options.parse(argc, argv);
 
-    while (std::getline(std::cin, programSpec)) {
-        canonizeProgram(programSpec);
+    if (args.count("help")) {
+        std::cout << options.help({"", "Group"}) << std::endl;
+        exit(0);
+    }
+
+    std::string programSpec;
+    if (args.count("program")) {
+        programSpec = args["program"].as<std::string>();
+        canonizeProgram(programSpec, true);
+    } else {
+        while (std::getline(std::cin, programSpec)) {
+            canonizeProgram(programSpec);
+        }
     }
 
     return 0;
