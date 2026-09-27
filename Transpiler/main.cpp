@@ -76,7 +76,9 @@ void Transpiler::transpileBlock(std::ostream &os, int unrollIndex, int stepIndex
     }
 
     if (unrollIndex == 0) {
-        os << "\tif (numSteps > " << _maxSteps << ") {" << std::endl;
+        os << "\tnumSteps += deltaSteps;" << std::endl;
+        os << "\tdeltaSteps = 0;" << std::endl;
+        os << "\tif (numSteps > maxSteps) {" << std::endl;
         gotoExit(os, "\t\t", 3);
         os << "\t}" << std::endl;
 
@@ -92,7 +94,7 @@ void Transpiler::transpileBlock(std::ostream &os, int unrollIndex, int stepIndex
     os << "dataP " << (block->getInstructionAmount() > 0 ? "+" : "-");
     os << "= " << abs(block->getInstructionAmount()) << ";" << std::endl;
 
-    os << "\tnumSteps += " << block->getNumSteps() << ";" << std::endl;
+    os << "\tdeltaSteps += " << block->getNumSteps() << ";" << std::endl;
 
     int nextIter = (unrollIndex + 1) % _numUnrolls;
     os << "\tif (*dataP) {" << std::endl;
@@ -123,15 +125,23 @@ void Transpiler::transpile(std::ostream &os) {
     os << "// minShift = " << minShift << std::endl;
     os << "// maxShift = " << maxShift << std::endl;
 
-    os << "int main() {" << std::endl;
-    os << "\tunsigned int numSteps = 0;" << std::endl;
+    os << "int main(int argc, char * argv[]) {" << std::endl;
+    os << "\tunsigned long numSteps = 0;" << std::endl;
+    os << "\tunsigned long maxSteps = " << _maxSteps << ";" << std::endl;
+    os << "\tunsigned int deltaSteps = 0;" << std::endl;
     os << "\tint errorCode = -1;" << std::endl;
     os << "\tint data[" << dataSize << "];" << std::endl;
     os << "\tint* dataP = &data[" << minShift * _numUnrolls + _dataSize / 2 << "];" << std::endl;
     os << "\tint* dataMinP = &data[" << minShift * _numUnrolls << "];" << std::endl;
     os << "\tint* dataMaxP = &data[" << minShift * _numUnrolls + _dataSize << "];" << std::endl;
-
     os << std::endl;
+
+    os << "\tif (argc == 2) {" << std::endl;
+    os << "\t\tchar* endp;" << std::endl;
+    os << "\t\tmaxSteps = strtoul(argv[1], &endp, 10);" << std::endl;
+    os << "\t}" << std::endl;
+    os << std::endl;
+
     os << "\tmemset(data, 0, " << dataSize << " * sizeof(int));" << std::endl;
     os << std::endl;
 
@@ -142,7 +152,7 @@ void Transpiler::transpile(std::ostream &os) {
     }
 
     os << "done:" << std::endl;
-    os << "\tprintf(\"errorCode=%d\\tsteps=%u\\n\", errorCode, numSteps);" << std::endl;
+    os << "\tprintf(\"errorCode=%d\\tsteps=%lu\\n\", errorCode, numSteps);" << std::endl;
     os << "\texit(errorCode);" << std::endl;
     os << "}" << std::endl;
 }
