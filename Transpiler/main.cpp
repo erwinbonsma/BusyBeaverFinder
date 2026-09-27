@@ -9,6 +9,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 #include "cxxopts.hpp"
 
@@ -175,6 +176,7 @@ int main(int argc, char * argv[]) {
          cxxopts::value<std::size_t>()->default_value("1000000"))
         ("program", "Program specification", cxxopts::value<std::string>())
         ("block-sizes", "Size specification of each program block", cxxopts::value<std::string>())
+        ("outfile", "Path of output file", cxxopts::value<std::string>())
         ("help", "Show help");
     auto args = options.parse(argc, argv);
 
@@ -188,8 +190,6 @@ int main(int argc, char * argv[]) {
         exit(-1);
     }
     auto programSpec = args["program"].as<std::string>();
-    std::cout << "// Program spec: " << programSpec << std::endl;
-    std::cout << std::endl;
 
     std::shared_ptr<InterpretedProgram>  program;
     if (args.count("block-sizes")) {
@@ -212,7 +212,18 @@ int main(int argc, char * argv[]) {
     transpiler.setNumUnrolls(args["loopunrolls"].as<std::size_t>());
     transpiler.setMaxSteps(args["max-steps"].as<std::size_t>());
 
-    transpiler.transpile(std::cout);
+    {
+        std::ostream* fp = &std::cout;
+        std::ofstream fout;
+        if (args.count("outfile")) {
+            fout.open(args["outfile"].as<std::string>());
+            fp = &fout;
+        }
+
+        *fp << "// Program spec: " << programSpec << std::endl;
+        *fp << std::endl;
+        transpiler.transpile(*fp);
+    }
 
     return 0;
 }
