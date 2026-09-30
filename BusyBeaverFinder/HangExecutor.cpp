@@ -12,7 +12,7 @@
 
 #include "ProgramBlock.h"
 
-HangExecutor::HangExecutor(int dataSize, int maxHangDetectionSteps) :
+HangExecutor::HangExecutor(int dataSize, size_t maxHangDetectionSteps) :
     _hangDetectionStart(0),
     _maxHangDetectionSteps(maxHangDetectionSteps),
     _data(dataSize),
@@ -78,7 +78,7 @@ RunResult HangExecutor::executeBlock() {
     return RunResult::UNKNOWN;
 }
 
-RunResult HangExecutor::executeWithoutHangDetection(int stepLimit) {
+RunResult HangExecutor::executeWithoutHangDetection(size_t stepLimit) {
     RunResult result = RunResult::UNKNOWN;
 
     while (result == RunResult::UNKNOWN && _numSteps < stepLimit) {
@@ -88,7 +88,7 @@ RunResult HangExecutor::executeWithoutHangDetection(int stepLimit) {
     return result;
 }
 
-RunResult HangExecutor::executeWithHangDetection(int stepLimit) {
+RunResult HangExecutor::executeWithHangDetection(size_t stepLimit) {
     resetHangDetection();
 
     while (_numSteps < stepLimit) {

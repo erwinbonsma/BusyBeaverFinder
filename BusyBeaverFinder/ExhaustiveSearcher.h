@@ -87,7 +87,7 @@ public:
     }
 
     ProgramSize getProgramSize() const { return _settings.size; }
-    int getNumSteps() const override { return _programExecutor->numSteps(); }
+    size_t getNumSteps() const override { return _programExecutor->numSteps(); }
     const ProgramExecutor* getProgramExecutor() const { return _programExecutor; }
 
     //----------------------------------------------------------------------------------------------

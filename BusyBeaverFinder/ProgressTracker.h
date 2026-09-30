@@ -46,7 +46,7 @@ class ProgressTracker {
 
     HangType _detectedHang = HangType::UNDETECTED;
 
-    int _maxStepsSofar = 0;
+    size_t _maxStepsSofar = 0;
     std::string _bestProgramSpec;
 
     // Hang detector with details of the last detected specialized hang (i.e. hang that was
@@ -54,7 +54,7 @@ class ProgressTracker {
     std::shared_ptr<HangDetector> _lastDetectedHang;
 
     // Stats on hang-detection speed and effectiveness
-    int _maxStepsUntilHangDetection = 0;
+    size_t _maxStepsUntilHangDetection = 0;
 
     void report();
 
@@ -80,9 +80,9 @@ public:
 
     std::shared_ptr<HangDetector> getLastDetectedHang() const { return _lastDetectedHang; }
 
-    int getMaxStepsFound() const { return _maxStepsSofar; }
+    size_t getMaxStepsFound() const { return _maxStepsSofar; }
 
-    void reportDone(int totalSteps);
+    void reportDone(size_t totalSteps);
     void reportError();
     void reportDetectedHang(HangType hangType, bool executionWillContinue);
     void reportDetectedHang(std::shared_ptr<HangDetector> hangDetector, bool executionWillContinue);
@@ -92,7 +92,7 @@ public:
     // A "late escape" is a program that did not terminate while hang detection was enabled, but
     // whose execution escaped from its interpreted program during fast execution (at which time
     // the program cannot be expanded further).
-    void reportLateEscape(int numSteps);
+    void reportLateEscape(size_t numSteps);
 
     void dumpStats();
     void dumpHangStats();

@@ -151,7 +151,7 @@ RunResult FastExecutor::execute(std::shared_ptr<const InterpretedProgram> progra
     return run();
 }
 
-void FastExecutor::resumeFrom(const ProgramBlock* block, const Data& data, int numSteps) {
+void FastExecutor::resumeFrom(const ProgramBlock* block, const Data& data, size_t numSteps) {
     // Copy the data
     resetData();
     DataPointer srcP = data.getMinDataP();

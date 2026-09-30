@@ -38,7 +38,7 @@ public:
 
     RunResult execute(std::shared_ptr<const InterpretedProgram> program) override;
 
-    void resumeFrom(const ProgramBlock* resumeFrom, const Data& data, int numSteps);
+    void resumeFrom(const ProgramBlock* resumeFrom, const Data& data, size_t numSteps);
 
     HangType detectedHangType() const override { return HangType::NO_DATA_LOOP; }
 

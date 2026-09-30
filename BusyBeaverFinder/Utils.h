@@ -77,7 +77,7 @@ void dumpInstructionStack(const std::vector<Ins> &stack, std::ostream &os,
 class LogHistogram {
     friend std::ostream &operator<<(std::ostream &os, const LogHistogram &h);
 
-    std::vector<std::pair<int,long>> _histogram;
+    std::vector<std::pair<size_t, long>> _histogram;
     int _bins_per_log_scale;
     int _ini_log_scale;
 
@@ -89,7 +89,7 @@ public:
     LogHistogram(int ini_log_scale = 1, int bins_per_log_scale = 1);
 
     // Adds the value to the corresponding bin.
-    void add(int value);
+    void add(size_t value);
 };
 
 std::ostream &operator<<(std::ostream &os, const LogHistogram &h);

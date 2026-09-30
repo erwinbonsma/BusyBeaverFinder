@@ -20,20 +20,20 @@
 class HangDetector;
 
 struct ExecutionStackFrame {
-    ExecutionStackFrame(const ProgramBlock* programBlock, size_t dataStackSize, int numSteps)
+    ExecutionStackFrame(const ProgramBlock* programBlock, size_t dataStackSize, size_t numSteps)
     : programBlock(programBlock), dataStackSize(dataStackSize), numSteps(numSteps) {}
 
     const ProgramBlock* programBlock;
     size_t dataStackSize;
-    int numSteps;
+    size_t numSteps;
 };
 
 class HangExecutor : public ProgramExecutor, public ExecutionState {
     std::vector<std::shared_ptr<HangDetector>> _hangDetectors;
     std::vector<ExecutionStackFrame> _executionStack;
 
-    int _hangDetectionStart;
-    int _maxHangDetectionSteps;
+    size_t _hangDetectionStart;
+    size_t _maxHangDetectionSteps;
 
     std::shared_ptr<const InterpretedProgram> _program;
 
@@ -58,13 +58,13 @@ class HangExecutor : public ProgramExecutor, public ExecutionState {
 
     RunResult executeBlock();
 
-    RunResult executeWithoutHangDetection(int stepLimit);
-    RunResult executeWithHangDetection(int stepLimit);
+    RunResult executeWithoutHangDetection(size_t stepLimit);
+    RunResult executeWithHangDetection(size_t stepLimit);
 
     RunResult run();
 
 public:
-    HangExecutor(int dataSize, int maxHangDetectionSteps);
+    HangExecutor(int dataSize, size_t maxHangDetectionSteps);
     ~HangExecutor() override {};
 
     void addDefaultHangDetectors();
@@ -75,7 +75,7 @@ public:
     void setVerbose(bool setting) { _verbose = setting; }
 
     // Only applies to the next invocation of execute, after which it is reset to zero.
-    void setHangDetectionStart(int numSteps) { _hangDetectionStart = numSteps; }
+    void setHangDetectionStart(size_t numSteps) { _hangDetectionStart = numSteps; }
 
     HangType detectedHangType() const override;
     std::shared_ptr<HangDetector> detectedHang() const { return _detectedHang; }
@@ -96,7 +96,7 @@ public:
 
     const Data& getData() const override { return _data; }
 
-    int numSteps() const override { return ProgramExecutor::numSteps(); };
+    size_t numSteps() const override { return ProgramExecutor::numSteps(); };
     LoopRunState getLoopRunState() const override { return _loopRunState; }
     const RunHistory& getRunHistory() const override { return _runHistory; }
     const RunSummary& getRunSummary() const override { return _runSummary; }

@@ -17,17 +17,17 @@ class ProgramBlock;
 class ProgramExecutor {
 
 protected:
-    int _maxSteps;
-    int _numSteps;
+    size_t _maxSteps;
+    size_t _numSteps;
 
     const ProgramBlock* _block;
 
 public:
     virtual ~ProgramExecutor() {}
 
-    void setMaxSteps(int steps) { _maxSteps = steps; }
-    int getMaxSteps() const { return _maxSteps; }
-    int numSteps() const { return _numSteps; }
+    void setMaxSteps(size_t steps) { _maxSteps = steps; }
+    size_t getMaxSteps() const { return _maxSteps; }
+    size_t numSteps() const { return _numSteps; }
 
     const ProgramBlock* lastProgramBlock() { return _block; }
     virtual HangType detectedHangType() const = 0;

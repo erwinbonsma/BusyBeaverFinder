@@ -266,7 +266,7 @@ int LogHistogram::getBinUpperBound(int bin_index) {
     );
 }
 
-void LogHistogram::add(int value) {
+void LogHistogram::add(size_t value) {
     for (auto& entry : _histogram) {
         if (value <= entry.first) {
             // Found the right bin; bump its count
@@ -287,7 +287,7 @@ void LogHistogram::add(int value) {
 }
 
 std::ostream &operator<<(std::ostream &os, const LogHistogram &h) {
-    int lower = 1;
+    size_t lower = 1;
     for (auto& entry : h._histogram) {
         if (lower > 1) {
             os << ", ";

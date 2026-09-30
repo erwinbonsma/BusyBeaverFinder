@@ -29,7 +29,7 @@ public:
     void attachProgressTracker(std::unique_ptr<ProgressTracker> tracker);
     std::unique_ptr<ProgressTracker> detachProgressTracker();
 
-    virtual int getNumSteps() const = 0;
+    virtual size_t getNumSteps() const = 0;
 
     // Returns a spec that describes the 2LBB program that is currently visited by the search. It
     // is typically created from Program.getString() but not necessarily.

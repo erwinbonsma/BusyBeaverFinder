@@ -34,7 +34,7 @@ void ProgressTracker::report() {
     }
 }
 
-void ProgressTracker::reportDone(int totalSteps) {
+void ProgressTracker::reportDone(size_t totalSteps) {
     _totalSuccess++;
     _runLengthHistogram.add(totalSteps);
 
@@ -96,7 +96,7 @@ void ProgressTracker::reportAssumedHang() {
     report();
 }
 
-void ProgressTracker::reportLateEscape(int numSteps) {
+void ProgressTracker::reportLateEscape(size_t numSteps) {
     _totalLateEscapes++;
 
     std::cout << "ESC " << numSteps << " "
@@ -117,7 +117,7 @@ void ProgressTracker::reportLateEscape(int numSteps) {
 }
 
 void ProgressTracker::reportDetectedHang(HangType hangType, bool executionWillContinue) {
-    int numSteps = _searcher->getNumSteps();
+    size_t numSteps = _searcher->getNumSteps();
     _maxStepsUntilHangDetection = std::max(_maxStepsUntilHangDetection, numSteps);
     _hangDetectionHistogram.add(numSteps);
 

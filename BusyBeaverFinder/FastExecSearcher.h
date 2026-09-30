@@ -24,7 +24,7 @@ public:
     FastExecSearcher(BaseSearchSettings settings);
 
     const std::string getProgramSpec() const override { return _programSpec; };
-    int getNumSteps() const override { return _executor.numSteps(); };
+    size_t getNumSteps() const override { return _executor.numSteps(); };
 
     void run(const std::string& programSpec, std::shared_ptr<InterpretedProgram> program);
 
