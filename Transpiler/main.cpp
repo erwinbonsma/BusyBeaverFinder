@@ -40,6 +40,7 @@ public:
 };
 
 void Transpiler::gotoExit(std::ostream &os, const char* indent, int errorCode) {
+    os << indent << "numSteps += deltaSteps;" << std::endl;
     os << indent << "errorCode = " << errorCode << ";" << std::endl;
     os << indent << "goto done;" << std::endl;
 }
@@ -62,6 +63,7 @@ void Transpiler::transpileBlock(std::ostream &os, int unrollIndex, int stepIndex
     auto block = _program->programBlockAt(stepIndex);
 
     if (block->isExit()) {
+        os << "\tdeltaSteps += " << block->getNumSteps() << ";" << std::endl;
         gotoExit(os, "\t", 0);
         return;
     }
