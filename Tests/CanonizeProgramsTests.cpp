@@ -33,7 +33,7 @@ TEST_CASE("Canonize programs test", "[program][canonize]") {
         block[1].finalize(MOV, -3, dummySteps, block + 4, block + 2); // f
 
         InterpretedProgramFromArray  sourceProgram {block, maxSequenceLen};
-        InterpretedProgramCanonizer  canonical {sourceProgram};
+        auto canonical = InterpretedProgramCanonizer::canonizeProgram(sourceProgram);
 
         std::string expected {"a+1bc bX c>4de d+3-e e-2bf f<3ce"};
         REQUIRE(canonical.shortProgramString() == expected);
@@ -46,7 +46,7 @@ TEST_CASE("Canonize programs test", "[program][canonize]") {
         block[4].finalize(MOV,  2, dummySteps, block + 1, block + 2); // f
 
         InterpretedProgramFromArray  sourceProgram {block, maxSequenceLen};
-        InterpretedProgramCanonizer  canonical {sourceProgram};
+        auto canonical = InterpretedProgramCanonizer::canonizeProgram(sourceProgram);
 
         std::string expected {"a+1bc bX c<3db d-2ef e>1bd f>2cd"};
         REQUIRE(canonical.shortProgramString() == expected);
@@ -59,7 +59,7 @@ TEST_CASE("Canonize programs test", "[program][canonize]") {
         block[4].finalize(MOV,  1, dummySteps, block + 1, block + 0); // a
 
         InterpretedProgramFromArray  sourceProgram {block, maxSequenceLen};
-        InterpretedProgramCanonizer  canonical {sourceProgram};
+        auto canonical = InterpretedProgramCanonizer::canonizeProgram(sourceProgram);
 
         std::string expected {"a>1ba b>1ac c>2ba"};
         REQUIRE(canonical.shortProgramString() == expected);
