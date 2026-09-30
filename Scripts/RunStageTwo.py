@@ -168,6 +168,7 @@ counts = defaultdict(int)
 start_time = time.time()
 with open(args.result_file, "a") as f:
     def handle_result(result: Task):
+        global max_steps
         if result:
             print("\t".join([
                 result.program,
