@@ -35,7 +35,17 @@ def exec(cmd):
         print(result)
         print(result.stdout)
         print(result.stderr)
-        exit(-1)
+    return result.returncode == 0
+
+
+def exec_with_retry(cmd, retries: int = 3):
+    for i in range(retries + 1):
+        if exec(cmd):
+            return
+        time.sleep(2**i)
+        print("Retrying...")
+    print(f"Command failed after {retries} retries. Aborting...")
+    exit(-2)
 
 
 @dataclass
@@ -108,7 +118,7 @@ class Runner:
         if task.block_sizes:
             transpile_cmd.extend(["--block-sizes", task.block_sizes])
 
-        exec(transpile_cmd)
+        exec_with_retry(transpile_cmd)
 
     def _compile(self, task):
         if task is None:
@@ -116,7 +126,7 @@ class Runner:
 
         compile_cmd = ["gcc", task.src_file, "-o", task.bin_file]
 
-        exec(compile_cmd)
+        exec_with_retry(compile_cmd)
 
     def _run(self, task):
         if task is None:
