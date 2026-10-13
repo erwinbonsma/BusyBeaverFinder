@@ -62,14 +62,14 @@ void Transpiler::transpileBlock(std::ostream &os, int unrollIndex, int stepIndex
 
     auto block = _program->programBlockAt(stepIndex);
 
-    if (block->isExit()) {
-        os << "\tdeltaSteps += " << block->getNumSteps() << ";" << std::endl;
-        gotoExit(os, "\t", 0);
+    if (!block->isFinalized()) {
+        gotoExit(os, "\t", 1);
         return;
     }
 
-    if (!block->isFinalized()) {
-        gotoExit(os, "\t", 1);
+    if (block->isExit()) {
+        os << "\tdeltaSteps += " << block->getNumSteps() << ";" << std::endl;
+        gotoExit(os, "\t", 0);
         return;
     }
 
