@@ -408,7 +408,7 @@ TEST_CASE("6x6 Periodic Hang tests", "[hang][periodic][6x6]") {
 }
 
 TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
-    HangExecutor hangExecutor(1024, 2048);
+    HangExecutor hangExecutor(1024, 50000);
     hangExecutor.setMaxSteps(1000000);
     hangExecutor.addDefaultHangDetectors();
 
@@ -448,9 +448,17 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
     }
     SECTION("7x7-LargePeriodicMetaLoop2") {
         // Initially undetected because the meta-loop consists of 157 run blocks (which exceeded
-        // the maxLoopSize limit at the time of 128)
+        // the maxLoopSize limit at the time)
 
         RunResult result = hangExecutor.execute("d/qvkS4VtVuFTWBj+s");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
+    }
+    SECTION("7x7-LargePeriodicMetaLoop3") {
+        // Initially undetected because the meta-loop consists of 629 run blocks (which exceeded
+        // the maxLoopSize limit at the time)
+        RunResult result = hangExecutor.execute("d/qulCVEmBd5WYWz68");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
