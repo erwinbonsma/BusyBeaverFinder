@@ -447,26 +447,31 @@ int RunSummary::getDpDelta(int firstRunBlock, int lastRunBlock) const {
 void MetaRunSummary::attemptLoopCollapse() {
     if (!_metaLoopDetector) {
         _metaLoopDetector = std::make_unique<MetaRunSummary>(getRunBlocks(), getHelperBuffer());
+        _metaLoopIterations = 0;
     }
 
-    if (!_metaLoopDetector->processNewRunUnits()) {
+    _metaLoopDetector->processNewRunUnits();
+
+    if (!_metaLoopDetector->isInsideLoop()) {
         return;
     }
 
-    // New meta-loop detected. Check if run blocks can be grouped into larger ones so that it
-    // is a loop at this level.
+    if (_metaLoopIterations == _metaLoopDetector->getLoopIteration()) {
+        return;
+    }
+
+    _metaLoopIterations = _metaLoopDetector->getLoopIteration();
+
     auto metaRunBlock = _metaLoopDetector->getLastRunBlock();
     assert(metaRunBlock->isLoop());
 
-//    std::cout << "Before: ";
-//    dumpCondensed();
-
     // Period in old run-blocks
     int loopPeriod = metaRunBlock->getLoopPeriod();
-    int loopStart = metaRunBlock->getStartIndex();
+    int loopStart = metaRunBlock->getStartIndex() + loopPeriod * (_metaLoopIterations - 2);
 
-    int unitStart = runBlockAt(loopStart)->getStartIndex();
-    int unitLoopPeriod = getRunBlockLength(loopStart, loopStart + loopPeriod);
+//    std::cout << "Before: ";
+//    dumpCondensed();
+//    _metaLoopDetector->dump();
 
     // The meta-loop detector ignores varying run length of loops. For collapse at this level
     // the run units need to exactly repeat. Check if this is the case.
@@ -488,6 +493,9 @@ void MetaRunSummary::attemptLoopCollapse() {
     _runBlocks.erase(_runBlocks.begin() + loopStart, _runBlocks.end());
 
     // Replace by bigger loop-block
+    int unitStart = runBlockAt(loopStart)->getStartIndex();
+    int unitLoopPeriod = getRunBlockLength(loopStart, loopStart + loopPeriod);
+
     createRunBlock(unitStart, unitStart + 2 * unitLoopPeriod, unitLoopPeriod);
 
     resetPending();

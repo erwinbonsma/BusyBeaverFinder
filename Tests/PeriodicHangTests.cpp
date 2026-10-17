@@ -463,4 +463,36 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
     }
+    SECTION("7x7-LargePeriodicMetaLoop4") {
+        // Initially undetected because it requires a loop collapse of the meta-run loop, but the
+        // first attempt fails, as the first loop iteration is different from the others. Only
+        // after loop collapsing is attempted in further loop iterations does collapse succeed and
+        // is the hang recognized as being periodic.
+        //
+        // Meta-run summary: #6 #14*2.0 #22*2.0 #24 #22*4.0 #24 #22*4.0 #24 ...
+        // with:
+        // 6 = 10 16 22 26 35 41
+        // 14 = 22 26 27 16
+        // 22 = 20 26 27 16
+        // 24 = 45 41
+        //
+        // Run summary:
+        // #10 #16*2.0 #22 #26*3.0 #35 #41*2.1
+        // #22 #26*2.0 #27 #16*3.0
+        // #22 #26*4.0 #27 #16*2.0
+        // #20 #26*3.0 #27 #16*3.0
+        // #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
+        // #20 #26*3.0 #27 #16*3.0
+        // #20 #26*5.0 #27 #16*2.0
+        // #20 #26*3.0 #27 #16*3.0
+        // #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
+        // #20 #26*3.0 #27 #16*3.0
+        // #20 #26*5.0 #27 #16*2.0
+        // #20 #26*3.0 #27 #16*3.0
+        // #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
+        RunResult result = hangExecutor.execute("d/7vpS1a9S+FGoC1b8");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
+        REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
+    }
 }

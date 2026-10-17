@@ -252,6 +252,7 @@ class MetaRunSummary : public RunSummaryBase {
     const std::vector<RunBlock> &_runHistory;
 
     std::unique_ptr<MetaRunSummary> _metaLoopDetector;
+    int _metaLoopIterations;
     int _rewriteCount {};
 
     int getRunUnitIdAt(int runUnitIndex) const override {
