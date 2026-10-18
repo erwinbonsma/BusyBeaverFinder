@@ -458,6 +458,18 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
     SECTION("7x7-LargePeriodicMetaLoop3") {
         // Initially undetected because the meta-loop consists of 629 run blocks (which exceeded
         // the maxLoopSize limit at the time)
+        //
+        // Meta-run summary:
+        //   ....
+        //   #115 #52*2.0 #61 #63*2.1
+        //   #115 #52*2.0 #61 #63*2.1
+        //   #115 #52*2.0 #61 #63*2.1
+        // with:
+        //   52 = 180 285
+        //   61 = 150 180 285 150 183 232 105 26 28
+        //   63 = 150 180 285
+        //   115 = 172 26 28 179 294 105 26 28 150 172 26 28 179 294 299 150 183 232 105 26 28 179
+        //         294 285 180 285 105 26 28 150 172 26 28 150
         RunResult result = hangExecutor.execute("d/qulCVEmBd5WYWz68");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
@@ -469,30 +481,58 @@ TEST_CASE("7x7 Periodic Hang tests", "[hang][periodic][7x7]") {
         // after loop collapsing is attempted in further loop iterations does collapse succeed and
         // is the hang recognized as being periodic.
         //
-        // Meta-run summary: #6 #14*2.0 #22*2.0 #24 #22*4.0 #24 #22*4.0 #24 ...
+        // Meta-run summary:
+        //   #6 #14*2.0 #22*2.0
+        //   #24 #22*4.0
+        //   #24 #22*4.0
+        //   #24 #22*4.0
         // with:
-        // 6 = 10 16 22 26 35 41
-        // 14 = 22 26 27 16
-        // 22 = 20 26 27 16
-        // 24 = 45 41
+        //   6 = 10 16 22 26 35 41
+        //   14 = 22 26 27 16
+        //   22 = 20 26 27 16
+        //   24 = 45 41
         //
         // Run summary:
-        // #10 #16*2.0 #22 #26*3.0 #35 #41*2.1
-        // #22 #26*2.0 #27 #16*3.0
-        // #22 #26*4.0 #27 #16*2.0
-        // #20 #26*3.0 #27 #16*3.0
-        // #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
-        // #20 #26*3.0 #27 #16*3.0
-        // #20 #26*5.0 #27 #16*2.0
-        // #20 #26*3.0 #27 #16*3.0
-        // #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
-        // #20 #26*3.0 #27 #16*3.0
-        // #20 #26*5.0 #27 #16*2.0
-        // #20 #26*3.0 #27 #16*3.0
-        // #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
+        //   #10 #16*2.0 #22 #26*3.0 #35 #41*2.1
+        //   #22 #26*2.0 #27 #16*3.0
+        //   #22 #26*4.0 #27 #16*2.0
+        //   #20 #26*3.0 #27 #16*3.0
+        //   #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
+        //   #20 #26*3.0 #27 #16*3.0
+        //   #20 #26*5.0 #27 #16*2.0
+        //   #20 #26*3.0 #27 #16*3.0
+        //   #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
+        //   #20 #26*3.0 #27 #16*3.0
+        //   #20 #26*5.0 #27 #16*2.0
+        //   #20 #26*3.0 #27 #16*3.0
+        //   #20 #26*4.0 #27 #16*1.0 #45 #41*2.1
         RunResult result = hangExecutor.execute("d/7vpS1a9S+FGoC1b8");
 
         REQUIRE(result == RunResult::DETECTED_HANG);
         REQUIRE(hangExecutor.detectedHangType() == HangType::NESTED_PERIODIC);
+    }
+    SECTION("7x7-PeriodicSingleMetaLoop") {
+        // Periodic hang that was initially undetected because it requires an unroll of four
+        // iterations of the meta-loop to recognize the higher-level periodicity.
+        //
+        // Run summary:
+        //   #11 #15*2.0 #21
+        //   #25*2.1 #38*2.3 #41
+        //   #25*2.1 #38*0.3 #41
+        //   #25*2.1 #38*0.3 #41
+        //   #25*2.1 #38*1.3 #41
+        //   #25*2.1 #38*2.3 #41
+        //   #25*2.1 #38*0.3 #41
+        //   #25*2.1 #38*0.3 #41
+        //   #25*2.1 #38*1.3 #41
+        //
+        // Meta-run summary:
+        //   #3 #9*N
+        // with:
+        //   3 = 11 15 21
+        //   9 = 25 38 41
+        RunResult result = hangExecutor.execute("d/qvkShW+kuQCuUkWs");
+
+        REQUIRE(result == RunResult::DETECTED_HANG);
     }
 }
