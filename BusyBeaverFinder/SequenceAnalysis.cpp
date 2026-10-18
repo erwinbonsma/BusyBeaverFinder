@@ -95,7 +95,7 @@ void SequenceAnalysis::analyzeBlock(const ProgramBlock* pb) {
     }
 }
 
-void SequenceAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, int len) {
+void SequenceAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, size_t len) {
     _minDp = std::min(_minDp, _dpDelta);
     _maxDp = std::max(_maxDp, _dpDelta);
     _prevProgramBlock = nullptr;
@@ -112,7 +112,7 @@ bool SequenceAnalysis::finishAnalysis() {
     return true;
 }
 
-bool SequenceAnalysis::analyzeSequence(RawProgramBlocks programBlocks, int len) {
+bool SequenceAnalysis::analyzeSequence(RawProgramBlocks programBlocks, size_t len) {
     startAnalysis();
 
     _programBlocks = programBlocks;
@@ -125,7 +125,8 @@ void SequenceAnalysis::analyzeMultiSequenceStart() {
     startAnalysis();
 }
 
-void SequenceAnalysis::analyzeMultiSequence(RawProgramBlocks programBlocks, int len, int dpDelta) {
+void SequenceAnalysis::analyzeMultiSequence(RawProgramBlocks programBlocks,
+                                            size_t len, int dpDelta) {
     _dpDelta = dpDelta;
 
     analyzeBlocks(programBlocks, len);
@@ -176,7 +177,7 @@ std::ostream &operator<<(std::ostream &os, const SequenceAnalysis &sa) {
     os << ", delta DP = " << sa.dataPointerDelta();
 
     os << ", deltas: ";
-    int num = 0;
+    size_t num = 0;
     for (auto dd : sa.dataDeltas()) {
         if (num++ != 0) {
             os << ", ";

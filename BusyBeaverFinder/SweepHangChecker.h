@@ -29,21 +29,21 @@ class SweepHangChecker : public HangChecker {
 
     struct SweepLoopPart {
       public:
-        SweepLoopPart(int seqIndex, int rbIndex, int dpOffset)
+        SweepLoopPart(size_t seqIndex, size_t rbIndex, int dpOffset)
         : _seqIndex(seqIndex), _rbIndex(rbIndex), _dpOffset(dpOffset) {}
 
-        int seqIndex() const { return _seqIndex; }
-        int rbIndex() const { return _rbIndex; }
+        size_t seqIndex() const { return _seqIndex; }
+        size_t rbIndex() const { return _rbIndex; }
         int dpOffset() const { return _dpOffset; }
-        int& seqIndex() { return _seqIndex; }
-        int& rbIndex() { return _rbIndex; }
+        size_t& seqIndex() { return _seqIndex; }
+        size_t& rbIndex() { return _rbIndex; }
         int& dpOffset() { return _dpOffset; }
 
       private:
         // The index of the sequence within the sweep-loop
-        int _seqIndex;
+        size_t _seqIndex;
         // The index of the run block within the run-history
-        int _rbIndex;
+        size_t _rbIndex;
         // The DP when execution starts
         int _dpOffset;
     };
@@ -95,7 +95,7 @@ class SweepHangChecker : public HangChecker {
 
         const DataDeltas& sweepLoopDeltas() const { return _sweepDeltas; }
         int deltaRange() const { return _deltaRange; }
-        int outgoingLoopSequenceIndex() const { return _outgoingLoopSeqIndex; }
+        size_t outgoingLoopSequenceIndex() const { return _outgoingLoopSeqIndex; }
 
         const LoopAnalysis& combinedAnalysis() const { return _analysis; }
 
@@ -124,10 +124,10 @@ class SweepHangChecker : public HangChecker {
 
         // Index of (one of) the outgoing sweep-loop(s). This is the loop that is the starting
         // point for the analysis.
-        int _outgoingLoopSeqIndex;
+        size_t _outgoingLoopSeqIndex;
 
         // The number of bootstrap cycles for this loop.
-        int _outgoingLoopNumBootstrapCycles;
+        size_t _outgoingLoopNumBootstrapCycles;
 
         // The analysis of incoming and outgoing loops. Only one entry for each unique loop
         std::set<std::shared_ptr<LoopAnalysis>> _incomingLoops;
@@ -148,7 +148,7 @@ class SweepHangChecker : public HangChecker {
         bool isStationary() const { return _isStationary; }
         const DataDeltas& transitionDeltas() const { return _transitionDeltas; }
 
-        int incomingLoopSequenceIndex() const { return _incomingLoopSeqIndex; }
+        size_t incomingLoopSequenceIndex() const { return _incomingLoopSeqIndex; }
 
         const LoopAnalysis& combinedAnalysis() const { return _analysis; }
 
@@ -160,7 +160,7 @@ class SweepHangChecker : public HangChecker {
         // The behavior over time.
         LoopAnalysis _analysis;
         // Index of (one of) the incoming sweep-loop(s)
-        int _incomingLoopSeqIndex;
+        size_t _incomingLoopSeqIndex;
         bool _isStationary;
         int _minDp, _maxDp;
         DataDeltas _transitionDeltas;
@@ -211,7 +211,7 @@ class SweepHangChecker : public HangChecker {
 
     // Returns sequence index for first sweep loop satisfying the predicate (input Location for
     // the sweep loop)
-    template <class Pred> int findSweepLoop(Pred p) const;
+    template <class Pred> std::optional<size_t> findSweepLoop(Pred p) const;
 
     // Add all contributions of the loop within the specified DP-range to the analysis
     //
@@ -227,10 +227,13 @@ class SweepHangChecker : public HangChecker {
     // When successful returns DP offset at end
     std::optional<int> visitSweepLoopParts(const SweepLoopVisitor& visitor,
                                            const ExecutionState& executionState,
-                                           int startSeqIndex, SweepVisitOptions options = {}) const;
+                                           size_t startSeqIndex,
+                                           SweepVisitOptions options = {}) const;
 
-    const Location& locationInSweep(int seqIndex) const { return _locationsInSweep.at(seqIndex); }
-    const LoopBehavior& loopBehavior(int seqIndex) const {
+    const Location& locationInSweep(size_t seqIndex) const {
+        return _locationsInSweep.at(seqIndex);
+    }
+    const LoopBehavior& loopBehavior(size_t seqIndex) const {
         return _metaLoopAnalysis->loopBehaviors().at(
             _metaLoopAnalysis->loopIndexForSequence(seqIndex)
         );
@@ -239,9 +242,9 @@ class SweepHangChecker : public HangChecker {
     // Checks if the sweep loop or transition, with sequence index seqIndex, that is about to start
     // continues forever.
     virtual bool sweepLoopContinuesForever(const ExecutionState& executionState,
-                                           SweepLoop* loop, int seqIndex);
+                                           SweepLoop* loop, size_t seqIndex);
     virtual bool transitionContinuesForever(const ExecutionState& executionState,
-                                            TransitionGroup* transition, int seqIndex);
+                                            TransitionGroup* transition, size_t seqIndex);
 
     const MetaLoopAnalysis* _metaLoopAnalysis;
 
@@ -255,11 +258,11 @@ class SweepHangChecker : public HangChecker {
 
     std::vector<Location> _locationsInSweep;
     // The sequence index of the first loop that is a sweep
-    int _firstSweepLoopSeqIndex;
+    size_t _firstSweepLoopSeqIndex;
 
     // How long (in total number of run blocks) to execute the proof checks before deciding the
     // program hangs
-    int _proofUntil;
+    size_t _proofUntil;
 
 private:
     // Set start and end locations for sweep loops

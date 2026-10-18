@@ -51,19 +51,19 @@ enum class MetaLoopType : int8_t {
 struct MetaLoopData {
     // References which of the loops this data applies to.
     // Range: [0, numLoops>
-    int loopIndex;
+    size_t loopIndex;
 
     // References which of the run-blocks in the meta-loop this data applies to.
     // Range: [0, metaLoop.loopSize>
-    int sequenceIndex;
+    size_t sequenceIndex;
 
     // The number of instruction executed in the last loop iteration in case the loop was exited
     // prematurely.
-    int loopRemainder = 0;
+    size_t loopRemainder = 0;
 
     // The number of iterations of the last analyzed run-block. It is a temporary value used for
     // setting and checking iterationDelta.
-    int lastNumIterations = 0;
+    size_t lastNumIterations = 0;
 
     // (An approximation of) the data pointer position at the start of the last analyzed run-block.
     // It is a temporary value for setting dataPointerDelta.
@@ -79,7 +79,7 @@ struct MetaLoopData {
     std::optional<int> dataPointerDelta {};
 
     MetaLoopData() {}
-    MetaLoopData(int loopIndex, int sequenceIndex, int numIterations, int loopRemainder)
+    MetaLoopData(size_t loopIndex, size_t sequenceIndex, size_t numIterations, size_t loopRemainder)
     : loopIndex(loopIndex)
     , sequenceIndex(sequenceIndex)
     , lastNumIterations(numIterations)
@@ -94,7 +94,7 @@ class MetaLoopAnalysis;
 class LoopBehavior {
     const MetaLoopAnalysis* _metaLoopAnalysis;
     // The index of the loop in the MetaLoopAnalysis
-    int _sequenceIndex;
+    size_t _sequenceIndex;
 
     std::shared_ptr<LoopAnalysis> _loopAnalysis;
 
@@ -108,7 +108,7 @@ class LoopBehavior {
 
 public:
     // Contructor when meta-loop behavior is periodic or regular
-    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, int sequenceIndex,
+    LoopBehavior(const MetaLoopAnalysis* metaLoopAnalysis, size_t sequenceIndex,
                  std::shared_ptr<LoopAnalysis> loopAnalysis,
                  std::optional<int> minDpDelta, std::optional<int> maxDpDelta,
                  LoopIterationDeltaType iterationDeltaType, std::optional<int> iterationDelta)
@@ -122,7 +122,7 @@ public:
 
     std::shared_ptr<LoopAnalysis> loopAnalysis() const { return _loopAnalysis; }
 
-    int sequenceIndex() const { return _sequenceIndex; }
+    size_t sequenceIndex() const { return _sequenceIndex; }
     std::optional<int> minDpDelta() const { return _minDpDelta; }
     std::optional<int> maxDpDelta() const { return _maxDpDelta; }
 
@@ -174,56 +174,56 @@ public:
  */
 class MetaLoopAnalysis {
     // The meta-loop period in run blocks.
-    int _metaLoopPeriod {};
+    size_t _metaLoopPeriod {};
 
     // The size of the analyzed meta-loop in run blocks. This could be a multiple of the meta-loop
     // period to satisfy the meta-run loop conditions
-    int _analysisLoopSize {};
+    size_t _analysisLoopSize {};
 
     // The index of the run block from which this meta-loop analysis applies
-    int _firstRunBlockIndex {};
+    size_t _firstRunBlockIndex {};
     DataPointer _startDataPointer {};
 
     // The number of meta-run blocks for which this meta-loop analysis is valid
-    int _numMetaRunBlocks {};
-    int _numRunBlocks {};
-    int _numRewrites {};
+    size_t _numMetaRunBlocks {};
+    size_t _numRunBlocks {};
+    size_t _numRewrites {};
 
     mutable SimplePool<SequenceAnalysis> _sequenceAnalysisPool;
     mutable SimplePool<LoopAnalysis> _loopAnalysisPool;
 
     // Analysis cache. Key: Sequence ID
-    std::map<int, std::shared_ptr<SequenceAnalysis>> _analysisCache;
+    std::map<size_t, std::shared_ptr<SequenceAnalysis>> _analysisCache;
 
     // The analysis of every run block in the meta-loop (size = _metaLoopPeriod)
     std::vector<std::shared_ptr<SequenceAnalysis>> _seqAnalysis;
 
     // The sequence analysis for unrolled loops. It can be generated on demand, for fixed-sized
     // loops. It is indexed by sequence index.
-    mutable std::map<int, std::shared_ptr<SequenceAnalysis>> _unrolledLoopSeqAnalysis;
+    mutable std::map<size_t, std::shared_ptr<SequenceAnalysis>> _unrolledLoopSeqAnalysis;
 
     // The properties of the loops in the meta-loop. Access by loop index.
     std::vector<MetaLoopData> _loopData;
     std::vector<LoopBehavior> _loopBehaviors;
 
     // Maps sequence indices to loop indices.
-    std::map<int, int> _loopIndexLookup;
+    std::map<size_t, size_t> _loopIndexLookup;
 
     MetaLoopType _metaLoopType;
 
     void analyzeRunBlocks(const ExecutionState &executionState);
 
-    void initLoopData(const RunSummary &runSummary, int loopSize);
+    void initLoopData(const RunSummary &runSummary, size_t loopSize);
 
     // Returns true if the behavior matches a supported meta loop type.
     bool checkLoopIterationDelta(const RunSummary &runSummary,
-                                 int loopSize,
+                                 size_t loopSize,
                                  MetaLoopType& loopType,
                                  bool checkDeltaChange);
 
     // Returns the observed meta-loop behavior when analyzing the meta-loop with the given loop
     // size. Returns none when the behavior is not supported.
-    std::optional<MetaLoopType> checkLoopSize(const RunSummary &runSummary, int loopSize);
+    std::optional<MetaLoopType> checkLoopSize(const RunSummary &runSummary, size_t loopSize);
 
     // Determines the size of the meta-loop. It selects the size that results in the most simple
     // meta-loop type.
@@ -231,7 +231,7 @@ class MetaLoopAnalysis {
 
     // The number of loops in the meta-run block (the meta-loop may contain a multiple of this).
     // It is valid before analysis is complete.
-    int numLoops() const { return _loopAnalysisPool.numPopped(); }
+    size_t numLoops() const { return _loopAnalysisPool.numPopped(); }
 
     // Determine how the DP position at the end of each loop change wrt to the DP position at the
     // end of the loop in the previous iteration of the _analyzed_ meta-loop.
@@ -256,11 +256,11 @@ public:
     bool isAnalysisStillValid(const ExecutionState &executionState);
 
     // The meta-loop period (in run blocks). It is the period returned by the meta-run summary.
-    int metaLoopPeriod() const { return _metaLoopPeriod; }
+    size_t metaLoopPeriod() const { return _metaLoopPeriod; }
 
     // The loop size (in run blocks). It can be a multiple of the meta-loop period. This happens
     // when the number of iterations would otherwise increase non-linearly.
-    int loopSize() const { return _analysisLoopSize; }
+    size_t loopSize() const { return _analysisLoopSize; }
 
     // Returns true iff the program block history is periodic.
     bool isPeriodic() const { return _metaLoopType == MetaLoopType::PERIODIC; }
@@ -272,7 +272,7 @@ public:
 
     // Returns the index of the first run block (with sequence index zero) from where this
     // meta-loop analysis is valid.
-    int firstRunBlockIndex() const { return _firstRunBlockIndex; }
+    size_t firstRunBlockIndex() const { return _firstRunBlockIndex; }
 
     // Returns the position of the data pointer at the moment from where this meta-loop analysis
     // is valid.
@@ -281,30 +281,34 @@ public:
     const std::vector<std::shared_ptr<SequenceAnalysis>> sequenceAnalysisResults() const {
         return _seqAnalysis;
     }
-    const std::shared_ptr<SequenceAnalysis> sequenceAnalysis(int sequenceIndex) const {
+    const std::shared_ptr<SequenceAnalysis> sequenceAnalysis(size_t sequenceIndex) const {
         return _seqAnalysis[sequenceIndex % _metaLoopPeriod];
     }
     // Assumes isLoop(sequenceIndex) == true
-    const std::shared_ptr<LoopAnalysis> loopAnalysis(int sequenceIndex) const {
+    const std::shared_ptr<LoopAnalysis> loopAnalysis(size_t sequenceIndex) const {
         return std::dynamic_pointer_cast<LoopAnalysis>(sequenceAnalysis(sequenceIndex));
     }
 
     // Returns an analysis of a fixed-size loop as if it was a plain sequence.
     std::shared_ptr<SequenceAnalysis> unrolledLoopSequenceAnalysis(const ExecutionState &execState,
-                                                                   int sequenceIndex) const;
+                                                                   size_t sequenceIndex) const;
 
     const std::vector<LoopBehavior>& loopBehaviors() const { return _loopBehaviors; }
 
     // Returns how much DP changed after executing the specified run-block. The index is with
     // respect to the run summary.
-    int dpDeltaOfRunBlock(const RunSummary& runSummary, int runBlockIndex) const;
+    int dpDeltaOfRunBlock(const RunSummary& runSummary, size_t runBlockIndex) const;
 
-    int isLoop(int sequenceIndex) const {
+    bool isLoop(int sequenceIndex) const {
         return _seqAnalysis[sequenceIndex % _metaLoopPeriod]->isLoop();
     }
 
-    int loopIndexForSequence(int sequenceIndex) const { return _loopIndexLookup.at(sequenceIndex); }
-    int sequenceIndexForLoop(int loopIndex) const { return _loopData[loopIndex].sequenceIndex; }
+    size_t loopIndexForSequence(size_t sequenceIndex) const {
+        return _loopIndexLookup.at(sequenceIndex);
+    }
+    size_t sequenceIndexForLoop(size_t loopIndex) const {
+        return _loopData[loopIndex].sequenceIndex;
+    }
 
     // Returns how much the number of iterations increased compared to previous invocation of the
     // loop run block in the meta-loop. In case the increase is non-linear, it returns the last
@@ -312,21 +316,21 @@ public:
     //
     // Note: It differs from the iteration delta returned by the corresponding loop behavior when
     // loopSize != metaLoopPeriod.
-    int loopIterationDelta(int loopIndex) const {
+    int loopIterationDelta(size_t loopIndex) const {
         return _loopData[loopIndex].lastIterationDelta;
     }
 
     // Returns how much the data pointer has shifted when execution of the run block starts
     // compared to previous invocation of the run block in the meta-loop.
-    std::optional<int> dataPointerDelta(int loopIndex) const {
+    std::optional<int> dataPointerDelta(size_t loopIndex) const {
         return _loopData[loopIndex].dataPointerDelta;
     }
 
-    int lastNumLoopIterations(int loopIndex) const {
+    size_t lastNumLoopIterations(size_t loopIndex) const {
         return _loopData[loopIndex].lastNumIterations;
     }
 
-    int loopRemainder(int loopIndex) const {
+    size_t loopRemainder(size_t loopIndex) const {
         return _loopData[loopIndex].loopRemainder;
     }
 

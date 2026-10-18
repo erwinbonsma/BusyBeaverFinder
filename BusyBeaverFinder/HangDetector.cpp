@@ -18,8 +18,8 @@ HangDetector::HangDetector(const ExecutionState& execution) :
 }
 
 void HangDetector::reset() {
-    _lastFailedCheckPoint = -1;
-    _analysisCheckPoint = -1;
+    _lastFailedCheckPoint = 0;
+    _analysisCheckPoint = 0;
 
     clearAnalysis();
 }
@@ -29,7 +29,7 @@ bool HangDetector::detectHang() {
         return false;
     }
 
-    int now = currentCheckPoint(); // + (_execution.getLoopRunState() == LoopRunState::ENDED);
+    size_t now = currentCheckPoint(); // + (_execution.getLoopRunState() == LoopRunState::ENDED);
 
     if (now == _lastFailedCheckPoint) {
         // We already checked this and it failed. Ignore.

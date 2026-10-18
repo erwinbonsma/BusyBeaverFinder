@@ -42,9 +42,9 @@ bool IrregularSweepHangChecker::checkMetaMetaLoop(const ExecutionState& executio
         return false;
     }
 
-    int numMetaLoops = 0;
-    for (int i = 0; i < ExpectedMetaMetaLoopPeriod; ++i) {
-        int rbIndex = metaMetaRunBlock->getStartIndex() + i;
+    size_t numMetaLoops = 0;
+    for (size_t i = 0; i < ExpectedMetaMetaLoopPeriod; ++i) {
+        size_t rbIndex = metaMetaRunBlock->getStartIndex() + i;
         auto metaRunBlock = metaRunSummary.runBlockAt(rbIndex);
         if (metaRunBlock->isLoop()) {
             numMetaLoops += 1;
@@ -70,13 +70,13 @@ bool IrregularSweepHangChecker::findIrregularEnds() {
     std::map<LocationInSweep, std::pair<int, int>> map;
 
     size_t loopSize = _metaLoopAnalysis->loopSize();
-    for (int i = 0; i < loopSize; ++i) {
+    for (size_t i = 0; i < loopSize; ++i) {
         auto& location = locationInSweep(i);
         if (!location.isSweepLoop()) {
             continue;
         }
 
-        int loopIndex = _metaLoopAnalysis->loopIndexForSequence(i);
+        size_t loopIndex = _metaLoopAnalysis->loopIndexForSequence(i);
         auto& behavior = _metaLoopAnalysis->loopBehaviors().at(loopIndex);
 
         auto& entry = map[location.end];
@@ -471,7 +471,7 @@ bool IrregularSweepHangChecker::init(const MetaLoopAnalysis* metaLoopAnalysis,
 }
 
 bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& executionState,
-                                                          SweepLoop* loop, int seqIndex) {
+                                                          SweepLoop* loop, size_t seqIndex) {
     auto &lb = loopBehavior(seqIndex);
     if (lb.iterationDeltaType() == LoopIterationDeltaType::LINEAR_INCREASE) {
         // This is a regular sweep. This happens when it departs from the regular end of the sweep
@@ -516,7 +516,7 @@ bool IrregularSweepHangChecker::sweepLoopContinuesForever(const ExecutionState& 
 }
 
 bool IrregularSweepHangChecker::growingTransitionContinuesForever
-    (const ExecutionState& executionState, TransitionGroup* transition, int seqIndex) {
+    (const ExecutionState& executionState, TransitionGroup* transition, size_t seqIndex) {
 
     bool atLeft = _irregularEnd == LocationInSweep::LEFT;
 
@@ -568,7 +568,7 @@ bool IrregularSweepHangChecker::growingTransitionContinuesForever
 }
 
 bool IrregularSweepHangChecker::shrinkingTransitionContinuesForever
-    (const ExecutionState& executionState, TransitionGroup* transition, int seqIndex) {
+    (const ExecutionState& executionState, TransitionGroup* transition, size_t seqIndex) {
 
     // TODO
 
@@ -577,7 +577,7 @@ bool IrregularSweepHangChecker::shrinkingTransitionContinuesForever
 
 bool IrregularSweepHangChecker::transitionContinuesForever(const ExecutionState& executionState,
                                                            TransitionGroup* transition,
-                                                           int seqIndex) {
+                                                           size_t seqIndex) {
     bool atIrregularEnd = false;
     bool atLeft = _irregularEnd == LocationInSweep::LEFT;
 

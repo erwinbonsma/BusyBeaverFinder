@@ -10,7 +10,7 @@
 
 #include "Data.h"
 
-void PeriodicHangChecker::init(const LoopAnalysis* loop, int loopStart) {
+void PeriodicHangChecker::init(const LoopAnalysis* loop, size_t loopStart) {
     _loop = loop;
     _loopStart = loopStart;
     _proofPhase = 1;
@@ -19,7 +19,7 @@ void PeriodicHangChecker::init(const LoopAnalysis* loop, int loopStart) {
 Trilian PeriodicHangChecker::proofHangPhase1(const ExecutionState& execution) {
     const Data &data = execution.getData();
 
-    int loopLen = (int)execution.getRunHistory().size() - _loopStart;
+    size_t loopLen = execution.getRunHistory().size() - _loopStart;
     if (loopLen <= _loop->loopSize() * _loop->numBootstrapCycles()) {
         // Loop is not yet fully bootstrapped. Too early to tell if the loop is hanging
         return Trilian::MAYBE;
@@ -33,7 +33,7 @@ Trilian PeriodicHangChecker::proofHangPhase1(const ExecutionState& execution) {
         // Stationary loop
 
         // Check if any of the non-bootstrap conditions will be met.
-        for (int i = _loop->loopSize(); --i >= 0; ) {
+        for (size_t i = 0; i < _loop->loopSize(); i++) {
             const LoopExit &exit = _loop->exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 int value = *(data.getDataPointer() + exit.exitCondition.dpOffset());
@@ -66,7 +66,7 @@ Trilian PeriodicHangChecker::proofHangPhase1(const ExecutionState& execution) {
 }
 
 Trilian PeriodicHangChecker::proofHangPhase2(const ExecutionState& execution) {
-    int loopLen = (int)execution.getRunHistory().size() - _loopStart;
+    size_t loopLen = execution.getRunHistory().size() - _loopStart;
 
     if (loopLen >= _targetLoopLen) {
         // The loop ran the required number of extra iterations without exiting. This means it
@@ -78,7 +78,7 @@ Trilian PeriodicHangChecker::proofHangPhase2(const ExecutionState& execution) {
 }
 
 Trilian PeriodicHangChecker::proofHang(const ExecutionState& execution) {
-    int loopLen = (int)execution.getRunHistory().size() - _loopStart;
+    size_t loopLen = execution.getRunHistory().size() - _loopStart;
 
     if (loopLen % _loop->loopSize() != 0) {
         // Only check that we are at the start of the loop. This check is needed in case the

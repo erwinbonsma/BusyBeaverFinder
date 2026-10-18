@@ -73,7 +73,7 @@ public:
 
     // Returns the number of completed iterations before the loop exits. I.e. it returns zero when
     // it exits while executing its first iteration.
-    std::optional<int> exitIteration(int value) const;
+    std::optional<size_t> exitIteration(int value) const;
 
     // Specifies which data value the condition applies to. How to interpret this depends on whether
     // the DP is Travelling during loop execution. Let d = abs(dataPointerDelta)
@@ -112,11 +112,11 @@ public:
 // Specifies when a loop exit occurs
 class LoopExitOccurence {
 public:
-    int iteration;
-    int instructionIndex;
+    size_t iteration;
+    size_t instructionIndex;
     int dpOffset;
 
-    LoopExitOccurence(int iteration, int instructionIndex, int dpOffset)
+    LoopExitOccurence(size_t iteration, size_t instructionIndex, int dpOffset)
     : iteration(iteration), instructionIndex(instructionIndex), dpOffset(dpOffset) {}
 };
 
@@ -126,12 +126,12 @@ std::ostream &operator<<(std::ostream &os, const LoopExit &le);
  * and possible exits.
  */
 class LoopAnalysis : public SequenceAnalysis {
-    int _numBootstrapCycles;
+    size_t _numBootstrapCycles;
     std::vector<LoopExit> _loopExits;
 
     // The program blocks when the analysis is passed multiple sub-sequences of program blocks
     std::vector<const ProgramBlock *> _subSequenceProgramBlocks;
-    std::vector<int> _subSequenceLengths;
+    std::vector<size_t> _subSequenceLengths;
 
     DataDeltas _squashedDeltas;
 
@@ -147,10 +147,10 @@ class LoopAnalysis : public SequenceAnalysis {
 
 protected:
     // Returns true if the specified loop instruction exits the loop on a zero-value
-    bool exitsOnZero(int index) const;
-    const ProgramBlock* programBlockAt(int index) const;
-    const ProgramBlock* programBlockFollowing(int index) const;
-    void analyzeBlocks(RawProgramBlocks programBlocks, int len) override;
+    bool exitsOnZero(size_t index) const;
+    const ProgramBlock* programBlockAt(size_t index) const;
+    const ProgramBlock* programBlockFollowing(size_t index) const;
+    void analyzeBlocks(RawProgramBlocks programBlocks, size_t len) override;
 
     void startAnalysis() override;
     bool finishAnalysis() override;
@@ -163,23 +163,21 @@ public:
     LoopAnalysis& operator=(const LoopAnalysis&) = delete;
 
     bool isLoop() const override { return true; }
-    int loopSize() const { return sequenceSize(); }
+    size_t loopSize() const { return sequenceSize(); }
 
-    int subSequenceLen(int index) const { return _subSequenceLengths[index]; }
+    size_t subSequenceLen(size_t index) const { return _subSequenceLengths[index]; }
 
     // The number of iterations before the loop is fully spun up. A loop is spun up once it is
     // always the same loop instruction (or set of instructions) that first sees a data value.
-    int numBootstrapCycles() const { return _numBootstrapCycles; }
+    size_t numBootstrapCycles() const { return _numBootstrapCycles; }
 
     const DataDeltas& squashedDataDeltas() const { return _squashedDeltas; }
 
     // The delta realized by the loop at the given offset, assuming the loop runs endlessly.
     int deltaAt(int dpOffset) const;
 
-    int deltaAtOnNonStandardEntry(int dpOffset, int startingInstruction) const;
-
     // Returns the loop exit for the specified loop instruction
-    const LoopExit& exit(int index) const { return _loopExits[index]; }
+    const LoopExit& exit(size_t index) const { return _loopExits[index]; }
     const std::vector<LoopExit>& loopExits() const { return _loopExits; }
     bool exitsAnalyzed() const { return _loopExits.size() > 0; }
 
@@ -194,7 +192,7 @@ public:
     }
 
     // Analyses the loop. Returns true if analysis was successful.
-    bool analyzeLoop(RawProgramBlocks programBlocks, int len);
+    bool analyzeLoop(RawProgramBlocks programBlocks, size_t len);
 
     // Checks for a travelling loop if all values it is yet to consume are zero.
     //

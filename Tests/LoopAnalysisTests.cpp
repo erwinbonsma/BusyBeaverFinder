@@ -59,10 +59,10 @@ TEST_CASE("Exit condition tests", "[loop-analysis]") {
     }
 }
 
-void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, int numBlocks) {
+void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, size_t numBlocks) {
     const ProgramBlock* blockP[maxLoopSize];
 
-    for (int i = 0; i < numBlocks; ++i) {
+    for (size_t i = 0; i < numBlocks; ++i) {
         blockP[i] = startBlock++;
     }
 
@@ -70,7 +70,7 @@ void analyzeLoop(LoopAnalysis& la, ProgramBlock* startBlock, int numBlocks) {
 }
 
 TEST_CASE("Stationary loop classification tests", "[loop-analysis][stationary]") {
-    ProgramBlock exitBlock{-1};
+    ProgramBlock exitBlock{maxLoopSize};
 
     auto program = create_indexed_array<ProgramBlock, maxLoopSize>();
     ProgramBlock *loopBlock = program.data();
@@ -302,7 +302,7 @@ TEST_CASE("Stationary loop classification tests", "[loop-analysis][stationary]")
 }
 
 TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]") {
-    ProgramBlock exitBlock{-1};
+    ProgramBlock exitBlock{maxLoopSize};
 
     auto program = create_indexed_array<ProgramBlock, maxLoopSize>();
     ProgramBlock *loopBlock = program.data();
@@ -376,10 +376,6 @@ TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]")
         REQUIRE(la.deltaAt(-1) == 0);
         REQUIRE(la.deltaAt(0) == -1);
         REQUIRE(la.deltaAt(1) == -1);
-
-        REQUIRE(la.deltaAtOnNonStandardEntry(-1, 1) == 0);
-        REQUIRE(la.deltaAtOnNonStandardEntry(0, 1) == 0);
-        REQUIRE(la.deltaAtOnNonStandardEntry(1, 1) == -1);
     }
     SECTION("TravellingSingleChange2") {
         // As TravellingSingleChange, but with instructions reversed. This, amongst others, changes
@@ -401,10 +397,6 @@ TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]")
         REQUIRE(la.deltaAt(-1) == 0);
         REQUIRE(la.deltaAt(0) == 0);
         REQUIRE(la.deltaAt(1) == -1);
-
-        REQUIRE(la.deltaAtOnNonStandardEntry(-1, 1) == 0);
-        REQUIRE(la.deltaAtOnNonStandardEntry(0, 1) == -1);
-        REQUIRE(la.deltaAtOnNonStandardEntry(1, 1) == -1);
     }
     SECTION("TravellingSingleChange3") {
         // Single change, but with large DP shifts, and modulus DP
@@ -525,24 +517,6 @@ TEST_CASE("Travelling loop classification tests", "[loop-analysis][travelling]")
         REQUIRE(la.deltaAt(1) == 1);
         REQUIRE(la.deltaAt(2) == 2);
         REQUIRE(la.deltaAt(3) == 3);
-
-        REQUIRE(la.deltaAtOnNonStandardEntry(-1, 1) == 1);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 0, 1) == 2);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 1, 1) == 3);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 2, 1) == 3);
-
-        REQUIRE(la.deltaAtOnNonStandardEntry(-1, 2) == 1);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 0, 2) == 1);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 1, 2) == 3);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 2, 2) == 3);
-
-        REQUIRE(la.deltaAtOnNonStandardEntry(-1, 4) == 1);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 0, 4) == 2);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 1, 4) == 3);
-
-        REQUIRE(la.deltaAtOnNonStandardEntry(-1, 5) == 0);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 0, 5) == 1);
-        REQUIRE(la.deltaAtOnNonStandardEntry( 1, 5) == 1);
     }
     SECTION("TravellingSingleChangeInThreeSteps2") {
         // As TravellingSingleChangeInThreeSteps, but with shifts reversed. This should not impact

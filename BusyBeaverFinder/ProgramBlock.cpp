@@ -8,7 +8,7 @@
 
 #include "ProgramBlock.h"
 
-ProgramBlock::ProgramBlock(int startIndex) {
+ProgramBlock::ProgramBlock(size_t startIndex) {
     _startIndex = startIndex;
 }
 

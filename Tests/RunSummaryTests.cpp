@@ -16,22 +16,22 @@
 #include "RunSummary.h"
 
 class RunSummaryTest : public RunSummaryBase {
-    const std::vector<int> &_runHistory;
+    const std::vector<size_t> &_runHistory;
 
-    int getRunUnitIdAt(int runUnitIndex) const override { return _runHistory[runUnitIndex]; };
+    size_t getRunUnitIdAt(size_t runUnitIndex) const override { return _runHistory[runUnitIndex]; };
 
 public:
-    RunSummaryTest(const std::vector<int> &runHistory, int* helperBuf)
+    RunSummaryTest(const std::vector<size_t> &runHistory, int* helperBuf)
     : RunSummaryBase(helperBuf), _runHistory(runHistory) {}
 
     bool processNewRunUnits() override { return processNewHistory(_runHistory); };
 };
 
-bool checkRunSummary(RunSummaryTest& runSummary, std::vector<int>& expected) {
+bool checkRunSummary(RunSummaryTest& runSummary, std::vector<size_t>& expected) {
     auto expectedIt = expected.begin();
     int runBlockIndex = 0;
     // Maps run summary sequence IDs to expected IDs
-    std::map<int, int> idMap;
+    std::map<size_t, size_t> idMap;
 
     while (expectedIt != expected.end()) {
         if (runBlockIndex == runSummary.getNumRunBlocks()) {
@@ -39,8 +39,8 @@ bool checkRunSummary(RunSummaryTest& runSummary, std::vector<int>& expected) {
             return false;
         }
 
-        int expectedSequenceIndex = *expectedIt++; // Normalized
-        int expectedSequenceLength = *expectedIt++;
+        size_t expectedSequenceIndex = *expectedIt++; // Normalized
+        size_t expectedSequenceLength = *expectedIt++;
 
         const RunBlock* runBlock = runSummary.runBlockAt(runBlockIndex);
 
@@ -72,7 +72,7 @@ bool checkRunSummary(RunSummaryTest& runSummary, std::vector<int>& expected) {
     return true;
 }
 
-bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns,
+bool processAndCompare(std::vector<size_t>& blocks, std::vector<size_t>& expectedRuns,
                        bool identifyShortLoops = false) {
     int zArrayHelperBuf[32];
     RunSummaryTest runSummary(blocks, zArrayHelperBuf);
@@ -86,58 +86,58 @@ bool processAndCompare(std::vector<int>& blocks, std::vector<int>& expectedRuns,
 TEST_CASE( "RunSummary", "[util][runsummary]" ) {
     SECTION( "SingleBlockRunBlocks" ) {
         // Each run block consists of a single program block
-        std::vector<int> v = {1, 3,3,3, 2, 5,5,5, 4, 3,3,3, 2, 5,5,5, 4, 3,3,3};
-        std::vector<int> expectedRuns = {0,1, 1,3, 2,1, 3,3, 4,1, 1,3, 2,1, 3,3, 4,1, 1,3};
+        std::vector<size_t> v = {1, 3,3,3, 2, 5,5,5, 4, 3,3,3, 2, 5,5,5, 4, 3,3,3};
+        std::vector<size_t> expectedRuns = {0,1, 1,3, 2,1, 3,3, 4,1, 1,3, 2,1, 3,3, 4,1, 1,3};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "SingleBlockRunBlocks2" ) {
         // Same as previous, but starting with a loop
-        std::vector<int> v = {1,1,1, 0, 3,3,3, 2, 1,1,1, 0, 3,3,3, 2, 1,1,1};
-        std::vector<int> expectedRuns = {0,3, 1,1, 2,3, 3,1, 0,3, 1,1, 2,3, 3,1, 0,3};
+        std::vector<size_t> v = {1,1,1, 0, 3,3,3, 2, 1,1,1, 0, 3,3,3, 2, 1,1,1};
+        std::vector<size_t> expectedRuns = {0,3, 1,1, 2,3, 3,1, 0,3, 1,1, 2,3, 3,1, 0,3};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "MultiBlockLoop" ) {
         // Execution contains loop that consists of more than one program block
-        std::vector<int> v = {1,3, 5,7,5,7, 4, 5,7,5,7, 4};
-        std::vector<int> expectedRuns = {0,2, 1,4, 2,1, 1,4};
+        std::vector<size_t> v = {1,3, 5,7,5,7, 4, 5,7,5,7, 4};
+        std::vector<size_t> expectedRuns = {0,2, 1,4, 2,1, 1,4};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "MultiBlockLoopWithPrematureExit" ) {
         // Same as previous, but loop is aborted prematurely
-        std::vector<int> v = {1,3, 5,7,5,7,5, 6, 5,7,5,7,5, 6};
-        std::vector<int> expectedRuns = {0,2, 1,5, 2,1, 1,5};
+        std::vector<size_t> v = {1,3, 5,7,5,7,5, 6, 5,7,5,7,5, 6};
+        std::vector<size_t> expectedRuns = {0,2, 1,5, 2,1, 1,5};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "MultiBlockSwitch" ) {
         // Execution contains a switch between loops that consists of more than one program block
-        std::vector<int> v = {1,3, 5,5,5, 4,7,9,3, 5,5,5, 4,7,9,3, 5,5,5};
-        std::vector<int> expectedRuns = {0,2, 1,3, 2,4, 1,3, 2,4, 1,3};
+        std::vector<size_t> v = {1,3, 5,5,5, 4,7,9,3, 5,5,5, 4,7,9,3, 5,5,5};
+        std::vector<size_t> expectedRuns = {0,2, 1,3, 2,4, 1,3, 2,4, 1,3};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "MultiBlockSwitches" ) {
         // Execution contains multiple multi-block switches
-        std::vector<int> v = {1,3, 5,5, 4,7, 5,5, 4,6,9, 5,5};
-        std::vector<int> expectedRuns = {0,2, 1,2, 2,2, 1,2, 3,3, 1,2};
+        std::vector<size_t> v = {1,3, 5,5, 4,7, 5,5, 4,6,9, 5,5};
+        std::vector<size_t> expectedRuns = {0,2, 1,2, 2,2, 1,2, 3,3, 1,2};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "ManyLoopExits" ) {
         // Loop that has three different exits
-        std::vector<int> v = {1,1, 2, 1,1, 3, 1,1, 4, 1,1, 2, 1,1, 4, 1,1, 3, 1,1};
-        std::vector<int> expectedRuns =
+        std::vector<size_t> v = {1,1, 2, 1,1, 3, 1,1, 4, 1,1, 2, 1,1, 4, 1,1, 3, 1,1};
+        std::vector<size_t> expectedRuns =
             {0,2, 1,1, 0,2, 2,1, 0,2, 3,1, 0,2, 1,1, 0,2, 3,1, 0,2, 2,1, 0,2};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
     SECTION( "LoopWithRepeatedProgramBlocks" ) {
         // Loop that contains some repeated run blocks
-        std::vector<int> v = {1, 2,3,2,4,2,3,2,4, 5, 2,3,2,4,2,3,2,4, 5};
-        std::vector<int> expectedRuns = {0,1, 1,8, 2,1, 1,8};
+        std::vector<size_t> v = {1, 2,3,2,4,2,3,2,4, 5, 2,3,2,4,2,3,2,4, 5};
+        std::vector<size_t> expectedRuns = {0,1, 1,8, 2,1, 1,8};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
@@ -145,8 +145,8 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
         // This program contains different sequences that end with the same program block. These
         // should result in different run blocks, but they were not distinguished by an earlier
         // implementation of RunSummary (before 4fdc8fb commit)
-        std::vector<int> v = {1,2,3, 4,4, 1,5,3, 4,4, 1,2,3, 4,4, 1,5,3, 4,4};
-        std::vector<int> expectedRuns = {0,3, 1,2, 2,3, 1,2, 0,3, 1,2, 2,3, 1,2};
+        std::vector<size_t> v = {1,2,3, 4,4, 1,5,3, 4,4, 1,2,3, 4,4, 1,5,3, 4,4};
+        std::vector<size_t> expectedRuns = {0,3, 1,2, 2,3, 1,2, 0,3, 1,2, 2,3, 1,2};
 
         REQUIRE(processAndCompare(v, expectedRuns));
     }
@@ -155,8 +155,8 @@ TEST_CASE( "RunSummary", "[util][runsummary]" ) {
 TEST_CASE( "RunSummary-ShortLoops", "[util][runsummary]" ) {
     SECTION( "NoShortLoops" ) {
         // Execution contains a switch between loops that consists of more than one program block
-        std::vector<int> v = {1,3, 5,5,5, 4,7,9,3, 5,5,5, 4,7,9,3, 5,5,5};
-        std::vector<int> expectedRuns = {0,2, 1,3, 2,4, 1,3, 2,4, 1,3};
+        std::vector<size_t> v = {1,3, 5,5,5, 4,7,9,3, 5,5,5, 4,7,9,3, 5,5,5};
+        std::vector<size_t> expectedRuns = {0,2, 1,3, 2,4, 1,3, 2,4, 1,3};
 
         REQUIRE(processAndCompare(v, expectedRuns));
         REQUIRE(processAndCompare(v, expectedRuns, true));
@@ -164,9 +164,9 @@ TEST_CASE( "RunSummary-ShortLoops", "[util][runsummary]" ) {
     SECTION( "SingleBlockShortLoop" ) {
         // Single-block loop separated by alternating multi-block transitions.
         // The single iteration one-block loops is correctly detected.
-        std::vector<int> v = {1,2,3, 5,5, 4,7, 5,5,5, 1,2,3, 5, 4,7, 5,5,5};
-        std::vector<int> expectedRuns1 = {0,3, 1,2, 2,2, 1,3, 3,6, 1,3};
-        std::vector<int> expectedRuns2 = {0,3, 1,2, 2,2, 1,3, 0,3, 1,1, 2,2, 1,3};
+        std::vector<size_t> v = {1,2,3, 5,5, 4,7, 5,5,5, 1,2,3, 5, 4,7, 5,5,5};
+        std::vector<size_t> expectedRuns1 = {0,3, 1,2, 2,2, 1,3, 3,6, 1,3};
+        std::vector<size_t> expectedRuns2 = {0,3, 1,2, 2,2, 1,3, 0,3, 1,1, 2,2, 1,3};
 
         REQUIRE(processAndCompare(v, expectedRuns1));
         REQUIRE(processAndCompare(v, expectedRuns2, true));
@@ -176,17 +176,17 @@ TEST_CASE( "RunSummary-ShortLoops", "[util][runsummary]" ) {
         //
         // The single-iteration loop instance is not recognized, because it is part of a bigger
         // loop.
-        std::vector<int> v = {1,2,3, 5,5, 1,2,3, 5,5,5, 1,2,3, 5, 1,2,3, 5,5,5};
-        std::vector<int> expectedRuns = {0,3, 1,2, 0,3, 1,3, 2,8, 1,2};
+        std::vector<size_t> v = {1,2,3, 5,5, 1,2,3, 5,5,5, 1,2,3, 5, 1,2,3, 5,5,5};
+        std::vector<size_t> expectedRuns = {0,3, 1,2, 0,3, 1,3, 2,8, 1,2};
 
         REQUIRE(processAndCompare(v, expectedRuns));
         REQUIRE(processAndCompare(v, expectedRuns, true));
     }
     SECTION( "MultiBlockShortLoopWithSingleBlockTransitions" ) {
         // Multi-block loop seperated by single-block transitions.
-        std::vector<int> v = {1, 4,5,4,5, 2, 4,5,4,5, 1, 4,5, 2, 4, 1, 4,5,4,5};
-        std::vector<int> expectedRuns1 = {0,1, 1,4, 2,1, 1,4, 3,6, 1,4};
-        std::vector<int> expectedRuns2 = {0,1, 1,4, 2,1, 1,4, 0,1, 1,2, 2,1, 1,1, 0,1, 1,4};
+        std::vector<size_t> v = {1, 4,5,4,5, 2, 4,5,4,5, 1, 4,5, 2, 4, 1, 4,5,4,5};
+        std::vector<size_t> expectedRuns1 = {0,1, 1,4, 2,1, 1,4, 3,6, 1,4};
+        std::vector<size_t> expectedRuns2 = {0,1, 1,4, 2,1, 1,4, 0,1, 1,2, 2,1, 1,1, 0,1, 1,4};
 
         REQUIRE(processAndCompare(v, expectedRuns1));
         REQUIRE(processAndCompare(v, expectedRuns2, true));
@@ -196,17 +196,17 @@ TEST_CASE( "RunSummary-ShortLoops", "[util][runsummary]" ) {
         //
         // The single-iteration loop is not recognized, as it only looks for a match for the
         // last loop following the transition.
-        std::vector<int> v = {1, 2,2, 1, 3,3,3, 1, 2,2, 1, 3, 1, 2,2};
-        std::vector<int> expectedRuns = {0,1, 1,2, 0,1, 2,3, 0,1, 1,2, 3,3, 1,2};
+        std::vector<size_t> v = {1, 2,2, 1, 3,3,3, 1, 2,2, 1, 3, 1, 2,2};
+        std::vector<size_t> expectedRuns = {0,1, 1,2, 0,1, 2,3, 0,1, 1,2, 3,3, 1,2};
 
         REQUIRE(processAndCompare(v, expectedRuns));
         REQUIRE(processAndCompare(v, expectedRuns, true));
     }
     SECTION( "OnlyLoops" ) {
         // Two alternating single-block loops.
-        std::vector<int> v = {1,1, 2,2, 1,1,1, 2,2, 1, 2,2, 1,1,1, 2, 1,1};
-        std::vector<int> expectedRuns1 = {0,2, 1,2, 0,3, 1,2, 2,1, 1,2, 0,3, 3,1, 0,2};
-        std::vector<int> expectedRuns2 = {0,2, 1,2, 0,3, 1,2, 0,1, 1,2, 0,3, 1,1, 0,2};
+        std::vector<size_t> v = {1,1, 2,2, 1,1,1, 2,2, 1, 2,2, 1,1,1, 2, 1,1};
+        std::vector<size_t> expectedRuns1 = {0,2, 1,2, 0,3, 1,2, 2,1, 1,2, 0,3, 3,1, 0,2};
+        std::vector<size_t> expectedRuns2 = {0,2, 1,2, 0,3, 1,2, 0,1, 1,2, 0,3, 1,1, 0,2};
 
         REQUIRE(processAndCompare(v, expectedRuns1));
         REQUIRE(processAndCompare(v, expectedRuns2, true));
@@ -214,13 +214,13 @@ TEST_CASE( "RunSummary-ShortLoops", "[util][runsummary]" ) {
 }
 
 TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence]" ) {
-    std::vector<int> history;
+    std::vector<size_t> history;
     int zArrayHelperBuf[32];
     RunSummaryTest runSummary(history, zArrayHelperBuf);
-    int loopOffset;
+    size_t loopOffset;
 
     SECTION( "EqualThreeBlockLoops" ) {
-        std::vector<int> v = {1, 2,3,4,2,3,4, 1, 3,4,2,3,4,2, 1, 4,2,3,4,2,3};
+        std::vector<size_t> v = {1, 2,3,4,2,3,4, 1, 3,4,2,3,4,2, 1, 4,2,3,4,2,3};
         std::swap(history, v);
         runSummary.processNewRunUnits();
 
@@ -246,7 +246,7 @@ TEST_CASE( "RunSummaryLoopEquivalence", "[util][runsummary][loop-equivalence]" )
         REQUIRE(loopOffset == 2);
     }
     SECTION( "UnequalThreeBlockLoops" ) {
-        std::vector<int> v = {1, 2,3,4,2,3,4, 1, 3,5,2,3,5,2, 1, 4,2,6,4,2,6};
+        std::vector<size_t> v = {1, 2,3,4,2,3,4, 1, 3,5,2,3,5,2, 1, 4,2,6,4,2,6};
         std::swap(history, v);
         runSummary.processNewRunUnits();
 

@@ -13,10 +13,10 @@
 
 class HangDetector {
     // When last hang proof attempt was done that failed
-    int _lastFailedCheckPoint;
+    size_t _lastFailedCheckPoint;
 
     // When last analysis was performed
-    int _analysisCheckPoint;
+    size_t _analysisCheckPoint;
 
 protected:
     const ExecutionState& _execution;
@@ -26,7 +26,7 @@ protected:
     // it will only check again after the check point has changed. So the checkpoint should only
     // change when the next check might pass. What a suitable checkpoint is depends on the type of
     // hang that is being detected.
-    int currentCheckPoint() { return _execution.getRunSummary().getNumRunBlocks(); }
+    size_t currentCheckPoint() { return _execution.getRunSummary().getNumRunBlocks(); }
 
     virtual bool shouldCheckNow() const = 0;
 

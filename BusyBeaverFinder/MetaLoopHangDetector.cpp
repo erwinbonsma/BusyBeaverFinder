@@ -34,17 +34,17 @@ bool MetaLoopHangDetector::preparePeriodicHangCheck() {
     const RunSummary& runSummary = _execution.getRunSummary();
 
     // Loop period in run blocks
-    int runBlocksInLoop = _metaLoopAnalysis.loopSize();
+    size_t runBlocksInLoop = _metaLoopAnalysis.loopSize();
 
-    int startRunBlockIndex = runSummary.getNumRunBlocks() - runBlocksInLoop;
-    int endRunBlockIndex = runSummary.getNumRunBlocks() - 1;
+    size_t startRunBlockIndex = runSummary.getNumRunBlocks() - runBlocksInLoop;
+    size_t endRunBlockIndex = runSummary.getNumRunBlocks() - 1;
 
     //    _metaLoopStart = metaLoopStart;
-    int loopStart = runSummary.runBlockAt(startRunBlockIndex)->getStartIndex();
-    int loopEnd = (runSummary.runBlockAt(endRunBlockIndex)->getStartIndex()
-                   + runSummary.getRunBlockLength(endRunBlockIndex));
+    size_t loopStart = runSummary.runBlockAt(startRunBlockIndex)->getStartIndex();
+    size_t loopEnd = (runSummary.runBlockAt(endRunBlockIndex)->getStartIndex()
+                      + runSummary.getRunBlockLength(endRunBlockIndex));
     // Loop period in program blocks
-    int loopPeriod = loopEnd - loopStart;
+    size_t loopPeriod = loopEnd - loopStart;
     if (!_loopAnalysis.analyzeLoop(&_execution.getRunHistory()[loopStart], loopPeriod)) {
         return false;
     }

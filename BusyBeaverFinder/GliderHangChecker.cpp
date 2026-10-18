@@ -11,7 +11,7 @@
 bool GliderHangChecker::identifyLoopCounters() {
     auto &loopBehavior = _metaLoopAnalysis->loopBehaviors()[_gliderLoopIndex];
     auto loopAnalysis = loopBehavior.loopAnalysis();
-    int loopSize = loopAnalysis->loopSize();
+    size_t loopSize = loopAnalysis->loopSize();
     _loopCounterIndex = ((_metaLoopAnalysis->loopRemainder(_gliderLoopIndex) + loopSize - 1)
                          % loopSize);
 
@@ -63,12 +63,12 @@ bool GliderHangChecker::analyzeTransitionSequence(const ExecutionState& executio
 
     auto &loop = _metaLoopAnalysis->loopBehaviors()[_gliderLoopIndex];
     _firstGliderLoopRunBlockIndex = _metaLoopAnalysis->firstRunBlockIndex() + loop.sequenceIndex();
-    int pbIndexStart = runSummary.runBlockAt(_firstGliderLoopRunBlockIndex + 1)->getStartIndex();
-    int nextLoopRunBlock = _firstGliderLoopRunBlockIndex + _metaLoopAnalysis->loopSize();
+    size_t pbIndexStart = runSummary.runBlockAt(_firstGliderLoopRunBlockIndex + 1)->getStartIndex();
+    size_t nxtLoopRunBlock = _firstGliderLoopRunBlockIndex + _metaLoopAnalysis->loopSize();
 
     // Include start of loop until loop exit so that DP shift is correct over an iteration of the
     // meta-loop. Or re-phrased, let the glider loop start at the instruction where it exits.
-    int pbIndexEnd = runSummary.runBlockAt(nextLoopRunBlock)->getStartIndex() + _loopCounterIndex;
+    size_t pbIndexEnd = runSummary.runBlockAt(nxtLoopRunBlock)->getStartIndex() + _loopCounterIndex;
 
     if (!_transitionLoopAnalysis.analyzeLoop(&runHistory[pbIndexStart],
                                              pbIndexEnd - pbIndexStart)) {

@@ -74,7 +74,7 @@ InstructionPointer nextInstructionPointer(ProgramPointer pp) {
 
 // Not used anymore, but kept for reference. It helps understanding the findPeriod implementation
 // and has its own unit tests, which is possibly useful in troubleshooting.
-void calculateZArray(const char* input, int* output, int len) {
+void calculateZArray(const char* input, int* output, size_t len) {
     int l, r;
     l = r = 0;
 
@@ -104,7 +104,7 @@ void calculateZArray(const char* input, int* output, int len) {
     }
 }
 
-int findPeriod(const char* input, int* buf, int len) {
+size_t findPeriod(const char* input, int* buf, size_t len) {
     int l, r;
     l = r = 0;
 

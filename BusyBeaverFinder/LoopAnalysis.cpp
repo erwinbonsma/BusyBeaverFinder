@@ -53,7 +53,7 @@ bool ExitCondition::isTrueForValue(int value) const {
     return (value - _value) % _modulus == 0;
 }
 
-std::optional<int> ExitCondition::exitIteration(int value) const {
+std::optional<size_t> ExitCondition::exitIteration(int value) const {
     if (!isTrueForValue(value)) {
         return {};
     }
@@ -108,19 +108,19 @@ std::ostream &operator<<(std::ostream &os, const LoopExit &le) {
     return os;
 }
 
-bool LoopAnalysis::exitsOnZero(int index) const {
+bool LoopAnalysis::exitsOnZero(size_t index) const {
     const ProgramBlock* curBlock = programBlockAt(index);
     const ProgramBlock* nxtBlock = programBlockFollowing(index);
 
     return curBlock->nonZeroBlock() == nxtBlock;
 }
 
-const ProgramBlock* LoopAnalysis::programBlockAt(int index) const {
+const ProgramBlock* LoopAnalysis::programBlockAt(size_t index) const {
     if (_programBlocks) {
         return _programBlocks[index];
     } else {
-        int seqIndex = 0;
-        int lenSofar = _subSequenceLengths[0];
+        size_t seqIndex = 0;
+        size_t lenSofar = _subSequenceLengths[0];
         while (index >= lenSofar) {
             seqIndex += 1;
             lenSofar += _subSequenceLengths[seqIndex];
@@ -129,12 +129,12 @@ const ProgramBlock* LoopAnalysis::programBlockAt(int index) const {
     }
 }
 
-const ProgramBlock* LoopAnalysis::programBlockFollowing(int index) const {
+const ProgramBlock* LoopAnalysis::programBlockFollowing(size_t index) const {
     if (_programBlocks) {
         return _programBlocks[(index + 1) % loopSize()];
     } else {
-        int seqIndex = 0;
-        int lenSofar = _subSequenceLengths[0];
+        size_t seqIndex = 0;
+        size_t lenSofar = _subSequenceLengths[0];
         while (index >= lenSofar) {
             seqIndex += 1;
             lenSofar += _subSequenceLengths[seqIndex];
@@ -143,7 +143,7 @@ const ProgramBlock* LoopAnalysis::programBlockFollowing(int index) const {
     }
 }
 
-void LoopAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, int len) {
+void LoopAnalysis::analyzeBlocks(RawProgramBlocks programBlocks, size_t len) {
     SequenceAnalysis::analyzeBlocks(programBlocks, len);
 
     if (!_programBlocks) {
@@ -169,25 +169,6 @@ int LoopAnalysis::deltaAt(int dpOffset) const {
             )
         ) {
             delta += dd.delta();
-        }
-    }
-
-    return delta;
-}
-
-int LoopAnalysis::deltaAtOnNonStandardEntry(int dpOffset, int startingInstruction) const {
-    assert(startingInstruction > 0);
-
-    // Establish delta, compensating for DP offset
-    auto &ddEntry = effectiveResultAt(startingInstruction - 1);
-    int delta = deltaAt(dpOffset + ddEntry.dpOffset());
-
-    // Undo data value changes caused by skipped instructions.
-    for (int i = startingInstruction; --i >= 0; ) {
-        auto &dd = effectiveResultAt(i);
-        if (dd.dpOffset() == (dpOffset + ddEntry.dpOffset())) {
-            delta -= dd.delta();
-            break;
         }
     }
 
@@ -243,7 +224,7 @@ void LoopAnalysis::setExitConditionsForStationaryLoop() {
 
 // Identify bootstrap-only exits (and exits that can never be reached).
 void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
-    for (int i = loopSize(); --i >= 0; ) {
+    for (int i = static_cast<int>(loopSize()); --i >= 0; ) {
         LoopExit& loopExit = _loopExits[i];
 
         if (loopExit.exitWindow != ExitWindow::ANYTIME) {
@@ -269,7 +250,7 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
                         bool deltaIsPositive = _dataDeltas.deltaAt(dp) > 0;
                         int k = (deltaIsPositive == (delta2 > delta)) ? i : j;
 
-                        int numBootstrapCycles = abs((delta2 - delta) / mc);
+                        size_t numBootstrapCycles = abs((delta2 - delta) / mc);
                         _numBootstrapCycles = std::max(_numBootstrapCycles, numBootstrapCycles);
 
                         if (_loopExits[k].exitCondition.isValid()) {
@@ -295,7 +276,7 @@ void LoopAnalysis::identifyBootstrapOnlyExitsForStationaryLoop() {
 }
 
 void LoopAnalysis::markUnreachableExitsForStationaryLoop() {
-    for (int i = loopSize(); --i >= 0; ) {
+    for (int i = static_cast<int>(loopSize()); --i >= 0; ) {
         if (!exitsOnZero(i)) {
             // After this instruction executed successfully and the loop continues the value will
             // be zero. This makes it possible to verify if the instructions that follow it that
@@ -327,7 +308,7 @@ void LoopAnalysis::initExitsForStationaryLoop() {
 bool LoopAnalysis::initExitsForTravellingLoop() {
     // Temporary helper array that contains instruction indices, which will be sorted based on
     // the order in which they consume data values.
-    static std::array<int, maxLoopSize> indices;
+    static std::array<size_t, maxLoopSize> indices;
 
     // Temporary helper array that maintains the delta of the value after an instruction is
     // executed wrt to when the value was first encountered by the loop.
@@ -341,7 +322,7 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
         return false;
     }
 
-    for (int i = loopSize(); --i >= 0; ) {
+    for (size_t i = 0; i < loopSize(); i++) {
         indices[i] = i;
     }
 
@@ -359,13 +340,13 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
 
     _numBootstrapCycles = 0; // Initialize as zero. It is increased as needed.
     assert(_loopExits.empty());
-    for (int i = loopSize(); --i >= 0; ) {
+    for (size_t i = 0; i < loopSize(); i++) {
         _loopExits.emplace_back();
     }
 
     // Establish the exit condition for each instruction
     for (int ii = 0 ; ii < loopSize(); ii++) {
-        int i = indices[ii];
+        size_t i = indices[ii];
         const ProgramBlock* pb = programBlockAt(i);
 
         int dp_i = _effectiveResult[i].dpOffset();
@@ -381,7 +362,7 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
 
         bool foundPreceding = false;
         for (int jj = ii; --jj >= 0; ) {
-            int j = indices[jj];
+            size_t j = indices[jj];
             int dp_j = _effectiveResult[j].dpOffset();
             int mod_j = normalizedMod(dp_j, _dpDelta);
 
@@ -428,7 +409,7 @@ bool LoopAnalysis::initExitsForTravellingLoop() {
                     } else if (loopExit.exitWindow != ExitWindow::BOOTSTRAP) {
                         // The later instruction can still exit the loop during bootstrap
                         loopExit.exitWindow = ExitWindow::BOOTSTRAP;
-                        int numBootstrapCycles = abs((dp_j - dp_i) / _dpDelta);
+                        size_t numBootstrapCycles = abs((dp_j - dp_i) / _dpDelta);
                         _numBootstrapCycles = std::max(_numBootstrapCycles, numBootstrapCycles);
                     }
                 }
@@ -469,7 +450,7 @@ bool LoopAnalysis::finishAnalysis() {
     return true;
 }
 
-bool LoopAnalysis::analyzeLoop(RawProgramBlocks programBlocks, int len) {
+bool LoopAnalysis::analyzeLoop(RawProgramBlocks programBlocks, size_t len) {
     return analyzeSequence(programBlocks, len);
 }
 
@@ -479,7 +460,7 @@ bool LoopAnalysis::allValuesToBeConsumedAreZero(const Data &data) const {
     for (auto &loopExit : _loopExits) {
         if (loopExit.firstForValue) {
             DataPointer p = data.getDataPointer() + loopExit.exitCondition.dpOffset();
-            int count = 0;
+            size_t count = 0;
 
             while (
                (dataPointerDelta() > 0 && p <= data.getMaxBoundP()) ||
@@ -510,7 +491,7 @@ std::optional<LoopExitOccurence> LoopAnalysis::stationaryLoopExits(const Data& d
     assert(dataPointerDelta() == 0);
 
     std::optional<LoopExitOccurence> result;
-    int instructionIndex = 0;
+    size_t instructionIndex = 0;
     for (auto &loopExit : _loopExits) {
         if (
             loopExit.exitWindow != ExitWindow::NEVER &&
@@ -543,7 +524,7 @@ std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
     os << "# bootstrap cycles = " << la._numBootstrapCycles << std::endl;
 
     if (la.exitsAnalyzed()) {
-        for (int i = 0; i < la.sequenceSize(); i++) {
+        for (size_t i = 0; i < la.sequenceSize(); i++) {
             os << "Instruction #" << i;
             os << ", Exit: " << la.exit(i) << std::endl;
         }
@@ -552,7 +533,7 @@ std::ostream &operator<<(std::ostream &os, const LoopAnalysis &la) {
     if (la._subSequenceProgramBlocks.size() > 0) {
         const ProgramBlock *pbPrev = nullptr;
         const ProgramBlock *pb;
-        for (int i = 0; i < la.loopSize(); ++i) {
+        for (size_t i = 0; i < la.loopSize(); ++i) {
             pb = la.programBlockAt(i);
             if (pbPrev && pbPrev->zeroBlock() != pb && pbPrev->nonZeroBlock() != pb) {
                 os << "---" << std::endl;

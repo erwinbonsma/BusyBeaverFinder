@@ -76,7 +76,7 @@ protected:
     virtual void startAnalysis();
 
     void analyzeBlock(const ProgramBlock* block);
-    virtual void analyzeBlocks(RawProgramBlocks programBlocks, int len);
+    virtual void analyzeBlocks(RawProgramBlocks programBlocks, size_t len);
 
     // Returns true is analysis completed and the sequence matched the expected pattern
     virtual bool finishAnalysis();
@@ -100,18 +100,18 @@ public:
 
     const DataDeltas& dataDeltas() const { return _dataDeltas; }
 
-    const DataDelta& effectiveResultAt(int index) const { return _effectiveResult[index]; }
+    const DataDelta& effectiveResultAt(size_t index) const { return _effectiveResult[index]; }
 
     const std::multimap<int, PreCondition> preConditions() const { return _preConditions; }
     bool hasPreCondition(int dpOffset, PreCondition preCondition) const;
 
     // Analyse the given continous sequence of program blocks
-    bool analyzeSequence(RawProgramBlocks programBlocks, int len);
+    bool analyzeSequence(RawProgramBlocks programBlocks, size_t len);
 
     // Analyse the combined effects of multiple sub-sequences
     void analyzeMultiSequenceStart();
     // dpDelta gives the (relative) start position of DP at start of program block sequence
-    void analyzeMultiSequence(RawProgramBlocks programBlocks, int len, int dpDelta);
+    void analyzeMultiSequence(RawProgramBlocks programBlocks, size_t len, int dpDelta);
     bool analyzeMultiSequenceEnd(int dpDelta);
 
     void dump() const { std::cout << *this << std::endl; }

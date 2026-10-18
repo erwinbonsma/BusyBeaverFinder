@@ -17,25 +17,25 @@ class RunBlockTransitions {
 
     // The maximum number of destinations that should be maintained per node.
     // When the maximum would be exceeded, the oldest transition is dropped.
-    int _maxDestinationsPerNode { 4 };
+    size_t _maxDestinationsPerNode { 4 };
 
     struct Transition {
-        Transition(int lastOccurence) : count(1), lastOccurence(lastOccurence) {}
+        Transition(size_t lastOccurence) : count(1), lastOccurence(lastOccurence) {}
 
-        int count = 0;
-        int lastOccurence = 0;
+        size_t count = 0;
+        size_t lastOccurence = 0;
     };
 
     struct Transitions {
         // Map with key sequenceId of destination node and value index (in run summary) when
         // transition last occured
-        std::map<int, Transition> destNodes;
+        std::map<size_t, Transition> destNodes;
 
     };
 
     // Map with key sequenceId of source node
-    std::map<int, Transitions> _transitions;
-    int _numTransitions = 0;
+    std::map<size_t, Transitions> _transitions;
+    size_t _numTransitions = 0;
 
     const RunSummary& _runSummary;
 
@@ -44,7 +44,7 @@ class RunBlockTransitions {
 public:
     RunBlockTransitions(const RunSummary& runSummary) : _runSummary(runSummary) {}
 
-    void setMaxDestinationsPerNode(int value) { _maxDestinationsPerNode = value; }
+    void setMaxDestinationsPerNode(size_t value) { _maxDestinationsPerNode = value; }
 
     void reset();
     void processNewRunBlocks();

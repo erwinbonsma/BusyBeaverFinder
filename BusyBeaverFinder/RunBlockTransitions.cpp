@@ -34,7 +34,7 @@ void RunBlockTransitions::addTransition(const RunBlock* src, const RunBlock* dst
     if (t.destNodes.size() > _maxDestinationsPerNode) {
         // Exceeded the maximum number of transitions. Drop the oldest
 
-        int min = _numTransitions;
+        size_t min = _numTransitions;
         auto minIt = t.destNodes.end();
         for (auto it = t.destNodes.begin(), end = t.destNodes.end(); it != end; ++it) {
             if (it->second.lastOccurence < min) {
@@ -48,9 +48,9 @@ void RunBlockTransitions::addTransition(const RunBlock* src, const RunBlock* dst
 
 
 void RunBlockTransitions::processNewRunBlocks() {
-    int target = _runSummary.getNumRunBlocks() - 1;
+    const RunBlock* last = _runSummary.getLastRunBlock();
     const RunBlock* prv = _runSummary.runBlockAt(_numTransitions);
-    while (_numTransitions < target) {
+    while (prv != last) {
         const RunBlock* cur = _runSummary.runBlockAt(_numTransitions + 1);
         addTransition(prv, cur);
         prv = cur;

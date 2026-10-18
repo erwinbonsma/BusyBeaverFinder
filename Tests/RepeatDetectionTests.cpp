@@ -18,55 +18,55 @@ TEST_CASE( "RepeatDetection", "[util][repeat]" ) {
 
     SECTION( "1234234" ) {
         int input[] = {1, 2, 3, 4, 2, 3, 4};
-        int len = findRepeatedSequence(input, buf, 7);
+        size_t len = findRepeatedSequence(input, buf, 7);
 
         REQUIRE(len == 3);
     }
     SECTION( "1234123" ) {
         int input[] = {1, 2, 3, 4, 1, 2, 3};
-        int len = findRepeatedSequence(input, buf, 7);
+        size_t len = findRepeatedSequence(input, buf, 7);
 
         REQUIRE(len == 0);
     }
     SECTION( "121314151415" ) {
         int input[] = {1, 2, 1, 3, 1, 4, 1, 5, 1, 4, 1, 5};
-        int len = findRepeatedSequence(input, buf, 12);
+        size_t len = findRepeatedSequence(input, buf, 12);
 
         REQUIRE(len == 4);
     }
     SECTION( "12131413121" ) {
         int input[] = {1, 2, 1, 3, 1, 4, 1, 3, 1, 2, 1};
-        int len = findRepeatedSequence(input, buf, 11);
+        size_t len = findRepeatedSequence(input, buf, 11);
 
         REQUIRE(len == 0);
     }
     SECTION( "11" ) {
         int input[] = {1, 1};
-        int len = findRepeatedSequence(input, buf, 2);
+        size_t len = findRepeatedSequence(input, buf, 2);
 
         REQUIRE(len == 1);
     }
     SECTION( "1" ) {
         int input[] = {1};
-        int len = findRepeatedSequence(input, buf, 1);
+        size_t len = findRepeatedSequence(input, buf, 1);
 
         REQUIRE(len == 0);
     }
     SECTION( "2341234" ) {
         int input[] = {2, 3, 4, 1, 2, 3, 4};
-        int len = findRepeatedSequence(input, buf, 7);
+        size_t len = findRepeatedSequence(input, buf, 7);
 
         REQUIRE(len == 0);
     }
     SECTION( "12341234" ) {
         int input[] = {1, 2, 3, 4, 1, 2, 3, 4};
-        int len = findRepeatedSequence(input, buf, 8);
+        size_t len = findRepeatedSequence(input, buf, 8);
 
         REQUIRE(len == 4);
     }
     SECTION( "12344444" ) {
         int input[] = {1, 2, 3, 4, 4, 4, 4, 4};
-        int len = findRepeatedSequence(input, buf, 8);
+        size_t len = findRepeatedSequence(input, buf, 8);
 
         // The algorithm is not expected to find the longest repeat sequence. It is only used to
         // signal the first repeat.

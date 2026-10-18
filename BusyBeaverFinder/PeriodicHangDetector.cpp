@@ -23,7 +23,7 @@ bool PeriodicHangDetector::analyzeHangBehaviour() {
     const RunSummary& runSummary = _execution.getRunSummary();
     auto loopRunBlock = runSummary.getLastRunBlock();
 
-    int loopStart = loopRunBlock->getStartIndex();
+    size_t loopStart = loopRunBlock->getStartIndex();
     if (!_loop.analyzeLoop(&runHistory[loopStart], loopRunBlock->getLoopPeriod())) {
         return false;
     }
@@ -31,7 +31,7 @@ bool PeriodicHangDetector::analyzeHangBehaviour() {
     if (_loop.dataPointerDelta() != 0) {
         // A travelling loop can only hang if none of its non-bootstrap exits exit on zero.
         // As the data tape is infinite and initialized with zeros, it will always encounter zeros.
-        for (int i = _loop.loopSize(); --i >= 0; ) {
+        for (size_t i = 0; i < _loop.loopSize(); i++) {
             const LoopExit &exit = _loop.exit(i);
             if (exit.exitWindow == ExitWindow::ANYTIME) {
                 if (exit.exitCondition.isTrueForValue(0)) {

@@ -48,8 +48,8 @@ inline int sign(int val) {
 
 InstructionPointer nextInstructionPointer(ProgramPointer insP);
 
-void calculateZArray(const char* input, int* output, int len);
-int findPeriod(const char* input, int* buf, int len);
+void calculateZArray(const char* input, int* output, size_t len);
+size_t findPeriod(const char* input, int* buf, size_t len);
 
 // Checks if the "input" array, containing "len" elements, ends with a repeated sequence.
 // It will return the length of this sequence if one is found, and zero otherwise.
@@ -59,7 +59,7 @@ int findPeriod(const char* input, int* buf, int len);
 // abcdabc => 0
 // abcdee => 1
 template <typename T>
-int findRepeatedSequence(const T* input, int* buf, int len);
+size_t findRepeatedSequence(const T* input, int* buf, size_t len);
 
 // Returns true if any combination of deltas (with repeats) can sum to target value.
 bool deltasCanSumTo(std::set<int> deltas, int target);
@@ -177,9 +177,9 @@ makeRange(Container& c, size_t begin, size_t end) {
 // - Changed termination criterion and return value
 // - Only iterate over half the sequence (as it will not find a match anymore beyond that)
 template <typename T>
-int findRepeatedSequence(const T* input, int* buf, int len) {
-    int lastpos = len - 1;
-    int halflen = len / 2;
+size_t findRepeatedSequence(const T* input, int* buf, size_t len) {
+    int lastpos = static_cast<int>(len - 1);
+    int halflen = static_cast<int>(len / 2);
     int l, r;
     l = r = 0;
 

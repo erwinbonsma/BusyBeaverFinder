@@ -13,7 +13,7 @@
 #include "Types.h"
 
 class ProgramBlock {
-    int _startIndex;
+    size_t _startIndex;
 
     // Entries
     std::vector<ProgramBlock*> _entries;
@@ -34,7 +34,7 @@ protected:
     int _numSteps {};
 
 public:
-    ProgramBlock(int startIndex);
+    ProgramBlock(size_t startIndex);
     void reset();
 
     void finalizeHang();
@@ -43,7 +43,7 @@ public:
                   ProgramBlock* zeroBlock, ProgramBlock* nonZeroBlock);
 
     // Index that uniquely specifies the starting position (including turn direction)
-    int getStartIndex() const { return _startIndex; }
+    size_t getStartIndex() const { return _startIndex; }
 
     bool isFinalized() const { return _isFinalized; }
 

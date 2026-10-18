@@ -160,7 +160,7 @@ void InterpretedProgramBuilder::pop() {
 }
 
 InstructionPointer InterpretedProgramBuilder::startInstructionForBlock(const ProgramBlock* block) {
-    int val = block->getStartIndex() >> 1;
+    int val = static_cast<int>(block->getStartIndex()) >> 1;
     int8_t col = val % maxProgramSize;
     int8_t row = (val - col) / maxProgramSize;
 

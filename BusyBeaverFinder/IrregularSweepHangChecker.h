@@ -85,14 +85,14 @@ class IrregularSweepHangChecker : public SweepHangChecker {
 
   protected:
     bool sweepLoopContinuesForever(const ExecutionState& executionState,
-                                   SweepLoop* loop, int seqIndex) override;
+                                   SweepLoop* loop, size_t seqIndex) override;
     bool transitionContinuesForever(const ExecutionState& executionState,
-                                    TransitionGroup* transition, int seqIndex) override;
+                                    TransitionGroup* transition, size_t seqIndex) override;
 
     bool growingTransitionContinuesForever(const ExecutionState& executionState,
-                                            TransitionGroup* transition, int seqIndex);
+                                            TransitionGroup* transition, size_t seqIndex);
     bool shrinkingTransitionContinuesForever(const ExecutionState& executionState,
-                                             TransitionGroup* transition, int seqIndex);
+                                             TransitionGroup* transition, size_t seqIndex);
   private:
     LocationInSweep mapDataDir(DataDirection dir) const {
         return dir == DataDirection::LEFT ? LocationInSweep::LEFT : LocationInSweep::RIGHT;

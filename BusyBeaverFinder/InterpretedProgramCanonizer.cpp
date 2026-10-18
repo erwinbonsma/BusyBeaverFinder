@@ -47,10 +47,10 @@ int InterpretedProgramCanonizer::canonicalStartIndexForBlock(const ProgramBlock*
 
 InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgram& source) {
     // Maps from "my" startIndex to block index
-    std::map<int, int> myMap;
+    std::map<size_t, size_t> myMap;
 
     // Maps from their startIndex to block index
-    std::map<int, int> theirMap;
+    std::map<size_t, size_t> theirMap;
 
     std::deque<const ProgramBlock*> pending;
     pending.push_back(source.getEntryBlock());
@@ -64,7 +64,7 @@ InterpretedProgramCanonizer::InterpretedProgramCanonizer(const InterpretedProgra
         auto result = myMap.find(startIndex);
         if (result == myMap.end()) {
             // Block does not yet exist. Add it
-            int index = static_cast<int>(_blocks.size());
+            size_t index = _blocks.size();
             _blocks.emplace_back(startIndex);
 
             myMap.insert({startIndex, index});

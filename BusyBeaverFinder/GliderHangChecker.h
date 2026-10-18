@@ -19,20 +19,20 @@ class GliderHangChecker : public HangChecker {
     LoopAnalysis _transitionLoopAnalysis;
 
     // The index of the loop in the meta-loop analysis (zero when there's only one loop)
-    int _gliderLoopIndex;
+    size_t _gliderLoopIndex;
 
     // The run block index of the first glider loop
-    int _firstGliderLoopRunBlockIndex;
+    size_t _firstGliderLoopRunBlockIndex;
 
     // The instruction in the glider loop that decrements the loop counter (which eventually causes
     // the loop to exit)
-    int _loopCounterIndex;
+    size_t _loopCounterIndex;
 
     // The location of the (current) loop counter, relative to DP at loop entry.
     int _counterDpOffset;
 
-    int _numBootstrapCycles;
-    int _proofEnd;
+    size_t _numBootstrapCycles;
+    size_t _proofEnd;
 
     bool identifyLoopCounters();
     bool analyzeTransitionSequence(const ExecutionState& executionState);
@@ -40,7 +40,7 @@ class GliderHangChecker : public HangChecker {
 public:
     bool init(const MetaLoopAnalysis* metaLoopAnalysis, const ExecutionState& executionState);
 
-    int gliderLoopIndex() const { return _gliderLoopIndex; }
+    size_t gliderLoopIndex() const { return _gliderLoopIndex; }
     int counterDpOffset() const { return _counterDpOffset; }
     const LoopAnalysis& transitionLoopAnalysis() const { return _transitionLoopAnalysis; }
 

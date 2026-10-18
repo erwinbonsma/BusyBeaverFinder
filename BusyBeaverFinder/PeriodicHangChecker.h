@@ -13,19 +13,19 @@
 class PeriodicHangChecker : public HangChecker {
 
     const LoopAnalysis* _loop;
-    int _loopStart;
+    size_t _loopStart;
 
     int _proofPhase;
-    int _targetLoopLen;
+    size_t _targetLoopLen;
 
 protected:
     Trilian proofHangPhase1(const ExecutionState& _execution);
     Trilian proofHangPhase2(const ExecutionState& _execution);
 
 public:
-    void init(const LoopAnalysis* loop, int loopStart);
+    void init(const LoopAnalysis* loop, size_t loopStart);
 
-    int loopStart() const { return _loopStart; }
+    size_t loopStart() const { return _loopStart; }
 
     Trilian proofHang(const ExecutionState& _execution) override;
 };
