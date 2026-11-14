@@ -31,11 +31,11 @@ enum class SearchMode : int8_t {
 
 struct SearchSettings : public BaseSearchSettings {
     // The maximum number of steps with hang detection enabled
-    int maxHangDetectionSteps = 1024;
+    size_t maxHangDetectionSteps = 1024;
 
     // The maximum number of steps where the program space is searched during execution.
     // Beyond this limit, if a program encounters an unset instruction, it is a late escape.
-    int maxSearchSteps = 1024;
+    size_t maxSearchSteps = 1024;
 
 
     bool testHangDetection = false;

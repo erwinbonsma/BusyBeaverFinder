@@ -57,11 +57,11 @@ void init(int argc, char * argv[]) {
         ("w,width", "Program width", cxxopts::value<int>())
         ("h,height", "Program height", cxxopts::value<int>())
         ("d,datasize", "Data size", cxxopts::value<int>())
-        ("max-steps", "Maximum program execution steps", cxxopts::value<int>())
+        ("max-steps", "Maximum program execution steps", cxxopts::value<size_t>())
         ("max-search-steps", "Maximum steps to enable back-tracking search",
-         cxxopts::value<int>())
+         cxxopts::value<size_t>())
         ("max-hang-detection-steps", "Max steps to execute with hang detection",
-         cxxopts::value<int>())
+         cxxopts::value<size_t>())
         ("undo-capacity", "Maximum data operations to undo", cxxopts::value<int>())
         ("run-mode", "One of: FULL, RESUME, ESCAPE, ONLYRUN", cxxopts::value<std::string>())
         ("input-file", "File with programs (ESCAPE, ONLYRUN)", cxxopts::value<std::string>())
@@ -111,13 +111,13 @@ void init(int argc, char * argv[]) {
 
     // Set max total steps
     if (result.count("max-steps")) {
-        settings.maxSteps = result["max-steps"].as<int>();
+        settings.maxSteps = result["max-steps"].as<size_t>();
     }
     if (result.count("max-hang-detection-steps")) {
-        settings.maxHangDetectionSteps = result["max-hang-detection-steps"].as<int>();
+        settings.maxHangDetectionSteps = result["max-hang-detection-steps"].as<size_t>();
     }
     if (result.count("max-search-steps")) {
-        settings.maxSearchSteps = result["max-search-steps"].as<int>();
+        settings.maxSearchSteps = result["max-search-steps"].as<size_t>();
     }
     settings.maxSearchSteps = std::max(settings.maxHangDetectionSteps, settings.maxSearchSteps);
     settings.maxSteps = std::max(settings.maxSearchSteps, settings.maxSteps);

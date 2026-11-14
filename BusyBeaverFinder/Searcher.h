@@ -16,7 +16,7 @@ struct BaseSearchSettings {
     int dataSize{1024};
 
     // The maximum steps that a program will run for.
-    int maxSteps{1024};
+    size_t maxSteps{1024};
 
     BaseSearchSettings(int size) : size(size) {}
 };
