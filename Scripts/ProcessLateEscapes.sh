@@ -2,14 +2,15 @@
 #
 # Script for following up on search by chasing late escapes.
 #
-# It expects log of the search run via stdin
+# It a file named "late-escapes-1.txt" with all initial late escapes that need expanding.
+# Each line should contain two, tab seperated, fields:
+# - Number of steps until unset instruction was encountered
+# - The program spec
+#
 # As argument it expect invocation of search, without --run-mode and --inputfile arguments.
 #
 # It will generate output logs and late escape files in the current directory.
 # It will also overwrite any existing files.
-#
-# Example invocation:
-# cat search-log.txt | ${SCRIPT_PATH}ProcessLateEscapes.sh ${BIN_PATH}/BusyBeaverFinder [ARGS]
 
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 
@@ -17,7 +18,6 @@ SEARCH_CMD=$*
 echo Search command=${SEARCH_CMD}
 
 RUN=1
-grep "ESC" | sed -f ${SCRIPTPATH}/ProcessLateEscapes.sed > late-escapes-${RUN}.txt
 
 while true; do
   NUM_LATE_ESCAPES=`wc -l late-escapes-${RUN}.txt | sed 's_ __g' | sed 's_[^0-9].*__'`
